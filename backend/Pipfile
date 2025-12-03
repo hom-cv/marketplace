@@ -8,6 +8,7 @@ fastapi = {extras = ["standard"], version = "*"}
 sqlalchemy = "*"
 inflect = "*"
 alembic = "*"
+pydantic-settings = "*"
 
 [dev-packages]
 

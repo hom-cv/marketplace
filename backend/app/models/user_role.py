@@ -7,7 +7,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
-from backend.app.models.user import User
 
 
 class RoleType(AutoName):
@@ -38,7 +37,7 @@ class UserRole(Base):
     )
 
     # Relationships
-    users: Mapped[List["User"]] = relationship(  # type: ignore
+    users: Mapped[List["User"]] = relationship(  # type: ignore # noqa
         secondary="user_to_user_roles", back_populates="roles", lazy="selectin"
     )
 
