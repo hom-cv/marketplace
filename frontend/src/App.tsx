@@ -1,7 +1,8 @@
 import "@mantine/core/styles.css";
+import { HeaderBar } from "./components/HeaderBar";
 
 function App() {
-  return <>Hello World</>;
+  return <HeaderBar />;
 }
 
 export default App;
