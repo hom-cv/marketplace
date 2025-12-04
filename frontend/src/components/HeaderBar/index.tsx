@@ -8,12 +8,13 @@ import {
   Drawer,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { Link } from "@tanstack/react-router";
 import styles from "./HeaderBar.module.css";
 
 const links = [
   { link: "/login", label: "Login" },
   { link: "/sign-up", label: "Sign up" },
-];
+] as const;
 
 export const HeaderBar = () => {
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
@@ -21,7 +22,7 @@ export const HeaderBar = () => {
 
   const items = links.map((link) => {
     return (
-      <Button component="a" href={link.link} key={link.link}>
+      <Button component={Link} to={link.link} key={link.link}>
         {link.label}
       </Button>
     );
@@ -31,7 +32,9 @@ export const HeaderBar = () => {
     <Box>
       <header className={styles.header}>
         <Container size="md" className={styles.headerContent}>
-          <Title>marketplace</Title>
+          <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+            <Title>marketplace</Title>
+          </Link>
           <Group visibleFrom="xs">{items}</Group>
 
           <Burger
@@ -44,10 +47,10 @@ export const HeaderBar = () => {
       </header>
       <Drawer opened={drawerOpened} onClose={closeDrawer} size="100%">
         <Group justify="center" grow pb="xl" px="md">
-          <Button component="a" href="/login">
+          <Button component={Link} to="/login" onClick={closeDrawer}>
             Log in
           </Button>
-          <Button component="a" href="/sign-up">
+          <Button component={Link} to="/sign-up" onClick={closeDrawer}>
             Sign up
           </Button>
         </Group>
@@ -55,3 +58,4 @@ export const HeaderBar = () => {
     </Box>
   );
 };
+
