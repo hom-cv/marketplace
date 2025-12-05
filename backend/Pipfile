@@ -9,6 +9,11 @@ sqlalchemy = "*"
 inflect = "*"
 alembic = "*"
 pydantic-settings = "*"
+pyjwt = "*"
+asyncpg = "*"
+email-validator = "*"
+greenlet = "*"
+bcrypt = "*"
 
 [dev-packages]
 
