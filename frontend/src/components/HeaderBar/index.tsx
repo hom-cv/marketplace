@@ -10,7 +10,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuthStore, useIsAuthenticated } from "../../stores/authStore";
 import { useLogout, useCurrentUser } from "../../hooks/useAuth";
 import styles from "./HeaderBar.module.css";
 
@@ -18,7 +18,8 @@ export const HeaderBar = () => {
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuthStore();
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useIsAuthenticated();
   const logout = useLogout();
 
   // Try to fetch current user on mount

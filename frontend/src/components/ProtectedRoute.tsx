@@ -12,7 +12,7 @@ import { useCurrentUser } from "../hooks/useAuth";
 
 export function ProtectedRoute() {
   const navigate = useNavigate();
-  const { user, token, isAuthenticated } = useAuthStore();
+  const { user, token } = useAuthStore();
   const { isLoading, isError } = useCurrentUser();
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export function ProtectedRoute() {
     );
   }
 
-  if (isAuthenticated && user) {
+  if (token && user) {
     return <Outlet />;
   }
 
@@ -44,3 +44,4 @@ export function ProtectedRoute() {
     </Center>
   );
 }
+
