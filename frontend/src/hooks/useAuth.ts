@@ -8,53 +8,47 @@ import { useAuthStore } from "../stores/authStore";
 import type { RegisterRequest } from "../api/types";
 
 export function useCurrentUser() {
-    const { setUser, token } = useAuthStore();
+  const { setUser, token } = useAuthStore();
 
-    return useQuery({
-        queryKey: ["currentUser"],
-        queryFn: async () => {
-            const user = await getCurrentUser();
-            setUser(user);
-            return user;
-        },
-        enabled: !!token, // Only fetch if we have a token
-        retry: false,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-    });
+  return useQuery({
+    queryKey: ["currentUser"],
+    queryFn: async () => {
+      const user = await getCurrentUser();
+      setUser(user);
+      return user;
+    },
+    enabled: !!token,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 }
 
 export function useLoginMutation() {
-    const queryClient = useQueryClient();
-    const { setUser, setToken } = useAuthStore();
+  const { setToken } = useAuthStore();
 
-    return useMutation({
-        mutationFn: ({ email, password }: { email: string; password: string }) =>
-            loginUser(email, password),
-        onSuccess: async (data) => {
-            // Store token first
-            setToken(data.access_token);
-            // Then fetch user
-            const user = await getCurrentUser();
-            setUser(user);
-            queryClient.setQueryData(["currentUser"], user);
-        },
-    });
+  return useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) =>
+      loginUser(email, password),
+    onSuccess: async (data) => {
+      setToken(data.access_token);
+    },
+  });
 }
 
 export function useRegisterMutation() {
-    return useMutation({
-        mutationFn: (data: RegisterRequest) => registerUser(data),
-    });
+  return useMutation({
+    mutationFn: (data: RegisterRequest) => registerUser(data),
+  });
 }
 
 export function useLogout() {
-    const queryClient = useQueryClient();
-    const logout = useAuthStore((state) => state.logout);
+  const queryClient = useQueryClient();
+  const logout = useAuthStore((state) => state.logout);
 
-    return () => {
-        logout();
-        queryClient.removeQueries({ queryKey: ["currentUser"] });
-        // Note: Backend should provide a logout endpoint to clear the cookie
-        // For now, we just clear client state
-    };
+  return () => {
+    logout();
+    queryClient.removeQueries({ queryKey: ["currentUser"] });
+    // Note: Backend should provide a logout endpoint to clear the cookie
+    // For now, we just clear client state
+  };
 }

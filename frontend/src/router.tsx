@@ -4,6 +4,8 @@ import { Outlet } from "@tanstack/react-router";
 import { LoginPage } from "./pages/LoginPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { HomePage } from "./pages/HomePage";
+import { AppPage } from "./pages/AppPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const rootRoute = createRootRoute({
     component: () => (
@@ -32,7 +34,25 @@ const signUpRoute = createRoute({
     component: SignUpPage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signUpRoute]);
+// Protected routes layout
+const protectedLayout = createRoute({
+    getParentRoute: () => rootRoute,
+    id: "protected",
+    component: ProtectedRoute,
+});
+
+const appRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: "/app",
+    component: AppPage,
+});
+
+const routeTree = rootRoute.addChildren([
+    indexRoute,
+    loginRoute,
+    signUpRoute,
+    protectedLayout.addChildren([appRoute]),
+]);
 
 export const router = createRouter({ routeTree });
 
