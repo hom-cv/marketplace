@@ -11,9 +11,10 @@ from app.schemas.auth import (
     AuthRegisterResponse,
     AuthRegisterSchema,
 )
+from app.schemas.email_verification import EmailVerificationResponse
 from app.schemas.user import UserResponseSchema
 from app.services.auth import AuthService
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,6 +40,7 @@ async def register_user(
     - **password**: Password (minimum 8 characters)
 
     Returns the created user (without password).
+    A verification email will be sent to the provided email address.
     """
     user = await AuthService(db=db).register_user(obj_in)
 
@@ -77,3 +79,41 @@ async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
     Get the currently authenticated user's information.
     """
     return UserResponseSchema.model_validate(current_user)
+
+
+@router.get(
+    "/verify-email",
+    status_code=status.HTTP_200_OK,
+    response_model=EmailVerificationResponse,
+)
+async def verify_email(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    token: Annotated[str, Query(description="Email verification token")],
+) -> EmailVerificationResponse:
+    """
+    Verify a user's email address using the verification token.
+
+    The token is sent to the user's email during registration.
+    """
+    await AuthService(db=db).verify_email(token)
+
+    return EmailVerificationResponse(message="Email verified successfully")
+
+
+@router.post(
+    "/resend-verification",
+    status_code=status.HTTP_200_OK,
+    response_model=EmailVerificationResponse,
+)
+async def resend_verification_email(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> EmailVerificationResponse:
+    """
+    Resend the verification email to the currently authenticated user.
+
+    Requires authentication.
+    """
+    await AuthService(db=db).resend_verification_email(current_user)
+
+    return EmailVerificationResponse(message="Verification email sent successfully")

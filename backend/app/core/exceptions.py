@@ -56,3 +56,17 @@ def conflict_error(detail: str = "Conflict") -> HTTPException:
         HTTPException: The constructed HTTP 409 Conflict exception.
     """
     return _build_error(status_code=status.HTTP_409_CONFLICT, detail=detail)
+
+
+def bad_request_error(detail: str = "Bad request") -> HTTPException:
+    """
+    Creates an HTTP 400 Bad Request error.
+
+    Args:
+        detail (str, optional): The detail message for the error. Defaults to "Bad request".
+
+    Returns:
+        HTTPException: The constructed HTTP 400 Bad Request exception.
+    """
+    return _build_error(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+

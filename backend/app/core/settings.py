@@ -21,6 +21,10 @@ class Settings(BaseSettings):
 
     JWT_SECRET_KEY: str
 
+    SENDGRID_API_KEY: str
+    SENDGRID_FROM_EMAIL: str
+    API_BASE_URL: str
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> Self:
         """

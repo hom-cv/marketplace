@@ -52,6 +52,10 @@ class User(Base):
         String(255),
         nullable=False,
     )
+    email_verified: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+    )
     status: Mapped[UserStatus] = mapped_column(
         Enum(
             UserStatus,
