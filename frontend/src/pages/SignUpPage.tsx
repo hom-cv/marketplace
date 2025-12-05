@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
     TextInput,
     PasswordInput,
@@ -8,10 +8,15 @@ import {
     Text,
     Container,
     Stack,
+    Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useRegisterMutation } from "../hooks/useAuth";
 
 export function SignUpPage() {
+    const navigate = useNavigate();
+    const registerMutation = useRegisterMutation();
+
     const form = useForm({
         initialValues: {
             username: "",
@@ -30,15 +35,27 @@ export function SignUpPage() {
                 value.trim().length > 0 ? null : "Last name is required",
             email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
             password: (value) =>
-                value.length >= 6 ? null : "Password must be at least 6 characters",
+                value.length >= 8 ? null : "Password must be at least 8 characters",
             confirmPassword: (value, values) =>
                 value === values.password ? null : "Passwords do not match",
         },
     });
 
     const handleSubmit = (values: typeof form.values) => {
-        console.log("Sign up submitted:", values);
-        // TODO: Implement actual sign up logic
+        registerMutation.mutate(
+            {
+                username: values.username,
+                first_name: values.firstName,
+                last_name: values.lastName,
+                email_address: values.email,
+                password: values.password,
+            },
+            {
+                onSuccess: () => {
+                    navigate({ to: "/login" });
+                },
+            }
+        );
     };
 
     return (
@@ -54,6 +71,11 @@ export function SignUpPage() {
             <Paper withBorder shadow="md" p={30} mt={30} radius="md">
                 <form onSubmit={form.onSubmit(handleSubmit)}>
                     <Stack>
+                        {registerMutation.isError && (
+                            <Alert color="red" title="Registration failed">
+                                {registerMutation.error?.message || "Could not create account"}
+                            </Alert>
+                        )}
                         <TextInput
                             label="Username"
                             placeholder="Your username"
@@ -90,7 +112,12 @@ export function SignUpPage() {
                             required
                             {...form.getInputProps("confirmPassword")}
                         />
-                        <Button type="submit" fullWidth mt="xl">
+                        <Button
+                            type="submit"
+                            fullWidth
+                            mt="xl"
+                            loading={registerMutation.isPending}
+                        >
                             Sign up
                         </Button>
                     </Stack>
@@ -99,3 +126,4 @@ export function SignUpPage() {
         </Container>
     );
 }
+
