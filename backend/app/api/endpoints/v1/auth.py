@@ -11,6 +11,7 @@ from app.schemas.auth import (
     AuthRegisterResponse,
     AuthRegisterSchema,
 )
+from app.schemas.user import UserResponseSchema
 from app.services.auth import AuthService
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -80,9 +81,9 @@ async def login_user(
     )
 
 
-@router.get("/me", status_code=status.HTTP_200_OK)
+@router.get("/me", status_code=status.HTTP_200_OK, response_model=UserResponseSchema)
 async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
     """
     Get the currently authenticated user's information.
     """
-    return current_user
+    return UserResponseSchema.model_validate(current_user)
