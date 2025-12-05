@@ -8,7 +8,8 @@ import { useEffect } from "react";
 import { useNavigate, Outlet } from "@tanstack/react-router";
 import { Center, Loader } from "@mantine/core";
 import { useAuthStore } from "../stores/authStore";
-import { useCurrentUser } from "../hooks/useAuth";
+import { useLogout, useCurrentUser } from "../hooks/useAuth";
+
 
 export function ProtectedRoute() {
   const navigate = useNavigate();
@@ -17,11 +18,13 @@ export function ProtectedRoute() {
 
   useEffect(() => {
     if (!token) {
+      useLogout();
       navigate({ to: "/" });
       return;
     }
 
     if (isError) {
+      useLogout();
       navigate({ to: "/" });
     }
   }, [token, isError, navigate]);
