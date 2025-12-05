@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     POSTGRES_URI: str | None = None
     ALEMBIC_URI: str | None = None
 
+    JWT_SECRET_KEY: str
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> Self:
         """

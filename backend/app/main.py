@@ -1,5 +1,11 @@
 from fastapi import FastAPI
 
+from app.api.api_v1 import api_router as v1_router
+
+
+def init_routers(app: FastAPI) -> None:
+    app.include_router(v1_router)
+
 
 def create_app() -> FastAPI:
     app_ = FastAPI(
@@ -15,6 +21,8 @@ def create_app() -> FastAPI:
         Returns a 200 OK status if the application is running.
         """
         return {"status": "ok", "service": "AppName"}
+
+    init_routers(app=app_)
 
     return app_
 
