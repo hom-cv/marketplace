@@ -15,19 +15,20 @@ export function ProtectedRoute() {
   const navigate = useNavigate();
   const { user, token } = useAuthStore();
   const { isLoading, isError } = useCurrentUser();
+  const logout = useLogout();
 
   useEffect(() => {
     if (!token) {
-      useLogout();
+      logout();
       navigate({ to: "/" });
       return;
     }
 
     if (isError) {
-      useLogout();
+      logout();
       navigate({ to: "/" });
     }
-  }, [token, isError, navigate]);
+  }, [token, isError, navigate, logout]);
 
   if (token && !user && isLoading) {
     return (
