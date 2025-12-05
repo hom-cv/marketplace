@@ -13,7 +13,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UserResponseSchema
 from app.services.auth import AuthService
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,7 +48,6 @@ async def register_user(
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login_user(
     db: Annotated[AsyncSession, Depends(get_async_db)],
-    response: Response,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     """
@@ -64,15 +63,6 @@ async def login_user(
     expires_delta = timedelta(days=1)
     access_token = create_access_token(
         data={"user_id": user.id}, expires_delta=expires_delta
-    )
-
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=False,
-        secure=True,
-        samesite=None,
-        expires=60 * 60 * 24,
     )
 
     return AuthLoginResponse(

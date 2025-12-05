@@ -6,27 +6,62 @@ import {
   Burger,
   Box,
   Drawer,
+  Text,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useAuthStore } from "../../stores/authStore";
+import { useLogout, useCurrentUser } from "../../hooks/useAuth";
 import styles from "./HeaderBar.module.css";
-
-const links = [
-  { link: "/login", label: "Login" },
-  { link: "/sign-up", label: "Sign up" },
-] as const;
 
 export const HeaderBar = () => {
   const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
     useDisclosure(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuthStore();
+  const logout = useLogout();
 
-  const items = links.map((link) => {
-    return (
-      <Button component={Link} to={link.link} key={link.link}>
-        {link.label}
+  // Try to fetch current user on mount
+  useCurrentUser();
+
+  const handleLogout = () => {
+    logout();
+    closeDrawer();
+    navigate({ to: "/" });
+  };
+
+  const authButtons = isAuthenticated ? (
+    <>
+      <Text size="sm">Hey, {user?.first_name}</Text>
+      <Button variant="light" onClick={handleLogout}>
+        Logout
       </Button>
-    );
-  });
+    </>
+  ) : (
+    <>
+      <Button component={Link} to="/login">
+        Login
+      </Button>
+      <Button component={Link} to="/sign-up">
+        Sign up
+      </Button>
+    </>
+  );
+
+  const mobileAuthButtons = isAuthenticated ? (
+    <Button fullWidth onClick={handleLogout}>
+      Logout
+    </Button>
+  ) : (
+    <>
+      <Button component={Link} to="/login" onClick={closeDrawer}>
+        Log in
+      </Button>
+      <Button component={Link} to="/sign-up" onClick={closeDrawer}>
+        Sign up
+      </Button>
+    </>
+  );
 
   return (
     <Box>
@@ -35,7 +70,7 @@ export const HeaderBar = () => {
           <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
             <Title>marketplace</Title>
           </Link>
-          <Group visibleFrom="xs">{items}</Group>
+          <Group visibleFrom="xs">{authButtons}</Group>
 
           <Burger
             opened={drawerOpened}
@@ -47,15 +82,9 @@ export const HeaderBar = () => {
       </header>
       <Drawer opened={drawerOpened} onClose={closeDrawer} size="100%">
         <Group justify="center" grow pb="xl" px="md">
-          <Button component={Link} to="/login" onClick={closeDrawer}>
-            Log in
-          </Button>
-          <Button component={Link} to="/sign-up" onClick={closeDrawer}>
-            Sign up
-          </Button>
+          {mobileAuthButtons}
         </Group>
       </Drawer>
     </Box>
   );
 };
-

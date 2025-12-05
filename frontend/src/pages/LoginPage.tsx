@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
     TextInput,
     PasswordInput,
@@ -8,10 +8,15 @@ import {
     Text,
     Container,
     Stack,
+    Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useLoginMutation } from "../hooks/useAuth";
 
 export function LoginPage() {
+    const navigate = useNavigate();
+    const loginMutation = useLoginMutation();
+
     const form = useForm({
         initialValues: {
             email: "",
@@ -25,8 +30,14 @@ export function LoginPage() {
     });
 
     const handleSubmit = (values: typeof form.values) => {
-        console.log("Login submitted:", values);
-        // TODO: Implement actual login logic
+        loginMutation.mutate(
+            { email: values.email, password: values.password },
+            {
+                onSuccess: () => {
+                    navigate({ to: "/" });
+                },
+            }
+        );
     };
 
     return (
@@ -42,6 +53,11 @@ export function LoginPage() {
             <Paper withBorder shadow="md" p={30} mt={30} radius="md">
                 <form onSubmit={form.onSubmit(handleSubmit)}>
                     <Stack>
+                        {loginMutation.isError && (
+                            <Alert color="red" title="Login failed">
+                                {loginMutation.error?.message || "Invalid credentials"}
+                            </Alert>
+                        )}
                         <TextInput
                             label="Email"
                             placeholder="you@example.com"
@@ -54,7 +70,12 @@ export function LoginPage() {
                             required
                             {...form.getInputProps("password")}
                         />
-                        <Button type="submit" fullWidth mt="xl">
+                        <Button
+                            type="submit"
+                            fullWidth
+                            mt="xl"
+                            loading={loginMutation.isPending}
+                        >
                             Sign in
                         </Button>
                     </Stack>
@@ -63,3 +84,4 @@ export function LoginPage() {
         </Container>
     );
 }
+
