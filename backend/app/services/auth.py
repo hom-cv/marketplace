@@ -145,9 +145,6 @@ class AuthService:
         Args:
             user (User): The user to resend verification email to.
 
-        Returns:
-            bool: True if email was sent successfully.
-
         Raises:
             HTTPException: If email is already verified (400 Bad Request).
         """
