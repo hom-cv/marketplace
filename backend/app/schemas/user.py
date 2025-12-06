@@ -46,6 +46,8 @@ class UserResponseSchema(BaseModel):
     first_name: str
     last_name: str
     email_address: str
+    email_verified: bool
 
     class Config:
         from_attributes = True
+

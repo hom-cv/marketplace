@@ -5,6 +5,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { HomePage } from "./pages/HomePage";
 import { AppPage } from "./pages/AppPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const rootRoute = createRootRoute({
@@ -34,6 +35,15 @@ const signUpRoute = createRoute({
     component: SignUpPage,
 });
 
+const verifyEmailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/verify-email",
+    component: VerifyEmailPage,
+    validateSearch: (search: Record<string, unknown>) => ({
+        token: (search.token as string) || undefined,
+    }),
+});
+
 // Protected routes layout
 const protectedLayout = createRoute({
     getParentRoute: () => rootRoute,
@@ -51,6 +61,7 @@ const routeTree = rootRoute.addChildren([
     indexRoute,
     loginRoute,
     signUpRoute,
+    verifyEmailRoute,
     protectedLayout.addChildren([appRoute]),
 ]);
 

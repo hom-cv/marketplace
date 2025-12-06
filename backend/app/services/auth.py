@@ -1,12 +1,23 @@
 """Auth service layer for authentication operations."""
 
+import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import conflict_error, unauthorized_error
+from app.core.exceptions import (
+    bad_request_error,
+    conflict_error,
+    not_found_error,
+    unauthorized_error,
+)
+from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
 from app.crud.user import user_crud
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
+from app.services.email_service import email_service
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -48,21 +59,30 @@ class AuthService:
         if existing_username:
             raise conflict_error("A user with this username already exists")
 
-        # Hash the password
-        hashed_password = get_password_hash(obj_in.password)
-
-        # Create the user
+        # Create the user instance
         user = User(
             username=obj_in.username,
             first_name=obj_in.first_name,
             last_name=obj_in.last_name,
             email_address=obj_in.email_address,
-            hashed_password=hashed_password,
+            hashed_password=get_password_hash(obj_in.password),
         )
 
-        self.db.add(user)
-        await self.db.commit()
-        await self.db.refresh(user)
+        # Persist to database via CRUD layer
+        user = await user_crud.create_user(db=self.db, user=user)
+
+        # Send verification email
+        email_sent = email_service.send_verification_email(
+            user_id=user.id,
+            email=user.email_address,
+            first_name=user.first_name,
+        )
+        if not email_sent:
+            logger.warning(
+                "Failed to send verification email to user %s (%s)",
+                user.id,
+                user.email_address,
+            )
 
         return user
 
@@ -88,3 +108,60 @@ class AuthService:
             raise unauthorized_error("Invalid email or password")
 
         return user
+
+    async def verify_email(self, token: str) -> User:
+        """
+        Verify a user's email address using the verification token.
+
+        Args:
+            token (str): The email verification token.
+
+        Returns:
+            User: The verified user.
+
+        Raises:
+            HTTPException: If token is invalid or expired (400 Bad Request).
+        """
+        user_id = verify_email_token(token)
+        if user_id is None:
+            raise bad_request_error("Invalid or expired verification token")
+
+        user = await user_crud.get_by_id(db=self.db, id=user_id)
+        if not user:
+            raise not_found_error("User not found")
+
+        if user.email_verified:
+            raise bad_request_error("Email already verified")
+
+        # Update via CRUD layer
+        user = await user_crud.update_email_verified(db=self.db, user=user)
+
+        return user
+
+    async def resend_verification_email(self, user: User):
+        """
+        Resend verification email to the user.
+
+        Args:
+            user (User): The user to resend verification email to.
+
+        Raises:
+            HTTPException: If email is already verified (400 Bad Request).
+        """
+        if user.email_verified:
+            raise bad_request_error("Email already verified")
+
+        email_sent = email_service.send_verification_email(
+            user_id=user.id,
+            email=user.email_address,
+            first_name=user.first_name,
+        )
+        if not email_sent:
+            logger.error(
+                "Failed to resend verification email to user %s (%s)",
+                user.id,
+                user.email_address,
+            )
+            raise bad_request_error(
+                "Failed to send verification email. Please try again later."
+            )

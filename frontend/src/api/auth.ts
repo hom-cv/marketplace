@@ -3,7 +3,7 @@
  */
 
 import { apiRequest, jsonRequest, formRequest } from "./api";
-import type { User, RegisterRequest, LoginResponse } from "./types";
+import type { User, RegisterRequest, LoginResponse, EmailVerificationResponse } from "./types";
 
 export function registerUser(data: RegisterRequest): Promise<User> {
     return jsonRequest<User>("/auth/register", "POST", data);
@@ -19,3 +19,14 @@ export function loginUser(email: string, password: string): Promise<LoginRespons
 export function getCurrentUser(): Promise<User> {
     return apiRequest<User>("/auth/me");
 }
+
+export function verifyEmail(token: string): Promise<EmailVerificationResponse> {
+    return apiRequest<EmailVerificationResponse>(`/auth/verify-email?token=${encodeURIComponent(token)}`);
+}
+
+export function resendVerificationEmail(): Promise<EmailVerificationResponse> {
+    return apiRequest<EmailVerificationResponse>("/auth/resend-verification", {
+        method: "POST",
+    });
+}
+

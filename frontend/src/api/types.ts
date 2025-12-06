@@ -8,6 +8,7 @@ export interface User {
     first_name: string;
     last_name: string;
     email_address: string;
+    email_verified: boolean;
 }
 
 export interface RegisterRequest {
@@ -23,6 +24,11 @@ export interface LoginResponse {
     token_type: string;
 }
 
+export interface EmailVerificationResponse {
+    message: string;
+}
+
 export interface ApiError {
     detail: string;
 }
+
