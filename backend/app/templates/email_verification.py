@@ -26,6 +26,4 @@ def get_verification_email_html(first_name: str, verification_url: str) -> str:
 
     return _EMAIL_VERIFICATION_TEMPLATE.replace(
         "{{ first_name }}", str(safe_first_name)
-    ).replace(
-        "{{ verification_url }}", str(safe_verification_url)
-    )
+    ).replace("{{ verification_url }}", str(safe_verification_url))

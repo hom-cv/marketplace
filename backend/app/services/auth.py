@@ -138,7 +138,7 @@ class AuthService:
 
         return user
 
-    async def resend_verification_email(self, user: User) -> bool:
+    async def resend_verification_email(self, user: User):
         """
         Resend verification email to the user.
 
@@ -165,7 +165,6 @@ class AuthService:
                 user.id,
                 user.email_address,
             )
-            raise bad_request_error("Failed to send verification email. Please try again later.")
-
-        return True
-
+            raise bad_request_error(
+                "Failed to send verification email. Please try again later."
+            )

@@ -1,6 +1,5 @@
 """Email service for sending emails via SendGrid."""
 
-from backend.app.templates.email_verification import get_verification_email_html
 import logging
 
 from python_http_client.exceptions import HTTPError
@@ -9,6 +8,7 @@ from sendgrid.helpers.mail import Mail
 
 from app.core.jwt import create_email_verification_token
 from app.core.settings import Settings, get_settings
+from app.templates.email_verification import get_verification_email_html
 
 logger = logging.getLogger(__name__)
 settings: Settings = get_settings()

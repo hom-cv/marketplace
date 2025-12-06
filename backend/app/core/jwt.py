@@ -73,6 +73,12 @@ def verify_email_token(token: str) -> int | None:
         payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("sub") != "email_verification":
             return None
-        return payload.get("user_id")
+
+        user_id = payload.get("user_id")
+
+        if not isinstance(user_id, int):
+            return None
+
+        return user_id
     except jwt.PyJWTError:
         return None
