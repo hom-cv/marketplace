@@ -51,7 +51,9 @@ class EmailService:
             logger.error("Failed to send email to %s: %s", to_email, e)
             return False
 
-    def send_verification_email(self, user_id: int, email: str, first_name: str) -> bool:
+    def send_verification_email(
+        self, user_id: int, email: str, first_name: str
+    ) -> bool:
         """
         Send a verification email to the user.
 
@@ -64,7 +66,7 @@ class EmailService:
             bool: True if the email was sent successfully, False otherwise.
         """
         token = create_email_verification_token(user_id)
-        verification_url = f"{settings.API_BASE_URL}/verify-email?token={token}"
+        verification_url = f"{settings.BASE_URL}/verify-email?token={token}"
 
         html_content = get_verification_email_html(
             first_name=first_name,
@@ -79,4 +81,3 @@ class EmailService:
 
 
 email_service = EmailService()
-
