@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   TextInput,
@@ -12,10 +13,18 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useLoginMutation } from "../hooks/useAuth";
+import { useAuthStore } from "../stores/authStore";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
+  const { token } = useAuthStore();
+
+  useEffect(() => {
+    if (token) {
+      navigate({ to: "/app" });
+    }
+  }, [token, navigate]);
 
   const form = useForm({
     initialValues: {

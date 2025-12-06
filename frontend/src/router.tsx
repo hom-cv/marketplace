@@ -39,11 +39,9 @@ const verifyEmailRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/verify-email",
     component: VerifyEmailPage,
-    validateSearch: (search: Record<string, unknown>) => {
-        return {
-            token: search.token as string | undefined,
-        };
-    },
+    validateSearch: (search: Record<string, unknown>) => ({
+        token: (search.token as string) || undefined,
+    }),
 });
 
 // Protected routes layout
@@ -74,4 +72,3 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
-

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
     TextInput,
@@ -11,11 +12,20 @@ import {
     Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useRegisterMutation } from "../hooks/useAuth";
+import { useRegisterMutation, useLoginMutation } from "../hooks/useAuth";
+import { useAuthStore } from "../stores/authStore";
 
 export function SignUpPage() {
     const navigate = useNavigate();
     const registerMutation = useRegisterMutation();
+    const loginMutation = useLoginMutation();
+    const { token, setToken, setUser } = useAuthStore();
+
+    useEffect(() => {
+        if (token) {
+            navigate({ to: "/app" });
+        }
+    }, [token, navigate]);
 
     const form = useForm({
         initialValues: {
@@ -51,8 +61,22 @@ export function SignUpPage() {
                 password: values.password,
             },
             {
-                onSuccess: () => {
-                    navigate({ to: "/login" });
+                onSuccess: (user) => {
+                    // Auto-login after successful registration
+                    loginMutation.mutate(
+                        { email: values.email, password: values.password },
+                        {
+                            onSuccess: (loginResponse) => {
+                                setToken(loginResponse.access_token);
+                                setUser(user);
+                                navigate({ to: "/verify-email", search: { token: undefined } });
+                            },
+                            onError: () => {
+                                // If auto-login fails, redirect to login page
+                                navigate({ to: "/login" });
+                            },
+                        }
+                    );
                 },
             }
         );

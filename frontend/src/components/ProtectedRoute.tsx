@@ -1,7 +1,7 @@
 /**
  * Protected Route Component
  * Checks if user is authenticated, fetches user data if token exists but user is null,
- * redirects to "/" if not authenticated.
+ * redirects to "/" if not authenticated, redirects to "/verify-email" if email not verified.
  */
 
 import { useEffect } from "react";
@@ -30,6 +30,12 @@ export function ProtectedRoute() {
     }
   }, [token, isError, navigate, logout]);
 
+  useEffect(() => {
+    if (user && !user.email_verified) {
+      navigate({ to: "/verify-email", search: { token: undefined } });
+    }
+  }, [user, navigate]);
+
   if (token && !user && isLoading) {
     return (
       <Center h="50vh">
@@ -39,6 +45,13 @@ export function ProtectedRoute() {
   }
 
   if (token && user) {
+    if (!user.email_verified) {
+      return (
+        <Center h="50vh">
+          <Loader size="lg" />
+        </Center>
+      );
+    }
     return <Outlet />;
   }
 
@@ -48,4 +61,3 @@ export function ProtectedRoute() {
     </Center>
   );
 }
-
