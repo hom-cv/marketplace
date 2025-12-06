@@ -2,11 +2,14 @@
 
 from pathlib import Path
 
-from markupsafe import escape
+from jinja2 import Environment, FileSystemLoader
 
-# Load the HTML template at module level
+# Set up Jinja2 environment with autoescape enabled for XSS protection
 _TEMPLATE_DIR = Path(__file__).parent
-_EMAIL_VERIFICATION_TEMPLATE = (_TEMPLATE_DIR / "email_verification.html").read_text()
+_jinja_env = Environment(
+    loader=FileSystemLoader(_TEMPLATE_DIR),
+    autoescape=True,
+)
 
 
 def get_verification_email_html(first_name: str, verification_url: str) -> str:
@@ -20,10 +23,8 @@ def get_verification_email_html(first_name: str, verification_url: str) -> str:
     Returns:
         str: The HTML content for the email with escaped user inputs.
     """
-    # Escape user-provided inputs to prevent XSS attacks
-    safe_first_name = escape(first_name)
-    safe_verification_url = escape(verification_url)
-
-    return _EMAIL_VERIFICATION_TEMPLATE.replace(
-        "{{ first_name }}", str(safe_first_name)
-    ).replace("{{ verification_url }}", str(safe_verification_url))
+    template = _jinja_env.get_template("email_verification.html")
+    return template.render(
+        first_name=first_name,
+        verification_url=verification_url,
+    )

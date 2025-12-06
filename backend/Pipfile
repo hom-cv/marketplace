@@ -16,6 +16,7 @@ greenlet = "*"
 bcrypt = "*"
 sendgrid = "*"
 psycopg2-binary = "*"
+jinja2 = "*"
 
 [dev-packages]
 
