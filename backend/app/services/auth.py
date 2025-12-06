@@ -1,14 +1,23 @@
 """Auth service layer for authentication operations."""
 
+import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import bad_request_error, conflict_error, unauthorized_error
+from app.core.exceptions import (
+    bad_request_error,
+    conflict_error,
+    not_found_error,
+    unauthorized_error,
+)
 from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
 from app.crud.user import user_crud
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
 from app.services.email_service import email_service
+
+logger = logging.getLogger(__name__)
 
 
 class AuthService:
@@ -63,11 +72,17 @@ class AuthService:
         user = await user_crud.create_user(db=self.db, user=user)
 
         # Send verification email
-        email_service.send_verification_email(
+        email_sent = email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
             first_name=user.first_name,
         )
+        if not email_sent:
+            logger.warning(
+                "Failed to send verification email to user %s (%s)",
+                user.id,
+                user.email_address,
+            )
 
         return user
 
@@ -113,7 +128,7 @@ class AuthService:
 
         user = await user_crud.get_by_id(db=self.db, id=user_id)
         if not user:
-            raise bad_request_error("User not found")
+            raise not_found_error("User not found")
 
         if user.email_verified:
             raise bad_request_error("Email already verified")
@@ -139,9 +154,18 @@ class AuthService:
         if user.email_verified:
             raise bad_request_error("Email already verified")
 
-        return email_service.send_verification_email(
+        email_sent = email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
             first_name=user.first_name,
         )
+        if not email_sent:
+            logger.error(
+                "Failed to resend verification email to user %s (%s)",
+                user.id,
+                user.email_address,
+            )
+            raise bad_request_error("Failed to send verification email. Please try again later.")
+
+        return True
 

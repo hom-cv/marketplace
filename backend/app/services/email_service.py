@@ -2,6 +2,7 @@
 
 import logging
 
+from python_http_client.exceptions import HTTPError
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
@@ -46,9 +47,18 @@ class EmailService:
         )
         try:
             response = self.client.send(message)
+
             return response.status_code in (200, 201, 202)
-        except Exception as e:
-            logger.error("Failed to send email to %s: %s", to_email, e)
+        except HTTPError as e:
+            logger.error(
+                "SendGrid API error sending email to %s: status=%s, body=%s",
+                to_email,
+                e.status_code,
+                e.body,
+            )
+            return False
+        except OSError as e:
+            logger.error("Network error sending email to %s: %s", to_email, e)
             return False
 
     def send_verification_email(
