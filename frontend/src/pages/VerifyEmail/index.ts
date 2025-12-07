@@ -1,1 +1,1 @@
-export { VerifyEmailPage } from './VerifyEmailPage';
+export { VerifyEmailPage } from "@/pages/VerifyEmail/VerifyEmailPage";

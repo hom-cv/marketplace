@@ -6,7 +6,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Container } from "@mantine/core";
-import { useAuthStore } from "../../stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 
 export function HomePage() {
     const navigate = useNavigate();

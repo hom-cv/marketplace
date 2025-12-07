@@ -2,8 +2,8 @@
  * Auth API functions
  */
 
-import { apiRequest, jsonRequest, formRequest } from "./api";
-import type { User, RegisterRequest, LoginResponse, EmailVerificationResponse } from "./types";
+import { apiRequest, jsonRequest, formRequest } from "@/api/api";
+import type { User, RegisterRequest, LoginResponse, EmailVerificationResponse } from "@/api/types";
 
 export function registerUser(data: RegisterRequest): Promise<User> {
     return jsonRequest<User>("/auth/register", "POST", data);

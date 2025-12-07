@@ -33,8 +33,8 @@ import {
   IconPhoto,
 } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
-import { createPost } from "../../api/posts";
-import type { PostType } from "../../api/types";
+import { createPost } from "@/api/posts";
+import type { PostType } from "@/api/types";
 import styles from "./CreatePostPage.module.css";
 
 const postTypeOptions = [

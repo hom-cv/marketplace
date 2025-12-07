@@ -7,8 +7,8 @@
 import { useEffect } from "react";
 import { useNavigate, Outlet } from "@tanstack/react-router";
 import { Center, Loader } from "@mantine/core";
-import { useAuthStore } from "../../stores/authStore";;
-import { useLogout, useCurrentUser } from "../../hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
+import { useLogout, useCurrentUser } from "@/hooks/useAuth";
 
 
 export function ProtectedRoute() {

@@ -1,1 +1,1 @@
-export { CreatePostPage } from './CreatePostPage';
+export { CreatePostPage } from "@/pages/CreatePost/CreatePostPage";

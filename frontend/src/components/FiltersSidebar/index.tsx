@@ -14,7 +14,7 @@ import {
   Group,
 } from "@mantine/core";
 import { IconFilter, IconX } from "@tabler/icons-react";
-import type { PostType } from "../../api/types";
+import type { PostType } from "@/api/types";
 
 interface FiltersState {
   types: PostType[];

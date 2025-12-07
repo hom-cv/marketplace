@@ -4,7 +4,7 @@
  */
 
 import { Card, Image, Text, Badge, Group, Stack, Box } from "@mantine/core";
-import type { Post, PostType } from "../../api/types";
+import type { Post, PostType } from "@/api/types";
 import styles from "./PostCard.module.css";
 
 interface PostCardProps {

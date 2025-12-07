@@ -11,8 +11,8 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useAuthStore, useIsAuthenticated } from "../../stores/authStore";
-import { useLogout, useCurrentUser } from "../../hooks/useAuth";
+import { useAuthStore, useIsAuthenticated } from "@/stores/authStore";
+import { useLogout, useCurrentUser } from "@/hooks/useAuth";
 import styles from "./HeaderBar.module.css";
 
 export const HeaderBar = () => {

@@ -2,9 +2,9 @@
  * Posts API client
  */
 
-import { apiRequest, API_BASE_URL } from "./api";
-import type { Post, CreatePostRequest } from "./types";
-import { useAuthStore } from "../stores/authStore";
+import { apiRequest, API_BASE_URL } from "@/api/api";
+import type { Post, CreatePostRequest } from "@/api/types";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Create a new post with optional multiple image uploads

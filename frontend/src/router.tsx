@@ -1,13 +1,13 @@
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
-import { HeaderBar } from "./components/HeaderBar";
+import { HeaderBar } from "@/components/HeaderBar";
 import { Outlet } from "@tanstack/react-router";
-import { LoginPage } from "./pages/Login";
-import { SignUpPage } from "./pages/SignUp";
-import { HomePage } from "./pages/Home";
-import { AppPage } from "./pages/App";
-import { VerifyEmailPage } from "./pages/VerifyEmail";
-import { CreatePostPage } from "./pages/CreatePost";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "@/pages/Login";
+import { SignUpPage } from "@/pages/SignUp";
+import { HomePage } from "@/pages/Home";
+import { AppPage } from "@/pages/App";
+import { VerifyEmailPage } from "@/pages/VerifyEmail";
+import { CreatePostPage } from "@/pages/CreatePost";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const rootRoute = createRootRoute({
     component: () => (

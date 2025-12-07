@@ -3,9 +3,9 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { registerUser, loginUser, getCurrentUser } from "../api/auth";
-import { useAuthStore } from "../stores/authStore";
-import type { RegisterRequest } from "../api/types";
+import { registerUser, loginUser, getCurrentUser } from "@/api/auth";
+import { useAuthStore } from "@/stores/authStore";
+import type { RegisterRequest } from "@/api/types";
 
 export function useCurrentUser() {
   const { setUser, token } = useAuthStore();

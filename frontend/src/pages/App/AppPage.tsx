@@ -25,10 +25,10 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconAlertCircle, IconPlus, IconFilter } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
-import { getPosts } from "../../api/posts";
-import { PostCard } from "../../components/PostCard";
-import { PostFeedItem } from "../../components/PostFeedItem";
-import { FiltersSidebar, type FiltersState } from "../../components/FiltersSidebar";
+import { getPosts } from "@/api/posts";
+import { PostCard } from "@/components/PostCard";
+import { PostFeedItem } from "@/components/PostFeedItem";
+import { FiltersSidebar, type FiltersState } from "@/components/FiltersSidebar";
 import styles from "./AppPage.module.css";
 
 export function AppPage() {
