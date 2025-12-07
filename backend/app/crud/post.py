@@ -115,10 +115,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         """
         db.add(post)
         await db.commit()
-        await db.refresh(post)
 
-        # Reload with user relationship
-        return await self.get_by_id_with_user(db, id=post.id)  # type: ignore
+        await db.refresh(post, attribute_names=["user"])
+
+        return post
 
 
 post_crud = PostCRUD(Post)
