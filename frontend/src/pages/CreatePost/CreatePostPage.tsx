@@ -3,7 +3,7 @@
  * Split layout: Image preview on left, form on right
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Container,
@@ -57,10 +57,15 @@ export function CreatePostPage() {
   const [images, setImages] = useState<File[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Create preview URLs for uploaded images
   const imagePreviews = useMemo(() => {
     return images.map((file) => URL.createObjectURL(file));
   }, [images]);
+
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
 
   const mutation = useMutation({
     mutationFn: createPost,
