@@ -84,8 +84,7 @@ async def list_posts(
     Supports pagination with skip and limit parameters.
     """
     posts = await post_crud.get_all_posts(db, skip=skip, limit=limit)
-    return [PostResponseSchema.model_validate(p) for p in posts]
-
+    return posts
 
 @router.get(
     "/me",
