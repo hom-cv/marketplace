@@ -1,5 +1,6 @@
 """Storage service for Digital Ocean Spaces file uploads."""
 
+import asyncio
 import logging
 import uuid
 from io import BytesIO
@@ -65,33 +66,30 @@ class StorageService:
 
         from botocore.exceptions import ClientError
 
-        # Generate unique filename
         file_ext = file.filename.split(".")[-1] if file.filename else "jpg"
         unique_filename = f"{folder}/{uuid.uuid4()}.{file_ext}"
 
         try:
-            # Read file content
             content = await file.read()
-
-            # Upload to Spaces
-            self.client.upload_fileobj(
-                BytesIO(content),
-                self.bucket,
-                unique_filename,
-                ExtraArgs={
-                    "ACL": "public-read",
-                    "ContentType": file.content_type or "image/jpeg",
-                },
+            await asyncio.to_thread(
+                self.client.upload_fileobj(
+                    BytesIO(content),
+                    self.bucket,
+                    unique_filename,
+                    ExtraArgs={
+                        "ACL": "public-read",
+                        "ContentType": file.content_type or "image/jpeg",
+                    },
+                )
             )
 
-            # Return CDN URL
             return f"{self.cdn_url}/{unique_filename}"
 
         except ClientError as e:
             logger.error(f"Failed to upload file to DO Spaces: {e}")
             raise Exception("Failed to upload image") from e
 
-    async def delete_image(self, image_url: str) -> bool:
+    async def delete_image(self, image_url: str) -> None:
         """
         Delete an image from Digital Ocean Spaces.
 
@@ -102,20 +100,22 @@ class StorageService:
             bool: True if deleted successfully.
         """
         if not self.enabled:
-            return False
+            return
 
         from botocore.exceptions import ClientError
 
         try:
-            # Extract key from URL
             key = image_url.replace(f"{self.cdn_url}/", "")
 
-            self.client.delete_object(Bucket=self.bucket, Key=key)
-            return True
+            await asyncio.to_thread(
+                self.client.delete_object,
+                Bucket=self.bucket,
+                Key=key,
+            )
 
         except ClientError as e:
             logger.error(f"Failed to delete file from DO Spaces: {e}")
-            return False
+            raise Exception("Failed to delete image") from e
 
 
 storage_service = StorageService()

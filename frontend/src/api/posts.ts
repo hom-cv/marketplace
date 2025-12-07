@@ -2,11 +2,9 @@
  * Posts API client
  */
 
-import { apiRequest } from "./api";
+import { apiRequest, API_BASE_URL } from "./api";
 import type { Post, CreatePostRequest } from "./types";
 import { useAuthStore } from "../stores/authStore";
-
-const API_BASE_URL = "http://localhost:8000/api/v1";
 
 /**
  * Create a new post with optional multiple image uploads
