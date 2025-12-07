@@ -1,9 +1,9 @@
 """Storage service for Digital Ocean Spaces file uploads."""
 
-from urllib.parse import urlparse
 import asyncio
 import logging
 import uuid
+from urllib.parse import urlparse
 
 import boto3
 from botocore.exceptions import ClientError
@@ -12,6 +12,18 @@ from fastapi import UploadFile
 from app.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
+
+# Allowed image extensions
+ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
+MAX_IMAGES = 5
+
+
+from app.services.exceptions import (
+    DeleteError,
+    InvalidFileTypeError,
+    TooManyImagesError,
+    UploadError,
+)
 
 
 class StorageService:
@@ -42,6 +54,13 @@ class StorageService:
             self.cdn_url = None
             self.client = None
 
+    def _get_file_extension(self, filename: str) -> str | None:
+        """Extract and validate file extension."""
+        if not filename or "." not in filename:
+            return None
+        ext = filename.rsplit(".", 1)[-1].lower()
+        return ext if ext in ALLOWED_EXTENSIONS else None
+
     async def upload_image(self, file: UploadFile, folder: str = "posts") -> str | None:
         """
         Upload an image to Digital Ocean Spaces.
@@ -51,10 +70,11 @@ class StorageService:
             folder: The folder/prefix to store the file in.
 
         Returns:
-            The public CDN URL of the uploaded file, or None if disabled.
+            The public CDN URL of the uploaded file, or None if disabled/invalid.
 
         Raises:
-            Exception: If upload fails.
+            InvalidFileTypeError: If file extension is not allowed.
+            UploadError: If upload to storage fails.
         """
         if not file or not file.filename:
             return None
@@ -63,7 +83,12 @@ class StorageService:
             logger.warning("Image upload skipped - DO Spaces not configured")
             return None
 
-        file_ext = file.filename.rsplit(".")[-1].lower() if file.filename and '.' in file.filename else "jpg"
+        file_ext = self._get_file_extension(file.filename)
+        if not file_ext:
+            raise InvalidFileTypeError(
+                f"Invalid file type. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+            )
+
         unique_filename = f"{folder}/{uuid.uuid4()}.{file_ext}"
 
         try:
@@ -81,7 +106,7 @@ class StorageService:
 
         except ClientError as e:
             logger.error(f"Failed to upload file to DO Spaces: {e}")
-            raise Exception("Failed to upload image") from e
+            raise UploadError("Failed to upload image to storage") from e
 
     async def upload_images(self, files: list[UploadFile], folder: str = "posts") -> list[str]:
         """
@@ -95,9 +120,25 @@ class StorageService:
             List of public CDN URLs for successfully uploaded files.
 
         Raises:
-            Exception: If any upload fails.
+            TooManyImagesError: If more than MAX_IMAGES are provided.
+            InvalidFileTypeError: If any file has an invalid extension.
+            UploadError: If any upload fails.
         """
-        tasks = [self.upload_image(f, folder) for f in files]
+        # Filter out empty files
+        valid_files = [f for f in files if f and f.filename]
+
+        if len(valid_files) > MAX_IMAGES:
+            raise TooManyImagesError(f"Maximum {MAX_IMAGES} images allowed")
+
+        # Validate all extensions before uploading
+        for f in valid_files:
+            ext = self._get_file_extension(f.filename)  # type: ignore
+            if not ext:
+                raise InvalidFileTypeError(
+                    f"Invalid file type for '{f.filename}'. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
+                )
+
+        tasks = [self.upload_image(f, folder) for f in valid_files]
         results = await asyncio.gather(*tasks)
         return [url for url in results if url]
 
@@ -109,13 +150,13 @@ class StorageService:
             image_url: The full CDN URL of the image.
 
         Raises:
-            Exception: If deletion fails.
+            DeleteError: If deletion fails.
         """
-        if not self.enabled:
+        if not self.enabled or not image_url:
             return
 
         try:
-            key = urlparse(image_url).path.lstrip('/')
+            key = urlparse(image_url).path.lstrip("/")
             await asyncio.to_thread(
                 self.client.delete_object,
                 Bucket=self.bucket,
@@ -124,7 +165,7 @@ class StorageService:
 
         except ClientError as e:
             logger.error(f"Failed to delete file from DO Spaces: {e}")
-            raise Exception("Failed to delete image") from e
+            raise DeleteError("Failed to delete image from storage") from e
 
 
 storage_service = StorageService()

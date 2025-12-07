@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import not_found_error, server_error
+from app.core.exceptions import bad_request_error, not_found_error, server_error
 from app.core.security import get_current_user
 from app.crud.post import post_crud
 from app.db.utils import get_async_db
@@ -14,7 +14,12 @@ from app.models import Post, User
 from app.models.post import PostType
 from app.schemas.post import PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
-from app.services.storage import storage_service
+from app.services.exceptions import (
+    InvalidFileTypeError,
+    TooManyImagesError,
+    UploadError,
+)
+from app.services.storage_service import storage_service
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -38,10 +43,13 @@ async def create_post(
 
     Accepts multipart/form-data with optional multiple image uploads.
     The first image will be used as the cover/display image.
+    Maximum 5 images allowed. Supported formats: jpg, jpeg, png, gif, webp.
     """
     try:
         image_urls = await storage_service.upload_images(images, folder="posts")
-    except Exception:
+    except (InvalidFileTypeError, TooManyImagesError) as e:
+        raise bad_request_error(str(e))
+    except UploadError:
         raise server_error("Failed to upload images. Please try again.")
 
     image_url = image_urls[0] if image_urls else None
