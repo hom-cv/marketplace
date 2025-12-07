@@ -12,8 +12,8 @@ import {
     Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useRegisterMutation, useLoginMutation } from "../hooks/useAuth";
-import { useAuthStore } from "../stores/authStore";
+import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
 
 export function SignUpPage() {
     const navigate = useNavigate();

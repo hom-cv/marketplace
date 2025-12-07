@@ -1,5 +1,5 @@
 import "@mantine/core/styles.css";
-import { HeaderBar } from "./components/HeaderBar";
+import { HeaderBar } from "@/components/HeaderBar";
 
 function App() {
   return <HeaderBar />;

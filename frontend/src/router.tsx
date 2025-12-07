@@ -1,12 +1,13 @@
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
-import { HeaderBar } from "./components/HeaderBar";
+import { HeaderBar } from "@/components/HeaderBar";
 import { Outlet } from "@tanstack/react-router";
-import { LoginPage } from "./pages/LoginPage";
-import { SignUpPage } from "./pages/SignUpPage";
-import { HomePage } from "./pages/HomePage";
-import { AppPage } from "./pages/AppPage";
-import { VerifyEmailPage } from "./pages/VerifyEmailPage";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import { LoginPage } from "@/pages/Login";
+import { SignUpPage } from "@/pages/SignUp";
+import { HomePage } from "@/pages/Home";
+import { AppPage } from "@/pages/App";
+import { VerifyEmailPage } from "@/pages/VerifyEmail";
+import { CreatePostPage } from "@/pages/CreatePost";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const rootRoute = createRootRoute({
     component: () => (
@@ -57,12 +58,18 @@ const appRoute = createRoute({
     component: AppPage,
 });
 
+const createPostRoute = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: "/app/posts/new",
+    component: CreatePostPage,
+});
+
 const routeTree = rootRoute.addChildren([
     indexRoute,
     loginRoute,
     signUpRoute,
     verifyEmailRoute,
-    protectedLayout.addChildren([appRoute]),
+    protectedLayout.addChildren([appRoute, createPostRoute]),
 ]);
 
 export const router = createRouter({ routeTree });

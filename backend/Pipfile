@@ -17,6 +17,7 @@ bcrypt = "*"
 sendgrid = "*"
 psycopg2-binary = "*"
 jinja2 = "*"
+boto3 = "*"
 
 [dev-packages]
 
