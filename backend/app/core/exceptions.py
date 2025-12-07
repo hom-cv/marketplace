@@ -70,3 +70,15 @@ def bad_request_error(detail: str = "Bad request") -> HTTPException:
     """
     return _build_error(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
+
+def server_error(detail: str = "Internal server error") -> HTTPException:
+    """
+    Creates an HTTP 500 Internal Server Error.
+
+    Args:
+        detail (str, optional): The detail message for the error.
+
+    Returns:
+        HTTPException: The constructed HTTP 500 exception.
+    """
+    return _build_error(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)

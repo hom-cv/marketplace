@@ -1,13 +1,12 @@
 """Posts API endpoints for the marketplace."""
 
-import asyncio
 from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import not_found_error
+from app.core.exceptions import not_found_error, server_error
 from app.core.security import get_current_user
 from app.crud.post import post_crud
 from app.db.utils import get_async_db
@@ -40,14 +39,10 @@ async def create_post(
     Accepts multipart/form-data with optional multiple image uploads.
     The first image will be used as the cover/display image.
     """
-    async def upload_single_image(image: UploadFile) -> str | None:
-        if image and image.filename:
-            return await storage_service.upload_image(image, folder="posts")
-        return None
-
-    upload_tasks = [upload_single_image(image) for image in images]
-    upload_results = await asyncio.gather(*upload_tasks)
-    image_urls: list[str] = [url for url in upload_results if url]
+    try:
+        image_urls = await storage_service.upload_images(images, folder="posts")
+    except Exception:
+        raise server_error("Failed to upload images. Please try again.")
 
     image_url = image_urls[0] if image_urls else None
 
