@@ -1,5 +1,6 @@
 """Posts API endpoints for the marketplace."""
 
+import asyncio
 from decimal import Decimal
 from typing import Annotated
 
@@ -39,18 +40,17 @@ async def create_post(
     Accepts multipart/form-data with optional multiple image uploads.
     The first image will be used as the cover/display image.
     """
-    # Upload all images
-    image_urls: list[str] = []
-    for image in images:
+    async def upload_single_image(image: UploadFile) -> str | None:
         if image and image.filename:
-            url = await storage_service.upload_image(image, folder="posts")
-            if url:
-                image_urls.append(url)
+            return await storage_service.upload_image(image, folder="posts")
+        return None
 
-    # First image is the cover image
+    upload_tasks = [upload_single_image(image) for image in images]
+    upload_results = await asyncio.gather(*upload_tasks)
+    image_urls: list[str] = [url for url in upload_results if url]
+
     image_url = image_urls[0] if image_urls else None
 
-    # Create post
     post = Post(
         title=title,
         description=description,

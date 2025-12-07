@@ -66,7 +66,7 @@ class StorageService:
 
         from botocore.exceptions import ClientError
 
-        file_ext = file.filename.split(".")[-1] if file.filename else "jpg"
+        file_ext = file.filename.rsplit(".")[-1].lower() if file.filename and '.' in file.filename else "jpg"
         unique_filename = f"{folder}/{uuid.uuid4()}.{file_ext}"
 
         try:
