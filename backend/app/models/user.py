@@ -1,5 +1,8 @@
 from enum import auto
-from typing import List
+from typing import TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from app.models.post import Post
 
 from sqlalchemy import BigInteger, Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -73,6 +76,10 @@ class User(Base):
         lazy="selectin",  # Optimize for common access pattern
         cascade="all, delete",
         back_populates="users",
+    )
+    posts: Mapped[List["Post"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     # Indexes

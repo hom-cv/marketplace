@@ -26,6 +26,22 @@ class Settings(BaseSettings):
     API_BASE_URL: str
     BASE_URL: str
 
+    # Digital Ocean Spaces (optional - for image uploads)
+    DO_SPACES_KEY: str | None = None
+    DO_SPACES_SECRET: str | None = None
+    DO_SPACES_BUCKET: str | None = None
+    DO_SPACES_REGION: str | None = None
+
+    @property
+    def do_spaces_endpoint(self) -> str:
+        """Get the DO Spaces endpoint URL."""
+        return f"https://{self.DO_SPACES_REGION}.digitaloceanspaces.com"
+
+    @property
+    def do_spaces_cdn_url(self) -> str:
+        """Get the CDN URL for accessing uploaded files."""
+        return f"https://{self.DO_SPACES_BUCKET}.{self.DO_SPACES_REGION}.cdn.digitaloceanspaces.com"
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> Self:
         """

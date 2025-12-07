@@ -1,0 +1,34 @@
+/* PostCard styles with hover effects and modern aesthetics */
+
+.card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.imageSection {
+  position: relative;
+  overflow: hidden;
+}
+
+.image {
+  transition: transform 0.3s ease;
+}
+
+.card:hover .image {
+  transform: scale(1.05);
+}
+
+.typeBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+}

@@ -7,6 +7,7 @@ import {
   Box,
   Drawer,
   Text,
+  Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -82,10 +83,20 @@ export const HeaderBar = () => {
         </Container>
       </header>
       <Drawer opened={drawerOpened} onClose={closeDrawer} size="100%">
-        <Group justify="center" grow pb="xl" px="md">
+        <Stack>
+          {isAuthenticated && (
+            <Button
+              component={Link}
+              to="/app/posts/new"
+              onClick={closeDrawer}
+              fullWidth
+            >
+              Create Listing
+            </Button>
+          )}
           {mobileAuthButtons}
-        </Group>
+        </Stack>
       </Drawer>
-    </Box>
+    </Box >
   );
 };

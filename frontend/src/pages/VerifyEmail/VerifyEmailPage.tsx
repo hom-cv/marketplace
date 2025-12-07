@@ -20,8 +20,8 @@ import {
   Alert,
 } from "@mantine/core";
 import { IconCheck, IconX, IconMail, IconAlertCircle } from "@tabler/icons-react";
-import { verifyEmail, resendVerificationEmail, getCurrentUser } from "../api/auth";
-import { useAuthStore } from "../stores/authStore";
+import { verifyEmail, resendVerificationEmail, getCurrentUser } from "../../api/auth";
+import { useAuthStore } from "../../stores/authStore";
 
 type PageMode = "loading" | "verify" | "resend" | "success" | "error";
 type ResendStatus = "idle" | "loading" | "success" | "error";
