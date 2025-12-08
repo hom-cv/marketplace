@@ -18,6 +18,7 @@ sendgrid = "*"
 psycopg2-binary = "*"
 jinja2 = "*"
 boto3 = "*"
+omise = "*"
 
 [dev-packages]
 
