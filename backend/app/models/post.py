@@ -2,7 +2,6 @@
 
 from decimal import Decimal
 from enum import auto
-from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, Enum, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -10,9 +9,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
-
-if TYPE_CHECKING:
-    from app.models.user import User
 
 
 class PostType(AutoName):
@@ -84,4 +80,8 @@ class Post(Base):
     user: Mapped["User"] = relationship(
         back_populates="posts",
         lazy="selectin",
+    )
+    payments: Mapped[list["Payment"]] = relationship(
+        back_populates="post",
+        cascade="all, delete-orphan",
     )

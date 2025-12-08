@@ -82,3 +82,15 @@ def server_error(detail: str = "Internal server error") -> HTTPException:
         HTTPException: The constructed HTTP 500 exception.
     """
     return _build_error(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=detail)
+
+def forbidden_error(detail: str = "Forbidden") -> HTTPException:
+    """
+    Creates an HTTP 403 Forbidden error.
+
+    Args:
+        detail (str, optional): The detail message for the error. Defaults to "Forbidden".
+
+    Returns:
+        HTTPException: The constructed HTTP 403 Forbidden exception.
+    """
+    return _build_error(status_code=status.HTTP_403_FORBIDDEN, detail=detail)

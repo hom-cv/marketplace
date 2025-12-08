@@ -44,7 +44,16 @@ async def create_post(
     Accepts multipart/form-data with optional multiple image uploads.
     The first image will be used as the cover/display image.
     Maximum 5 images allowed. Supported formats: jpg, jpeg, png, gif, webp.
+    
+    Requires the user to be a verified seller.
     """
+    # Check if user is a verified seller
+    if not current_user.is_seller:
+        raise bad_request_error(
+            "You must be a verified seller to create listings. "
+            "Please complete seller verification first."
+        )
+
     try:
         image_urls = await storage_service.upload_images(images, folder="posts")
     except (InvalidFileTypeError, TooManyImagesError) as e:

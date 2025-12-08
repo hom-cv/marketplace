@@ -1,3 +1,5 @@
+"""User role models for managing authorization levels."""
+
 from enum import auto
 from typing import List
 
@@ -15,6 +17,7 @@ class RoleType(AutoName):
     ADMIN = auto()
     USER = auto()
     MODERATOR = auto()
+    SELLER = auto()
 
 
 class UserRole(Base):

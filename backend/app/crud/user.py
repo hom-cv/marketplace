@@ -2,6 +2,7 @@
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.crud._base import BaseCRUD
 from app.models.user import User, UserStatus
@@ -10,6 +11,33 @@ from app.schemas.user import UserCreateSchema, UserUpdateSchema
 
 class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
     """CRUD operations for User model."""
+
+    async def get_by_id_with_relations(
+        self, db: AsyncSession, *, id: int
+    ) -> User | None:
+        """
+        Retrieve a user by ID with roles and seller_profile eagerly loaded.
+
+        This is needed for endpoints that access user.is_seller or
+        user.seller_profile to avoid async lazy loading issues.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            id (int): The user ID.
+
+        Returns:
+            User | None: The user if found, or None.
+        """
+        query = (
+            select(self.model)
+            .where(self.model.id == id)
+            .options(
+                selectinload(User.roles),
+                selectinload(User.seller_profile),
+            )
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
 
     async def get_by_email(self, db: AsyncSession, *, email: str) -> User | None:
         """

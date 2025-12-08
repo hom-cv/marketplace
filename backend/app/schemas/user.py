@@ -1,5 +1,7 @@
 """User schemas for request/response validation."""
 
+from typing import Any
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -47,7 +49,25 @@ class UserResponseSchema(BaseModel):
     last_name: str
     email_address: str
     email_verified: bool
+    is_seller: bool = False
+    seller_status: str | None = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
+    @classmethod
+    def from_user(cls, user: Any) -> "UserResponseSchema":
+        """Create response from User model with seller info."""
+        seller_status = None
+        if user.seller_profile:
+            seller_status = user.seller_profile.verification_status.value.lower()
+
+        return cls(
+            id=user.id,
+            username=user.username,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email_address=user.email_address,
+            email_verified=user.email_verified,
+            is_seller=user.is_seller,
+            seller_status=seller_status,
+        )

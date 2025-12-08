@@ -1,14 +1,14 @@
-from enum import auto
-from typing import TYPE_CHECKING, List
+"""User model for application users and their relationships."""
 
-if TYPE_CHECKING:
-    from app.models.post import Post
+from enum import auto
+from typing import List, Optional
 
 from sqlalchemy import BigInteger, Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
+from app.models.seller import SellerVerificationStatus
 from app.models.user_role import RoleType, UserRole, UserToUserRole
 
 
@@ -81,6 +81,21 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    seller_profile: Mapped[Optional["SellerProfile"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
+    )
+    purchases: Mapped[List["Payment"]] = relationship(
+        back_populates="buyer",
+        foreign_keys="Payment.buyer_id",
+        cascade="all, delete-orphan",
+    )
+    sales: Mapped[List["Payment"]] = relationship(
+        back_populates="seller",
+        foreign_keys="Payment.seller_id",
+        cascade="all, delete-orphan",
+    )
 
     # Indexes
     __table_args__ = (
@@ -97,6 +112,16 @@ class User(Base):
         """Check if the user has admin role."""
         if self.roles:
             return any(r.role == RoleType.ADMIN for r in self.roles)
+        return False
+
+    @property
+    def is_seller(self) -> bool:
+        """Check if the user is a verified seller."""
+        if self.seller_profile:
+            return (
+                self.seller_profile.verification_status
+                == SellerVerificationStatus.VERIFIED
+            )
         return False
 
     @property

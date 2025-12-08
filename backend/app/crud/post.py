@@ -8,6 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.crud._base import BaseCRUD
 from app.models.post import Post
+from app.models.user import User
 from app.schemas.post import PostCreateSchema, PostUpdateSchema
 
 
@@ -34,7 +35,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         """
         query = (
             select(self.model)
-            .options(selectinload(self.model.user))
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
             .order_by(self.model.created_date.desc())
             .offset(skip)
             .limit(limit)
@@ -64,7 +67,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         """
         query = (
             select(self.model)
-            .options(selectinload(self.model.user))
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
             .where(self.model.user_id == user_id)
             .order_by(self.model.created_date.desc())
             .offset(skip)
@@ -91,7 +96,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         """
         query = (
             select(self.model)
-            .options(selectinload(self.model.user))
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
             .where(self.model.id == id)
         )
         result = await db.execute(query)
@@ -116,9 +123,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         db.add(post)
         await db.commit()
 
-        await db.refresh(post, attribute_names=["user"])
-
-        return post
+        # Re-fetch with proper eager loading
+        return await self.get_by_id_with_user(db, id=post.id)  # type: ignore
 
 
 post_crud = PostCRUD(Post)

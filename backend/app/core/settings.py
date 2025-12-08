@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     API_BASE_URL: str
     BASE_URL: str
 
+    # Omise configuration
+    OMISE_PUBLIC_KEY: str
+    OMISE_SECRET_KEY: str
+    OMISE_WEBHOOK_SECRET: str | None = None
+
     # Digital Ocean Spaces (optional - for image uploads)
     DO_SPACES_KEY: str | None = None
     DO_SPACES_SECRET: str | None = None
