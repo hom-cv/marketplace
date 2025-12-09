@@ -111,6 +111,10 @@ async def omise_webhook(
     - recipient.verify: Seller verification completed
 
     Configure this URL in the Omise dashboard under Webhooks.
+
+    Note: Omise recommends verifying webhook events by making a GET request
+    to the Omise API to confirm the status independently. This verification
+    is handled in PaymentService.process_webhook().
     """
     try:
         body = await request.json()
@@ -126,3 +130,5 @@ async def omise_webhook(
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return {"status": "error", "message": str(e)}
+
+
