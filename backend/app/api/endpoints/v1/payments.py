@@ -130,5 +130,3 @@ async def omise_webhook(
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return {"status": "error", "message": str(e)}
-
-
