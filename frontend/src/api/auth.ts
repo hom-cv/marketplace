@@ -3,7 +3,7 @@
  */
 
 import { apiRequest, jsonRequest, formRequest } from "@/api/api";
-import type { User, RegisterRequest, LoginResponse, EmailVerificationResponse } from "@/api/types";
+import type { User, RegisterRequest, LoginResponse, EmailVerificationResponse } from "@/api/types/user";
 
 export function registerUser(data: RegisterRequest): Promise<User> {
     return jsonRequest<User>("/auth/register", "POST", data);

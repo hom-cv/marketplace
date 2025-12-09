@@ -1,5 +1,5 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { HeaderBar } from "@/components/HeaderBar";
+import { AppNavigation } from "@/components/AppNavigation";
 
 export const Route = createRootRoute({
     component: RootComponent,
@@ -8,7 +8,7 @@ export const Route = createRootRoute({
 function RootComponent() {
     return (
         <>
-            <HeaderBar />
+            <AppNavigation />
             <Outlet />
         </>
     );
