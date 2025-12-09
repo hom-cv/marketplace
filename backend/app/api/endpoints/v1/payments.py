@@ -1,5 +1,6 @@
 """Payment API endpoints for processing transactions."""
 
+from json.decoder import JSONDecodeError
 import logging
 from typing import Annotated
 
@@ -127,6 +128,9 @@ async def omise_webhook(
         )
 
         return {"status": "ok"}
+    except JSONDecodeError as e:
+        logger.error(f"Webhook JSON decode error: {e}")
+        return {"status": "error", "message": "Invalid JSON body"}
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return {"status": "error", "message": str(e)}
