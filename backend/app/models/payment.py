@@ -111,23 +111,23 @@ class Payment(Base):
         nullable=True,
     )
 
-    # Foreign keys
-    buyer_id: Mapped[int | None] = mapped_column(
+    # Foreign keys - RESTRICT prevents deletion of referenced records
+    buyer_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
         index=True,
     )
-    seller_id: Mapped[int | None] = mapped_column(
+    seller_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
         index=True,
     )
-    post_id: Mapped[int | None] = mapped_column(
+    post_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("posts.id", ondelete="SET NULL"),
-        nullable=True,
+        ForeignKey("posts.id", ondelete="RESTRICT"),
+        nullable=False,
         index=True,
     )
 

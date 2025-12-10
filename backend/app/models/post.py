@@ -69,11 +69,11 @@ class Post(Base):
         default=list,
     )
 
-    # Foreign keys
-    user_id: Mapped[int | None] = mapped_column(
+    # Foreign keys - RESTRICT prevents deletion of referenced user
+    user_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
+        ForeignKey("users.id", ondelete="RESTRICT"),
+        nullable=False,
         index=True,
     )
 

@@ -1,6 +1,7 @@
 """User model for application users and their relationships."""
 
 from enum import auto
+from datetime import datetime
 from typing import List, Optional
 
 from sqlalchemy import BigInteger, Enum, Index, String
@@ -128,3 +129,15 @@ class User(Base):
     def full_name(self) -> str:
         """Get user's full name."""
         return f"{self.first_name} {self.last_name}"
+
+    # Soft delete
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        nullable=True,
+        default=None,
+        index=True,
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if user has been soft deleted."""
+        return self.deleted_at is not None
