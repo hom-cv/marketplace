@@ -79,7 +79,7 @@ class User(Base):
     )
     posts: Mapped[List["Post"]] = relationship(
         back_populates="user",
-        cascade="all, delete-orphan",
+        # No cascade - preserve posts for accounting
     )
     seller_profile: Mapped[Optional["SellerProfile"]] = relationship(
         back_populates="user",
@@ -89,12 +89,12 @@ class User(Base):
     purchases: Mapped[List["Payment"]] = relationship(
         back_populates="buyer",
         foreign_keys="Payment.buyer_id",
-        cascade="all, delete-orphan",
+        # No cascade - preserve payment records for accounting
     )
     sales: Mapped[List["Payment"]] = relationship(
         back_populates="seller",
         foreign_keys="Payment.seller_id",
-        cascade="all, delete-orphan",
+        # No cascade - preserve payment records for accounting
     )
 
     # Indexes

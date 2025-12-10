@@ -112,22 +112,22 @@ class Payment(Base):
     )
 
     # Foreign keys
-    buyer_id: Mapped[int] = mapped_column(
+    buyer_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
-    seller_id: Mapped[int] = mapped_column(
+    seller_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
-    post_id: Mapped[int] = mapped_column(
+    post_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("posts.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("posts.id", ondelete="SET NULL"),
+        nullable=True,
         index=True,
     )
 
