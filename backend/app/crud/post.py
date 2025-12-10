@@ -124,7 +124,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         await db.commit()
 
         # Re-fetch with proper eager loading
-        return await self.get_by_id_with_user(db, id=post.id)  # type: ignore
+        created_post = await self.get_by_id_with_user(db, id=post.id)
+        if not created_post:
+            raise server_error(f"Failed to re-fetch created post with id {post.id}")
+        return created_post
 
 
 post_crud = PostCRUD(Post)
