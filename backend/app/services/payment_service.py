@@ -359,7 +359,7 @@ class PaymentService:
 
         verified = data.get("verified", False)
         if verified:
-            user = await user_crud.get_by_id(self.db, id=seller_profile.user_id)
+            user = await user_crud.get_by_id_with_relations(self.db, id=seller_profile.user_id)
             if user:
                 await seller_crud.update_verification_status(
                     self.db,
