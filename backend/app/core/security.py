@@ -65,7 +65,7 @@ async def get_current_user(
         raise unauthorized_error("Could not validate credentials.") from pyjwt_error
 
     if token_data.user_id:
-        user = await user_crud.get_by_id(db=db, id=token_data.user_id)
+        user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
         if not user:
             raise not_found_error("User not found")
     else:

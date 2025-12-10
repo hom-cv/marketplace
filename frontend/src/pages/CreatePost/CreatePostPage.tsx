@@ -24,6 +24,8 @@ import {
   FileButton,
   SimpleGrid,
   Badge,
+  Paper,
+  ThemeIcon,
 } from "@mantine/core";
 import {
   IconAlertCircle,
@@ -31,10 +33,12 @@ import {
   IconPlus,
   IconX,
   IconPhoto,
+  IconBuildingStore,
 } from "@tabler/icons-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { createPost } from "@/api/posts";
-import type { PostType } from "@/api/types";
+import { useAuthStore } from "@/stores/authStore";
+import type { PostType } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
 
 const postTypeOptions = [
@@ -49,6 +53,7 @@ const postTypeOptions = [
 export function CreatePostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((state) => state.user);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -100,6 +105,36 @@ export function CreatePostPage() {
   };
 
   const isValid = title && description && type && price;
+
+  // Check if user is a verified seller
+  if (!user?.is_seller) {
+    return (
+      <Container size="sm" py="xl">
+        <Paper shadow="sm" p="xl" radius="md">
+          <Stack align="center" gap="lg">
+            <ThemeIcon size={64} radius="xl" color="orange" variant="light">
+              <IconBuildingStore size={32} />
+            </ThemeIcon>
+            <Title order={2} ta="center">
+              Seller Verification Required
+            </Title>
+            <Text c="dimmed" ta="center" maw={400}>
+              You need to be a verified seller to create listings.
+              Complete seller verification to start selling on the marketplace.
+            </Text>
+            <Button
+              component={Link}
+              to="/app/become-seller"
+              size="lg"
+              leftSection={<IconBuildingStore size={18} />}
+            >
+              Become a Seller
+            </Button>
+          </Stack>
+        </Paper>
+      </Container>
+    );
+  }
 
   const ImagePreviewSection = () => (
     <Box className={styles.imageSection}>
@@ -263,3 +298,4 @@ export function CreatePostPage() {
     </Container>
   );
 }
+

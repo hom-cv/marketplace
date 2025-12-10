@@ -1,8 +1,8 @@
 import "@mantine/core/styles.css";
-import { HeaderBar } from "@/components/HeaderBar";
+import { AppNavigation } from "@/components/AppNavigation";
 
 function App() {
-  return <HeaderBar />;
+  return <AppNavigation />;
 }
 
 export default App;

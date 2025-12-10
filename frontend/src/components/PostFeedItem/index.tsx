@@ -4,7 +4,7 @@
  */
 
 import { Box, Group, Text, Badge, Stack, Image } from "@mantine/core";
-import type { Post, PostType } from "@/api/types";
+import type { Post, PostType } from "@/api/types/post";
 
 interface PostFeedItemProps {
   post: Post;

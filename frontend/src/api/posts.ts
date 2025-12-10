@@ -3,7 +3,7 @@
  */
 
 import { apiRequest, API_BASE_URL } from "@/api/api";
-import type { Post, CreatePostRequest } from "@/api/types";
+import type { Post, CreatePostRequest } from "@/api/types/post";
 import { useAuthStore } from "@/stores/authStore";
 
 /**

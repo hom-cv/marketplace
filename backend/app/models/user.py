@@ -1,14 +1,15 @@
-from enum import auto
-from typing import TYPE_CHECKING, List
+"""User model for application users and their relationships."""
 
-if TYPE_CHECKING:
-    from app.models.post import Post
+from enum import auto
+from datetime import datetime
+from typing import List, Optional
 
 from sqlalchemy import BigInteger, Enum, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
+from app.models.seller import SellerVerificationStatus
 from app.models.user_role import RoleType, UserRole, UserToUserRole
 
 
@@ -79,7 +80,22 @@ class User(Base):
     )
     posts: Mapped[List["Post"]] = relationship(
         back_populates="user",
+        # No cascade - preserve posts for accounting
+    )
+    seller_profile: Mapped[Optional["SellerProfile"]] = relationship(
+        back_populates="user",
         cascade="all, delete-orphan",
+        uselist=False,
+    )
+    purchases: Mapped[List["Payment"]] = relationship(
+        back_populates="buyer",
+        foreign_keys="Payment.buyer_id",
+        # No cascade - preserve payment records for accounting
+    )
+    sales: Mapped[List["Payment"]] = relationship(
+        back_populates="seller",
+        foreign_keys="Payment.seller_id",
+        # No cascade - preserve payment records for accounting
     )
 
     # Indexes
@@ -100,6 +116,28 @@ class User(Base):
         return False
 
     @property
+    def is_seller(self) -> bool:
+        """Check if the user is a verified seller."""
+        if self.seller_profile:
+            return (
+                self.seller_profile.verification_status
+                == SellerVerificationStatus.VERIFIED
+            )
+        return False
+
+    @property
     def full_name(self) -> str:
         """Get user's full name."""
         return f"{self.first_name} {self.last_name}"
+
+    # Soft delete
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        nullable=True,
+        default=None,
+        index=True,
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if user has been soft deleted."""
+        return self.deleted_at is not None

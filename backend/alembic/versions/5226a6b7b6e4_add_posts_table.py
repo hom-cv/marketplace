@@ -51,4 +51,5 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_posts_id'), table_name='posts')
     op.drop_index(op.f('ix_posts_created_date'), table_name='posts')
     op.drop_table('posts')
+    op.execute('DROP TYPE post_type_enum;')
     # ### end Alembic commands ###

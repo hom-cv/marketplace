@@ -1,1 +1,12 @@
+# Environmental variables and secrets
 .env
+
+# Compiled Python files
+__pycache__/
+
+# All Python bytecode files (*.pyc) anywhere in the project
+*.py[cod]
+
+# Virtual environments (common pattern)
+.venv/
+venv/

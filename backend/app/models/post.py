@@ -2,7 +2,6 @@
 
 from decimal import Decimal
 from enum import auto
-from typing import TYPE_CHECKING
 
 from sqlalchemy import BigInteger, Enum, ForeignKey, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
@@ -10,9 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
-
-if TYPE_CHECKING:
-    from app.models.user import User
+from datetime import datetime
 
 
 class PostType(AutoName):
@@ -72,10 +69,10 @@ class Post(Base):
         default=list,
     )
 
-    # Foreign keys
+    # Foreign keys - RESTRICT prevents deletion of referenced user
     user_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="CASCADE"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )
@@ -85,3 +82,19 @@ class Post(Base):
         back_populates="posts",
         lazy="selectin",
     )
+    payments: Mapped[list["Payment"]] = relationship(
+        back_populates="post",
+        # Don't cascade delete - preserve payment records
+    )
+
+    # Soft delete
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        nullable=True,
+        default=None,
+        index=True,
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if post has been soft deleted."""
+        return self.deleted_at is not None

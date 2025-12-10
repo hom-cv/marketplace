@@ -1,0 +1,15 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.filterPanel {
+  background: var(--mantine-color-gray-0);
+}
+
+@media (prefers-color-scheme: dark) {
+  .filterPanel {
+    background: var(--mantine-color-dark-6);
+  }
+}

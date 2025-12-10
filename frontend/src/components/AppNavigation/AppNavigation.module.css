@@ -1,0 +1,15 @@
+.header {
+  height: 60px;
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.headerContent {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.avatar {
+  cursor: pointer;
+}

@@ -1,5 +1,11 @@
+"""Authentication API endpoints."""
+
 from datetime import timedelta
 from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user
@@ -14,9 +20,6 @@ from app.schemas.auth import (
 from app.schemas.email_verification import EmailVerificationResponse
 from app.schemas.user import UserResponseSchema
 from app.services.auth import AuthService
-from fastapi import APIRouter, Depends, Query, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -78,7 +81,7 @@ async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
     """
     Get the currently authenticated user's information.
     """
-    return UserResponseSchema.model_validate(current_user)
+    return UserResponseSchema.from_user(current_user)
 
 
 @router.get(

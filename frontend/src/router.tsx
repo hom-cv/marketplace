@@ -1,18 +1,24 @@
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
-import { HeaderBar } from "@/components/HeaderBar";
+import { AppNavigation } from "@/components/AppNavigation";
 import { Outlet } from "@tanstack/react-router";
 import { LoginPage } from "@/pages/Login";
 import { SignUpPage } from "@/pages/SignUp";
 import { HomePage } from "@/pages/Home";
-import { AppPage } from "@/pages/App";
 import { VerifyEmailPage } from "@/pages/VerifyEmail";
 import { CreatePostPage } from "@/pages/CreatePost";
+import { BecomeSellerPage } from "@/pages/BecomeSeller";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { DashboardLayout } from "@/components/DashboardLayout";
+import { DashboardPage } from "@/pages/Dashboard";
+import { ExplorePage } from "@/pages/Explore";
+import { PurchaseHistoryPage } from "@/pages/PurchaseHistory";
+import { MyListingsPage } from "@/pages/MyListings";
+import { SoldListingsPage } from "@/pages/SoldListings";
 
 const rootRoute = createRootRoute({
     component: () => (
         <>
-            <HeaderBar />
+            <AppNavigation />
             <Outlet />
         </>
     ),
@@ -45,23 +51,61 @@ const verifyEmailRoute = createRoute({
     }),
 });
 
-// Protected routes layout
+// Protected routes wrapper
 const protectedLayout = createRoute({
     getParentRoute: () => rootRoute,
     id: "protected",
     component: ProtectedRoute,
 });
 
-const appRoute = createRoute({
+// Dashboard layout with sidebar - parent for all /app routes
+const dashboardLayout = createRoute({
     getParentRoute: () => protectedLayout,
     path: "/app",
-    component: AppPage,
+    component: DashboardLayout,
+});
+
+// Dashboard pages
+const dashboardRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/",
+    component: DashboardPage,
+});
+
+const exploreRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/explore",
+    component: ExplorePage,
+});
+
+const purchasesRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/purchases",
+    component: PurchaseHistoryPage,
+});
+
+const myListingsRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/my-listings",
+    component: MyListingsPage,
+});
+
+const salesRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/sales",
+    component: SoldListingsPage,
 });
 
 const createPostRoute = createRoute({
-    getParentRoute: () => protectedLayout,
-    path: "/app/posts/new",
+    getParentRoute: () => dashboardLayout,
+    path: "/posts/new",
     component: CreatePostPage,
+});
+
+const becomeSellerRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/become-seller",
+    component: BecomeSellerPage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -69,7 +113,17 @@ const routeTree = rootRoute.addChildren([
     loginRoute,
     signUpRoute,
     verifyEmailRoute,
-    protectedLayout.addChildren([appRoute, createPostRoute]),
+    protectedLayout.addChildren([
+        dashboardLayout.addChildren([
+            dashboardRoute,
+            exploreRoute,
+            purchasesRoute,
+            myListingsRoute,
+            salesRoute,
+            createPostRoute,
+            becomeSellerRoute,
+        ]),
+    ]),
 ]);
 
 export const router = createRouter({ routeTree });
@@ -79,3 +133,4 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
+
