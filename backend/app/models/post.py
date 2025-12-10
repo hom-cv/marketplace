@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
+from datetime import datetime
 
 
 class PostType(AutoName):
@@ -83,5 +84,17 @@ class Post(Base):
     )
     payments: Mapped[list["Payment"]] = relationship(
         back_populates="post",
-        cascade="all, delete-orphan",
+        # Don't cascade delete - preserve payment records
     )
+
+    # Soft delete
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        nullable=True,
+        default=None,
+        index=True,
+    )
+
+    @property
+    def is_deleted(self) -> bool:
+        """Check if post has been soft deleted."""
+        return self.deleted_at is not None

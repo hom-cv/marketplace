@@ -133,3 +133,30 @@ async def get_post(
         raise not_found_error("Post not found")
 
     return PostResponseSchema.model_validate(post)
+
+
+@router.delete(
+    "/{post_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_post(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    post_id: int,
+) -> None:
+    """
+    Delete a post (soft delete).
+
+    Only the owner can delete their post. The post is soft-deleted
+    to preserve payment records for accounting purposes.
+    """
+    post = await post_crud.get_by_id_with_user(db, id=post_id)
+
+    if not post:
+        raise not_found_error("Post not found")
+
+    if post.user_id != current_user.id:
+        raise bad_request_error("You can only delete your own posts")
+
+    await post_crud.soft_delete(db, post=post)
+
