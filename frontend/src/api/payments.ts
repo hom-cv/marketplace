@@ -50,7 +50,7 @@ export async function getMySales(): Promise<PurchaseListItem[]> {
  * Add tracking number to a sale (seller action)
  */
 export async function addTracking(paymentId: number, carrier: string, trackingNumber: string): Promise<void> {
-  await jsonRequest("/payments/" + paymentId + "/tracking", "POST", {
+  await jsonRequest(`/payments/${paymentId}/tracking`, "POST", {
     carrier: carrier,
     tracking_number: trackingNumber,
   });
