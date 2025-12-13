@@ -11,6 +11,7 @@ from app.core.security import get_current_user
 from app.crud.payment import payment_crud
 from app.db.utils import get_async_db
 from app.models import User
+from app.models.payment import PaymentStatus
 from app.schemas.payment import (
     AddTrackingRequest,
     CreateCardPaymentRequest,
@@ -213,7 +214,7 @@ async def add_tracking(
     if payment.seller_id != current_user.id:
         raise forbidden_error("Only the seller can add tracking information")
 
-    if payment.status.value.lower() != "successful":
+    if payment.status != PaymentStatus.SUCCESSFUL:
         raise forbidden_error("Can only add tracking to successful payments")
 
     await payment_crud.add_tracking_number(
@@ -243,7 +244,7 @@ async def confirm_delivery(
     if payment.buyer_id != current_user.id:
         raise forbidden_error("Only the buyer can confirm delivery")
 
-    if payment.status.value.lower() != "successful":
+    if payment.status != PaymentStatus.SUCCESSFUL:
         raise forbidden_error("Can only confirm delivery for successful payments")
 
     await payment_crud.confirm_delivery(db, payment=payment)
