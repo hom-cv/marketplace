@@ -19,10 +19,9 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
     PurchaseListItem,
-    PostSummary,
-    UserSummary,
 )
 from app.core.exceptions import forbidden_error, not_found_error
+from app.services.listing_service import ListingService
 from app.services.payment_service import PaymentService
 
 logger = logging.getLogger(__name__)
@@ -81,6 +80,7 @@ async def create_promptpay_payment(
     )
 
 
+
 @router.get(
     "/my-purchases",
     status_code=status.HTTP_200_OK,
@@ -90,47 +90,9 @@ async def get_my_purchases(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[PurchaseListItem]:
-    """
-    Get all purchases made by the current user.
-
-    Returns successful payments with post and seller information.
-    """
-    payments = await payment_crud.get_payments_by_buyer(db, buyer_id=current_user.id)
-    
-    return [
-        PurchaseListItem(
-            payment_id=p.id,
-            status=p.status.value.lower(),
-            amount=p.amount,
-            currency=p.currency,
-            payment_method=p.payment_method.value.lower(),
-            paid_at=p.paid_at,
-            created_at=p.created_date,
-            post=PostSummary(
-                id=p.post.id,
-                title=p.post.title,
-                image_url=p.post.image_url,
-                price=str(p.post.price),
-                shipping_cost=str(p.post.shipping_cost) if p.post.shipping_cost else "0",
-            ),
-            seller=UserSummary(
-                id=p.seller.id,
-                username=p.seller.username,
-            ) if p.seller else None,
-            # Fee breakdown
-            item_price=p.item_price,
-            shipping_cost=p.shipping_cost,
-            vat_amount=p.vat_amount,
-            processing_fee=p.processing_fee,
-            platform_fee=p.platform_fee,
-            fulfillment_status=p.fulfillment_status.value.lower() if p.fulfillment_status else None,
-            tracking_number=p.tracking_number,
-            shipped_at=p.shipped_at,
-            delivered_at=p.delivered_at,
-            shipping_carrier=p.shipping_carrier.value.lower() if p.shipping_carrier else None,
-        )
-        for p in payments
-    ]
+    """Get all purchases made by the current user."""
+    service = ListingService(db)
+    return await service.get_purchases(current_user.id)
 
 
 @router.get(
@@ -142,54 +104,9 @@ async def get_my_sales(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> list[PurchaseListItem]:
-    """
-    Get all sales made by the current user (as seller).
-
-    Returns successful payments with post and buyer information.
-    """
-    payments = await payment_crud.get_payments_by_seller(db, seller_id=current_user.id)
-    
-    return [
-        PurchaseListItem(
-            payment_id=p.id,
-            status=p.status.value.lower(),
-            amount=p.amount,
-            currency=p.currency,
-            payment_method=p.payment_method.value.lower(),
-            paid_at=p.paid_at,
-            created_at=p.created_date,
-            post=PostSummary(
-                id=p.post.id,
-                title=p.post.title,
-                image_url=p.post.image_url,
-                price=str(p.post.price),
-                shipping_cost=str(p.post.shipping_cost) if p.post.shipping_cost else "0",
-            ),
-            buyer=UserSummary(
-                id=p.buyer.id,
-                username=p.buyer.username,
-            ) if p.buyer else None,
-            # Fee breakdown
-            item_price=p.item_price,
-            shipping_cost=p.shipping_cost,
-            vat_amount=p.vat_amount,
-            processing_fee=p.processing_fee,
-            platform_fee=p.platform_fee,
-            fulfillment_status=p.fulfillment_status.value.lower() if p.fulfillment_status else None,
-            tracking_number=p.tracking_number,
-            shipped_at=p.shipped_at,
-            delivered_at=p.delivered_at,
-            shipping_carrier=p.shipping_carrier.value.lower() if p.shipping_carrier else None,
-            # Shipping address for seller
-            shipping_name=p.shipping_name,
-            shipping_phone=p.shipping_phone,
-            shipping_address=p.shipping_address,
-            shipping_district=p.shipping_district,
-            shipping_province=p.shipping_province,
-            shipping_postal_code=p.shipping_postal_code,
-        )
-        for p in payments
-    ]
+    """Get all sales made by the current user (as seller)."""
+    service = ListingService(db)
+    return await service.get_sales(current_user.id)
 
 
 @router.post(
