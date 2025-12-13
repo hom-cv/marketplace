@@ -123,6 +123,13 @@ class AddTrackingRequest(BaseModel):
     tracking_number: str = Field(..., description="Shipping tracking number", min_length=1, max_length=100)
 
 
+class WebhookResponse(BaseModel):
+    """Response for webhook processing."""
+
+    status: str
+    message: str | None = None
+
+
 class WebhookEventData(BaseModel):
     """Schema for Omise webhook event payload."""
 
@@ -131,7 +138,7 @@ class WebhookEventData(BaseModel):
     livemode: bool
     location: str | None = None
 
-    model_config = {"extra": "allow"}  # Allow additional fields from Omise
+    model_config = {"extra": "allow"}
 
 
 class WebhookEvent(BaseModel):
@@ -144,5 +151,3 @@ class WebhookEvent(BaseModel):
     data: WebhookEventData
 
     model_config = {"extra": "allow"}
-
-
