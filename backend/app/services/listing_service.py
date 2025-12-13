@@ -22,7 +22,7 @@ def _payment_to_list_item(p: Payment, include_shipping_address: bool = False) ->
             title=p.post.title,
             image_url=p.post.image_url,
             price=str(p.post.price),
-            shipping_cost=str(p.post.shipping_cost) if p.post.shipping_cost else "0",
+            shipping_cost=str(p.post.shipping_cost),
         ),
         buyer=UserSummary(id=p.buyer.id, username=p.buyer.username) if p.buyer else None,
         seller=UserSummary(id=p.seller.id, username=p.seller.username) if p.seller else None,
