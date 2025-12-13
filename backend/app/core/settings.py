@@ -1,6 +1,7 @@
 from functools import lru_cache
 from typing import Self
 from urllib import parse
+from decimal import Decimal
 
 from pydantic import PostgresDsn, model_validator
 from pydantic_settings import BaseSettings
@@ -39,13 +40,13 @@ class Settings(BaseSettings):
     DO_SPACES_REGION: str | None = None
 
     # Transaction fees (percentages)
-    PLATFORM_FEE_PERCENT: float = 10.0  # Platform fee to us
-    VAT_PERCENT: float = 7.0  # VAT on item price
+    PLATFORM_FEE_PERCENT: Decimal = Decimal("10.0")  # Platform fee to us
+    VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on item price
     
     # Payment processing fees (Omise fees passed to buyer)
-    CARD_PROCESSING_FEE_PERCENT: float = 3.65  # Credit card processing fee
-    PROMPTPAY_PROCESSING_FEE_PERCENT: float = 1.65  # PromptPay processing fee
-    PROCESSING_FEE_VAT_PERCENT: float = 7.0  # VAT on processing fees
+    CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("3.65")  # Credit card processing fee
+    PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal("1.65")  # PromptPay processing fee
+    PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
 
     @property
     def do_spaces_endpoint(self) -> str:
