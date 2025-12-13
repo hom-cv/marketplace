@@ -57,6 +57,11 @@ class Post(Base):
         Numeric(10, 2),
         nullable=False,
     )
+    shipping_cost: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+        default=0,
+    )
     # Single image URL (first/cover image for backward compatibility)
     image_url: Mapped[str | None] = mapped_column(
         String(500),

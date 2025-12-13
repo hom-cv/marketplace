@@ -8,14 +8,21 @@ from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user
+from app.crud.payment import payment_crud
 from app.db.utils import get_async_db
 from app.models import User
+from app.models.payment import PaymentStatus
 from app.schemas.payment import (
+    AddTrackingRequest,
     CreateCardPaymentRequest,
     CreatePromptPayPaymentRequest,
     PaymentResponse,
     PaymentStatusResponse,
+    PurchaseListItem,
+    WebhookResponse,
 )
+from app.core.exceptions import forbidden_error, not_found_error
+from app.services.listing_service import ListingService
 from app.services.payment_service import PaymentService
 
 logger = logging.getLogger(__name__)
@@ -74,6 +81,92 @@ async def create_promptpay_payment(
     )
 
 
+
+@router.get(
+    "/my-purchases",
+    status_code=status.HTTP_200_OK,
+    response_model=list[PurchaseListItem],
+)
+async def get_my_purchases(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> list[PurchaseListItem]:
+    """Get all purchases made by the current user."""
+    service = ListingService(db)
+    return await service.get_purchases(current_user.id)
+
+
+@router.get(
+    "/my-sales",
+    status_code=status.HTTP_200_OK,
+    response_model=list[PurchaseListItem],
+)
+async def get_my_sales(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> list[PurchaseListItem]:
+    """Get all sales made by the current user (as seller)."""
+    service = ListingService(db)
+    return await service.get_sales(current_user.id)
+
+
+@router.post(
+    "/{payment_id}/tracking",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def add_tracking(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    payment_id: int,
+    request: AddTrackingRequest,
+) -> None:
+    """
+    Add tracking number to a sale (seller action).
+
+    Only the seller can add tracking information.
+    """
+    payment = await payment_crud.get_by_id(db, id=payment_id)
+    if not payment:
+        raise not_found_error("Payment not found")
+
+    if payment.seller_id != current_user.id:
+        raise forbidden_error("Only the seller can add tracking information")
+
+    if payment.status != PaymentStatus.SUCCESSFUL:
+        raise forbidden_error("Can only add tracking to successful payments")
+
+    await payment_crud.add_tracking_number(
+        db, payment=payment, tracking_number=request.tracking_number, carrier=request.carrier
+    )
+
+
+@router.post(
+    "/{payment_id}/confirm-delivery",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def confirm_delivery(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    payment_id: int,
+) -> None:
+    """
+    Confirm delivery of an item (buyer action).
+
+    Only the buyer can confirm delivery.
+    """
+    payment = await payment_crud.get_by_id(db, id=payment_id)
+    if not payment:
+        raise not_found_error("Payment not found")
+
+    if payment.buyer_id != current_user.id:
+        raise forbidden_error("Only the buyer can confirm delivery")
+
+    if payment.status != PaymentStatus.SUCCESSFUL:
+        raise forbidden_error("Can only confirm delivery for successful payments")
+
+    await payment_crud.confirm_delivery(db, payment=payment)
+
+
 @router.get(
     "/{payment_id}",
     status_code=status.HTTP_200_OK,
@@ -98,11 +191,12 @@ async def get_payment_status(
 @router.post(
     "/webhook",
     status_code=status.HTTP_200_OK,
+    response_model=WebhookResponse,
 )
 async def omise_webhook(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     request: Request,
-):
+) -> WebhookResponse:
     """
     Handle Omise webhook events.
 
@@ -112,10 +206,6 @@ async def omise_webhook(
     - recipient.verify: Seller verification completed
 
     Configure this URL in the Omise dashboard under Webhooks.
-
-    Note: Omise recommends verifying webhook events by making a GET request
-    to the Omise API to confirm the status independently. This verification
-    is handled in PaymentService.process_webhook().
     """
     try:
         body = await request.json()
@@ -127,10 +217,11 @@ async def omise_webhook(
             event_data=event_data,
         )
 
-        return {"status": "ok"}
+        return WebhookResponse(status="ok")
     except JSONDecodeError as e:
         logger.error(f"Webhook JSON decode error: {e}")
-        return {"status": "error", "message": "Invalid JSON body"}
+        return WebhookResponse(status="error", message="Invalid JSON body")
     except Exception as e:
         logger.error(f"Webhook error: {e}")
-        return {"status": "error", "message": str(e)}
+        return WebhookResponse(status="error", message=str(e))
+

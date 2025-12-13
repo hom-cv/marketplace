@@ -36,6 +36,7 @@ async def create_post(
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
     price: Annotated[Decimal, Form(gt=0, le=1000000)],
+    shipping_cost: Annotated[Decimal, Form(ge=0, le=10000)] = Decimal("0"),
     images: Annotated[list[UploadFile], File()] = [],
 ) -> PostResponseSchema:
     """
@@ -68,6 +69,7 @@ async def create_post(
         description=description,
         type=PostType[type.value],
         price=price,
+        shipping_cost=shipping_cost,
         image_url=image_url,
         image_urls=image_urls,
         user_id=current_user.id,

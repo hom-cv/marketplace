@@ -83,6 +83,7 @@ class OmiseService:
         description: str | None = None,
         return_uri: str | None = None,
         metadata: dict[str, Any] | None = None,
+        platform_fee: int | None = None,
     ) -> omise.Charge:
         """
         Create an Omise charge for card payment.
@@ -94,19 +95,25 @@ class OmiseService:
             description: Optional charge description
             return_uri: URL to redirect after 3DS authentication
             metadata: Optional metadata to attach to charge
+            platform_fee: Platform fee in satang (for Omise Connect)
 
         Returns:
             Omise Charge object
         """
         try:
-            charge = omise.Charge.create(
-                amount=amount,
-                currency=currency,
-                card=card_token,
-                description=description,
-                return_uri=return_uri,
-                metadata=metadata or {},
-            )
+            charge_params = {
+                "amount": amount,
+                "currency": currency,
+                "card": card_token,
+                "description": description,
+                "return_uri": return_uri,
+                "metadata": metadata or {},
+            }
+            # Add platform_fee for Omise Connect if specified
+            if platform_fee is not None:
+                charge_params["platform_fee"] = {"fixed": platform_fee}
+            
+            charge = omise.Charge.create(**charge_params)
             logger.info(f"Created Omise charge: {charge.id}, status: {charge.status}")
             return charge
         except omise.errors.BaseError as e:
@@ -148,6 +155,7 @@ class OmiseService:
         description: str | None = None,
         return_uri: str | None = None,
         metadata: dict[str, Any] | None = None,
+        platform_fee: int | None = None,
     ) -> omise.Charge:
         """
         Create an Omise charge using a source (PromptPay, etc.).
@@ -159,19 +167,25 @@ class OmiseService:
             description: Optional charge description
             return_uri: URL to redirect after payment
             metadata: Optional metadata
+            platform_fee: Platform fee in satang (for Omise Connect)
 
         Returns:
             Omise Charge object
         """
         try:
-            charge = omise.Charge.create(
-                amount=amount,
-                currency=currency,
-                source=source_id,
-                description=description,
-                return_uri=return_uri,
-                metadata=metadata or {},
-            )
+            charge_params = {
+                "amount": amount,
+                "currency": currency,
+                "source": source_id,
+                "description": description,
+                "return_uri": return_uri,
+                "metadata": metadata or {},
+            }
+            # Add platform_fee for Omise Connect if specified
+            if platform_fee is not None:
+                charge_params["platform_fee"] = {"fixed": platform_fee}
+            
+            charge = omise.Charge.create(**charge_params)
             logger.info(f"Created Omise charge with source: {charge.id}")
             return charge
         except omise.errors.BaseError as e:

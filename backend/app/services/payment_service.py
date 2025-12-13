@@ -1,6 +1,7 @@
 """Payment service for handling payment processing."""
 
 import logging
+from datetime import datetime
 
 import omise.errors
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,8 @@ from app.schemas.payment import (
     PaymentStatusResponse,
 )
 from app.services.omise_service import OmiseService
+from app.services.pricing_service import calculate_order_total, PaymentMethodType
+from app.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -69,33 +72,17 @@ class PaymentService:
         ):
             raise bad_request_error("Seller is not verified")
 
-        # Convert price to satang (smallest unit for THB)
-        amount = int(post.price * 100)
+        # Calculate total with all fees using pricing service
+        price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.CARD)
+        
+        # Convert total to satang (smallest unit for THB)
+        amount = int(price_breakdown.total * 100)
+        platform_fee_satang = int(price_breakdown.platform_fee * 100)
         currency = "THB"
 
         try:
-            # Create Omise charge
-            charge = self.omise_service.create_charge(
-                amount=amount,
-                currency=currency,
-                card_token=payment_request.token,
-                description=f"Purchase: {post.title}",
-                return_uri=payment_request.return_uri,
-                metadata={
-                    "post_id": post.id,
-                    "buyer_id": buyer.id,
-                    "seller_id": post.user_id,
-                },
-            )
-
-            # Determine initial status
-            status = PaymentStatus.PENDING
-            if charge.status == "successful":
-                status = PaymentStatus.SUCCESSFUL
-            elif charge.status == "failed":
-                status = PaymentStatus.FAILED
-
-            # Create payment record
+            # Build return_uri with payment_id placeholder - we'll create payment first
+            # Create payment record first to get the ID
             payment = await payment_crud.create_payment(
                 self.db,
                 buyer_id=buyer.id,
@@ -104,13 +91,63 @@ class PaymentService:
                 amount=amount,
                 currency=currency,
                 payment_method=PaymentMethod.CARD,
-                omise_charge_id=charge.id,
-                authorize_uri=charge.authorize_uri if hasattr(charge, "authorize_uri") else None,
+                omise_charge_id=None,  # Will update after charge creation
+                authorize_uri=None,
                 return_uri=payment_request.return_uri,
                 description=f"Purchase: {post.title}",
+                # Fee breakdown for accounting (all in satang)
+                item_price=int(price_breakdown.item_price * 100),
+                shipping_cost=int(price_breakdown.shipping_cost * 100),
+                vat_amount=int(price_breakdown.vat_amount * 100),
+                processing_fee=int(price_breakdown.processing_fee * 100),
+                platform_fee=platform_fee_satang,
+                # Shipping address
+                shipping_name=payment_request.shipping.name,
+                shipping_phone=payment_request.shipping.phone,
+                shipping_address=payment_request.shipping.address,
+                shipping_district=payment_request.shipping.district,
+                shipping_province=payment_request.shipping.province,
+                shipping_postal_code=payment_request.shipping.postal_code,
             )
 
-            # Update status if already determined
+            # Build return_uri with payment_id
+            separator = "&" if "?" in payment_request.return_uri else "?"
+            return_uri_with_id = f"{payment_request.return_uri}{separator}payment_id={payment.id}"
+
+            # Only pass platform_fee if Omise Connect is enabled
+            settings = get_settings()
+            omise_platform_fee = platform_fee_satang if settings.OMISE_CONNECT_ENABLED else None
+
+            # Create Omise charge with payment_id in return_uri and platform_fee for Omise Connect
+            charge = self.omise_service.create_charge(
+                amount=amount,
+                currency=currency,
+                card_token=payment_request.token,
+                description=f"Purchase: {post.title}",
+                return_uri=return_uri_with_id,
+                metadata={
+                    "post_id": post.id,
+                    "buyer_id": buyer.id,
+                    "seller_id": post.user_id,
+                    "payment_id": payment.id,
+                },
+                platform_fee=omise_platform_fee,
+            )
+
+            # Update payment with charge details
+            payment.omise_charge_id = charge.id
+            if hasattr(charge, "authorize_uri") and charge.authorize_uri:
+                payment.authorize_uri = charge.authorize_uri
+            await self.db.commit()
+            await self.db.refresh(payment)
+
+            # Determine status and update if needed
+            status = PaymentStatus.PENDING
+            if charge.status == "successful":
+                status = PaymentStatus.SUCCESSFUL
+            elif charge.status == "failed":
+                status = PaymentStatus.FAILED
+
             if status != PaymentStatus.PENDING:
                 await payment_crud.update_status(
                     self.db,
@@ -163,8 +200,12 @@ class PaymentService:
         ):
             raise bad_request_error("Seller is not verified")
 
-        # Convert price to satang
-        amount = int(post.price * 100)
+        # Calculate total with all fees using pricing service
+        price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY)
+        
+        # Convert total to satang
+        amount = int(price_breakdown.total * 100)
+        platform_fee_satang = int(price_breakdown.platform_fee * 100)
         currency = "THB"
 
         try:
@@ -174,7 +215,11 @@ class PaymentService:
                 currency=currency,
             )
 
-            # Create charge with source
+            # Only pass platform_fee if Omise Connect is enabled
+            settings = get_settings()
+            omise_platform_fee = platform_fee_satang if settings.OMISE_CONNECT_ENABLED else None
+
+            # Create charge with source and platform_fee for Omise Connect
             charge = self.omise_service.create_charge_with_source(
                 amount=amount,
                 currency=currency,
@@ -186,15 +231,43 @@ class PaymentService:
                     "buyer_id": buyer.id,
                     "seller_id": post.user_id,
                 },
+                platform_fee=omise_platform_fee,
             )
 
-            # Get QR code and expiration
-            scannable_code = getattr(source, "scannable_code", None)
+            # Get QR code from charge source (not from initial source)
+            # The QR code is available on charge.source.scannable_code
             qr_code_uri = None
-            if scannable_code and hasattr(scannable_code, "image"):
-                qr_code_uri = scannable_code.image.download_uri
+            charge_source = getattr(charge, "source", None)
+            if charge_source:
+                scannable_code = getattr(charge_source, "scannable_code", None)
+                if scannable_code:
+                    image = getattr(scannable_code, "image", None)
+                    if image:
+                        qr_code_uri = getattr(image, "download_uri", None)
+                        logger.info(f"PromptPay QR code URI: {qr_code_uri}")
 
-            expires_at = getattr(charge, "expires_at", None)
+            # If still no QR code, log the charge structure for debugging
+            if not qr_code_uri:
+                logger.warning(f"No QR code found in charge. Charge source: {charge_source}")
+                # Try alternate path: directly from charge
+                if hasattr(charge, "scannable_code"):
+                    scannable = charge.scannable_code
+                    if hasattr(scannable, "image") and hasattr(scannable.image, "download_uri"):
+                        qr_code_uri = scannable.image.download_uri
+                        logger.info(f"Got QR from alternate path: {qr_code_uri}")
+
+            # Parse expires_at from string to datetime
+            expires_at_str = getattr(charge, "expires_at", None)
+            expires_at = None
+            if expires_at_str:
+                try:
+                    # Handle ISO format with Z suffix
+                    if isinstance(expires_at_str, str):
+                        expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
+                    else:
+                        expires_at = expires_at_str
+                except (ValueError, TypeError):
+                    logger.warning(f"Could not parse expires_at: {expires_at_str}")
 
             # Create payment record
             payment = await payment_crud.create_payment(
@@ -210,6 +283,19 @@ class PaymentService:
                 qr_code_uri=qr_code_uri,
                 expires_at=expires_at,
                 description=f"Purchase: {post.title}",
+                # Fee breakdown for accounting (all in satang)
+                item_price=int(price_breakdown.item_price * 100),
+                shipping_cost=int(price_breakdown.shipping_cost * 100),
+                vat_amount=int(price_breakdown.vat_amount * 100),
+                processing_fee=int(price_breakdown.processing_fee * 100),
+                platform_fee=platform_fee_satang,
+                # Shipping address
+                shipping_name=payment_request.shipping.name,
+                shipping_phone=payment_request.shipping.phone,
+                shipping_address=payment_request.shipping.address,
+                shipping_district=payment_request.shipping.district,
+                shipping_province=payment_request.shipping.province,
+                shipping_postal_code=payment_request.shipping.postal_code,
             )
 
             return PaymentResponse(
