@@ -30,12 +30,22 @@ class Settings(BaseSettings):
     OMISE_PUBLIC_KEY: str
     OMISE_SECRET_KEY: str
     OMISE_WEBHOOK_SECRET: str | None = None
+    OMISE_CONNECT_ENABLED: bool = False  # Enable when Omise Connect is set up
 
     # Digital Ocean Spaces (optional - for image uploads)
     DO_SPACES_KEY: str | None = None
     DO_SPACES_SECRET: str | None = None
     DO_SPACES_BUCKET: str | None = None
     DO_SPACES_REGION: str | None = None
+
+    # Transaction fees (percentages)
+    PLATFORM_FEE_PERCENT: float = 10.0  # Platform fee to us
+    VAT_PERCENT: float = 7.0  # VAT on item price
+    
+    # Payment processing fees (Omise fees passed to buyer)
+    CARD_PROCESSING_FEE_PERCENT: float = 3.65  # Credit card processing fee
+    PROMPTPAY_PROCESSING_FEE_PERCENT: float = 1.65  # PromptPay processing fee
+    PROCESSING_FEE_VAT_PERCENT: float = 7.0  # VAT on processing fees
 
     @property
     def do_spaces_endpoint(self) -> str:
