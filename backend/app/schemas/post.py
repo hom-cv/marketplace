@@ -45,6 +45,13 @@ class PostCreateSchema(BaseModel):
         decimal_places=2,
         description="Price in the marketplace currency",
     )
+    shipping_cost: Decimal = Field(
+        default=Decimal("0"),
+        ge=0,
+        le=10000,
+        decimal_places=2,
+        description="Shipping cost set by seller",
+    )
 
 
 class PostUpdateSchema(BaseModel):
@@ -54,6 +61,7 @@ class PostUpdateSchema(BaseModel):
     description: str | None = Field(None, min_length=1, max_length=5000)
     type: PostType | None = None
     price: Decimal | None = Field(None, gt=0, le=1000000, decimal_places=2)
+    shipping_cost: Decimal | None = Field(None, ge=0, le=10000, decimal_places=2)
 
 
 class PostResponseSchema(BaseModel):
@@ -64,6 +72,7 @@ class PostResponseSchema(BaseModel):
     description: str
     type: PostType
     price: Decimal
+    shipping_cost: Decimal
     image_url: str | None
     image_urls: list[str] | None = None
     user: UserResponseSchema

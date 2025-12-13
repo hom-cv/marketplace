@@ -47,8 +47,11 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         query = (
             select(self.model)
             .where(self.model.buyer_id == buyer_id)
-            .order_by(self.model.created_at.desc())
-            .options(selectinload(self.model.post))
+            .order_by(self.model.created_date.desc())
+            .options(
+                selectinload(self.model.post),
+                selectinload(self.model.seller),
+            )
         )
         result = await db.scalars(query)
         return list(result.all())
@@ -69,8 +72,11 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         query = (
             select(self.model)
             .where(self.model.seller_id == seller_id)
-            .order_by(self.model.created_at.desc())
-            .options(selectinload(self.model.post))
+            .order_by(self.model.created_date.desc())
+            .options(
+                selectinload(self.model.post),
+                selectinload(self.model.buyer),
+            )
         )
         result = await db.scalars(query)
         return list(result.all())
@@ -91,6 +97,19 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         qr_code_uri: str | None = None,
         expires_at: datetime | None = None,
         description: str | None = None,
+        # Fee breakdown (all in satang)
+        item_price: int | None = None,
+        shipping_cost: int | None = None,
+        vat_amount: int | None = None,
+        processing_fee: int | None = None,
+        platform_fee: int | None = None,
+        # Shipping address
+        shipping_name: str | None = None,
+        shipping_phone: str | None = None,
+        shipping_address: str | None = None,
+        shipping_district: str | None = None,
+        shipping_province: str | None = None,
+        shipping_postal_code: str | None = None,
     ) -> Payment:
         """
         Create a new payment record.
@@ -109,6 +128,8 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
             qr_code_uri (str | None): PromptPay QR code URL.
             expires_at (datetime | None): Payment expiration time.
             description (str | None): Payment description.
+            item_price, shipping_cost, vat_amount, processing_fee, platform_fee: Fee breakdown.
+            shipping_*: Shipping address fields.
 
         Returns:
             Payment: The created payment.
@@ -127,6 +148,19 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
             expires_at=expires_at,
             description=description,
             status=PaymentStatus.PENDING,
+            # Fee breakdown
+            item_price=item_price,
+            shipping_cost=shipping_cost,
+            vat_amount=vat_amount,
+            processing_fee=processing_fee,
+            platform_fee=platform_fee,
+            # Shipping address
+            shipping_name=shipping_name,
+            shipping_phone=shipping_phone,
+            shipping_address=shipping_address,
+            shipping_district=shipping_district,
+            shipping_province=shipping_province,
+            shipping_postal_code=shipping_postal_code,
         )
 
         db.add(payment)
@@ -157,10 +191,14 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         Returns:
             Payment: The updated payment.
         """
+        from app.models.payment import FulfillmentStatus
+        
         payment.status = status
 
         if status == PaymentStatus.SUCCESSFUL:
             payment.paid_at = datetime.now(timezone.utc)
+            # Set initial fulfillment status to PACKING
+            payment.fulfillment_status = FulfillmentStatus.PACKING
         elif status == PaymentStatus.FAILED:
             payment.failure_code = failure_code
             payment.failure_message = failure_message
@@ -196,5 +234,93 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         return payment
 
+    async def add_tracking_number(
+        self,
+        db: AsyncSession,
+        *,
+        payment: Payment,
+        tracking_number: str,
+        carrier: str,
+    ) -> Payment:
+        """
+        Add tracking number to a payment (seller action).
+
+        Sets fulfillment_status to IN_TRANSIT and records shipped_at timestamp.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            payment (Payment): The payment to update.
+            tracking_number (str): The shipping tracking number.
+            carrier (str): The shipping carrier (EMS, KEX, FLASH_EXPRESS, J_AND_T).
+
+        Returns:
+            Payment: The updated payment.
+        """
+        from app.models.payment import FulfillmentStatus, ShippingCarrier
+        
+        payment.tracking_number = tracking_number
+        payment.shipping_carrier = ShippingCarrier[carrier.upper()]
+        payment.fulfillment_status = FulfillmentStatus.IN_TRANSIT
+        payment.shipped_at = datetime.now(timezone.utc)
+
+        await db.commit()
+        await db.refresh(payment)
+
+        return payment
+
+    async def confirm_delivery(
+        self,
+        db: AsyncSession,
+        *,
+        payment: Payment,
+    ) -> Payment:
+        """
+        Confirm delivery of an item (buyer action).
+
+        Sets fulfillment_status to DELIVERED and records delivered_at timestamp.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            payment (Payment): The payment to update.
+
+        Returns:
+            Payment: The updated payment.
+        """
+        from app.models.payment import FulfillmentStatus
+        
+        payment.fulfillment_status = FulfillmentStatus.DELIVERED
+        payment.delivered_at = datetime.now(timezone.utc)
+
+        await db.commit()
+        await db.refresh(payment)
+
+        return payment
+
+    async def set_packing_status(
+        self,
+        db: AsyncSession,
+        *,
+        payment: Payment,
+    ) -> Payment:
+        """
+        Set initial packing status for a successful payment.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            payment (Payment): The payment to update.
+
+        Returns:
+            Payment: The updated payment.
+        """
+        from app.models.payment import FulfillmentStatus
+        
+        payment.fulfillment_status = FulfillmentStatus.PACKING
+
+        await db.commit()
+        await db.refresh(payment)
+
+        return payment
+
 
 payment_crud = PaymentCRUD(Payment)
+

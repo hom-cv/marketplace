@@ -5,12 +5,24 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+class ShippingAddress(BaseModel):
+    """Embedded shipping address for payment."""
+
+    name: str = Field(..., description="Recipient name", max_length=100)
+    phone: str = Field(..., description="Contact phone", max_length=20)
+    address: str = Field(..., description="Street address")
+    district: str = Field(..., description="District/Subdistrict", max_length=100)
+    province: str = Field(..., description="Province", max_length=100)
+    postal_code: str = Field(..., description="Postal code", max_length=10)
+
+
 class CreateCardPaymentRequest(BaseModel):
     """Schema for creating a card payment."""
 
     post_id: int = Field(..., description="ID of the post to purchase")
     token: str = Field(..., description="Omise card token from frontend")
     return_uri: str = Field(..., description="URL to redirect after 3DS authentication")
+    shipping: ShippingAddress = Field(..., description="Shipping address")
 
 
 class CreatePromptPayPaymentRequest(BaseModel):
@@ -18,6 +30,7 @@ class CreatePromptPayPaymentRequest(BaseModel):
 
     post_id: int = Field(..., description="ID of the post to purchase")
     return_uri: str = Field(..., description="URL to redirect after payment completion")
+    shipping: ShippingAddress = Field(..., description="Shipping address")
 
 
 class PaymentResponse(BaseModel):
@@ -46,6 +59,70 @@ class PaymentStatusResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PostSummary(BaseModel):
+    """Embedded post information for purchase/sale items."""
+
+    id: int
+    title: str
+    image_url: str | None = None
+    price: str
+    shipping_cost: str = "0"
+
+    model_config = {"from_attributes": True}
+
+
+class UserSummary(BaseModel):
+    """Embedded user information for purchase/sale items."""
+
+    id: int
+    username: str
+
+    model_config = {"from_attributes": True}
+
+
+class PurchaseListItem(BaseModel):
+    """Schema for a purchase or sale list item."""
+
+    payment_id: int
+    status: str
+    amount: int  # In satang
+    currency: str
+    payment_method: str
+    paid_at: datetime | None = None
+    created_at: datetime
+    post: PostSummary
+    buyer: UserSummary | None = None  # For sales list
+    seller: UserSummary | None = None  # For purchases list
+    # Fee breakdown (all in satang)
+    item_price: int | None = None
+    shipping_cost: int | None = None
+    vat_amount: int | None = None
+    processing_fee: int | None = None
+    platform_fee: int | None = None
+    # Fulfillment tracking fields
+    fulfillment_status: str | None = None
+    tracking_number: str | None = None
+    shipped_at: datetime | None = None
+    delivered_at: datetime | None = None
+    shipping_carrier: str | None = None
+    # Shipping address (for seller to see)
+    shipping_name: str | None = None
+    shipping_phone: str | None = None
+    shipping_address: str | None = None
+    shipping_district: str | None = None
+    shipping_province: str | None = None
+    shipping_postal_code: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class AddTrackingRequest(BaseModel):
+    """Schema for adding tracking number to a sale."""
+
+    carrier: str = Field(..., description="Shipping carrier: EMS, KEX, FLASH_EXPRESS, or J_AND_T")
+    tracking_number: str = Field(..., description="Shipping tracking number", min_length=1, max_length=100)
+
+
 class WebhookEventData(BaseModel):
     """Schema for Omise webhook event payload."""
 
@@ -67,3 +144,5 @@ class WebhookEvent(BaseModel):
     data: WebhookEventData
 
     model_config = {"extra": "allow"}
+
+
