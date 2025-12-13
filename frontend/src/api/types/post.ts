@@ -12,6 +12,7 @@ export interface Post {
   description: string;
   type: PostType;
   price: string; // Decimal comes as string from API
+  shipping_cost: string; // Decimal comes as string from API
   image_url: string | null;
   image_urls: string[] | null;
   user: User;
@@ -22,5 +23,7 @@ export interface CreatePostRequest {
   description: string;
   type: PostType;
   price: number;
+  shipping_cost?: number;
   images?: File[];
 }
+
