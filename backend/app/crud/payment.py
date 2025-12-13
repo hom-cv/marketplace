@@ -293,29 +293,5 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         return payment
 
-    async def set_packing_status(
-        self,
-        db: AsyncSession,
-        *,
-        payment: Payment,
-    ) -> Payment:
-        """
-        Set initial packing status for a successful payment.
-
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            payment (Payment): The payment to update.
-
-        Returns:
-            Payment: The updated payment.
-        """
-        payment.fulfillment_status = FulfillmentStatus.PACKING
-
-        await db.commit()
-        await db.refresh(payment)
-
-        return payment
-
-
 payment_crud = PaymentCRUD(Payment)
 
