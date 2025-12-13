@@ -254,10 +254,13 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         Returns:
             Payment: The updated payment.
         """        
-        payment.tracking_number = tracking_number
-        payment.shipping_carrier = ShippingCarrier[carrier.upper()]
-        payment.fulfillment_status = FulfillmentStatus.IN_TRANSIT
-        payment.shipped_at = datetime.now(timezone.utc)
+        try:
+            payment.tracking_number = tracking_number
+            payment.shipping_carrier = ShippingCarrier[carrier.upper()]
+            payment.fulfillment_status = FulfillmentStatus.IN_TRANSIT
+            payment.shipped_at = datetime.now(timezone.utc)
+        except KeyError:
+            raise ValueError("Invalid carrier")
 
         await db.commit()
         await db.refresh(payment)
