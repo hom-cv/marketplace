@@ -21,6 +21,8 @@ from app.schemas.payment import (
     PaymentStatusResponse,
 )
 from app.services.omise_service import OmiseService
+from app.services.pricing_service import calculate_order_total, PaymentMethodType
+from app.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,6 @@ class PaymentService:
             raise bad_request_error("Seller is not verified")
 
         # Calculate total with all fees using pricing service
-        from app.services.pricing_service import calculate_order_total, PaymentMethodType
         price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.CARD)
         
         # Convert total to satang (smallest unit for THB)
@@ -114,7 +115,6 @@ class PaymentService:
             return_uri_with_id = f"{payment_request.return_uri}{separator}payment_id={payment.id}"
 
             # Only pass platform_fee if Omise Connect is enabled
-            from app.core.settings import get_settings
             settings = get_settings()
             omise_platform_fee = platform_fee_satang if settings.OMISE_CONNECT_ENABLED else None
 
@@ -201,7 +201,6 @@ class PaymentService:
             raise bad_request_error("Seller is not verified")
 
         # Calculate total with all fees using pricing service
-        from app.services.pricing_service import calculate_order_total, PaymentMethodType
         price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY)
         
         # Convert total to satang
@@ -217,7 +216,6 @@ class PaymentService:
             )
 
             # Only pass platform_fee if Omise Connect is enabled
-            from app.core.settings import get_settings
             settings = get_settings()
             omise_platform_fee = platform_fee_satang if settings.OMISE_CONNECT_ENABLED else None
 
