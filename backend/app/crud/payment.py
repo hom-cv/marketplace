@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.crud._base import BaseCRUD
-from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.models.payment import Payment, PaymentMethod, PaymentStatus, FulfillmentStatus, ShippingCarrier
 from app.schemas.payment import CreateCardPaymentRequest
 
 
@@ -190,9 +190,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         Returns:
             Payment: The updated payment.
-        """
-        from app.models.payment import FulfillmentStatus
-        
+        """        
         payment.status = status
 
         if status == PaymentStatus.SUCCESSFUL:
@@ -255,9 +253,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         Returns:
             Payment: The updated payment.
-        """
-        from app.models.payment import FulfillmentStatus, ShippingCarrier
-        
+        """        
         payment.tracking_number = tracking_number
         payment.shipping_carrier = ShippingCarrier[carrier.upper()]
         payment.fulfillment_status = FulfillmentStatus.IN_TRANSIT
@@ -286,8 +282,6 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         Returns:
             Payment: The updated payment.
         """
-        from app.models.payment import FulfillmentStatus
-        
         payment.fulfillment_status = FulfillmentStatus.DELIVERED
         payment.delivered_at = datetime.now(timezone.utc)
 
@@ -312,8 +306,6 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         Returns:
             Payment: The updated payment.
         """
-        from app.models.payment import FulfillmentStatus
-        
         payment.fulfillment_status = FulfillmentStatus.PACKING
 
         await db.commit()
