@@ -76,7 +76,7 @@ export function PostCard({ post }: PostCardProps) {
 
           <Group justify="space-between" align="center">
             <Text size="xl" fw={700} c="dark">
-              ฿{price.toLocaleString()}
+              ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
             {isOwner && (
               <Badge variant="light" color="gray" size="sm">
