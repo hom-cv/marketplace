@@ -55,7 +55,7 @@ def calculate_order_total(
 
 
 async def get_price_breakdown_for_post(
-    db,
+    db: AsyncSession,
     post_id: int,
     payment_method: PaymentMethodType = PaymentMethodType.CARD,
 ) -> PriceBreakdown:
