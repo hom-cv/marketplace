@@ -19,7 +19,8 @@ import {
 } from "@mantine/core";
 import { IconShoppingBag, IconAlertCircle, IconPackage, IconTruck, IconCheck, IconCopy } from "@tabler/icons-react";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
-import type { PurchaseListItem } from "@/api/types/payment";
+import { formatPriceBreakdown } from "@/utils/priceFormatters";
+
 const CARRIER_LABELS: Record<string, string> = {
   ems: "EMS",
   kex: "Kerry",
@@ -76,15 +77,6 @@ export function PurchaseHistoryPage() {
       default:
         return 0;
     }
-  };
-
-  const formatPriceBreakdown = (purchase: PurchaseListItem): string => {
-    const itemPrice = (purchase.item_price ?? 0) / 100;
-    const shippingCost = (purchase.shipping_cost ?? 0) / 100;
-    const totalFees = ((purchase.vat_amount ?? 0) + (purchase.processing_fee ?? 0) + (purchase.platform_fee ?? 0)) / 100;
-    const shippingText = shippingCost > 0 ? ` + Ship ฿${shippingCost.toLocaleString()}` : "";
-
-    return `Item ฿${itemPrice.toLocaleString()}${shippingText} + Fees ฿${totalFees.toFixed(2)}`;
   };
 
   // Filter to only show successful payments

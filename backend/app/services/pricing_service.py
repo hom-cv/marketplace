@@ -1,5 +1,6 @@
 """Pricing calculation service for order totals."""
 
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from decimal import Decimal, ROUND_HALF_UP
 
 from app.core.exceptions import not_found_error

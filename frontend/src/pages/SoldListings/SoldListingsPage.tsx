@@ -21,7 +21,9 @@ import {
 } from "@mantine/core";
 import { IconReceipt, IconAlertCircle, IconTruck, IconCheck, IconCopy } from "@tabler/icons-react";
 import { getMySales, addTracking } from "@/api/payments";
-import type { PurchaseListItem } from "@/api/types/payment";
+import { formatPriceBreakdown } from "@/utils/priceFormatters";
+
+
 const CARRIER_OPTIONS = [
   { value: "EMS", label: "EMS (Thailand Post)" },
   { value: "KEX", label: "Kerry Express" },
@@ -163,16 +165,9 @@ export function SoldListingsPage() {
                   )}
 
                   {/* Fee breakdown - from stored payment data */}
-                  {(() => {
-                    const itemPrice = (sale.item_price ?? 0) / 100;
-                    const shippingCost = (sale.shipping_cost ?? 0) / 100;
-                    const totalFees = ((sale.vat_amount ?? 0) + (sale.processing_fee ?? 0) + (sale.platform_fee ?? 0)) / 100;
-                    return (
-                      <Text size="xs" c="dimmed">
-                        Item ฿{itemPrice.toLocaleString()} {shippingCost > 0 ? `+ Ship ฿${shippingCost.toLocaleString()}` : ""} + Fees ฿{totalFees.toFixed(2)}
-                      </Text>
-                    );
-                  })()}
+                  <Text size="xs" c="dimmed">
+                    {formatPriceBreakdown(sale)}
+                  </Text>
 
                   <Text size="xs" c="dimmed">
                     {new Date(sale.created_at).toLocaleDateString()}
