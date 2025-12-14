@@ -83,18 +83,8 @@ class PaymentStatusResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class PriceBreakdownResponse(BaseModel):
+class PriceBreakdownResponse(PriceBreakdown):
     """Schema for price breakdown calculation."""
-
-    item_price: Decimal
-    shipping_cost: Decimal
-    vat_amount: Decimal
-    platform_fee: Decimal
-    processing_fee: Decimal
-    total: Decimal
-    vat_percent: float
-    platform_fee_percent: float
-    processing_fee_percent: float
 
     model_config = {
         "from_attributes": True,
