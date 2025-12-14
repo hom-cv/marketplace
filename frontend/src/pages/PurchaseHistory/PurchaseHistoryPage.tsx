@@ -78,6 +78,15 @@ export function PurchaseHistoryPage() {
     }
   };
 
+  const formatPriceBreakdown = (purchase: Purchase): string => {
+    const itemPrice = (purchase.item_price ?? 0) / 100;
+    const shippingCost = (purchase.shipping_cost ?? 0) / 100;
+    const totalFees = ((purchase.vat_amount ?? 0) + (purchase.processing_fee ?? 0) + (purchase.platform_fee ?? 0)) / 100;
+    const shippingText = shippingCost > 0 ? ` + Ship ฿${shippingCost.toLocaleString()}` : "";
+
+    return `Item ฿${itemPrice.toLocaleString()}${shippingText} + Fees ฿${totalFees.toFixed(2)}`;
+  };
+
   // Filter to only show successful payments
   const successfulPurchases = purchases?.filter((p) => p.status === "successful") || [];
 
@@ -131,16 +140,9 @@ export function PurchaseHistoryPage() {
                   )}
 
                   {/* Fee breakdown - from stored payment data */}
-                  {(() => {
-                    const itemPrice = (purchase.item_price ?? 0) / 100;
-                    const shippingCost = (purchase.shipping_cost ?? 0) / 100;
-                    const totalFees = ((purchase.vat_amount ?? 0) + (purchase.processing_fee ?? 0) + (purchase.platform_fee ?? 0)) / 100;
-                    return (
-                      <Text size="xs" c="dimmed">
-                        Item ฿{itemPrice.toLocaleString()} {shippingCost > 0 ? `+ Ship ฿${shippingCost.toLocaleString()}` : ""} + Fees ฿{totalFees.toFixed(2)}
-                      </Text>
-                    );
-                  })()}
+                  <Text size="xs" c="dimmed">
+                    {formatPriceBreakdown(purchase)}
+                  </Text>
 
                   {/* Order Progress Stepper */}
                   <Stepper
