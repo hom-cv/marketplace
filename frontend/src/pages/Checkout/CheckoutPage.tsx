@@ -233,7 +233,7 @@ export function CheckoutPage() {
     );
   }
 
-  const total = priceBreakdown?.total ?? 0;
+  const total = parseFloat(priceBreakdown?.total ?? "0");
   const hasPaymentResponse = !!paymentResponse;
 
   return (

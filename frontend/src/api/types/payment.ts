@@ -90,12 +90,12 @@ export interface PurchaseListItem {
 }
 
 export interface PriceBreakdownResponse {
-  item_price: number;
-  shipping_cost: number;
-  vat_amount: number;
-  platform_fee: number;
-  processing_fee: number;
-  total: number;
+  item_price: string;
+  shipping_cost: string;
+  vat_amount: string;
+  platform_fee: string;
+  processing_fee: string;
+  total: string;
   vat_percent: number;
   platform_fee_percent: number;
   processing_fee_percent: number;

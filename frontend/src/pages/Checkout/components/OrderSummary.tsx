@@ -29,12 +29,12 @@ interface OrderSummaryProps {
 }
 
 export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
-  const itemPrice = priceBreakdown?.item_price ?? 0;
-  const shippingCost = priceBreakdown?.shipping_cost ?? 0;
-  const vatAmount = priceBreakdown?.vat_amount ?? 0;
-  const platformFee = priceBreakdown?.platform_fee ?? 0;
-  const processingFee = priceBreakdown?.processing_fee ?? 0;
-  const total = priceBreakdown?.total ?? 0;
+  const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
+  const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
+  const vatAmount = parseFloat(priceBreakdown?.vat_amount ?? "0");
+  const platformFee = parseFloat(priceBreakdown?.platform_fee ?? "0");
+  const processingFee = parseFloat(priceBreakdown?.processing_fee ?? "0");
+  const total = parseFloat(priceBreakdown?.total ?? "0");
   const vatPercent = priceBreakdown?.vat_percent ?? 0;
   const platformFeePercent = priceBreakdown?.platform_fee_percent ?? 0;
   const processingFeePercent = priceBreakdown?.processing_fee_percent ?? 0;

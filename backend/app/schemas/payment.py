@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 
 
 class PaymentMethodType(str, Enum):
@@ -96,7 +96,14 @@ class PriceBreakdownResponse(BaseModel):
     platform_fee_percent: float
     processing_fee_percent: float
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True,
+        "ser_json_inf_nan": "constants",
+    }
+
+    @field_serializer("item_price", "shipping_cost", "vat_amount", "platform_fee", "processing_fee", "total")
+    def serialize_decimal(self, value: Decimal) -> str:
+        return str(value)
 
 
 class PostSummary(BaseModel):
