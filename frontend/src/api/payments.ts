@@ -8,8 +8,21 @@ import type {
   CreatePromptPayPaymentRequest,
   PaymentResponse,
   PaymentStatusResponse,
+  PriceBreakdownResponse,
   PurchaseListItem,
 } from "@/api/types/payment";
+
+/**
+ * Get price breakdown for a post
+ */
+export async function getPriceBreakdown(
+  postId: number,
+  paymentMethod: "card" | "promptpay" = "card"
+): Promise<PriceBreakdownResponse> {
+  return apiRequest<PriceBreakdownResponse>(
+    `/posts/${postId}/price-breakdown?payment_method=${paymentMethod}`
+  );
+}
 
 /**
  * Create a card payment
@@ -62,5 +75,3 @@ export async function addTracking(paymentId: number, carrier: string, trackingNu
 export async function confirmDelivery(paymentId: number): Promise<void> {
   await jsonRequest("/payments/" + paymentId + "/confirm-delivery", "POST", {});
 }
-
-

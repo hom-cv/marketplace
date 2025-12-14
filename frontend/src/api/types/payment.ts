@@ -89,3 +89,14 @@ export interface PurchaseListItem {
   shipping_postal_code: string | null;
 }
 
+export interface PriceBreakdownResponse {
+  item_price: number;
+  shipping_cost: number;
+  vat_amount: number;
+  platform_fee: number;
+  processing_fee: number;
+  total: number;
+  vat_percent: number;
+  platform_fee_percent: number;
+  processing_fee_percent: number;
+}

@@ -10,29 +10,23 @@ import {
   Container,
   Grid,
   Stack,
-  Paper,
   Title,
-  Text,
-  TextInput,
   Button,
-  Group,
-  SegmentedControl,
   Alert,
-  Image,
   Loader,
   Center,
   Stepper,
-  Divider,
-  Card,
-  Box,
-  Spoiler,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconCreditCard, IconQrcode, IconCheck, IconX, IconTruck, IconMapPin, IconArrowLeft } from "@tabler/icons-react";
-import { createCardPayment, createPromptPayPayment, getPaymentStatus } from "@/api/payments";
+import { IconCreditCard, IconMapPin, IconArrowLeft } from "@tabler/icons-react";
+import { createCardPayment, createPromptPayPayment, getPaymentStatus, getPriceBreakdown } from "@/api/payments";
 import { getPost } from "@/api/posts";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
-import styles from "./CheckoutPage.module.css";
+
+import { OrderSummary } from "./components/OrderSummary";
+import { ShippingAddressForm } from "./components/ShippingAddressForm";
+import { PaymentMethodForm } from "./components/PaymentMethodForm";
+import { PaymentStatusView } from "./components/PaymentStatusView";
 
 type PaymentMethod = "card" | "promptpay";
 
@@ -63,23 +57,27 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [error, setError] = useState<string | null>(null);
   const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(null);
-
-  // Card form state
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [expMonth, setExpMonth] = useState("");
-  const [expYear, setExpYear] = useState("");
-  const [cvv, setCvv] = useState("");
   const [isTokenizing, setIsTokenizing] = useState(false);
 
-  // Fetch post data
-  const { data: post, isLoading: postLoading, error: postError } = useQuery({
-    queryKey: ["post", postId],
-    queryFn: () => getPost(parseInt(postId, 10)),
-    enabled: !!postId,
+  // Card form
+  const cardForm = useForm({
+    initialValues: {
+      name: "",
+      number: "",
+      expMonth: "",
+      expYear: "",
+      cvv: "",
+    },
+    validate: {
+      name: (value) => (value.trim().length < 2 ? "Name is required" : null),
+      number: (value) => (value.replace(/\s/g, "").length < 13 ? "Valid card number required" : null),
+      expMonth: (value) => (/^(0[1-9]|1[0-2]|[1-9])$/.test(value) ? null : "Valid month required"),
+      expYear: (value) => (/^\d{2,4}$/.test(value) ? null : "Valid year required"),
+      cvv: (value) => (/^\d{3,4}$/.test(value) ? null : "Valid CVV required"),
+    },
   });
 
-  // Shipping address form
+  // Shipping form
   const shippingForm = useForm<ShippingAddress>({
     initialValues: {
       name: "",
@@ -99,7 +97,19 @@ export function CheckoutPage() {
     },
   });
 
-  // Poll payment status for PromptPay
+  // Queries
+  const { data: post, isLoading: postLoading, error: postError } = useQuery({
+    queryKey: ["post", postId],
+    queryFn: () => getPost(parseInt(postId, 10)),
+    enabled: !!postId,
+  });
+
+  const { data: priceBreakdown } = useQuery({
+    queryKey: ["priceBreakdown", postId, paymentMethod],
+    queryFn: () => getPriceBreakdown(parseInt(postId, 10), paymentMethod),
+    enabled: !!postId,
+  });
+
   const { data: paymentStatus } = useQuery({
     queryKey: ["paymentStatus", paymentResponse?.payment_id],
     queryFn: () => paymentResponse?.payment_id ? getPaymentStatus(paymentResponse.payment_id) : null,
@@ -107,7 +117,7 @@ export function CheckoutPage() {
     refetchInterval: 3000,
   });
 
-  // Card payment mutation
+  // Mutations
   const cardPaymentMutation = useMutation({
     mutationFn: createCardPayment,
     onSuccess: (data) => {
@@ -116,20 +126,13 @@ export function CheckoutPage() {
         window.location.href = data.authorize_uri;
       }
     },
-    onError: (err: Error) => {
-      setError(err.message);
-    },
+    onError: (err: Error) => setError(err.message),
   });
 
-  // PromptPay payment mutation
   const promptPayMutation = useMutation({
     mutationFn: createPromptPayPayment,
-    onSuccess: (data) => {
-      setPaymentResponse(data);
-    },
-    onError: (err: Error) => {
-      setError(err.message);
-    },
+    onSuccess: (data) => setPaymentResponse(data),
+    onError: (err: Error) => setError(err.message),
   });
 
   // Load Omise script
@@ -142,15 +145,21 @@ export function CheckoutPage() {
     }
   }, []);
 
-  // Set Omise public key when ready
   useEffect(() => {
     if (window.Omise) {
       window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY || "");
     }
   }, []);
 
-  // Handle card form submit
+  // Handlers
+  const handleNextStep = () => {
+    if (!shippingForm.validate().hasErrors) {
+      setStep(1);
+    }
+  };
+
   const handleCardSubmit = () => {
+    if (cardForm.validate().hasErrors) return;
     if (!window.Omise || !post) {
       setError("Payment system not loaded. Please refresh.");
       return;
@@ -159,23 +168,23 @@ export function CheckoutPage() {
     setIsTokenizing(true);
     setError(null);
 
+    const { name, number, expMonth, expYear, cvv } = cardForm.values;
+
     window.Omise.createToken(
       "card",
       {
-        name: cardName,
-        number: cardNumber.replace(/\s/g, ""),
+        name,
+        number: number.replace(/\s/g, ""),
         expiration_month: expMonth.padStart(2, "0"),
         expiration_year: expYear.length === 2 ? `20${expYear}` : expYear,
         security_code: cvv,
       },
       (statusCode, response) => {
         setIsTokenizing(false);
-
         if (statusCode !== 200 || !response.id) {
           setError(response.message || "Failed to process card");
           return;
         }
-
         cardPaymentMutation.mutate({
           post_id: post.id,
           token: response.id,
@@ -186,7 +195,6 @@ export function CheckoutPage() {
     );
   };
 
-  // Handle PromptPay
   const handlePromptPay = () => {
     if (!post) return;
     setError(null);
@@ -196,18 +204,6 @@ export function CheckoutPage() {
       shipping: shippingForm.values,
     });
   };
-
-  // Proceed to payment step
-  const handleNextStep = () => {
-    if (shippingForm.validate().hasErrors) {
-      return;
-    }
-    setStep(1);
-  };
-
-  // Check if payment succeeded
-  const isSuccess = paymentStatus?.status === "successful" || paymentResponse?.status === "successful";
-  const isFailed = paymentStatus?.status === "failed" || paymentResponse?.status === "failed";
 
   // Loading state
   if (postLoading) {
@@ -232,36 +228,11 @@ export function CheckoutPage() {
     );
   }
 
-  const itemPrice = parseFloat(post.price);
-  const shippingCost = parseFloat(post.shipping_cost || "0");
-
-  // Fee constants (must match backend pricing_service.py)
-  const VAT_PERCENT = 7;
-  const PLATFORM_FEE_PERCENT = 10;
-  const CARD_PROCESSING_FEE_PERCENT = 3.65;
-  const PROMPTPAY_PROCESSING_FEE_PERCENT = 1.65;
-  const PROCESSING_FEE_VAT_PERCENT = 7;
-
-  // VAT and platform fee on item price
-  const vatAmount = Math.round(itemPrice * (VAT_PERCENT / 100) * 100) / 100;
-  const platformFee = Math.round(itemPrice * (PLATFORM_FEE_PERCENT / 100) * 100) / 100;
-
-  // Subtotal before processing
-  const subtotal = itemPrice + shippingCost + vatAmount + platformFee;
-
-  // Processing fee (gross-up: subtotal * rate / (1 - rate))
-  const baseProcessingPercent = paymentMethod === "promptpay"
-    ? PROMPTPAY_PROCESSING_FEE_PERCENT
-    : CARD_PROCESSING_FEE_PERCENT;
-  const effectiveProcessingRate = (baseProcessingPercent / 100) * (1 + PROCESSING_FEE_VAT_PERCENT / 100);
-  const processingFee = Math.round(subtotal * effectiveProcessingRate / (1 - effectiveProcessingRate) * 100) / 100;
-  const effectiveProcessingPercent = effectiveProcessingRate * 100;
-
-  const total = Math.round((subtotal + processingFee) * 100) / 100;
+  const total = priceBreakdown?.total ?? 0;
+  const hasPaymentResponse = !!paymentResponse;
 
   return (
     <Container size="lg">
-      {/* Back button */}
       <Button
         variant="subtle"
         leftSection={<IconArrowLeft size={16} />}
@@ -277,248 +248,39 @@ export function CheckoutPage() {
         {/* LEFT SIDE - Forms */}
         <Grid.Col span={{ base: 12, md: 7 }}>
           <Stack gap="lg">
-            {/* Success state */}
-            {isSuccess && (
-              <Paper withBorder p="xl" radius="md" bg="green.0">
-                <Stack align="center" gap="md">
-                  <IconCheck size={48} color="var(--mantine-color-green-6)" />
-                  <Title order={3} ta="center" c="green.8">Payment Successful!</Title>
-                  <Text ta="center" c="dimmed">
-                    Your payment has been processed. The seller will be notified.
-                  </Text>
-                  <Group justify="center" mt="md">
-                    <Button variant="light" onClick={() => navigate({ to: "/app/purchases" })}>
-                      View Purchases
-                    </Button>
-                    <Button onClick={() => navigate({ to: "/app/explore" })}>
-                      Continue Shopping
-                    </Button>
-                  </Group>
-                </Stack>
-              </Paper>
-            )}
+            <PaymentStatusView
+              paymentResponse={paymentResponse}
+              paymentStatus={paymentStatus ?? null}
+              error={error}
+            />
 
-            {/* Failed state */}
-            {isFailed && (
-              <Alert color="red" icon={<IconX />} title="Payment Failed">
-                {paymentStatus?.failure_message || "Please try again or use a different payment method."}
-              </Alert>
-            )}
-
-            {/* Error */}
-            {error && (
-              <Alert color="red" title="Error">
-                {error}
-              </Alert>
-            )}
-
-            {/* PromptPay QR code */}
-            {paymentResponse?.qr_code_uri && !isSuccess && !isFailed && (
-              <Paper withBorder p="xl" radius="md">
-                <Stack align="center" gap="md">
-                  <Title order={4}>Scan to Pay</Title>
-                  <Text size="sm" c="dimmed">Scan with your banking app</Text>
-                  <Image
-                    src={paymentResponse.qr_code_uri}
-                    alt="PromptPay QR Code"
-                    w={250}
-                    className={styles.qrCode}
-                  />
-                  {paymentResponse.expires_at && (
-                    <Text size="xs" c="dimmed">
-                      Expires: {new Date(paymentResponse.expires_at).toLocaleTimeString()}
-                    </Text>
-                  )}
-                  <Group gap="xs">
-                    <Loader size="xs" />
-                    <Text size="sm" c="dimmed">Waiting for payment...</Text>
-                  </Group>
-                </Stack>
-              </Paper>
-            )}
-
-            {/* Forms - only show when no payment response */}
-            {!paymentResponse && (
+            {!hasPaymentResponse && (
               <>
                 <Stepper active={step} size="sm">
                   <Stepper.Step label="Shipping" icon={<IconMapPin size={18} />} />
                   <Stepper.Step label="Payment" icon={<IconCreditCard size={18} />} />
                 </Stepper>
 
-                {/* Step 1: Shipping Address */}
                 {step === 0 && (
-                  <Paper withBorder p="xl" radius="md">
-                    <Title order={4} mb="lg">Shipping Address</Title>
-                    <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }}>
-                      <Stack gap="md">
-                        <Group grow>
-                          <TextInput
-                            label="Recipient Name"
-                            placeholder="Name for delivery"
-                            size="md"
-                            {...shippingForm.getInputProps("name")}
-                          />
-                          <TextInput
-                            label="Phone"
-                            placeholder="08X-XXX-XXXX"
-                            size="md"
-                            {...shippingForm.getInputProps("phone")}
-                          />
-                        </Group>
-                        <TextInput
-                          label="Address"
-                          placeholder="Street, building, room number"
-                          size="md"
-                          {...shippingForm.getInputProps("address")}
-                        />
-                        <Group grow>
-                          <TextInput
-                            label="District"
-                            placeholder="District/Subdistrict"
-                            size="md"
-                            {...shippingForm.getInputProps("district")}
-                          />
-                          <TextInput
-                            label="Province"
-                            placeholder="Province"
-                            size="md"
-                            {...shippingForm.getInputProps("province")}
-                          />
-                        </Group>
-                        <TextInput
-                          label="Postal Code"
-                          placeholder="10XXX"
-                          maxLength={5}
-                          size="md"
-                          w={180}
-                          {...shippingForm.getInputProps("postal_code")}
-                        />
-                        <Button type="submit" size="lg" mt="md" rightSection={<IconTruck size={18} />}>
-                          Continue to Payment
-                        </Button>
-                      </Stack>
-                    </form>
-                  </Paper>
+                  <ShippingAddressForm
+                    form={shippingForm}
+                    onSubmit={handleNextStep}
+                  />
                 )}
 
-                {/* Step 2: Payment */}
                 {step === 1 && (
-                  <Stack gap="lg">
-                    {/* Address confirmation */}
-                    <Paper withBorder p="lg" radius="md" bg="gray.0">
-                      <Group justify="space-between" mb="xs">
-                        <Text size="sm" fw={600}>Ship to:</Text>
-                        <Button size="xs" variant="subtle" onClick={() => setStep(0)}>
-                          Edit
-                        </Button>
-                      </Group>
-                      <Text size="sm" fw={500}>{shippingForm.values.name}</Text>
-                      <Text size="xs" c="dimmed">{shippingForm.values.phone}</Text>
-                      <Text size="xs">{shippingForm.values.address}</Text>
-                      <Text size="xs">
-                        {shippingForm.values.district}, {shippingForm.values.province} {shippingForm.values.postal_code}
-                      </Text>
-                    </Paper>
-
-                    <Paper withBorder p="xl" radius="md">
-                      <Title order={4} mb="lg">Payment Method</Title>
-
-                      <SegmentedControl
-                        value={paymentMethod}
-                        onChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                        data={[
-                          {
-                            value: "card",
-                            label: (
-                              <Center>
-                                <IconCreditCard size={18} />
-                                <Text ml="xs">Credit Card</Text>
-                              </Center>
-                            ),
-                          },
-                          {
-                            value: "promptpay",
-                            label: (
-                              <Center>
-                                <IconQrcode size={18} />
-                                <Text ml="xs">PromptPay</Text>
-                              </Center>
-                            ),
-                          },
-                        ]}
-                        fullWidth
-                        size="md"
-                        mb="lg"
-                      />
-
-                      {/* Card form */}
-                      {paymentMethod === "card" && (
-                        <Stack gap="md">
-                          <TextInput
-                            label="Cardholder Name"
-                            placeholder="Name on card"
-                            size="md"
-                            value={cardName}
-                            onChange={(e) => setCardName(e.target.value)}
-                          />
-                          <TextInput
-                            label="Card Number"
-                            placeholder="4242 4242 4242 4242"
-                            size="md"
-                            value={cardNumber}
-                            onChange={(e) => setCardNumber(e.target.value)}
-                          />
-                          <Group grow>
-                            <TextInput
-                              label="Exp. Month"
-                              placeholder="MM"
-                              size="md"
-                              value={expMonth}
-                              onChange={(e) => setExpMonth(e.target.value)}
-                              maxLength={2}
-                            />
-                            <TextInput
-                              label="Exp. Year"
-                              placeholder="YY"
-                              size="md"
-                              value={expYear}
-                              onChange={(e) => setExpYear(e.target.value)}
-                              maxLength={4}
-                            />
-                            <TextInput
-                              label="CVV"
-                              placeholder="123"
-                              size="md"
-                              value={cvv}
-                              onChange={(e) => setCvv(e.target.value)}
-                              maxLength={4}
-                            />
-                          </Group>
-                          <Button
-                            size="lg"
-                            mt="md"
-                            onClick={handleCardSubmit}
-                            loading={isTokenizing || cardPaymentMutation.isPending}
-                            disabled={!cardName || !cardNumber || !expMonth || !expYear || !cvv}
-                          >
-                            Pay ฿{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </Button>
-                        </Stack>
-                      )}
-
-                      {/* PromptPay button */}
-                      {paymentMethod === "promptpay" && (
-                        <Button
-                          size="lg"
-                          fullWidth
-                          onClick={handlePromptPay}
-                          loading={promptPayMutation.isPending}
-                        >
-                          Generate QR Code - ฿{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </Button>
-                      )}
-                    </Paper>
-                  </Stack>
+                  <PaymentMethodForm
+                    shippingAddress={shippingForm.values}
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                    cardForm={cardForm}
+                    onCardSubmit={handleCardSubmit}
+                    onPromptPaySubmit={handlePromptPay}
+                    onEditShipping={() => setStep(0)}
+                    total={total}
+                    isCardLoading={isTokenizing || cardPaymentMutation.isPending}
+                    isPromptPayLoading={promptPayMutation.isPending}
+                  />
                 )}
               </>
             )}
@@ -527,72 +289,7 @@ export function CheckoutPage() {
 
         {/* RIGHT SIDE - Order Summary */}
         <Grid.Col span={{ base: 12, md: 5 }}>
-          <Paper withBorder p="xl" radius="md" pos="sticky" top={100}>
-            <Title order={4} mb="lg">Order Summary</Title>
-
-            {/* Item */}
-            <Card withBorder p="sm" radius="md" mb="lg">
-              <Group>
-                {post.image_url && (
-                  <Image
-                    src={post.image_url}
-                    alt={post.title}
-                    w={80}
-                    h={80}
-                    radius="md"
-                    fit="cover"
-                  />
-                )}
-                <Box style={{ flex: 1 }}>
-                  <Text fw={500} lineClamp={2}>{post.title}</Text>
-                  <Text size="sm" c="dimmed">Sold by @{post.user.username}</Text>
-                </Box>
-              </Group>
-            </Card>
-
-            <Divider my="md" />
-
-            {/* Price breakdown */}
-            <Stack gap="xs">
-              <Group justify="space-between">
-                <Text size="sm">Item Price</Text>
-                <Text size="sm" fw={500}>฿{itemPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-              </Group>
-              <Group justify="space-between">
-                <Text size="sm">Shipping</Text>
-                <Text size="sm" fw={500} c={shippingCost === 0 ? "green" : undefined}>
-                  {shippingCost === 0 ? "Free" : `฿${shippingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-                </Text>
-              </Group>
-              <Group justify="space-between">
-                <Text size="sm">Fees & Taxes</Text>
-                <Text size="sm" fw={500}>฿{(vatAmount + processingFee + platformFee).toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-              </Group>
-              <Spoiler maxHeight={0} showLabel="View fee details" hideLabel="Hide details">
-                <Stack gap={4} pl="md" mt="xs">
-                  <Group justify="space-between">
-                    <Text size="xs" c="dimmed">VAT ({VAT_PERCENT}%)</Text>
-                    <Text size="xs" c="dimmed">฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-                  </Group>
-                  <Group justify="space-between">
-                    <Text size="xs" c="dimmed">Processing ({effectiveProcessingPercent.toFixed(2)}%)</Text>
-                    <Text size="xs" c="dimmed">฿{processingFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-                  </Group>
-                  <Group justify="space-between">
-                    <Text size="xs" c="dimmed">Platform ({PLATFORM_FEE_PERCENT}%)</Text>
-                    <Text size="xs" c="dimmed">฿{platformFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-                  </Group>
-                </Stack>
-              </Spoiler>
-            </Stack>
-
-            <Divider my="md" />
-
-            <Group justify="space-between">
-              <Text size="lg" fw={600}>Total</Text>
-              <Text size="xl" fw={700}>฿{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-            </Group>
-          </Paper>
+          <OrderSummary post={post} priceBreakdown={priceBreakdown} />
         </Grid.Col>
       </Grid>
     </Container>
