@@ -36,10 +36,10 @@ export function PaymentReturnPage() {
     queryKey: ["paymentStatus", paymentId],
     queryFn: () => (paymentId ? getPaymentStatus(paymentId) : null),
     enabled: !!paymentId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling if payment is complete or after 20 attempts (60 seconds)
-      if (!data?.state?.data) return 3000;
-      const status = data.state.data.status;
+      const status = query.state.data?.status;
+      if (!status) return 3000; // Keep polling if no data yet
       if (status === "successful" || status === "failed" || status === "expired" || pollCount >= 20) {
         return false;
       }
