@@ -55,8 +55,8 @@ const typeLabels: Record<PostType, string> = {
 
 export function PostViewPage() {
   const navigate = useNavigate();
-  const params = useParams({ strict: false }) as { postId?: string };
-  const postId = params.postId ? parseInt(params.postId, 10) : null;
+  const { postId: postIdString } = useParams();
+  const postId = postIdString ? parseInt(postIdString, 10) : null;
   const currentUser = useAuthStore((state) => state.user);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
