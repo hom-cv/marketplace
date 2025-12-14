@@ -85,12 +85,12 @@ class PaymentStatusResponse(BaseModel):
 class PriceBreakdownResponse(BaseModel):
     """Schema for price breakdown calculation."""
 
-    item_price: float
-    shipping_cost: float
-    vat_amount: float
-    platform_fee: float
-    processing_fee: float
-    total: float
+    item_price: Decimal
+    shipping_cost: Decimal
+    vat_amount: Decimal
+    platform_fee: Decimal
+    processing_fee: Decimal
+    total: Decimal
     vat_percent: float
     platform_fee_percent: float
     processing_fee_percent: float
