@@ -51,7 +51,7 @@ declare global {
 }
 
 export function CheckoutPage() {
-  const { postId } = useParams({ strict: false }) as { postId: string };
+  const { postId } = useParams();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
