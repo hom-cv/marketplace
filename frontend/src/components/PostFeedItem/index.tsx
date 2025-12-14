@@ -55,7 +55,7 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
       <Stack gap="xs" px="md" py="sm">
         <Group justify="space-between">
           <Text fw={700} size="lg">
-            ฿{price.toLocaleString()}
+            ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
           <Group gap="xs">
             {isOwner && (
