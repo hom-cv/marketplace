@@ -14,8 +14,7 @@ class PaymentMethodType(str, Enum):
     PROMPTPAY = "promptpay"
 
 
-@dataclass
-class PriceBreakdown:
+class PriceBreakdown(BaseModel):
     """Price breakdown for an order."""
     item_price: Decimal
     shipping_cost: Decimal
@@ -26,6 +25,8 @@ class PriceBreakdown:
     vat_percent: float
     processing_fee_percent: float
     platform_fee_percent: float
+
+    model_config = {"from_attributes": True}
 
 
 class ShippingAddress(BaseModel):
