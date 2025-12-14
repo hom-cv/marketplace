@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { IconShoppingBag, IconAlertCircle, IconPackage, IconTruck, IconCheck, IconCopy } from "@tabler/icons-react";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
-
+import type { PurchaseListItem } from "@/api/types/payment";
 const CARRIER_LABELS: Record<string, string> = {
   ems: "EMS",
   kex: "Kerry",
