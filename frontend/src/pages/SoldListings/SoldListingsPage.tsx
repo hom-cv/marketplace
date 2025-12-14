@@ -21,7 +21,7 @@ import {
 } from "@mantine/core";
 import { IconReceipt, IconAlertCircle, IconTruck, IconCheck, IconCopy } from "@tabler/icons-react";
 import { getMySales, addTracking } from "@/api/payments";
-
+import type { PurchaseListItem } from "@/api/types/payment";
 const CARRIER_OPTIONS = [
   { value: "EMS", label: "EMS (Thailand Post)" },
   { value: "KEX", label: "Kerry Express" },
