@@ -70,6 +70,6 @@ async def get_price_breakdown_for_post(
         raise not_found_error("Post not found")
 
     item_price = Decimal(post.price)
-    shipping_cost = Decimal(post.shipping_cost or "0")
+    shipping_cost = Decimal(post.shipping_cost)
 
     return calculate_order_total(item_price, shipping_cost, payment_method)
