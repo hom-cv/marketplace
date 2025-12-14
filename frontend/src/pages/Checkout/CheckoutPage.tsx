@@ -135,19 +135,24 @@ export function CheckoutPage() {
     onError: (err: Error) => setError(err.message),
   });
 
-  // Load Omise script
+  // Load Omise script and set public key
   useEffect(() => {
-    if (!window.Omise) {
+    const setOmiseKey = () => {
+      if (window.Omise) {
+        window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY || "");
+      }
+    };
+
+    if (window.Omise) {
+      // Script already loaded
+      setOmiseKey();
+    } else {
+      // Load script and set key on load
       const script = document.createElement("script");
       script.src = "https://cdn.omise.co/omise.js";
       script.async = true;
+      script.onload = setOmiseKey;
       document.body.appendChild(script);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (window.Omise) {
-      window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY || "");
     }
   }, []);
 
