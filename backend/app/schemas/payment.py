@@ -1,8 +1,31 @@
 """Payment schemas for charge requests and responses."""
 
+from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
+from enum import Enum
 
 from pydantic import BaseModel, Field
+
+
+class PaymentMethodType(str, Enum):
+    """Payment method types."""
+    CARD = "card"
+    PROMPTPAY = "promptpay"
+
+
+@dataclass
+class PriceBreakdown:
+    """Price breakdown for an order."""
+    item_price: Decimal
+    shipping_cost: Decimal
+    vat_amount: Decimal
+    processing_fee: Decimal
+    platform_fee: Decimal
+    total: Decimal
+    vat_percent: float
+    processing_fee_percent: float
+    platform_fee_percent: float
 
 
 class ShippingAddress(BaseModel):
@@ -55,6 +78,22 @@ class PaymentStatusResponse(BaseModel):
     paid_at: datetime | None = None
     failure_code: str | None = None
     failure_message: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class PriceBreakdownResponse(BaseModel):
+    """Schema for price breakdown calculation."""
+
+    item_price: float
+    shipping_cost: float
+    vat_amount: float
+    platform_fee: float
+    processing_fee: float
+    total: float
+    vat_percent: float
+    platform_fee_percent: float
+    processing_fee_percent: float
 
     model_config = {"from_attributes": True}
 

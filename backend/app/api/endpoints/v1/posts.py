@@ -1,7 +1,7 @@
 """Posts API endpoints for the marketplace."""
 
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from app.crud.post import post_crud
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
+from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.exceptions import (
@@ -19,6 +20,7 @@ from app.services.exceptions import (
     TooManyImagesError,
     UploadError,
 )
+from app.services.pricing_service import get_price_breakdown_for_post
 from app.services.storage_service import storage_service
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -135,6 +137,38 @@ async def get_post(
         raise not_found_error("Post not found")
 
     return PostResponseSchema.model_validate(post)
+
+
+@router.get(
+    "/{post_id}/price-breakdown",
+    status_code=status.HTTP_200_OK,
+    response_model=PriceBreakdownResponse,
+)
+async def get_price_breakdown(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    post_id: int,
+    payment_method: Literal["card", "promptpay"] = Query("card", description="Payment method"),
+) -> PriceBreakdownResponse:
+    """
+    Get price breakdown for a post.
+
+    Returns the full price breakdown including item price, shipping,
+    VAT, platform fee, processing fee, and total.
+    """
+    method = PaymentMethodType(payment_method)
+    breakdown = await get_price_breakdown_for_post(db, post_id, method)
+
+    return PriceBreakdownResponse(
+        item_price=float(breakdown.item_price),
+        shipping_cost=float(breakdown.shipping_cost),
+        vat_amount=float(breakdown.vat_amount),
+        platform_fee=float(breakdown.platform_fee),
+        processing_fee=float(breakdown.processing_fee),
+        total=float(breakdown.total),
+        vat_percent=breakdown.vat_percent,
+        platform_fee_percent=breakdown.platform_fee_percent,
+        processing_fee_percent=breakdown.processing_fee_percent,
+    )
 
 
 @router.delete(
