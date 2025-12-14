@@ -112,7 +112,7 @@ export function CheckoutPage() {
 
   const { data: paymentStatus } = useQuery({
     queryKey: ["paymentStatus", paymentResponse?.payment_id],
-    queryFn: () => paymentResponse?.payment_id ? getPaymentStatus(paymentResponse.payment_id) : null,
+    queryFn: () => getPaymentStatus(paymentResponse!.payment_id),
     enabled: !!paymentResponse?.payment_id && paymentResponse.status === "pending" && paymentMethod === "promptpay",
     refetchInterval: 3000,
   });
