@@ -78,7 +78,7 @@ export function PurchaseHistoryPage() {
     }
   };
 
-  const formatPriceBreakdown = (purchase: Purchase): string => {
+  const formatPriceBreakdown = (purchase: PurchaseListItem): string => {
     const itemPrice = (purchase.item_price ?? 0) / 100;
     const shippingCost = (purchase.shipping_cost ?? 0) / 100;
     const totalFees = ((purchase.vat_amount ?? 0) + (purchase.processing_fee ?? 0) + (purchase.platform_fee ?? 0)) / 100;
