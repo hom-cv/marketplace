@@ -73,5 +73,5 @@ export async function addTracking(paymentId: number, carrier: string, trackingNu
  * Confirm delivery of an item (buyer action)
  */
 export async function confirmDelivery(paymentId: number): Promise<void> {
-  await jsonRequest("/payments/" + paymentId + "/confirm-delivery", "POST", {});
+  await jsonRequest(`/payments/${paymentId}/confirm-delivery`, "POST", {});
 }
