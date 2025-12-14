@@ -21,7 +21,7 @@ export function formatPriceBreakdown(item: PriceBreakdownItem): string {
   const itemPrice = (item.item_price ?? 0) / 100;
   const shippingCost = (item.shipping_cost ?? 0) / 100;
   const totalFees = ((item.vat_amount ?? 0) + (item.processing_fee ?? 0) + (item.platform_fee ?? 0)) / 100;
-  const shippingText = shippingCost > 0 ? ` + Ship ฿${shippingCost.toLocaleString()}` : "";
-
-  return `Item ฿${itemPrice.toLocaleString()}${shippingText} + Fees ฿${totalFees.toFixed(2)}`;
+  const format = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const shippingText = shippingCost > 0 ? ` + Ship ฿${format(shippingCost)}` : "";
+  return `Item ฿${format(itemPrice)}${shippingText} + Fees ฿${format(totalFees)}`;
 }
