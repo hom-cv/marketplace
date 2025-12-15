@@ -90,9 +90,11 @@ class PriceBreakdownResponse(PriceBreakdown):
         "ser_json_inf_nan": "constants",
     }
 
-    @field_serializer("item_price", "shipping_cost", "vat_amount", "platform_fee", "processing_fee", "total")
-    def serialize_decimal(self, value: Decimal) -> str:
-        return str(value)
+    @field_serializer('*', when_used='json')
+    def serialize_decimal(self, value):
+        if isinstance(value, Decimal):
+            return str(value)
+        return value
 
 
 class PostSummary(BaseModel):
