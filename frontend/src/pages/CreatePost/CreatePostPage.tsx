@@ -59,6 +59,7 @@ export function CreatePostPage() {
   const [description, setDescription] = useState("");
   const [type, setType] = useState<PostType | null>(null);
   const [price, setPrice] = useState<number | string>("");
+  const [shippingCost, setShippingCost] = useState<number | string>(0);
   const [images, setImages] = useState<File[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
@@ -100,6 +101,7 @@ export function CreatePostPage() {
       description,
       type,
       price: typeof price === "string" ? parseFloat(price) : price,
+      shipping_cost: typeof shippingCost === "string" ? parseFloat(shippingCost) : shippingCost,
       images: images.length > 0 ? images : undefined,
     });
   };
@@ -269,7 +271,7 @@ export function CreatePostPage() {
                 />
 
                 <NumberInput
-                  label="Price ($)"
+                  label="Price (฿)"
                   placeholder="0.00"
                   required
                   min={0.01}
@@ -280,6 +282,18 @@ export function CreatePostPage() {
                   onChange={setPrice}
                 />
               </SimpleGrid>
+
+              <NumberInput
+                label="Shipping Cost (฿)"
+                description="Set to 0 for free shipping"
+                placeholder="0.00"
+                min={0}
+                max={10000}
+                decimalScale={2}
+                fixedDecimalScale
+                value={shippingCost}
+                onChange={setShippingCost}
+              />
 
               <Button
                 type="submit"

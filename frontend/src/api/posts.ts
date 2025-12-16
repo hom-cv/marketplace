@@ -17,6 +17,7 @@ export async function createPost(data: CreatePostRequest): Promise<Post> {
   formData.append("description", data.description);
   formData.append("type", data.type);
   formData.append("price", data.price.toString());
+  formData.append("shipping_cost", (data.shipping_cost ?? 0).toString());
 
   // Append multiple images
   if (data.images && data.images.length > 0) {

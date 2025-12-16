@@ -1,30 +1,12 @@
 """Pricing calculation service for order totals."""
 
+from sqlalchemy.ext.asyncio.session import AsyncSession
 from decimal import Decimal, ROUND_HALF_UP
-from dataclasses import dataclass
-from enum import Enum
 
+from app.core.exceptions import not_found_error
 from app.core.settings import get_settings
-
-
-class PaymentMethodType(str, Enum):
-    """Payment method types."""
-    CARD = "card"
-    PROMPTPAY = "promptpay"
-
-
-@dataclass
-class PriceBreakdown:
-    """Price breakdown for an order."""
-    item_price: Decimal
-    shipping_cost: Decimal
-    vat_amount: Decimal
-    processing_fee: Decimal
-    platform_fee: Decimal
-    total: Decimal
-    vat_percent: float
-    processing_fee_percent: float
-    platform_fee_percent: float
+from app.crud.post import post_crud
+from app.schemas.payment import PaymentMethodType, PriceBreakdown
 
 
 def calculate_order_total(
@@ -71,3 +53,24 @@ def calculate_order_total(
         processing_fee_percent=float(effective_rate * 100),
         platform_fee_percent=settings.PLATFORM_FEE_PERCENT,
     )
+
+
+async def get_price_breakdown_for_post(
+    db: AsyncSession,
+    post_id: int,
+    payment_method: PaymentMethodType = PaymentMethodType.CARD,
+) -> PriceBreakdown:
+    """
+    Get price breakdown for a post.
+    
+    Fetches the post by ID and calculates the full price breakdown.
+    Raises not_found_error if post doesn't exist.
+    """
+    post = await post_crud.get_by_id(db, id=post_id)
+    if not post:
+        raise not_found_error("Post not found")
+
+    item_price = post.price
+    shipping_cost = post.shipping_cost
+
+    return calculate_order_total(item_price, shipping_cost, payment_method)

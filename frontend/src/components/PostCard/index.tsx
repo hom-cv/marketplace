@@ -4,7 +4,9 @@
  */
 
 import { Card, Image, Text, Badge, Group, Stack, Box } from "@mantine/core";
+import { useNavigate } from "@tanstack/react-router";
 import type { Post, PostType } from "@/api/types/post";
+import { useAuthStore } from "@/stores/authStore";
 import styles from "./PostCard.module.css";
 
 interface PostCardProps {
@@ -30,7 +32,14 @@ const typeLabels: Record<PostType, string> = {
 };
 
 export function PostCard({ post }: PostCardProps) {
+  const navigate = useNavigate();
   const price = parseFloat(post.price);
+  const currentUser = useAuthStore((state) => state.user);
+  const isOwner = currentUser?.id === post.user.id;
+
+  const handleClick = () => {
+    navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+  };
 
   return (
     <Card
@@ -39,6 +48,7 @@ export function PostCard({ post }: PostCardProps) {
       padding={0}
       radius="lg"
       withBorder
+      onClick={handleClick}
     >
       <Card.Section className={styles.imageSection}>
         <Image
@@ -66,8 +76,13 @@ export function PostCard({ post }: PostCardProps) {
 
           <Group justify="space-between" align="center">
             <Text size="xl" fw={700} c="dark">
-              ${price.toFixed(2)}
+              ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
+            {isOwner && (
+              <Badge variant="light" color="gray" size="sm">
+                Your listing
+              </Badge>
+            )}
           </Group>
 
           <Text size="sm" c="dimmed" lineClamp={2}>

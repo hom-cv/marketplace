@@ -1,8 +1,31 @@
 """Payment schemas for charge requests and responses."""
 
 from datetime import datetime
+from decimal import Decimal
+from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
+
+
+class PaymentMethodType(str, Enum):
+    """Payment method types."""
+    CARD = "card"
+    PROMPTPAY = "promptpay"
+
+
+class PriceBreakdown(BaseModel):
+    """Price breakdown for an order."""
+    item_price: Decimal
+    shipping_cost: Decimal
+    vat_amount: Decimal
+    processing_fee: Decimal
+    platform_fee: Decimal
+    total: Decimal
+    vat_percent: float
+    processing_fee_percent: float
+    platform_fee_percent: float
+
+    model_config = {"from_attributes": True}
 
 
 class ShippingAddress(BaseModel):
@@ -57,6 +80,21 @@ class PaymentStatusResponse(BaseModel):
     failure_message: str | None = None
 
     model_config = {"from_attributes": True}
+
+
+class PriceBreakdownResponse(PriceBreakdown):
+    """Schema for price breakdown calculation."""
+
+    model_config = {
+        "from_attributes": True,
+        "ser_json_inf_nan": "constants",
+    }
+
+    @field_serializer('*', when_used='json')
+    def serialize_decimal(self, value):
+        if isinstance(value, Decimal):
+            return str(value)
+        return value
 
 
 class PostSummary(BaseModel):

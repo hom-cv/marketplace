@@ -14,6 +14,9 @@ import { ExplorePage } from "@/pages/Explore";
 import { PurchaseHistoryPage } from "@/pages/PurchaseHistory";
 import { MyListingsPage } from "@/pages/MyListings";
 import { SoldListingsPage } from "@/pages/SoldListings";
+import { PaymentReturnPage } from "@/pages/PaymentReturn";
+import { PostViewPage } from "@/pages/PostView";
+import { CheckoutPage } from "@/pages/Checkout";
 
 const rootRoute = createRootRoute({
     component: () => (
@@ -102,10 +105,32 @@ const createPostRoute = createRoute({
     component: CreatePostPage,
 });
 
+const postViewRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/posts/$postId",
+    component: PostViewPage,
+});
+
 const becomeSellerRoute = createRoute({
     getParentRoute: () => dashboardLayout,
     path: "/become-seller",
     component: BecomeSellerPage,
+});
+
+const paymentReturnRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/payment-return",
+    component: PaymentReturnPage,
+    validateSearch: (search: Record<string, unknown>) => ({
+        payment_id: (search.payment_id as string) || undefined,
+        status: (search.status as string) || undefined,
+    }),
+});
+
+const checkoutRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/checkout/$postId",
+    component: CheckoutPage,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -121,7 +146,10 @@ const routeTree = rootRoute.addChildren([
             myListingsRoute,
             salesRoute,
             createPostRoute,
+            postViewRoute,
             becomeSellerRoute,
+            paymentReturnRoute,
+            checkoutRoute,
         ]),
     ]),
 ]);
