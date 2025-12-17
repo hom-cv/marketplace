@@ -20,7 +20,7 @@ def calculate_order_total(
     Calculate order total and seller payout.
     
     Buyer pays: item_price + shipping_cost (no extra fees)
-    Seller receives: item_price + shipping_cost - (platform_fee + VAT on platform + processing_fee)
+    Seller receives: item_price + shipping_cost - (platform_fee + VAT on platform + processing_fee + VAT on processing_fee)
     
     Fees are calculated on (item_price + shipping_cost) to prevent gaming.
     VAT is only applied to the platform fee.
