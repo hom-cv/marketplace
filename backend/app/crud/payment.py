@@ -103,6 +103,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         vat_amount: int | None = None,
         processing_fee: int | None = None,
         platform_fee: int | None = None,
+        seller_payout: int | None = None,
         # Shipping address
         shipping_name: str | None = None,
         shipping_phone: str | None = None,
@@ -128,7 +129,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
             qr_code_uri (str | None): PromptPay QR code URL.
             expires_at (datetime | None): Payment expiration time.
             description (str | None): Payment description.
-            item_price, shipping_cost, vat_amount, processing_fee, platform_fee: Fee breakdown.
+            item_price, shipping_cost, vat_amount, processing_fee, platform_fee, seller_payout: Fee breakdown.
             shipping_*: Shipping address fields.
 
         Returns:
@@ -154,6 +155,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
             vat_amount=vat_amount,
             processing_fee=processing_fee,
             platform_fee=platform_fee,
+            seller_payout=seller_payout,
             # Shipping address
             shipping_name=shipping_name,
             shipping_phone=shipping_phone,

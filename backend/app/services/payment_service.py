@@ -101,7 +101,7 @@ class PaymentService:
                 vat_amount=int(price_breakdown.vat_amount * 100),
                 processing_fee=int(price_breakdown.processing_fee * 100),
                 platform_fee=platform_fee_satang,
-                # Shipping address
+                seller_payout=int(price_breakdown.seller_payout * 100),
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
                 shipping_address=payment_request.shipping.address,
@@ -289,6 +289,7 @@ class PaymentService:
                 vat_amount=int(price_breakdown.vat_amount * 100),
                 processing_fee=int(price_breakdown.processing_fee * 100),
                 platform_fee=platform_fee_satang,
+                seller_payout=int(price_breakdown.seller_payout * 100),
                 # Shipping address
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
