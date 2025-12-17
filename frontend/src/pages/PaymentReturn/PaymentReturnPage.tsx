@@ -23,7 +23,7 @@ import { getPaymentStatus } from "@/api/payments";
 
 export function PaymentReturnPage() {
   const navigate = useNavigate();
-  const search = useSearch();
+  const search = useSearch({ from: "/protected/app/payment-return" });
   const paymentId = search.payment_id ? parseInt(search.payment_id, 10) : null;
   const [pollCount, setPollCount] = useState(0);
 

@@ -4,9 +4,7 @@ import {
   Title,
   Text,
   Stack,
-  Card,
   Center,
-  ThemeIcon,
   Loader,
   Alert,
   Group,
@@ -15,35 +13,19 @@ import {
   TextInput,
   Button,
   Select,
-  ActionIcon,
-  CopyButton,
-  Tooltip,
+  Accordion,
+  Paper,
+  Box,
+  SimpleGrid,
 } from "@mantine/core";
-import { IconReceipt, IconAlertCircle, IconTruck, IconCheck, IconCopy } from "@tabler/icons-react";
+import { IconReceipt, IconAlertCircle, IconTruck } from "@tabler/icons-react";
 import { getMySales, addTracking } from "@/api/payments";
-import { formatPriceBreakdown } from "@/utils/priceFormatters";
-
-
-const CARRIER_OPTIONS = [
-  { value: "EMS", label: "EMS (Thailand Post)" },
-  { value: "KEX", label: "Kerry Express" },
-  { value: "FLASH_EXPRESS", label: "Flash Express" },
-  { value: "J_AND_T", label: "J&T Express" },
-];
-
-const CARRIER_LABELS: Record<string, string> = {
-  ems: "EMS",
-  kex: "Kerry",
-  flash_express: "Flash",
-  j_and_t: "J&T",
-};
-
-const CARRIER_COLORS: Record<string, string> = {
-  ems: "blue",
-  kex: "orange",
-  flash_express: "yellow",
-  j_and_t: "red",
-};
+import { EarningsPreview } from "@/components/EarningsPreview";
+import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { ShippingAddressCard } from "@/components/ShippingAddressCard";
+import { TrackingInfoCard } from "@/components/TrackingInfoCard";
+import { UserCard } from "@/components/UserCard";
+import { CARRIER_OPTIONS, FULFILLMENT_LABELS, FULFILLMENT_COLORS } from "@/constants/shipping";
 
 export function SoldListingsPage() {
   const queryClient = useQueryClient();
@@ -79,18 +61,6 @@ export function SoldListingsPage() {
     );
   }
 
-  const fulfillmentLabels: Record<string, string> = {
-    packing: "Packing",
-    in_transit: "In Transit",
-    delivered: "Delivered",
-  };
-
-  const fulfillmentColors: Record<string, string> = {
-    packing: "orange",
-    in_transit: "blue",
-    delivered: "green",
-  };
-
   const handleAddTracking = (paymentId: number) => {
     const trackingNumber = trackingInputs[paymentId];
     const carrier = carrierInputs[paymentId];
@@ -101,7 +71,13 @@ export function SoldListingsPage() {
     }
   };
 
-  // Filter to only show successful payments
+  const getSellerPayout = (sale: typeof successfulSales[0]) => {
+    const itemPrice = (sale.item_price ?? 0) / 100;
+    const shippingCost = (sale.shipping_cost ?? 0) / 100;
+    const totalFees = ((sale.platform_fee ?? 0) + (sale.processing_fee ?? 0)) / 100;
+    return itemPrice + shippingCost - totalFees;
+  };
+
   const successfulSales = sales?.filter((s) => s.status === "successful") || [];
 
   return (
@@ -112,140 +88,138 @@ export function SoldListingsPage() {
       </div>
 
       {successfulSales.length === 0 ? (
-        <Center py="xl">
-          <Card padding="xl" radius="md" withBorder ta="center" maw={400}>
-            <Stack align="center" gap="md">
-              <ThemeIcon size="xl" radius="xl" variant="light" color="gray">
-                <IconReceipt size={24} />
-              </ThemeIcon>
-              <div>
-                <Text fw={500}>No sales yet</Text>
-                <Text size="sm" c="dimmed">
-                  When you sell items, they'll appear here.
-                </Text>
-              </div>
-            </Stack>
-          </Card>
-        </Center>
+        <EmptyStateCard
+          icon={<IconReceipt size={24} />}
+          title="No sales yet"
+          description="When you sell items, they'll appear here."
+        />
       ) : (
-        <Stack gap="md">
+        <Accordion variant="separated" radius="md">
           {successfulSales.map((sale) => (
-            <Card key={sale.payment_id} padding="md" radius="md" withBorder>
-              <Group wrap="nowrap" align="flex-start">
-                <Image
-                  src={sale.post.image_url || "https://placehold.co/100x100?text=No+Image"}
-                  alt={sale.post.title}
-                  w={80}
-                  h={80}
-                  radius="md"
-                  fit="cover"
-                />
-                <Stack gap={4} style={{ flex: 1 }}>
-                  <Group justify="space-between" align="flex-start">
-                    <Text fw={500} lineClamp={1}>{sale.post.title}</Text>
-                    <Group gap="xs">
-                      {sale.fulfillment_status && (
-                        <Badge
-                          color={fulfillmentColors[sale.fulfillment_status] || "gray"}
-                          variant="filled"
-                          leftSection={sale.fulfillment_status === "delivered" ? <IconCheck size={12} /> : <IconTruck size={12} />}
-                        >
-                          {fulfillmentLabels[sale.fulfillment_status] || sale.fulfillment_status}
-                        </Badge>
-                      )}
+            <Accordion.Item key={sale.payment_id} value={String(sale.payment_id)}>
+              <Accordion.Control>
+                <Group wrap="nowrap" gap="md">
+                  <Image
+                    src={sale.post.image_url || "https://placehold.co/60x60?text=No+Image"}
+                    alt={sale.post.title}
+                    w={50}
+                    h={50}
+                    radius="md"
+                    fit="cover"
+                  />
+                  <Box style={{ flex: 1, minWidth: 0 }}>
+                    <Group justify="space-between" wrap="nowrap" mb={2}>
+                      <Text fw={600} size="sm" lineClamp={1} style={{ flex: 1 }}>
+                        {sale.post.title}
+                      </Text>
+                      <Text fw={700} c="green" size="sm" style={{ flexShrink: 0 }}>
+                        +฿{getSellerPayout(sale).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </Text>
                     </Group>
-                  </Group>
-                  <Text size="lg" fw={700} c="green">
-                    +฿{(sale.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                  </Text>
-                  {sale.buyer && (
-                    <Text size="sm" c="dimmed">
-                      Buyer: @{sale.buyer.username}
-                    </Text>
-                  )}
-
-                  {/* Fee breakdown - from stored payment data */}
-                  <Text size="xs" c="dimmed">
-                    {formatPriceBreakdown(sale)}
-                  </Text>
-
-                  <Text size="xs" c="dimmed">
-                    {new Date(sale.created_at).toLocaleDateString()}
-                  </Text>
-
-                  {/* Shipping Address */}
-                  {sale.shipping_name && (
-                    <Card withBorder p="xs" mt="sm" radius="sm" bg="gray.0">
-                      <Text size="xs" fw={600} mb={4}>Ship to:</Text>
-                      <Text size="sm" fw={500}>{sale.shipping_name}</Text>
-                      <Text size="xs" c="dimmed">{sale.shipping_phone}</Text>
-                      <Text size="xs">{sale.shipping_address}</Text>
-                      <Text size="xs">{sale.shipping_district}, {sale.shipping_province} {sale.shipping_postal_code}</Text>
-                    </Card>
-                  )}
-
-                  {/* Tracking section */}
-                  {sale.tracking_number ? (
-                    <Group gap="xs" mt="xs" align="center">
+                    <Group gap={6}>
                       <Badge
-                        variant="filled"
-                        color={CARRIER_COLORS[sale.shipping_carrier || ""] || "blue"}
-                      >
-                        {CARRIER_LABELS[sale.shipping_carrier || ""] || sale.shipping_carrier}
-                      </Badge>
-                      <Text size="sm" ff="monospace">{sale.tracking_number}</Text>
-                      <CopyButton value={sale.tracking_number}>
-                        {({ copied, copy }) => (
-                          <Tooltip label={copied ? "Copied" : "Copy"} withArrow>
-                            <ActionIcon size="sm" variant="subtle" onClick={copy} color={copied ? "teal" : "gray"}>
-                              <IconCopy size={14} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
-                      </CopyButton>
-                    </Group>
-                  ) : (
-                    <Stack gap="xs" mt="xs">
-                      <Select
-                        placeholder="Select carrier"
                         size="xs"
-                        data={CARRIER_OPTIONS}
-                        value={carrierInputs[sale.payment_id] || null}
-                        onChange={(value) => setCarrierInputs((prev) => ({
-                          ...prev,
-                          [sale.payment_id]: value,
-                        }))}
+                        color={FULFILLMENT_COLORS[sale.fulfillment_status || ""] || "gray"}
+                        variant="light"
+                      >
+                        {FULFILLMENT_LABELS[sale.fulfillment_status || ""] || "Processing"}
+                      </Badge>
+                      {sale.tracking_number && (
+                        <Badge size="xs" variant="outline" color="gray">Shipped</Badge>
+                      )}
+                      <Text size="xs" c="dimmed">
+                        {new Date(sale.created_at).toLocaleDateString()}
+                      </Text>
+                    </Group>
+                  </Box>
+                </Group>
+              </Accordion.Control>
+
+              <Accordion.Panel>
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                  <Stack gap="sm">
+                    <Paper withBorder p="xs" radius="sm">
+                      <Text size="xs" fw={600} mb="xs" c="dimmed">Earnings</Text>
+                      <EarningsPreview
+                        itemPrice={(sale.item_price ?? 0) / 100}
+                        shippingCost={(sale.shipping_cost ?? 0) / 100}
+                        title=""
+                        compact
+                        hideExplanation
                       />
-                      <Group gap="xs">
-                        <TextInput
-                          placeholder="Enter tracking number"
-                          size="xs"
-                          style={{ flex: 1 }}
-                          value={trackingInputs[sale.payment_id] || ""}
-                          onChange={(e) => setTrackingInputs((prev) => ({
-                            ...prev,
-                            [sale.payment_id]: e.target.value,
-                          }))}
-                        />
-                        <Button
-                          size="xs"
-                          onClick={() => handleAddTracking(sale.payment_id)}
-                          loading={trackingMutation.isPending}
-                          disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
-                        >
-                          Ship
-                        </Button>
-                      </Group>
-                    </Stack>
-                  )}
-                </Stack>
-              </Group>
-            </Card>
+                    </Paper>
+
+                    {sale.buyer && (
+                      <UserCard username={sale.buyer.username} label="Buyer" />
+                    )}
+                  </Stack>
+
+                  <Stack gap="sm">
+                    {sale.shipping_name && (
+                      <ShippingAddressCard
+                        name={sale.shipping_name}
+                        phone={sale.shipping_phone}
+                        address={sale.shipping_address}
+                        district={sale.shipping_district}
+                        province={sale.shipping_province}
+                        postalCode={sale.shipping_postal_code}
+                      />
+                    )}
+
+                    {sale.tracking_number ? (
+                      <TrackingInfoCard
+                        trackingNumber={sale.tracking_number}
+                        carrier={sale.shipping_carrier}
+                      />
+                    ) : (
+                      <Paper withBorder p="xs" radius="sm">
+                        <Group gap={4} mb={4}>
+                          <IconTruck size={12} color="var(--mantine-color-dimmed)" />
+                          <Text size="xs" fw={600} c="dimmed">Add Shipping</Text>
+                        </Group>
+                        <Stack gap={6}>
+                          <Select
+                            placeholder="Carrier"
+                            size="xs"
+                            data={CARRIER_OPTIONS}
+                            value={carrierInputs[sale.payment_id] || null}
+                            onChange={(value) => setCarrierInputs((prev) => ({
+                              ...prev,
+                              [sale.payment_id]: value,
+                            }))}
+                            disabled={trackingMutation.isPending}
+                          />
+                          <Group gap={4}>
+                            <TextInput
+                              placeholder="Tracking #"
+                              size="xs"
+                              style={{ flex: 1 }}
+                              value={trackingInputs[sale.payment_id] || ""}
+                              onChange={(e) => setTrackingInputs((prev) => ({
+                                ...prev,
+                                [sale.payment_id]: e.target.value,
+                              }))}
+                              disabled={trackingMutation.isPending}
+                            />
+                            <Button
+                              size="xs"
+                              onClick={() => handleAddTracking(sale.payment_id)}
+                              loading={trackingMutation.isPending}
+                              disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
+                            >
+                              Ship
+                            </Button>
+                          </Group>
+                        </Stack>
+                      </Paper>
+                    )}
+                  </Stack>
+                </SimpleGrid>
+              </Accordion.Panel>
+            </Accordion.Item>
           ))}
-        </Stack>
+        </Accordion>
       )}
     </Stack>
   );
 }
-
-

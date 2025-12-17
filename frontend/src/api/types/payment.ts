@@ -96,6 +96,8 @@ export interface PriceBreakdownResponse {
   platform_fee: string;
   processing_fee: string;
   total: string;
+  seller_payout: string;
+  total_fees: string;
   vat_percent: number;
   platform_fee_percent: number;
   processing_fee_percent: number;

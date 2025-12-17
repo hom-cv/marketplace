@@ -21,6 +21,8 @@ class PriceBreakdown(BaseModel):
     processing_fee: Decimal
     platform_fee: Decimal
     total: Decimal
+    seller_payout: Decimal
+    total_fees: Decimal
     vat_percent: float
     processing_fee_percent: float
     platform_fee_percent: float
