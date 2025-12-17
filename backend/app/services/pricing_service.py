@@ -23,7 +23,7 @@ def calculate_order_total(
     Seller receives: item_price + shipping_cost - (platform_fee + VAT on platform + processing_fee + VAT on processing_fee)
     
     Fees are calculated on (item_price + shipping_cost) to prevent gaming.
-    VAT is only applied to the platform fee.
+    VAT is applied to both platform and processing fees.
     """    
     base_amount = item_price + shipping_cost
     
