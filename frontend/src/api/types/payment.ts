@@ -74,6 +74,7 @@ export interface PurchaseListItem {
   vat_amount: number | null;
   processing_fee: number | null;
   platform_fee: number | null;
+  seller_payout: number | null;
   // Fulfillment tracking fields
   fulfillment_status: string | null;
   tracking_number: string | null;

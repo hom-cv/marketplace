@@ -72,10 +72,7 @@ export function SoldListingsPage() {
   };
 
   const getSellerPayout = (sale: typeof successfulSales[0]) => {
-    const itemPrice = (sale.item_price ?? 0) / 100;
-    const shippingCost = (sale.shipping_cost ?? 0) / 100;
-    const totalFees = ((sale.platform_fee ?? 0) + (sale.processing_fee ?? 0)) / 100;
-    return itemPrice + shippingCost - totalFees;
+    return (sale.seller_payout ?? 0) / 100;
   };
 
   const successfulSales = sales?.filter((s) => s.status === "successful") || [];

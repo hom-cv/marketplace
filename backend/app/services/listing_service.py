@@ -9,6 +9,12 @@ from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
 
 def _payment_to_list_item(p: Payment, include_shipping_address: bool = False) -> PurchaseListItem:
     """Convert Payment model to PurchaseListItem schema."""
+    item_price = p.item_price or 0
+    shipping_cost = p.shipping_cost or 0
+    platform_fee = p.platform_fee or 0
+    processing_fee = p.processing_fee or 0
+    seller_payout = item_price + shipping_cost - platform_fee - processing_fee
+
     return PurchaseListItem(
         payment_id=p.id,
         status=p.status.value.lower(),
@@ -31,6 +37,7 @@ def _payment_to_list_item(p: Payment, include_shipping_address: bool = False) ->
         vat_amount=p.vat_amount,
         processing_fee=p.processing_fee,
         platform_fee=p.platform_fee,
+        seller_payout=seller_payout,
         fulfillment_status=p.fulfillment_status.value.lower() if p.fulfillment_status else None,
         tracking_number=p.tracking_number,
         shipped_at=p.shipped_at,
