@@ -14,18 +14,22 @@ class PaymentMethodType(str, Enum):
 
 
 class PriceBreakdown(BaseModel):
-    """Price breakdown for an order."""
+    """
+    Price breakdown for an order.
+    
+    All monetary values are in THB.
+    - platform_fee: includes VAT
+    - processing_fee: includes VAT  
+    - total_vat: total VAT from both fees
+    """
     item_price: Decimal
     shipping_cost: Decimal
-    vat_amount: Decimal
-    processing_fee: Decimal
     platform_fee: Decimal
+    processing_fee: Decimal
+    total_fees: Decimal
+    total_vat: Decimal
     total: Decimal
     seller_payout: Decimal
-    total_fees: Decimal
-    vat_percent: float
-    processing_fee_percent: float
-    platform_fee_percent: float
 
     model_config = {"from_attributes": True}
 
@@ -85,7 +89,7 @@ class PaymentStatusResponse(BaseModel):
 
 
 class PriceBreakdownResponse(PriceBreakdown):
-    """Schema for price breakdown calculation."""
+    """Schema for price breakdown API response."""
 
     model_config = {
         "from_attributes": True,
@@ -136,10 +140,10 @@ class PurchaseListItem(BaseModel):
     # Fee breakdown (all in satang)
     item_price: int | None = None
     shipping_cost: int | None = None
-    vat_amount: int | None = None
-    processing_fee: int | None = None
     platform_fee: int | None = None
+    processing_fee: int | None = None
     total_fees: int | None = None
+    total_vat: int | None = None
     seller_payout: int | None = None
     # Fulfillment tracking fields
     fulfillment_status: str | None = None
@@ -161,35 +165,11 @@ class PurchaseListItem(BaseModel):
 class AddTrackingRequest(BaseModel):
     """Schema for adding tracking number to a sale."""
 
-    carrier: str = Field(..., description="Shipping carrier: EMS, KEX, FLASH_EXPRESS, or J_AND_T")
-    tracking_number: str = Field(..., description="Shipping tracking number", min_length=1, max_length=100)
+    carrier: str = Field(..., description="Carrier code: EMS, KEX, FLASH_EXPRESS, J_AND_T")
+    tracking_number: str = Field(..., description="Tracking number", max_length=50)
 
 
 class WebhookResponse(BaseModel):
-    """Response for webhook processing."""
+    """Response for webhook endpoints."""
 
-    status: str
-    message: str | None = None
-
-
-class WebhookEventData(BaseModel):
-    """Schema for Omise webhook event payload."""
-
-    object: str
-    id: str
-    livemode: bool
-    location: str | None = None
-
-    model_config = {"extra": "allow"}
-
-
-class WebhookEvent(BaseModel):
-    """Schema for Omise webhook event."""
-
-    object: str
-    id: str
-    livemode: bool
-    key: str
-    data: WebhookEventData
-
-    model_config = {"extra": "allow"}
+    message: str

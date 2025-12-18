@@ -100,9 +100,9 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
         # Fee breakdown (all in satang)
         item_price: int | None = None,
         shipping_cost: int | None = None,
-        vat_amount: int | None = None,
-        processing_fee: int | None = None,
         platform_fee: int | None = None,
+        processing_fee: int | None = None,
+        total_vat: int | None = None,
         seller_payout: int | None = None,
         # Shipping address
         shipping_name: str | None = None,
@@ -129,7 +129,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
             qr_code_uri (str | None): PromptPay QR code URL.
             expires_at (datetime | None): Payment expiration time.
             description (str | None): Payment description.
-            item_price, shipping_cost, vat_amount, processing_fee, platform_fee, seller_payout: Fee breakdown.
+            Fee breakdown fields: item_price, shipping_cost, platform_fee, processing_fee, total_vat, seller_payout.
             shipping_*: Shipping address fields.
 
         Returns:
@@ -152,9 +152,9 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
             # Fee breakdown
             item_price=item_price,
             shipping_cost=shipping_cost,
-            vat_amount=vat_amount,
-            processing_fee=processing_fee,
             platform_fee=platform_fee,
+            processing_fee=processing_fee,
+            total_vat=total_vat,
             seller_payout=seller_payout,
             # Shipping address
             shipping_name=shipping_name,

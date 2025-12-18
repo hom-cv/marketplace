@@ -71,10 +71,10 @@ export interface PurchaseListItem {
   // Fee breakdown (all in satang)
   item_price: number | null;
   shipping_cost: number | null;
-  vat_amount: number | null;
-  processing_fee: number | null;
   platform_fee: number | null;
+  processing_fee: number | null;
   total_fees: number | null;
+  total_vat: number | null;
   seller_payout: number | null;
   // Fulfillment tracking fields
   fulfillment_status: string | null;
@@ -94,13 +94,10 @@ export interface PurchaseListItem {
 export interface PriceBreakdownResponse {
   item_price: string;
   shipping_cost: string;
-  vat_amount: string;
   platform_fee: string;
   processing_fee: string;
+  total_fees: string;
+  total_vat: string;
   total: string;
   seller_payout: string;
-  total_fees: string;
-  vat_percent: number;
-  platform_fee_percent: number;
-  processing_fee_percent: number;
 }
