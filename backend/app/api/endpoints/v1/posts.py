@@ -22,6 +22,7 @@ from app.services.exceptions import (
 )
 from app.services.pricing_service import get_price_breakdown_for_post
 from app.services.storage_service import storage_service
+from app.services.pricing_service import calculate_order_total
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -202,8 +203,6 @@ async def preview_earnings(
     This endpoint calculates the price breakdown without requiring an existing post.
     Useful for showing earnings preview during post creation.
     """
-    from app.services.pricing_service import calculate_order_total
-
     method = PaymentMethodType(payment_method)
     breakdown = calculate_order_total(item_price, shipping_cost, method)
 
