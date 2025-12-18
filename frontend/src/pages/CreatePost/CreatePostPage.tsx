@@ -317,7 +317,7 @@ export function CreatePostPage() {
           </Grid.Col>
         </Grid>
       </form>
-    </Container >
+    </Container>
   );
 }
 
