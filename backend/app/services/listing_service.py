@@ -31,6 +31,7 @@ def _payment_to_list_item(p: Payment, include_shipping_address: bool = False) ->
         vat_amount=p.vat_amount,
         processing_fee=p.processing_fee,
         platform_fee=p.platform_fee,
+        total_fees=(p.platform_fee or 0) + (p.processing_fee or 0),
         seller_payout=p.seller_payout,
         fulfillment_status=p.fulfillment_status.value.lower() if p.fulfillment_status else None,
         tracking_number=p.tracking_number,

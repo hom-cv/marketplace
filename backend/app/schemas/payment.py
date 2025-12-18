@@ -139,6 +139,7 @@ class PurchaseListItem(BaseModel):
     vat_amount: int | None = None
     processing_fee: int | None = None
     platform_fee: int | None = None
+    total_fees: int | None = None
     seller_payout: int | None = None
     # Fulfillment tracking fields
     fulfillment_status: str | None = None

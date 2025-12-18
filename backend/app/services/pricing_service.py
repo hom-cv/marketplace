@@ -31,9 +31,9 @@ def calculate_order_total(
     platform_fee_base = (base_amount * platform_fee_percent / 100).quantize(Decimal("0.01"), rounding=ROUND_UP)
     
     vat_percent = Decimal(str(settings.VAT_PERCENT))
-    vat_amount = (platform_fee_base * vat_percent / 100).quantize(Decimal("0.01"), rounding=ROUND_UP)
+    platform_vat_amount = (platform_fee_base * vat_percent / 100).quantize(Decimal("0.01"), rounding=ROUND_UP)
     
-    platform_fee = platform_fee_base + vat_amount
+    platform_fee = platform_fee_base + platform_vat_amount
     
     if payment_method == PaymentMethodType.PROMPTPAY:
         base_rate = Decimal(str(settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
@@ -53,7 +53,7 @@ def calculate_order_total(
     return PriceBreakdown(
         item_price=item_price,
         shipping_cost=shipping_cost,
-        vat_amount=vat_amount,
+        vat_amount=platform_vat_amount,
         processing_fee=processing_fee,
         platform_fee=platform_fee,
         total=total,

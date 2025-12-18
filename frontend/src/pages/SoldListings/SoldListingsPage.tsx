@@ -141,7 +141,7 @@ export function SoldListingsPage() {
                         breakdown={{
                           itemPrice: (sale.item_price ?? 0) / 100,
                           shippingCost: (sale.shipping_cost ?? 0) / 100,
-                          totalFees: ((sale.platform_fee ?? 0) + (sale.processing_fee ?? 0)) / 100,
+                          totalFees: (sale.total_fees ?? 0) / 100,
                           sellerPayout: (sale.seller_payout ?? 0) / 100,
                         }}
                         title=""
