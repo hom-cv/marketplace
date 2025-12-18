@@ -1,39 +1,89 @@
 /**
  * EarningsPreview - Shows seller earnings breakdown
  * 
- * Displays:
- * - Item price
- * - Shipping (if any)
- * - Fees deducted (~14.6%)
- * - Final payout amount
+ * Three modes:
+ * 1. postId: Fetches breakdown from backend using post ID
+ * 2. breakdown: Displays pre-fetched breakdown data directly
+ * 3. itemPrice/shippingCost: Fetches preview from backend (for create post page)
  */
-import { Paper, Text, Stack, Group } from "@mantine/core";
+import { Paper, Text, Stack, Group, Loader, Center } from "@mantine/core";
+import { useQuery } from "@tanstack/react-query";
+import { getPriceBreakdown, getEarningsPreview } from "@/api/payments";
+
+interface BreakdownData {
+  itemPrice: number;
+  shippingCost: number;
+  totalFees: number;
+  sellerPayout: number;
+}
 
 interface EarningsPreviewProps {
-  itemPrice: number;
+  /** Post ID to fetch breakdown from API */
+  postId?: number;
+  /** Pre-fetched breakdown data */
+  breakdown?: BreakdownData;
+  /** Item price for preview calculation (used when no postId) */
+  itemPrice?: number;
+  /** Shipping cost for preview calculation */
   shippingCost?: number;
-  feePercent?: number;
+  /** Title text to display. Empty string to hide */
   title?: string;
+  /** Compact mode with less padding and smaller text */
   compact?: boolean;
+  /** Hide the fee explanation text */
   hideExplanation?: boolean;
 }
 
 export function EarningsPreview({
+  postId,
+  breakdown,
   itemPrice,
   shippingCost = 0,
-  feePercent = 0.146,
   title = "Your Earnings Preview",
   compact = false,
   hideExplanation = false,
 }: EarningsPreviewProps) {
-  const totalAmount = itemPrice + shippingCost;
-  const totalFees = totalAmount * feePercent;
-  const sellerPayout = totalAmount - totalFees;
+  // Mode 1: Fetch by post ID
+  const postQuery = useQuery({
+    queryKey: ["price-breakdown", postId],
+    queryFn: () => getPriceBreakdown(postId!, "card"),
+    enabled: !!postId && !breakdown,
+  });
+
+  // Mode 3: Fetch preview by price/shipping
+  const previewQuery = useQuery({
+    queryKey: ["earnings-preview", itemPrice, shippingCost],
+    queryFn: () => getEarningsPreview(itemPrice!, shippingCost, "card"),
+    enabled: !!itemPrice && !postId && !breakdown,
+  });
+
+  const isLoading = postQuery.isLoading || previewQuery.isLoading;
+  const apiData = postQuery.data || previewQuery.data;
+
+  // Use provided breakdown or convert API response
+  const data: BreakdownData | null = breakdown ?? (apiData ? {
+    itemPrice: parseFloat(apiData.item_price),
+    shippingCost: parseFloat(apiData.shipping_cost),
+    totalFees: parseFloat(apiData.total_fees),
+    sellerPayout: parseFloat(apiData.seller_payout),
+  } : null);
 
   const format = (v: number) =>
     v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const textSize = compact ? "xs" : "sm";
+
+  if (isLoading) {
+    return (
+      <Center p={compact ? "xs" : "md"}>
+        <Loader size="xs" />
+      </Center>
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
 
   return (
     <Paper withBorder={!compact} p={compact ? "" : "md"} radius="md" bg={compact ? "transparent" : "gray.0"}>
@@ -41,17 +91,17 @@ export function EarningsPreview({
       <Stack gap={2}>
         <Group justify="space-between">
           <Text size={textSize} c="dimmed">Item Price</Text>
-          <Text size={textSize}>฿{format(itemPrice)}</Text>
+          <Text size={textSize}>฿{format(data.itemPrice)}</Text>
         </Group>
-        {shippingCost > 0 && (
+        {data.shippingCost > 0 && (
           <Group justify="space-between">
             <Text size={textSize} c="dimmed">+ Shipping</Text>
-            <Text size={textSize}>฿{format(shippingCost)}</Text>
+            <Text size={textSize}>฿{format(data.shippingCost)}</Text>
           </Group>
         )}
         <Group justify="space-between">
-          <Text size={textSize} c="dimmed">- Fees (~{(feePercent * 100).toFixed(1)}%)</Text>
-          <Text size={textSize} c="red">-฿{format(totalFees)}</Text>
+          <Text size={textSize} c="dimmed">- Fees</Text>
+          <Text size={textSize} c="red">-฿{format(data.totalFees)}</Text>
         </Group>
         <Group
           justify="space-between"
@@ -61,13 +111,13 @@ export function EarningsPreview({
         >
           <Text size={textSize} fw={600}>You receive</Text>
           <Text size={textSize} fw={700} c="green">
-            ฿{format(sellerPayout)}
+            ฿{format(data.sellerPayout)}
           </Text>
         </Group>
       </Stack>
       {!hideExplanation && (
         <Text size="xs" c="dimmed" mt="xs">
-          Fees include platform (10% + 7% VAT) + processing (~3.9%)
+          Fees include platform fee, processing fee, and VAT
         </Text>
       )}
     </Paper>

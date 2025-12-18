@@ -138,8 +138,12 @@ export function SoldListingsPage() {
                     <Paper withBorder p="xs" radius="sm">
                       <Text size="xs" fw={600} mb="xs" c="dimmed">Earnings</Text>
                       <EarningsPreview
-                        itemPrice={(sale.item_price ?? 0) / 100}
-                        shippingCost={(sale.shipping_cost ?? 0) / 100}
+                        breakdown={{
+                          itemPrice: (sale.item_price ?? 0) / 100,
+                          shippingCost: (sale.shipping_cost ?? 0) / 100,
+                          totalFees: ((sale.platform_fee ?? 0) + (sale.processing_fee ?? 0)) / 100,
+                          sellerPayout: (sale.seller_payout ?? 0) / 100,
+                        }}
                         title=""
                         compact
                         hideExplanation

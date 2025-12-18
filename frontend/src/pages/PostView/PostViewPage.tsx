@@ -226,8 +226,7 @@ export function PostViewPage() {
 
               {isOwner && (
                 <EarningsPreview
-                  itemPrice={price}
-                  shippingCost={parseFloat(post.shipping_cost ?? "0")}
+                  postId={postId ?? undefined}
                   title="Your Earnings (if sold)"
                 />
               )}
