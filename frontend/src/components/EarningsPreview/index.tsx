@@ -75,9 +75,15 @@ export function EarningsPreview({
 
   if (isLoading) {
     return (
-      <Center p={compact ? "xs" : "md"}>
-        <Loader size="xs" />
-      </Center>
+      <Paper withBorder={!compact} p={compact ? "" : "md"} radius="md" bg={compact ? "transparent" : "gray.0"}>
+        {title && <Text size={textSize} fw={600} mb="xs">{title}</Text>}
+        <Center py="sm">
+          <Stack align="center" gap={4}>
+            <Loader size="sm" />
+            <Text size="xs" c="dimmed">Calculating...</Text>
+          </Stack>
+        </Center>
+      </Paper>
     );
   }
 
