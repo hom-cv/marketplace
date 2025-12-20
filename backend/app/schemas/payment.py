@@ -166,7 +166,7 @@ class AddTrackingRequest(BaseModel):
     """Schema for adding tracking number to a sale."""
 
     carrier: str = Field(..., description="Carrier code: EMS, KEX, FLASH_EXPRESS, J_AND_T")
-    tracking_number: str = Field(..., description="Tracking number", max_length=50)
+    tracking_number: str = Field(..., description="Tracking number", min_length=1, max_length=50)
 
 
 class WebhookEventData(BaseModel):
