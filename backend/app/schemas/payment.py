@@ -169,7 +169,44 @@ class AddTrackingRequest(BaseModel):
     tracking_number: str = Field(..., description="Tracking number", max_length=50)
 
 
+class WebhookEventData(BaseModel):
+    """Data payload within an Omise webhook event.
+
+    This captures the common fields from charge/transfer objects.
+    Additional fields can be accessed via the model's extra config.
+    """
+
+    id: str = Field(..., description="Omise object ID (e.g., chrg_xxx, trsf_xxx)")
+    object: str = Field(..., description="Object type (charge, transfer, etc.)")
+    status: str | None = Field(None, description="Object status")
+    amount: int | None = Field(None, description="Amount in satang")
+    currency: str | None = Field(None, description="Currency code")
+    failure_code: str | None = Field(None, description="Failure code if failed")
+    failure_message: str | None = Field(None, description="Failure message if failed")
+    metadata: dict | None = Field(None, description="Metadata attached to the object")
+    paid_at: datetime | None = Field(None, description="When payment was completed")
+
+    model_config = {"extra": "allow"}
+
+
+class WebhookEvent(BaseModel):
+    """Omise webhook event payload.
+
+    See: https://www.omise.co/webhooks
+    """
+
+    object: str = Field(default="event", description="Always 'event'")
+    id: str = Field(..., description="Event ID")
+    livemode: bool = Field(default=False, description="Whether this is live mode")
+    key: str = Field(..., description="Event type key (e.g., charge.complete)")
+    data: WebhookEventData = Field(..., description="Event data payload")
+    created_at: datetime | None = Field(None, description="Event creation timestamp")
+
+    model_config = {"extra": "allow"}
+
+
 class WebhookResponse(BaseModel):
     """Response for webhook endpoints."""
 
-    message: str
+    status: str = Field(..., description="Response status (ok or error)")
+    message: str | None = Field(None, description="Optional error message")

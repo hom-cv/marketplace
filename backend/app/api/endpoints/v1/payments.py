@@ -1,8 +1,8 @@
-from json.decoder import JSONDecodeError
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, status
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user
@@ -17,6 +17,7 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
     PurchaseListItem,
+    WebhookEvent,
     WebhookResponse,
 )
 from app.core.exceptions import forbidden_error, not_found_error
@@ -192,7 +193,7 @@ async def get_payment_status(
 )
 async def omise_webhook(
     db: Annotated[AsyncSession, Depends(get_async_db)],
-    request: Request,
+    webhook_event: WebhookEvent,
 ) -> WebhookResponse:
     """
     Handle Omise webhook events.
@@ -205,20 +206,20 @@ async def omise_webhook(
     Configure this URL in the Omise dashboard under Webhooks.
     """
     try:
-        body = await request.json()
-        event_key = body.get("key", "")
-        event_data = body.get("data", {})
+        # Convert validated model data to dict for service layer
+        event_data = webhook_event.data.model_dump(exclude_none=True)
 
         await PaymentService(db=db).process_webhook(
-            event_key=event_key,
+            event_key=webhook_event.key,
             event_data=event_data,
         )
 
         return WebhookResponse(status="ok")
-    except JSONDecodeError as e:
-        logger.error(f"Webhook JSON decode error: {e}")
-        return WebhookResponse(status="error", message="Invalid JSON body")
+    except ValidationError as e:
+        logger.error(f"Webhook validation error: {e}")
+        return WebhookResponse(status="error", message="Invalid webhook payload")
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return WebhookResponse(status="error", message=str(e))
+
 
