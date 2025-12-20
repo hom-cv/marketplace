@@ -45,13 +45,10 @@ def calculate_order_total(
     else:
         base_rate = Decimal(str(settings.CARD_PROCESSING_FEE_PERCENT))
     
+    processing_fee_base = (base_amount * (base_rate / 100)).quantize(Decimal("0.01"), rounding=ROUND_UP)
     processing_vat_percent = Decimal(str(settings.PROCESSING_FEE_VAT_PERCENT))
-    effective_rate = (base_rate / 100) * (1 + processing_vat_percent / 100)
-    processing_fee = (base_amount * effective_rate).quantize(Decimal("0.01"), rounding=ROUND_UP)
-    
-    # Calculate processing VAT portion
-    processing_fee_base = (base_amount * base_rate / 100).quantize(Decimal("0.01"), rounding=ROUND_UP)
-    processing_vat = processing_fee - processing_fee_base
+    processing_vat = (processing_fee_base * processing_vat_percent / 100).quantize(Decimal("0.01"), rounding=ROUND_UP)
+    processing_fee = processing_fee_base + processing_vat
     
     # Totals
     total = item_price + shipping_cost
