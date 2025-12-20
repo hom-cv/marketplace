@@ -38,6 +38,7 @@ import {
 import { Link, useNavigate } from "@tanstack/react-router";
 import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
+import { EarningsPreview } from "@/components/EarningsPreview";
 import type { PostType } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
 
@@ -294,6 +295,13 @@ export function CreatePostPage() {
                 value={shippingCost}
                 onChange={setShippingCost}
               />
+
+              {price && typeof price === "number" && price > 0 && (
+                <EarningsPreview
+                  itemPrice={price}
+                  shippingCost={typeof shippingCost === "number" ? shippingCost : 0}
+                />
+              )}
 
               <Button
                 type="submit"

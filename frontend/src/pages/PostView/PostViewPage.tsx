@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import {
   Container,
   Title,
@@ -32,6 +32,7 @@ import {
 } from "@tabler/icons-react";
 import { getPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
+import { EarningsPreview } from "@/components/EarningsPreview";
 import type { PostType } from "@/api/types/post";
 import styles from "./PostViewPage.module.css";
 
@@ -55,7 +56,7 @@ const typeLabels: Record<PostType, string> = {
 
 export function PostViewPage() {
   const navigate = useNavigate();
-  const { postId: postIdString } = useParams();
+  const { postId: postIdString } = useParams({ from: "/protected/app/posts/$postId" });
   const postId = postIdString ? parseInt(postIdString, 10) : null;
   const currentUser = useAuthStore((state) => state.user);
 
@@ -224,9 +225,10 @@ export function PostViewPage() {
               )}
 
               {isOwner && (
-                <Alert color="gray" variant="light">
-                  This is your listing. You cannot purchase your own items.
-                </Alert>
+                <EarningsPreview
+                  postId={postId ?? undefined}
+                  title="Your Earnings (if sold)"
+                />
               )}
             </Stack>
           </Grid.Col>

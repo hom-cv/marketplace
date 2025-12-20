@@ -3,9 +3,7 @@ import {
   Title,
   Text,
   Stack,
-  Card,
   Center,
-  ThemeIcon,
   Loader,
   Alert,
   Group,
@@ -13,27 +11,18 @@ import {
   Badge,
   Button,
   Stepper,
-  ActionIcon,
-  CopyButton,
-  Tooltip,
+  Accordion,
+  Paper,
+  Box,
+  SimpleGrid,
 } from "@mantine/core";
-import { IconShoppingBag, IconAlertCircle, IconPackage, IconTruck, IconCheck, IconCopy } from "@tabler/icons-react";
+import { IconShoppingBag, IconAlertCircle, IconPackage, IconTruck, IconCheck } from "@tabler/icons-react";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
-import { formatPriceBreakdown } from "@/utils/priceFormatters";
-
-const CARRIER_LABELS: Record<string, string> = {
-  ems: "EMS",
-  kex: "Kerry",
-  flash_express: "Flash",
-  j_and_t: "J&T",
-};
-
-const CARRIER_COLORS: Record<string, string> = {
-  ems: "blue",
-  kex: "orange",
-  flash_express: "yellow",
-  j_and_t: "red",
-};
+import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { ShippingAddressCard } from "@/components/ShippingAddressCard";
+import { TrackingInfoCard } from "@/components/TrackingInfoCard";
+import { UserCard } from "@/components/UserCard";
+import { FULFILLMENT_LABELS, FULFILLMENT_COLORS } from "@/constants/shipping";
 
 export function PurchaseHistoryPage() {
   const queryClient = useQueryClient();
@@ -68,18 +57,13 @@ export function PurchaseHistoryPage() {
 
   const getFulfillmentStep = (status: string | null): number => {
     switch (status) {
-      case "packing":
-        return 0;
-      case "in_transit":
-        return 1;
-      case "delivered":
-        return 2;
-      default:
-        return 0;
+      case "packing": return 0;
+      case "in_transit": return 1;
+      case "delivered": return 2;
+      default: return 0;
     }
   };
 
-  // Filter to only show successful payments
   const successfulPurchases = purchases?.filter((p) => p.status === "successful") || [];
 
   return (
@@ -90,127 +74,110 @@ export function PurchaseHistoryPage() {
       </div>
 
       {successfulPurchases.length === 0 ? (
-        <Center py="xl">
-          <Card padding="xl" radius="md" withBorder ta="center" maw={400}>
-            <Stack align="center" gap="md">
-              <ThemeIcon size="xl" radius="xl" variant="light" color="gray">
-                <IconShoppingBag size={24} />
-              </ThemeIcon>
-              <div>
-                <Text fw={500}>No purchases yet</Text>
-                <Text size="sm" c="dimmed">
-                  When you buy items from the marketplace, they'll appear here.
-                </Text>
-              </div>
-            </Stack>
-          </Card>
-        </Center>
+        <EmptyStateCard
+          icon={<IconShoppingBag size={24} />}
+          title="No purchases yet"
+          description="When you buy items from the marketplace, they'll appear here."
+        />
       ) : (
-        <Stack gap="md">
+        <Accordion variant="separated" radius="md">
           {successfulPurchases.map((purchase) => (
-            <Card key={purchase.payment_id} padding="md" radius="md" withBorder>
-              <Group wrap="nowrap" align="flex-start">
-                <Image
-                  src={purchase.post.image_url || "https://placehold.co/100x100?text=No+Image"}
-                  alt={purchase.post.title}
-                  w={80}
-                  h={80}
-                  radius="md"
-                  fit="cover"
-                />
-                <Stack gap="xs" style={{ flex: 1 }}>
-                  <Group justify="space-between" align="flex-start">
-                    <Text fw={500} lineClamp={1}>{purchase.post.title}</Text>
-                    <Text size="lg" fw={700}>
-                      ฿{(purchase.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                    </Text>
-                  </Group>
-                  {purchase.seller && (
-                    <Text size="sm" c="dimmed">
-                      Seller: @{purchase.seller.username}
-                    </Text>
-                  )}
-
-                  {/* Fee breakdown - from stored payment data */}
-                  <Text size="xs" c="dimmed">
-                    {formatPriceBreakdown(purchase)}
-                  </Text>
-
-                  {/* Order Progress Stepper */}
-                  <Stepper
-                    active={getFulfillmentStep(purchase.fulfillment_status)}
-                    size="xs"
-                    mt="sm"
-                  >
-                    <Stepper.Step
-                      icon={<IconPackage size={14} />}
-                      label="Packing"
-                    />
-                    <Stepper.Step
-                      icon={<IconTruck size={14} />}
-                      label="In Transit"
-                      description={purchase.tracking_number || undefined}
-                    />
-                    <Stepper.Step
-                      icon={<IconCheck size={14} />}
-                      label="Delivered"
-                    />
-                  </Stepper>
-
-                  {/* Tracking number display */}
-                  {purchase.tracking_number && purchase.fulfillment_status === "in_transit" && (
-                    <Group gap="xs" mt="xs" align="center">
-                      <Badge
-                        variant="filled"
-                        color={CARRIER_COLORS[purchase.shipping_carrier || ""] || "blue"}
-                      >
-                        {CARRIER_LABELS[purchase.shipping_carrier || ""] || purchase.shipping_carrier}
-                      </Badge>
-                      <Text size="sm" ff="monospace">{purchase.tracking_number}</Text>
-                      <CopyButton value={purchase.tracking_number}>
-                        {({ copied, copy }) => (
-                          <Tooltip label={copied ? "Copied" : "Copy"} withArrow>
-                            <ActionIcon size="sm" variant="subtle" onClick={copy} color={copied ? "teal" : "gray"}>
-                              <IconCopy size={14} />
-                            </ActionIcon>
-                          </Tooltip>
-                        )}
-                      </CopyButton>
+            <Accordion.Item key={purchase.payment_id} value={String(purchase.payment_id)}>
+              <Accordion.Control>
+                <Group wrap="nowrap" gap="md">
+                  <Image
+                    src={purchase.post.image_url || "https://placehold.co/60x60?text=No+Image"}
+                    alt={purchase.post.title}
+                    w={50}
+                    h={50}
+                    radius="md"
+                    fit="cover"
+                  />
+                  <Box style={{ flex: 1, minWidth: 0 }}>
+                    <Group justify="space-between" wrap="nowrap" mb={2}>
+                      <Text fw={600} size="sm" lineClamp={1} style={{ flex: 1 }}>
+                        {purchase.post.title}
+                      </Text>
+                      <Text fw={700} size="sm" style={{ flexShrink: 0 }}>
+                        ฿{(purchase.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </Text>
                     </Group>
-                  )}
+                    <Group gap={6}>
+                      <Badge
+                        size="xs"
+                        color={FULFILLMENT_COLORS[purchase.fulfillment_status || ""] || "gray"}
+                        variant="light"
+                      >
+                        {FULFILLMENT_LABELS[purchase.fulfillment_status || ""] || "Processing"}
+                      </Badge>
+                      <Text size="xs" c="dimmed">
+                        {new Date(purchase.created_at).toLocaleDateString()}
+                      </Text>
+                    </Group>
+                  </Box>
+                </Group>
+              </Accordion.Control>
 
-                  {/* Confirm Delivery button - only show when in_transit */}
-                  {purchase.fulfillment_status === "in_transit" && (
-                    <Button
-                      size="xs"
-                      color="green"
-                      leftSection={<IconCheck size={14} />}
-                      mt="sm"
-                      onClick={() => confirmMutation.mutate(purchase.payment_id)}
-                      loading={confirmMutation.isPending}
-                    >
-                      Confirm Delivery
-                    </Button>
-                  )}
+              <Accordion.Panel>
+                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+                  <Stack gap="sm">
+                    <Paper withBorder p="xs" radius="sm">
+                      <Text size="xs" fw={600} mb="xs" c="dimmed">Order Progress</Text>
+                      <Stepper
+                        active={getFulfillmentStep(purchase.fulfillment_status)}
+                        size="xs"
+                        orientation="vertical"
+                      >
+                        <Stepper.Step icon={<IconPackage size={14} />} label="Packing" />
+                        <Stepper.Step icon={<IconTruck size={14} />} label="In Transit" />
+                        <Stepper.Step icon={<IconCheck size={14} />} label="Delivered" />
+                      </Stepper>
+                    </Paper>
 
-                  {/* Delivered message */}
-                  {purchase.fulfillment_status === "delivered" && (
-                    <Badge color="green" variant="filled" leftSection={<IconCheck size={12} />} mt="xs">
-                      Delivered
-                    </Badge>
-                  )}
+                    {purchase.fulfillment_status === "in_transit" && (
+                      <Button
+                        size="xs"
+                        color="green"
+                        leftSection={<IconCheck size={14} />}
+                        onClick={() => confirmMutation.mutate(purchase.payment_id)}
+                        loading={confirmMutation.isPending}
+                        fullWidth
+                      >
+                        Confirm Delivery
+                      </Button>
+                    )}
+                  </Stack>
 
-                  <Text size="xs" c="dimmed" mt="xs">
-                    Purchased {new Date(purchase.created_at).toLocaleDateString()}
-                  </Text>
-                </Stack>
-              </Group>
-            </Card>
+                  <Stack gap="sm">
+                    {purchase.seller && (
+                      <UserCard username={purchase.seller.username} label="Seller" />
+                    )}
+
+                    {purchase.shipping_name && (
+                      <ShippingAddressCard
+                        name={purchase.shipping_name}
+                        phone={purchase.shipping_phone}
+                        address={purchase.shipping_address}
+                        district={purchase.shipping_district}
+                        province={purchase.shipping_province}
+                        postalCode={purchase.shipping_postal_code}
+                        label="Shipping To"
+                      />
+                    )}
+
+                    {purchase.tracking_number && (
+                      <TrackingInfoCard
+                        trackingNumber={purchase.tracking_number}
+                        carrier={purchase.shipping_carrier}
+                      />
+                    )}
+                  </Stack>
+                </SimpleGrid>
+              </Accordion.Panel>
+            </Accordion.Item>
           ))}
-        </Stack>
+        </Accordion>
       )}
     </Stack>
   );
 }
-
-

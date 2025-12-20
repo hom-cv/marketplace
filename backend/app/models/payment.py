@@ -88,9 +88,10 @@ class Payment(Base):
     # Fee breakdown for accounting (all in satang)
     item_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     shipping_cost: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    vat_amount: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    processing_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     platform_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    processing_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    total_vat: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    seller_payout: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     # Payment method and status
     payment_method: Mapped[PaymentMethod] = mapped_column(

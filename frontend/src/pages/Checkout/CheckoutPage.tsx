@@ -51,7 +51,7 @@ declare global {
 }
 
 export function CheckoutPage() {
-  const { postId } = useParams();
+  const { postId } = useParams({ from: "/protected/app/checkout/$postId" });
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");

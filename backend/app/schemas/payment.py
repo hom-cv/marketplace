@@ -14,16 +14,22 @@ class PaymentMethodType(str, Enum):
 
 
 class PriceBreakdown(BaseModel):
-    """Price breakdown for an order."""
+    """
+    Price breakdown for an order.
+    
+    All monetary values are in THB.
+    - platform_fee: includes VAT
+    - processing_fee: includes VAT  
+    - total_vat: total VAT from both fees
+    """
     item_price: Decimal
     shipping_cost: Decimal
-    vat_amount: Decimal
-    processing_fee: Decimal
     platform_fee: Decimal
+    processing_fee: Decimal
+    total_fees: Decimal
+    total_vat: Decimal
     total: Decimal
-    vat_percent: float
-    processing_fee_percent: float
-    platform_fee_percent: float
+    seller_payout: Decimal
 
     model_config = {"from_attributes": True}
 
@@ -83,7 +89,7 @@ class PaymentStatusResponse(BaseModel):
 
 
 class PriceBreakdownResponse(PriceBreakdown):
-    """Schema for price breakdown calculation."""
+    """Schema for price breakdown API response."""
 
     model_config = {
         "from_attributes": True,
@@ -134,9 +140,11 @@ class PurchaseListItem(BaseModel):
     # Fee breakdown (all in satang)
     item_price: int | None = None
     shipping_cost: int | None = None
-    vat_amount: int | None = None
-    processing_fee: int | None = None
     platform_fee: int | None = None
+    processing_fee: int | None = None
+    total_fees: int | None = None
+    total_vat: int | None = None
+    seller_payout: int | None = None
     # Fulfillment tracking fields
     fulfillment_status: str | None = None
     tracking_number: str | None = None
@@ -157,35 +165,48 @@ class PurchaseListItem(BaseModel):
 class AddTrackingRequest(BaseModel):
     """Schema for adding tracking number to a sale."""
 
-    carrier: str = Field(..., description="Shipping carrier: EMS, KEX, FLASH_EXPRESS, or J_AND_T")
-    tracking_number: str = Field(..., description="Shipping tracking number", min_length=1, max_length=100)
-
-
-class WebhookResponse(BaseModel):
-    """Response for webhook processing."""
-
-    status: str
-    message: str | None = None
+    carrier: str = Field(..., description="Carrier code: EMS, KEX, FLASH_EXPRESS, J_AND_T")
+    tracking_number: str = Field(..., description="Tracking number", min_length=1, max_length=50)
 
 
 class WebhookEventData(BaseModel):
-    """Schema for Omise webhook event payload."""
+    """Data payload within an Omise webhook event.
 
-    object: str
-    id: str
-    livemode: bool
-    location: str | None = None
+    This captures the common fields from charge/transfer objects.
+    Additional fields can be accessed via the model's extra config.
+    """
+
+    id: str = Field(..., description="Omise object ID (e.g., chrg_xxx, trsf_xxx)")
+    object: str = Field(..., description="Object type (charge, transfer, etc.)")
+    status: str | None = Field(None, description="Object status")
+    amount: int | None = Field(None, description="Amount in satang")
+    currency: str | None = Field(None, description="Currency code")
+    failure_code: str | None = Field(None, description="Failure code if failed")
+    failure_message: str | None = Field(None, description="Failure message if failed")
+    metadata: dict | None = Field(None, description="Metadata attached to the object")
+    paid_at: datetime | None = Field(None, description="When payment was completed")
 
     model_config = {"extra": "allow"}
 
 
 class WebhookEvent(BaseModel):
-    """Schema for Omise webhook event."""
+    """Omise webhook event payload.
 
-    object: str
-    id: str
-    livemode: bool
-    key: str
-    data: WebhookEventData
+    See: https://www.omise.co/webhooks
+    """
+
+    object: str = Field(default="event", description="Always 'event'")
+    id: str = Field(..., description="Event ID")
+    livemode: bool = Field(default=False, description="Whether this is live mode")
+    key: str = Field(..., description="Event type key (e.g., charge.complete)")
+    data: WebhookEventData = Field(..., description="Event data payload")
+    created_at: datetime | None = Field(None, description="Event creation timestamp")
 
     model_config = {"extra": "allow"}
+
+
+class WebhookResponse(BaseModel):
+    """Response for webhook endpoints."""
+
+    status: str = Field(..., description="Response status (ok or error)")
+    message: str | None = Field(None, description="Optional error message")

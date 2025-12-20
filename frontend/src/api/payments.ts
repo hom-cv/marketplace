@@ -25,6 +25,19 @@ export async function getPriceBreakdown(
 }
 
 /**
+ * Get earnings preview without requiring a post (for create post page)
+ */
+export async function getEarningsPreview(
+  itemPrice: number,
+  shippingCost: number = 0,
+  paymentMethod: "card" | "promptpay" = "card"
+): Promise<PriceBreakdownResponse> {
+  return apiRequest<PriceBreakdownResponse>(
+    `/posts/preview/earnings?item_price=${itemPrice}&shipping_cost=${shippingCost}&payment_method=${paymentMethod}`
+  );
+}
+
+/**
  * Create a card payment
  */
 export async function createCardPayment(data: CreateCardPaymentRequest): Promise<PaymentResponse> {

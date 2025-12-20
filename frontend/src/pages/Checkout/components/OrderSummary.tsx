@@ -1,5 +1,6 @@
 /**
- * OrderSummary - Displays item and price breakdown
+ * OrderSummary - Displays item and price breakdown for buyers
+ * Buyers pay only item price + shipping (no extra fees)
  */
 
 import {
@@ -12,7 +13,6 @@ import {
   Box,
   Stack,
   Divider,
-  Spoiler,
 } from "@mantine/core";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
 
@@ -31,13 +31,7 @@ interface OrderSummaryProps {
 export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
   const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
   const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
-  const vatAmount = parseFloat(priceBreakdown?.vat_amount ?? "0");
-  const platformFee = parseFloat(priceBreakdown?.platform_fee ?? "0");
-  const processingFee = parseFloat(priceBreakdown?.processing_fee ?? "0");
   const total = parseFloat(priceBreakdown?.total ?? "0");
-  const vatPercent = priceBreakdown?.vat_percent ?? 0;
-  const platformFeePercent = priceBreakdown?.platform_fee_percent ?? 0;
-  const processingFeePercent = priceBreakdown?.processing_fee_percent ?? 0;
 
   return (
     <Paper withBorder p="xl" radius="md" pos="sticky" top={100}>
@@ -65,7 +59,6 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
 
       <Divider my="md" />
 
-      {/* Price breakdown */}
       <Stack gap="xs">
         <Group justify="space-between">
           <Text size="sm">Item Price</Text>
@@ -77,26 +70,6 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
             {shippingCost === 0 ? "Free" : `฿${shippingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
           </Text>
         </Group>
-        <Group justify="space-between">
-          <Text size="sm">Fees & Taxes</Text>
-          <Text size="sm" fw={500}>฿{(vatAmount + processingFee + platformFee).toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-        </Group>
-        <Spoiler maxHeight={0} showLabel="View fee details" hideLabel="Hide details">
-          <Stack gap={4} pl="md" mt="xs">
-            <Group justify="space-between">
-              <Text size="xs" c="dimmed">VAT ({vatPercent}%)</Text>
-              <Text size="xs" c="dimmed">฿{vatAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-            </Group>
-            <Group justify="space-between">
-              <Text size="xs" c="dimmed">Processing ({processingFeePercent.toFixed(2)}%)</Text>
-              <Text size="xs" c="dimmed">฿{processingFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-            </Group>
-            <Group justify="space-between">
-              <Text size="xs" c="dimmed">Platform ({platformFeePercent}%)</Text>
-              <Text size="xs" c="dimmed">฿{platformFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-            </Group>
-          </Stack>
-        </Spoiler>
       </Stack>
 
       <Divider my="md" />

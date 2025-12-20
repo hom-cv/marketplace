@@ -22,6 +22,7 @@ from app.services.exceptions import (
 )
 from app.services.pricing_service import get_price_breakdown_for_post
 from app.services.storage_service import storage_service
+from app.services.pricing_service import calculate_order_total
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -185,3 +186,24 @@ async def delete_post(
 
     await post_crud.soft_delete(db, post=post)
 
+
+@router.get(
+    "/preview/earnings",
+    status_code=status.HTTP_200_OK,
+    response_model=PriceBreakdownResponse,
+)
+async def preview_earnings(
+    item_price: Annotated[Decimal, Query(gt=0, le=1000000, description="Item price in THB")],
+    shipping_cost: Annotated[Decimal, Query(ge=0, le=10000, description="Shipping cost in THB")] = Decimal("0"),
+    payment_method: Literal["card", "promptpay"] = Query("card", description="Payment method"),
+) -> PriceBreakdownResponse:
+    """
+    Preview seller earnings for a given price and shipping cost.
+
+    This endpoint calculates the price breakdown without requiring an existing post.
+    Useful for showing earnings preview during post creation.
+    """
+    method = PaymentMethodType(payment_method)
+    breakdown = calculate_order_total(item_price, shipping_cost, method)
+
+    return PriceBreakdownResponse.model_validate(breakdown)

@@ -30,6 +30,11 @@ export async function apiRequest<T>(
     throw new Error(errorData.detail || `HTTP ${response.status}`);
   }
 
+  // Handle 204 No Content or non-JSON responses
+  if (response.status === 204 || !response.headers.get("content-type")?.includes("application/json")) {
+    return undefined as T;
+  }
+
   return response.json();
 }
 
