@@ -103,5 +103,5 @@ def get_email_service(settings: Settings | None = None) -> EmailService:
     Returns:
         EmailService instance.
     """
-    return EmailService(settings)
+    return EmailService(settings or get_settings())
 
