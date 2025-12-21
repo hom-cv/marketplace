@@ -13,7 +13,7 @@ from app.schemas.seller import (
     SellerVerificationRequest,
     SellerVerificationResponse,
 )
-from app.services.seller_service import SellerService
+from app.services.seller_service import SellerService, get_seller_service
 
 router = APIRouter(prefix="/seller", tags=["seller"])
 
@@ -24,8 +24,8 @@ router = APIRouter(prefix="/seller", tags=["seller"])
     response_model=SellerVerificationResponse,
 )
 async def register_seller(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    seller_service: Annotated[SellerService, Depends(get_seller_service)],
     verification_request: SellerVerificationRequest,
 ) -> SellerVerificationResponse:
     """
@@ -49,7 +49,7 @@ async def register_seller(
     - 'tbank' - Thanachart Bank
     - 'uob' - United Overseas Bank
     """
-    return await SellerService(db=db).register_seller(
+    return await seller_service.register_seller(
         user=current_user,
         verification_request=verification_request,
     )
@@ -61,12 +61,12 @@ async def register_seller(
     response_model=SellerStatusResponse,
 )
 async def get_seller_status(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    seller_service: Annotated[SellerService, Depends(get_seller_service)],
 ) -> SellerStatusResponse:
     """
     Get the current seller status for the authenticated user.
 
     Returns verification status, bank details (if any), and verification timestamp.
     """
-    return await SellerService(db=db).get_seller_status(user=current_user)
+    return await seller_service.get_seller_status(user=current_user)

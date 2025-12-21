@@ -6,12 +6,21 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.exceptions import invalid_carrier_error
 from app.crud._base import BaseCRUD
-from app.models.payment import Payment, PaymentMethod, PaymentStatus, FulfillmentStatus, ShippingCarrier
+from app.models.payment import (
+    FulfillmentStatus,
+    Payment,
+    PaymentMethod,
+    PaymentStatus,
+    ShippingCarrier,
+)
 from app.schemas.payment import CreateCardPaymentRequest
 
 
-class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentRequest]):
+class PaymentCRUD(
+    BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentRequest]
+):
     """CRUD operations for Payment model."""
 
     async def get_by_charge_id(
@@ -192,7 +201,7 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         Returns:
             Payment: The updated payment.
-        """        
+        """
         payment.status = status
 
         if status == PaymentStatus.SUCCESSFUL:
@@ -255,14 +264,14 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         Returns:
             Payment: The updated payment.
-        """        
+        """
         try:
             payment.tracking_number = tracking_number
             payment.shipping_carrier = ShippingCarrier[carrier.upper()]
             payment.fulfillment_status = FulfillmentStatus.IN_TRANSIT
             payment.shipped_at = datetime.now(timezone.utc)
         except KeyError:
-            raise ValueError("Invalid carrier")
+            raise invalid_carrier_error(carrier)
 
         await db.commit()
         await db.refresh(payment)
@@ -295,5 +304,5 @@ class PaymentCRUD(BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentR
 
         return payment
 
-payment_crud = PaymentCRUD(Payment)
 
+payment_crud = PaymentCRUD(Payment)

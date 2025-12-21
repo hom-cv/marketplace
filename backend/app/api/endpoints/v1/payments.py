@@ -1,10 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
-from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.core.exceptions import forbidden_error, not_found_error
 from app.core.security import get_current_user
 from app.crud.payment import payment_crud
 from app.db.utils import get_async_db
@@ -20,9 +17,11 @@ from app.schemas.payment import (
     WebhookEvent,
     WebhookResponse,
 )
-from app.core.exceptions import forbidden_error, not_found_error
-from app.services.listing_service import ListingService
-from app.services.payment_service import PaymentService
+from app.services.listing_service import ListingService, get_listing_service
+from app.services.payment_service import PaymentService, get_payment_service
+from fastapi import APIRouter, Depends, status
+from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +34,8 @@ router = APIRouter(prefix="/payments", tags=["payments"])
     response_model=PaymentResponse,
 )
 async def create_card_payment(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
     payment_request: CreateCardPaymentRequest,
 ) -> PaymentResponse:
     """
@@ -49,7 +48,7 @@ async def create_card_payment(
     If 3DS authentication is required, the response will include an
     `authorize_uri` that the user should be redirected to.
     """
-    return await PaymentService(db=db).create_card_payment(
+    return await payment_service.create_card_payment(
         buyer=current_user,
         payment_request=payment_request,
     )
@@ -61,8 +60,8 @@ async def create_card_payment(
     response_model=PaymentResponse,
 )
 async def create_promptpay_payment(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
     payment_request: CreatePromptPayPaymentRequest,
 ) -> PaymentResponse:
     """
@@ -74,7 +73,7 @@ async def create_promptpay_payment(
     The response will include a `qr_code_uri` for the QR code image
     and an `expires_at` timestamp for when the QR code expires.
     """
-    return await PaymentService(db=db).create_promptpay_payment(
+    return await payment_service.create_promptpay_payment(
         buyer=current_user,
         payment_request=payment_request,
     )
@@ -86,12 +85,11 @@ async def create_promptpay_payment(
     response_model=list[PurchaseListItem],
 )
 async def get_my_purchases(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    listing_service: Annotated[ListingService, Depends(get_listing_service)],
 ) -> list[PurchaseListItem]:
     """Get all purchases made by the current user."""
-    service = ListingService(db)
-    return await service.get_purchases(current_user.id)
+    return await listing_service.get_purchases(current_user.id)
 
 
 @router.get(
@@ -100,12 +98,11 @@ async def get_my_purchases(
     response_model=list[PurchaseListItem],
 )
 async def get_my_sales(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    listing_service: Annotated[ListingService, Depends(get_listing_service)],
 ) -> list[PurchaseListItem]:
     """Get all sales made by the current user (as seller)."""
-    service = ListingService(db)
-    return await service.get_sales(current_user.id)
+    return await listing_service.get_sales(current_user.id)
 
 
 @router.post(
@@ -134,7 +131,10 @@ async def add_tracking(
         raise forbidden_error("Can only add tracking to successful payments")
 
     await payment_crud.add_tracking_number(
-        db, payment=payment, tracking_number=request.tracking_number, carrier=request.carrier
+        db,
+        payment=payment,
+        tracking_number=request.tracking_number,
+        carrier=request.carrier,
     )
 
 
@@ -171,8 +171,8 @@ async def confirm_delivery(
     response_model=PaymentStatusResponse,
 )
 async def get_payment_status(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
     payment_id: int,
 ) -> PaymentStatusResponse:
     """
@@ -180,7 +180,7 @@ async def get_payment_status(
 
     Only the buyer or seller can view the payment status.
     """
-    return await PaymentService(db=db).get_payment_status(
+    return await payment_service.get_payment_status(
         payment_id=payment_id,
         user=current_user,
     )
@@ -192,7 +192,7 @@ async def get_payment_status(
     response_model=WebhookResponse,
 )
 async def omise_webhook(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
     webhook_event: WebhookEvent,
 ) -> WebhookResponse:
     """
@@ -209,7 +209,7 @@ async def omise_webhook(
         # Convert validated model data to dict for service layer
         event_data = webhook_event.data.model_dump(exclude_none=True)
 
-        await PaymentService(db=db).process_webhook(
+        await payment_service.process_webhook(
             event_key=webhook_event.key,
             event_data=event_data,
         )
@@ -221,5 +221,3 @@ async def omise_webhook(
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return WebhookResponse(status="error", message=str(e))
-
-

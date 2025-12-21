@@ -14,7 +14,7 @@ from app.schemas.seller import (
     SellerVerificationRequest,
     SellerVerificationResponse,
 )
-from app.services.omise_service import OmiseService
+from app.services.omise_service import OmiseService, get_omise_service
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +22,14 @@ logger = logging.getLogger(__name__)
 class SellerService:
     """Service for seller registration and verification operations."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(
+        self,
+        db: AsyncSession,
+        omise_service: OmiseService | None = None,
+    ) -> None:
         """Initialize seller service with database session."""
         self.db = db
-        self.omise_service = OmiseService()
+        self.omise_service = omise_service or get_omise_service()
 
     async def register_seller(
         self, user: User, verification_request: SellerVerificationRequest
@@ -189,3 +193,8 @@ class SellerService:
             SellerStatusResponse: The current seller status.
         """
         return await self.check_and_update_verification(user)
+
+
+def get_seller_service(db: AsyncSession) -> SellerService:
+    """Factory function to create SellerService instance."""
+    return SellerService(db)

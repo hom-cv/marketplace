@@ -15,7 +15,7 @@ from app.core.password import get_password_hash, verify_password
 from app.crud.user import user_crud
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
-from app.services.email_service import email_service
+from app.services.email_service import get_email_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,11 @@ class AuthService:
 
         Args:
             db (AsyncSession): The asynchronous database session.
+            email_service: Optional email service instance.
+                If None, a new instance is created via get_email_service().
         """
         self.db = db
+        self._email_service = get_email_service()
 
     async def register_user(self, obj_in: AuthRegisterSchema) -> User:
         """
@@ -72,7 +75,7 @@ class AuthService:
         user = await user_crud.create_user(db=self.db, user=user)
 
         # Send verification email
-        email_sent = email_service.send_verification_email(
+        email_sent = self._email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
             first_name=user.first_name,
@@ -151,7 +154,7 @@ class AuthService:
         if user.email_verified:
             raise bad_request_error("Email already verified")
 
-        email_sent = email_service.send_verification_email(
+        email_sent = self._email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
             first_name=user.first_name,
@@ -165,3 +168,8 @@ class AuthService:
             raise bad_request_error(
                 "Failed to send verification email. Please try again later."
             )
+
+
+def get_auth_service(db: AsyncSession) -> AuthService:
+    """Factory function to create AuthService instance."""
+    return AuthService(db)

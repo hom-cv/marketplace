@@ -6,7 +6,14 @@ from datetime import datetime
 import omise.errors
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.omise import (
+    CURRENCY_SUBUNIT_MULTIPLIER,
+    DEFAULT_CURRENCY,
+    ChargeStatus,
+    EventKey,
+)
 from app.core.exceptions import bad_request_error, forbidden_error, not_found_error
+from app.core.settings import get_settings
 from app.crud.payment import payment_crud
 from app.crud.post import post_crud
 from app.crud.seller import seller_crud
@@ -20,9 +27,8 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
 )
-from app.services.omise_service import OmiseService
+from app.services.omise_service import OmiseService, get_omise_service
 from app.services.pricing_service import calculate_order_total, PaymentMethodType
-from app.core.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +36,14 @@ logger = logging.getLogger(__name__)
 class PaymentService:
     """Service for payment processing operations."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(
+        self,
+        db: AsyncSession,
+        omise_service: OmiseService | None = None,
+    ) -> None:
         """Initialize payment service with database session."""
         self.db = db
-        self.omise_service = OmiseService()
+        self.omise_service = omise_service or get_omise_service()
 
     async def create_card_payment(
         self, buyer: User, payment_request: CreateCardPaymentRequest
@@ -76,9 +86,9 @@ class PaymentService:
         price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.CARD)
         
         # Convert total to satang (smallest unit for THB)
-        amount = int(price_breakdown.total * 100)
-        platform_fee_satang = int(price_breakdown.platform_fee * 100)
-        currency = "THB"
+        amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
+        platform_fee_satang = int(price_breakdown.platform_fee * CURRENCY_SUBUNIT_MULTIPLIER)
+        currency = DEFAULT_CURRENCY
 
         try:
             # Build return_uri with payment_id placeholder - we'll create payment first
@@ -96,12 +106,12 @@ class PaymentService:
                 return_uri=payment_request.return_uri,
                 description=f"Purchase: {post.title}",
                 # Fee breakdown for accounting (all in satang)
-                item_price=int(price_breakdown.item_price * 100),
-                shipping_cost=int(price_breakdown.shipping_cost * 100),
+                item_price=int(price_breakdown.item_price * CURRENCY_SUBUNIT_MULTIPLIER),
+                shipping_cost=int(price_breakdown.shipping_cost * CURRENCY_SUBUNIT_MULTIPLIER),
                 platform_fee=platform_fee_satang,
-                processing_fee=int(price_breakdown.processing_fee * 100),
-                total_vat=int(price_breakdown.total_vat * 100),
-                seller_payout=int(price_breakdown.seller_payout * 100),
+                processing_fee=int(price_breakdown.processing_fee * CURRENCY_SUBUNIT_MULTIPLIER),
+                total_vat=int(price_breakdown.total_vat * CURRENCY_SUBUNIT_MULTIPLIER),
+                seller_payout=int(price_breakdown.seller_payout * CURRENCY_SUBUNIT_MULTIPLIER),
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
                 shipping_address=payment_request.shipping.address,
@@ -143,9 +153,9 @@ class PaymentService:
 
             # Determine status and update if needed
             status = PaymentStatus.PENDING
-            if charge.status == "successful":
+            if charge.status == ChargeStatus.SUCCESSFUL:
                 status = PaymentStatus.SUCCESSFUL
-            elif charge.status == "failed":
+            elif charge.status == ChargeStatus.FAILED:
                 status = PaymentStatus.FAILED
 
             if status != PaymentStatus.PENDING:
@@ -204,9 +214,9 @@ class PaymentService:
         price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY)
         
         # Convert total to satang
-        amount = int(price_breakdown.total * 100)
-        platform_fee_satang = int(price_breakdown.platform_fee * 100)
-        currency = "THB"
+        amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
+        platform_fee_satang = int(price_breakdown.platform_fee * CURRENCY_SUBUNIT_MULTIPLIER)
+        currency = DEFAULT_CURRENCY
 
         try:
             # Create PromptPay source
@@ -284,12 +294,12 @@ class PaymentService:
                 expires_at=expires_at,
                 description=f"Purchase: {post.title}",
                 # Fee breakdown for accounting (all in satang)
-                item_price=int(price_breakdown.item_price * 100),
-                shipping_cost=int(price_breakdown.shipping_cost * 100),
+                item_price=int(price_breakdown.item_price * CURRENCY_SUBUNIT_MULTIPLIER),
+                shipping_cost=int(price_breakdown.shipping_cost * CURRENCY_SUBUNIT_MULTIPLIER),
                 platform_fee=platform_fee_satang,
-                processing_fee=int(price_breakdown.processing_fee * 100),
-                total_vat=int(price_breakdown.total_vat * 100),
-                seller_payout=int(price_breakdown.seller_payout * 100),
+                processing_fee=int(price_breakdown.processing_fee * CURRENCY_SUBUNIT_MULTIPLIER),
+                total_vat=int(price_breakdown.total_vat * CURRENCY_SUBUNIT_MULTIPLIER),
+                seller_payout=int(price_breakdown.seller_payout * CURRENCY_SUBUNIT_MULTIPLIER),
                 # Shipping address
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
@@ -344,13 +354,13 @@ class PaymentService:
             try:
                 charge = self.omise_service.get_charge(payment.omise_charge_id)
 
-                if charge.status == "successful":
+                if charge.status == ChargeStatus.SUCCESSFUL:
                     await payment_crud.update_status(
                         self.db,
                         payment=payment,
                         status=PaymentStatus.SUCCESSFUL,
                     )
-                elif charge.status == "failed":
+                elif charge.status == ChargeStatus.FAILED:
                     await payment_crud.update_status(
                         self.db,
                         payment=payment,
@@ -358,7 +368,7 @@ class PaymentService:
                         failure_code=getattr(charge, "failure_code", None),
                         failure_message=getattr(charge, "failure_message", None),
                     )
-                elif charge.status == "expired":
+                elif charge.status == ChargeStatus.EXPIRED:
                     await payment_crud.update_status(
                         self.db,
                         payment=payment,
@@ -389,11 +399,11 @@ class PaymentService:
         """
         logger.info(f"Processing webhook: {event_key}")
 
-        if event_key == "charge.complete":
+        if event_key == EventKey.CHARGE_COMPLETE:
             await self._handle_charge_complete(event_data)
-        elif event_key == "transfer.pay":
+        elif event_key == EventKey.TRANSFER_PAY:
             await self._handle_transfer_pay(event_data)
-        elif event_key == "recipient.verify":
+        elif event_key == EventKey.RECIPIENT_VERIFY:
             await self._handle_recipient_verify(event_data)
 
     async def _handle_charge_complete(self, data: dict) -> None:
@@ -408,14 +418,14 @@ class PaymentService:
             return
 
         status = data.get("status")
-        if status == "successful":
+        if status == ChargeStatus.SUCCESSFUL:
             await payment_crud.update_status(
                 self.db,
                 payment=payment,
                 status=PaymentStatus.SUCCESSFUL,
             )
             logger.info(f"Payment {payment.id} marked as successful")
-        elif status == "failed":
+        elif status == ChargeStatus.FAILED:
             await payment_crud.update_status(
                 self.db,
                 payment=payment,
@@ -463,3 +473,8 @@ class PaymentService:
                 rejection_reason=data.get("failure_code"),
             )
             logger.info(f"Seller {seller_profile.user_id} rejected via webhook")
+
+
+def get_payment_service(db: AsyncSession) -> PaymentService:
+    """Factory function to create PaymentService instance."""
+    return PaymentService(db)

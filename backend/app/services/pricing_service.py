@@ -9,8 +9,6 @@ from app.crud.post import post_crud
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
 
 
-settings = get_settings()
-
 def calculate_order_total(
     item_price: Decimal,
     shipping_cost: Decimal,
@@ -28,7 +26,8 @@ def calculate_order_total(
     
     total_fees = platform_fee + processing_fee (both include VAT)
     total_vat = platform_vat + processing_vat
-    """    
+    """
+    settings = get_settings()
     base_amount = item_price + shipping_cost
     
     # Platform fee calculation

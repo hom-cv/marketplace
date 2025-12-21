@@ -62,3 +62,8 @@ class ListingService:
         """Get all sales made by a seller (includes shipping address)."""
         payments = await payment_crud.get_payments_by_seller(self.db, seller_id=seller_id)
         return [_payment_to_list_item(p, include_shipping_address=True) for p in payments]
+
+
+def get_listing_service(db: AsyncSession) -> ListingService:
+    """Factory function to create ListingService instance."""
+    return ListingService(db)

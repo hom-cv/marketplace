@@ -19,7 +19,7 @@ from app.schemas.auth import (
 )
 from app.schemas.email_verification import EmailVerificationResponse
 from app.schemas.user import UserResponseSchema
-from app.services.auth import AuthService
+from app.services.auth import AuthService, get_auth_service
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
     response_model=AuthRegisterResponse,
 )
 async def register_user(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
     obj_in: AuthRegisterSchema,
 ) -> AuthRegisterResponse:
     """
@@ -45,14 +45,14 @@ async def register_user(
     Returns the created user (without password).
     A verification email will be sent to the provided email address.
     """
-    user = await AuthService(db=db).register_user(obj_in)
+    user = await auth_service.register_user(obj_in)
 
     return AuthRegisterResponse.model_validate(user)
 
 
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login_user(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     """
@@ -63,7 +63,7 @@ async def login_user(
     obj_in = AuthLoginSchema(
         email_address=form_data.username, password=form_data.password
     )
-    user = await AuthService(db=db).login_user(obj_in)
+    user = await auth_service.login_user(obj_in)
 
     expires_delta = timedelta(days=1)
     access_token = create_access_token(
@@ -90,7 +90,7 @@ async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
     response_model=EmailVerificationResponse,
 )
 async def verify_email(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
     token: Annotated[str, Query(description="Email verification token")],
 ) -> EmailVerificationResponse:
     """
@@ -98,7 +98,7 @@ async def verify_email(
 
     The token is sent to the user's email during registration.
     """
-    await AuthService(db=db).verify_email(token)
+    await auth_service.verify_email(token)
 
     return EmailVerificationResponse(message="Email verified successfully")
 
@@ -109,14 +109,14 @@ async def verify_email(
     response_model=EmailVerificationResponse,
 )
 async def resend_verification_email(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
 ) -> EmailVerificationResponse:
     """
     Resend the verification email to the currently authenticated user.
 
     Requires authentication.
     """
-    await AuthService(db=db).resend_verification_email(current_user)
+    await auth_service.resend_verification_email(current_user)
 
     return EmailVerificationResponse(message="Verification email sent successfully")
