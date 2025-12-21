@@ -13,7 +13,7 @@ from app.schemas.seller import (
     SellerVerificationRequest,
     SellerVerificationResponse,
 )
-from app.services.seller_service import SellerService, get_seller_service
+from app.services.seller_service import AnnotatedSellerService
 
 router = APIRouter(prefix="/seller", tags=["seller"])
 
@@ -25,7 +25,7 @@ router = APIRouter(prefix="/seller", tags=["seller"])
 )
 async def register_seller(
     current_user: Annotated[User, Depends(get_current_user)],
-    seller_service: Annotated[SellerService, Depends(get_seller_service)],
+    seller_service: AnnotatedSellerService,
     verification_request: SellerVerificationRequest,
 ) -> SellerVerificationResponse:
     """
@@ -62,7 +62,7 @@ async def register_seller(
 )
 async def get_seller_status(
     current_user: Annotated[User, Depends(get_current_user)],
-    seller_service: Annotated[SellerService, Depends(get_seller_service)],
+    seller_service: AnnotatedSellerService,
 ) -> SellerStatusResponse:
     """
     Get the current seller status for the authenticated user.

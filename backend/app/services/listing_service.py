@@ -1,5 +1,8 @@
 """Listing service for purchase and sales history."""
 
+from typing import Annotated
+
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.payment import payment_crud
@@ -67,3 +70,6 @@ class ListingService:
 def get_listing_service(db: AsyncSession) -> ListingService:
     """Factory function to create ListingService instance."""
     return ListingService(db)
+
+
+AnnotatedListingService = Annotated[ListingService, Depends(get_listing_service)]

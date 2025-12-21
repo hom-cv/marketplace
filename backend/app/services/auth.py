@@ -1,7 +1,9 @@
 """Auth service layer for authentication operations."""
 
 import logging
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -173,3 +175,6 @@ class AuthService:
 def get_auth_service(db: AsyncSession) -> AuthService:
     """Factory function to create AuthService instance."""
     return AuthService(db)
+
+
+AnnotatedAuthService = Annotated[AuthService, Depends(get_auth_service)]

@@ -1,8 +1,10 @@
 """Seller service for handling seller registration and verification."""
 
 import logging
+from typing import Annotated
 
 import omise.errors
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error
@@ -198,3 +200,6 @@ class SellerService:
 def get_seller_service(db: AsyncSession) -> SellerService:
     """Factory function to create SellerService instance."""
     return SellerService(db)
+
+
+AnnotatedSellerService = Annotated[SellerService, Depends(get_seller_service)]

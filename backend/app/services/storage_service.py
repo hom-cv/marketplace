@@ -3,11 +3,12 @@
 import asyncio
 import logging
 import uuid
+from typing import Annotated
 from urllib.parse import urlparse
 
 import boto3
 from botocore.exceptions import ClientError
-from fastapi import UploadFile
+from fastapi import Depends, UploadFile
 
 from app.constants.storage import ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGES_PER_POST
 from app.core.exceptions import (
@@ -182,3 +183,6 @@ def get_storage_service(settings: Settings | None = None) -> StorageService:
         StorageService instance.
     """
     return StorageService(settings)
+
+
+AnnotatedStorageService = Annotated[StorageService, Depends(get_storage_service)]

@@ -2,8 +2,10 @@
 
 import logging
 from datetime import datetime
+from typing import Annotated
 
 import omise.errors
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.omise import (
@@ -478,3 +480,5 @@ class PaymentService:
 def get_payment_service(db: AsyncSession) -> PaymentService:
     """Factory function to create PaymentService instance."""
     return PaymentService(db)
+
+AnnotatedPaymentService = Annotated[PaymentService, Depends(get_payment_service)]

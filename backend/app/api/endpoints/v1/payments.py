@@ -17,8 +17,8 @@ from app.schemas.payment import (
     WebhookEvent,
     WebhookResponse,
 )
-from app.services.listing_service import ListingService, get_listing_service
-from app.services.payment_service import PaymentService, get_payment_service
+from app.services.listing_service import AnnotatedListingService
+from app.services.payment_service import AnnotatedPaymentService
 from fastapi import APIRouter, Depends, status
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -35,7 +35,7 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 )
 async def create_card_payment(
     current_user: Annotated[User, Depends(get_current_user)],
-    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
+    payment_service: AnnotatedPaymentService,
     payment_request: CreateCardPaymentRequest,
 ) -> PaymentResponse:
     """
@@ -61,7 +61,7 @@ async def create_card_payment(
 )
 async def create_promptpay_payment(
     current_user: Annotated[User, Depends(get_current_user)],
-    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
+    payment_service: AnnotatedPaymentService,
     payment_request: CreatePromptPayPaymentRequest,
 ) -> PaymentResponse:
     """
@@ -86,7 +86,7 @@ async def create_promptpay_payment(
 )
 async def get_my_purchases(
     current_user: Annotated[User, Depends(get_current_user)],
-    listing_service: Annotated[ListingService, Depends(get_listing_service)],
+    listing_service: AnnotatedListingService,
 ) -> list[PurchaseListItem]:
     """Get all purchases made by the current user."""
     return await listing_service.get_purchases(current_user.id)
@@ -99,7 +99,7 @@ async def get_my_purchases(
 )
 async def get_my_sales(
     current_user: Annotated[User, Depends(get_current_user)],
-    listing_service: Annotated[ListingService, Depends(get_listing_service)],
+    listing_service: AnnotatedListingService,
 ) -> list[PurchaseListItem]:
     """Get all sales made by the current user (as seller)."""
     return await listing_service.get_sales(current_user.id)
@@ -172,7 +172,7 @@ async def confirm_delivery(
 )
 async def get_payment_status(
     current_user: Annotated[User, Depends(get_current_user)],
-    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
+    payment_service: AnnotatedPaymentService,
     payment_id: int,
 ) -> PaymentStatusResponse:
     """
@@ -192,7 +192,7 @@ async def get_payment_status(
     response_model=WebhookResponse,
 )
 async def omise_webhook(
-    payment_service: Annotated[PaymentService, Depends(get_payment_service)],
+    payment_service: AnnotatedPaymentService,
     webhook_event: WebhookEvent,
 ) -> WebhookResponse:
     """

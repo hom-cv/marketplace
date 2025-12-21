@@ -19,7 +19,7 @@ from app.schemas.auth import (
 )
 from app.schemas.email_verification import EmailVerificationResponse
 from app.schemas.user import UserResponseSchema
-from app.services.auth import AuthService, get_auth_service
+from app.services.auth import AnnotatedAuthService
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
     response_model=AuthRegisterResponse,
 )
 async def register_user(
-    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    auth_service: AnnotatedAuthService,
     obj_in: AuthRegisterSchema,
 ) -> AuthRegisterResponse:
     """
@@ -52,7 +52,7 @@ async def register_user(
 
 @router.post("/login", status_code=status.HTTP_200_OK)
 async def login_user(
-    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    auth_service: AnnotatedAuthService,
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
 ):
     """
@@ -90,7 +90,7 @@ async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
     response_model=EmailVerificationResponse,
 )
 async def verify_email(
-    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    auth_service: AnnotatedAuthService,
     token: Annotated[str, Query(description="Email verification token")],
 ) -> EmailVerificationResponse:
     """
@@ -110,7 +110,7 @@ async def verify_email(
 )
 async def resend_verification_email(
     current_user: Annotated[User, Depends(get_current_user)],
-    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    auth_service: AnnotatedAuthService,
 ) -> EmailVerificationResponse:
     """
     Resend the verification email to the currently authenticated user.

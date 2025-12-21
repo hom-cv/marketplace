@@ -19,7 +19,7 @@ from app.services.pricing_service import (
     calculate_order_total,
     get_price_breakdown_for_post,
 )
-from app.services.storage_service import get_storage_service
+from app.services.storage_service import AnnotatedStorageService
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +34,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 async def create_post(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
-    storage_service: Annotated[StorageService, Depends(get_storage_service)],
+    storage_service: AnnotatedStorageService,
     title: Annotated[str, Form(min_length=1, max_length=200)],
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
