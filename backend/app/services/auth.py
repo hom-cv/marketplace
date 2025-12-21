@@ -31,8 +31,6 @@ class AuthService:
 
         Args:
             db (AsyncSession): The asynchronous database session.
-            email_service: Optional email service instance.
-                If None, a new instance is created via get_email_service().
         """
         self.db = db
         self._email_service = get_email_service()
