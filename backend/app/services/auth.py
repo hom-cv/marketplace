@@ -17,7 +17,8 @@ from app.core.password import get_password_hash, verify_password
 from app.crud.user import user_crud
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
-from app.services.email_service import get_email_service
+from app.services.email_service import EmailService, get_email_service
+from app.db.utils import get_async_db
 
 logger = logging.getLogger(__name__)
 
@@ -25,15 +26,16 @@ logger = logging.getLogger(__name__)
 class AuthService:
     """Service class for authentication-related operations."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, email_service: EmailService):
         """
         Initialize the AuthService with a database session.
 
         Args:
             db (AsyncSession): The asynchronous database session.
+            email_service (EmailService): Email service for sending emails.
         """
         self.db = db
-        self._email_service = get_email_service()
+        self._email_service = email_service
 
     async def register_user(self, obj_in: AuthRegisterSchema) -> User:
         """
@@ -170,9 +172,11 @@ class AuthService:
             )
 
 
-def get_auth_service(db: AsyncSession) -> AuthService:
+def get_auth_service(
+    db: AsyncSession = Depends(get_async_db),
+    email_service: EmailService = Depends(get_email_service),
+) -> AuthService:
     """Factory function to create AuthService instance."""
-    return AuthService(db)
-
+    return AuthService(db, email_service)
 
 AnnotatedAuthService = Annotated[AuthService, Depends(get_auth_service)]

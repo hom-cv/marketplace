@@ -31,6 +31,8 @@ from app.schemas.payment import (
 )
 from app.services.omise_service import OmiseService, get_omise_service
 from app.services.pricing_service import calculate_order_total, PaymentMethodType
+from app.db.utils import get_async_db
+
 
 logger = logging.getLogger(__name__)
 
@@ -41,11 +43,11 @@ class PaymentService:
     def __init__(
         self,
         db: AsyncSession,
-        omise_service: OmiseService | None = None,
+        omise_service: OmiseService,
     ) -> None:
         """Initialize payment service with database session."""
         self.db = db
-        self.omise_service = omise_service or get_omise_service()
+        self.omise_service = omise_service
 
     async def create_card_payment(
         self, buyer: User, payment_request: CreateCardPaymentRequest
@@ -477,8 +479,12 @@ class PaymentService:
             logger.info(f"Seller {seller_profile.user_id} rejected via webhook")
 
 
-def get_payment_service(db: AsyncSession) -> PaymentService:
+def get_payment_service(
+    db: AsyncSession = Depends(get_async_db),
+    omise_service: OmiseService = Depends(get_omise_service),
+) -> PaymentService:
     """Factory function to create PaymentService instance."""
-    return PaymentService(db)
+    return PaymentService(db, omise_service)
+
 
 AnnotatedPaymentService = Annotated[PaymentService, Depends(get_payment_service)]

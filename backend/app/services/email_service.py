@@ -1,7 +1,9 @@
 """Email service for sending emails via SendGrid."""
 
 import logging
+from typing import Annotated
 
+from fastapi import Depends
 from python_http_client.exceptions import HTTPError
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
@@ -96,12 +98,15 @@ class EmailService:
 
 def get_email_service(settings: Settings | None = None) -> EmailService:
     """Factory function to create EmailService instance.
-    
+
     Args:
         settings: Optional settings to inject. Uses get_settings() if not provided.
-        
+
     Returns:
         EmailService instance.
     """
     return EmailService(settings or get_settings())
+
+
+AnnotatedEmailService = Annotated[EmailService, Depends(get_email_service)]
 

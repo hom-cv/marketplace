@@ -1,9 +1,10 @@
 """Omise service for interacting with Omise payment API."""
 
 import logging
-from typing import Any
+from typing import Annotated, Any
 
 import omise
+from fastapi import Depends
 
 from app.core.settings import Settings, get_settings
 
@@ -252,3 +253,6 @@ def get_omise_service(settings: Settings | None = None) -> OmiseService:
         OmiseService instance.
     """
     return OmiseService(settings)
+
+
+AnnotatedOmiseService = Annotated[OmiseService, Depends(get_omise_service)]

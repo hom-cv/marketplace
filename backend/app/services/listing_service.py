@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.payment import payment_crud
 from app.models.payment import Payment
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
+from app.db.utils import get_async_db
 
 
 def _payment_to_list_item(p: Payment, include_shipping_address: bool = False) -> PurchaseListItem:
@@ -67,7 +68,9 @@ class ListingService:
         return [_payment_to_list_item(p, include_shipping_address=True) for p in payments]
 
 
-def get_listing_service(db: AsyncSession) -> ListingService:
+def get_listing_service(
+    db: AsyncSession = Depends(get_async_db),
+) -> ListingService:
     """Factory function to create ListingService instance."""
     return ListingService(db)
 
