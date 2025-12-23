@@ -478,6 +478,71 @@ class PaymentService:
             )
             logger.info(f"Seller {seller_profile.user_id} rejected via webhook")
 
+    async def add_tracking(
+        self,
+        payment_id: int,
+        user: User,
+        tracking_number: str,
+        carrier: str,
+    ) -> None:
+        """
+        Add tracking number to a payment (seller action).
+
+        Args:
+            payment_id: The payment ID.
+            user: The user adding tracking (must be seller).
+            tracking_number: The tracking number.
+            carrier: The shipping carrier.
+
+        Raises:
+            NotFoundError: If payment not found.
+            ForbiddenError: If user is not seller or payment not successful.
+        """
+        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        if not payment:
+            raise not_found_error("Payment not found")
+
+        if payment.seller_id != user.id:
+            raise forbidden_error("Only the seller can add tracking information")
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            raise forbidden_error("Can only add tracking to successful payments")
+
+        await payment_crud.add_tracking_number(
+            self.db,
+            payment=payment,
+            tracking_number=tracking_number,
+            carrier=carrier,
+        )
+
+    async def confirm_delivery(
+        self,
+        payment_id: int,
+        user: User,
+    ) -> None:
+        """
+        Confirm delivery of an item (buyer action).
+
+        Args:
+            payment_id: The payment ID.
+            user: The user confirming delivery (must be buyer).
+
+        Raises:
+            NotFoundError: If payment not found.
+            ForbiddenError: If user is not buyer or payment not successful.
+        """
+        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        if not payment:
+            raise not_found_error("Payment not found")
+
+        if payment.buyer_id != user.id:
+            raise forbidden_error("Only the buyer can confirm delivery")
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            raise forbidden_error("Can only confirm delivery for successful payments")
+
+        await payment_crud.confirm_delivery(self.db, payment=payment)
+
 
 def get_payment_service(
     db: AsyncSession = Depends(get_async_db),

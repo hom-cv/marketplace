@@ -1,12 +1,8 @@
 import logging
 from typing import Annotated
 
-from app.core.exceptions import forbidden_error, not_found_error
 from app.core.security import get_current_user
-from app.crud.payment import payment_crud
-from app.db.utils import get_async_db
 from app.models import User
-from app.models.payment import PaymentStatus
 from app.schemas.payment import (
     AddTrackingRequest,
     CreateCardPaymentRequest,
@@ -21,7 +17,6 @@ from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
 from fastapi import APIRouter, Depends, status
 from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -110,8 +105,8 @@ async def get_my_sales(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def add_tracking(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    payment_service: AnnotatedPaymentService,
     payment_id: int,
     request: AddTrackingRequest,
 ) -> None:
@@ -120,19 +115,9 @@ async def add_tracking(
 
     Only the seller can add tracking information.
     """
-    payment = await payment_crud.get_by_id(db, id=payment_id)
-    if not payment:
-        raise not_found_error("Payment not found")
-
-    if payment.seller_id != current_user.id:
-        raise forbidden_error("Only the seller can add tracking information")
-
-    if payment.status != PaymentStatus.SUCCESSFUL:
-        raise forbidden_error("Can only add tracking to successful payments")
-
-    await payment_crud.add_tracking_number(
-        db,
-        payment=payment,
+    await payment_service.add_tracking(
+        payment_id=payment_id,
+        user=current_user,
         tracking_number=request.tracking_number,
         carrier=request.carrier,
     )
@@ -143,8 +128,8 @@ async def add_tracking(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def confirm_delivery(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    payment_service: AnnotatedPaymentService,
     payment_id: int,
 ) -> None:
     """
@@ -152,17 +137,10 @@ async def confirm_delivery(
 
     Only the buyer can confirm delivery.
     """
-    payment = await payment_crud.get_by_id(db, id=payment_id)
-    if not payment:
-        raise not_found_error("Payment not found")
-
-    if payment.buyer_id != current_user.id:
-        raise forbidden_error("Only the buyer can confirm delivery")
-
-    if payment.status != PaymentStatus.SUCCESSFUL:
-        raise forbidden_error("Can only confirm delivery for successful payments")
-
-    await payment_crud.confirm_delivery(db, payment=payment)
+    await payment_service.confirm_delivery(
+        payment_id=payment_id,
+        user=current_user,
+    )
 
 
 @router.get(
