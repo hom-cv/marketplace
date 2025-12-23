@@ -189,6 +189,7 @@ async def delete_post(
     response_model=PriceBreakdownResponse,
 )
 async def preview_earnings(
+    pricing_service: AnnotatedPricingService,
     item_price: Annotated[
         Decimal, Query(gt=0, le=1000000, description="Item price in THB")
     ],
@@ -206,6 +207,6 @@ async def preview_earnings(
     Useful for showing earnings preview during post creation.
     """
     method = PaymentMethodType(payment_method)
-    breakdown = calculate_order_total(item_price, shipping_cost, method)
+    breakdown = pricing_service.calculate_order_total(item_price, shipping_cost, method)
 
     return PriceBreakdownResponse.model_validate(breakdown)
