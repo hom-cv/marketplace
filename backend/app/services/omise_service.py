@@ -1,11 +1,12 @@
 """Omise service for interacting with Omise payment API."""
 
 import logging
-from typing import Any
+from typing import Annotated, Any
 
 import omise
+from fastapi import Depends
 
-from app.core.settings import get_settings
+from app.core.settings import AnnotatedSettings, Settings
 
 logger = logging.getLogger(__name__)
 
@@ -13,11 +14,15 @@ logger = logging.getLogger(__name__)
 class OmiseService:
     """Service for Omise API interactions."""
 
-    def __init__(self) -> None:
-        """Initialize Omise with API keys."""
-        settings = get_settings()
-        omise.api_secret = settings.OMISE_SECRET_KEY
-        omise.api_public = settings.OMISE_PUBLIC_KEY
+    def __init__(self, settings: Settings) -> None:
+        """Initialize Omise with API keys.
+
+        Args:
+            settings: Application settings.
+        """
+        self._settings = settings
+        omise.api_secret = self._settings.OMISE_SECRET_KEY
+        omise.api_public = self._settings.OMISE_PUBLIC_KEY
 
     def create_recipient(
         self,
@@ -112,7 +117,7 @@ class OmiseService:
             # Add platform_fee for Omise Connect if specified
             if platform_fee is not None:
                 charge_params["platform_fee"] = {"fixed": platform_fee}
-            
+
             charge = omise.Charge.create(**charge_params)
             logger.info(f"Created Omise charge: {charge.id}, status: {charge.status}")
             return charge
@@ -184,7 +189,7 @@ class OmiseService:
             # Add platform_fee for Omise Connect if specified
             if platform_fee is not None:
                 charge_params["platform_fee"] = {"fixed": platform_fee}
-            
+
             charge = omise.Charge.create(**charge_params)
             logger.info(f"Created Omise charge with source: {charge.id}")
             return charge
@@ -236,3 +241,13 @@ class OmiseService:
         except omise.errors.BaseError as e:
             logger.error(f"Failed to create Omise transfer: {e}")
             raise
+
+
+def _get_omise_service(
+    settings: AnnotatedSettings,
+) -> OmiseService:
+    """Factory function to create OmiseService instance."""
+    return OmiseService(settings)
+
+
+AnnotatedOmiseService = Annotated[OmiseService, Depends(_get_omise_service)]

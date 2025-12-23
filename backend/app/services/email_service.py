@@ -1,26 +1,32 @@
 """Email service for sending emails via SendGrid."""
 
 import logging
+from typing import Annotated
 
+from fastapi import Depends
 from python_http_client.exceptions import HTTPError
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 from app.core.jwt import create_email_verification_token
-from app.core.settings import Settings, get_settings
+from app.core.settings import AnnotatedSettings, Settings
 from app.templates.email_verification import get_verification_email_html
 
 logger = logging.getLogger(__name__)
-settings: Settings = get_settings()
 
 
 class EmailService:
     """Service class for sending emails via SendGrid."""
 
-    def __init__(self):
-        """Initialize the EmailService with SendGrid client."""
-        self.client = SendGridAPIClient(settings.SENDGRID_API_KEY)
-        self.from_email = settings.SENDGRID_FROM_EMAIL
+    def __init__(self, settings: Settings) -> None:
+        """Initialize the EmailService with SendGrid client.
+
+        Args:
+            settings: Application settings.
+        """
+        self._settings = settings
+        self.client = SendGridAPIClient(self._settings.SENDGRID_API_KEY)
+        self.from_email = self._settings.SENDGRID_FROM_EMAIL
 
     def send_email(
         self,
@@ -76,7 +82,7 @@ class EmailService:
             bool: True if the email was sent successfully, False otherwise.
         """
         token = create_email_verification_token(user_id)
-        verification_url = f"{settings.BASE_URL}/verify-email?token={token}"
+        verification_url = f"{self._settings.BASE_URL}/verify-email?token={token}"
 
         html_content = get_verification_email_html(
             first_name=first_name,
@@ -90,4 +96,11 @@ class EmailService:
         )
 
 
-email_service = EmailService()
+def _get_email_service(
+    settings: AnnotatedSettings,
+) -> EmailService:
+    """Factory function to create EmailService instance."""
+    return EmailService(settings)
+
+
+AnnotatedEmailService = Annotated[EmailService, Depends(_get_email_service)]

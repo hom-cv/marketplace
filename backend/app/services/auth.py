@@ -1,7 +1,9 @@
 """Auth service layer for authentication operations."""
 
 import logging
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -13,9 +15,10 @@ from app.core.exceptions import (
 from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
 from app.crud.user import user_crud
+from app.db.utils import get_async_db
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
-from app.services.email_service import email_service
+from app.services.email_service import AnnotatedEmailService, EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +26,16 @@ logger = logging.getLogger(__name__)
 class AuthService:
     """Service class for authentication-related operations."""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession, email_service: EmailService):
         """
         Initialize the AuthService with a database session.
 
         Args:
             db (AsyncSession): The asynchronous database session.
+            email_service (EmailService): Email service for sending emails.
         """
         self.db = db
+        self._email_service = email_service
 
     async def register_user(self, obj_in: AuthRegisterSchema) -> User:
         """
@@ -72,7 +77,7 @@ class AuthService:
         user = await user_crud.create_user(db=self.db, user=user)
 
         # Send verification email
-        email_sent = email_service.send_verification_email(
+        email_sent = self._email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
             first_name=user.first_name,
@@ -151,7 +156,7 @@ class AuthService:
         if user.email_verified:
             raise bad_request_error("Email already verified")
 
-        email_sent = email_service.send_verification_email(
+        email_sent = self._email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
             first_name=user.first_name,
@@ -165,3 +170,14 @@ class AuthService:
             raise bad_request_error(
                 "Failed to send verification email. Please try again later."
             )
+
+
+def _get_auth_service(
+    email_service: AnnotatedEmailService,
+    db: AsyncSession = Depends(get_async_db),
+) -> AuthService:
+    """Factory function to create AuthService instance."""
+    return AuthService(db, email_service)
+
+
+AnnotatedAuthService = Annotated[AuthService, Depends(_get_auth_service)]

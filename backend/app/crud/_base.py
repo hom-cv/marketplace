@@ -82,7 +82,7 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Raises:
             Exception: If there is an error while creating the instance.
         """
-        obj_in_dict = obj_in.dict()
+        obj_in_dict = obj_in.model_dump()
         created_obj = self.model(**obj_in_dict)
 
         db.add(created_obj)
@@ -108,7 +108,7 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Raises:
             Exception: If there is an error while updating the instance.
         """
-        update_data = obj_in.dict(exclude_unset=True)
+        update_data = obj_in.model_dump(exclude_unset=True)
         for field in update_data:
             setattr(db_obj, field, update_data[field])
 

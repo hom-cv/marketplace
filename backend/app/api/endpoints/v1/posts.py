@@ -3,10 +3,10 @@
 from decimal import Decimal
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.exceptions import bad_request_error, not_found_error, server_error
+from app.core.exceptions import (
+    bad_request_error,
+    not_found_error,
+)
 from app.core.security import get_current_user
 from app.crud.post import post_crud
 from app.db.utils import get_async_db
@@ -15,14 +15,10 @@ from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
-from app.services.exceptions import (
-    InvalidFileTypeError,
-    TooManyImagesError,
-    UploadError,
-)
-from app.services.pricing_service import get_price_breakdown_for_post
-from app.services.storage_service import storage_service
-from app.services.pricing_service import calculate_order_total
+from app.services.pricing_service import AnnotatedPricingService
+from app.services.storage_service import AnnotatedStorageService
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -35,6 +31,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 async def create_post(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    storage_service: AnnotatedStorageService,
     title: Annotated[str, Form(min_length=1, max_length=200)],
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
@@ -48,7 +45,7 @@ async def create_post(
     Accepts multipart/form-data with optional multiple image uploads.
     The first image will be used as the cover/display image.
     Maximum 5 images allowed. Supported formats: jpg, jpeg, png, gif, webp.
-    
+
     Requires the user to be a verified seller.
     """
     # Check if user is a verified seller
@@ -58,12 +55,7 @@ async def create_post(
             "Please complete seller verification first."
         )
 
-    try:
-        image_urls = await storage_service.upload_images(images, folder="posts")
-    except (InvalidFileTypeError, TooManyImagesError) as e:
-        raise bad_request_error(str(e))
-    except UploadError:
-        raise server_error("Failed to upload images. Please try again.")
+    image_urls = await storage_service.upload_images(images, folder="posts")
 
     image_url = image_urls[0] if image_urls else None
 
@@ -99,6 +91,7 @@ async def list_posts(
     """
     posts = await post_crud.get_all_posts(db, skip=skip, limit=limit)
     return posts
+
 
 @router.get(
     "/me",
@@ -146,9 +139,11 @@ async def get_post(
     response_model=PriceBreakdownResponse,
 )
 async def get_price_breakdown(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    pricing_service: AnnotatedPricingService,
     post_id: int,
-    payment_method: Literal["card", "promptpay"] = Query("card", description="Payment method"),
+    payment_method: Literal["card", "promptpay"] = Query(
+        "card", description="Payment method"
+    ),
 ) -> PriceBreakdownResponse:
     """
     Get price breakdown for a post.
@@ -157,9 +152,10 @@ async def get_price_breakdown(
     VAT, platform fee, processing fee, and total.
     """
     method = PaymentMethodType(payment_method)
-    breakdown = await get_price_breakdown_for_post(db, post_id, method)
+    breakdown = await pricing_service.get_price_breakdown_for_post(post_id, method)
 
     return PriceBreakdownResponse.model_validate(breakdown)
+
 
 @router.delete(
     "/{post_id}",
@@ -193,9 +189,16 @@ async def delete_post(
     response_model=PriceBreakdownResponse,
 )
 async def preview_earnings(
-    item_price: Annotated[Decimal, Query(gt=0, le=1000000, description="Item price in THB")],
-    shipping_cost: Annotated[Decimal, Query(ge=0, le=10000, description="Shipping cost in THB")] = Decimal("0"),
-    payment_method: Literal["card", "promptpay"] = Query("card", description="Payment method"),
+    pricing_service: AnnotatedPricingService,
+    item_price: Annotated[
+        Decimal, Query(gt=0, le=1000000, description="Item price in THB")
+    ],
+    shipping_cost: Annotated[
+        Decimal, Query(ge=0, le=10000, description="Shipping cost in THB")
+    ] = Decimal("0"),
+    payment_method: Literal["card", "promptpay"] = Query(
+        "card", description="Payment method"
+    ),
 ) -> PriceBreakdownResponse:
     """
     Preview seller earnings for a given price and shipping cost.
@@ -204,6 +207,6 @@ async def preview_earnings(
     Useful for showing earnings preview during post creation.
     """
     method = PaymentMethodType(payment_method)
-    breakdown = calculate_order_total(item_price, shipping_cost, method)
+    breakdown = pricing_service.calculate_order_total(item_price, shipping_cost, method)
 
     return PriceBreakdownResponse.model_validate(breakdown)

@@ -2,16 +2,26 @@
 
 import logging
 from datetime import datetime
+from typing import Annotated
 
 import omise.errors
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.omise import (
+    CURRENCY_SUBUNIT_MULTIPLIER,
+    DEFAULT_CURRENCY,
+    ChargeStatus,
+    EventKey,
+)
 from app.core.exceptions import bad_request_error, forbidden_error, not_found_error
+from app.core.settings import AnnotatedSettings, Settings
 from app.crud.payment import payment_crud
 from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.crud.user import user_crud
-from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.db.utils import get_async_db
+from app.models.payment import PaymentMethod, PaymentStatus
 from app.models.seller import SellerVerificationStatus
 from app.models.user import User
 from app.schemas.payment import (
@@ -20,9 +30,12 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
 )
-from app.services.omise_service import OmiseService
-from app.services.pricing_service import calculate_order_total, PaymentMethodType
-from app.core.settings import get_settings
+from app.services.omise_service import AnnotatedOmiseService, OmiseService
+from app.services.pricing_service import (
+    AnnotatedPricingService,
+    PaymentMethodType,
+    PricingService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +43,18 @@ logger = logging.getLogger(__name__)
 class PaymentService:
     """Service for payment processing operations."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(
+        self,
+        db: AsyncSession,
+        omise_service: OmiseService,
+        settings: Settings,
+        pricing_service: PricingService,
+    ) -> None:
         """Initialize payment service with database session."""
         self.db = db
-        self.omise_service = OmiseService()
+        self.omise_service = omise_service
+        self._settings = settings
+        self.pricing_service = pricing_service
 
     async def create_card_payment(
         self, buyer: User, payment_request: CreateCardPaymentRequest
@@ -63,9 +84,7 @@ class PaymentService:
             raise forbidden_error("You cannot purchase your own listing")
 
         # Check if seller is verified
-        seller_profile = await seller_crud.get_by_user_id(
-            self.db, user_id=post.user_id
-        )
+        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
         if (
             not seller_profile
             or seller_profile.verification_status != SellerVerificationStatus.VERIFIED
@@ -73,12 +92,16 @@ class PaymentService:
             raise bad_request_error("Seller is not verified")
 
         # Calculate total with all fees using pricing service
-        price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.CARD)
-        
+        price_breakdown = self.pricing_service.calculate_order_total(
+            post.price, post.shipping_cost, PaymentMethodType.CARD
+        )
+
         # Convert total to satang (smallest unit for THB)
-        amount = int(price_breakdown.total * 100)
-        platform_fee_satang = int(price_breakdown.platform_fee * 100)
-        currency = "THB"
+        amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
+        platform_fee_satang = int(
+            price_breakdown.platform_fee * CURRENCY_SUBUNIT_MULTIPLIER
+        )
+        currency = DEFAULT_CURRENCY
 
         try:
             # Build return_uri with payment_id placeholder - we'll create payment first
@@ -96,12 +119,20 @@ class PaymentService:
                 return_uri=payment_request.return_uri,
                 description=f"Purchase: {post.title}",
                 # Fee breakdown for accounting (all in satang)
-                item_price=int(price_breakdown.item_price * 100),
-                shipping_cost=int(price_breakdown.shipping_cost * 100),
+                item_price=int(
+                    price_breakdown.item_price * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
+                shipping_cost=int(
+                    price_breakdown.shipping_cost * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
                 platform_fee=platform_fee_satang,
-                processing_fee=int(price_breakdown.processing_fee * 100),
-                total_vat=int(price_breakdown.total_vat * 100),
-                seller_payout=int(price_breakdown.seller_payout * 100),
+                processing_fee=int(
+                    price_breakdown.processing_fee * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
+                total_vat=int(price_breakdown.total_vat * CURRENCY_SUBUNIT_MULTIPLIER),
+                seller_payout=int(
+                    price_breakdown.seller_payout * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
                 shipping_address=payment_request.shipping.address,
@@ -112,11 +143,14 @@ class PaymentService:
 
             # Build return_uri with payment_id
             separator = "&" if "?" in payment_request.return_uri else "?"
-            return_uri_with_id = f"{payment_request.return_uri}{separator}payment_id={payment.id}"
+            return_uri_with_id = (
+                f"{payment_request.return_uri}{separator}payment_id={payment.id}"
+            )
 
             # Only pass platform_fee if Omise Connect is enabled
-            settings = get_settings()
-            omise_platform_fee = platform_fee_satang if settings.OMISE_CONNECT_ENABLED else None
+            omise_platform_fee = (
+                platform_fee_satang if self._settings.OMISE_CONNECT_ENABLED else None
+            )
 
             # Create Omise charge with payment_id in return_uri and platform_fee for Omise Connect
             charge = self.omise_service.create_charge(
@@ -143,9 +177,9 @@ class PaymentService:
 
             # Determine status and update if needed
             status = PaymentStatus.PENDING
-            if charge.status == "successful":
+            if charge.status == ChargeStatus.SUCCESSFUL:
                 status = PaymentStatus.SUCCESSFUL
-            elif charge.status == "failed":
+            elif charge.status == ChargeStatus.FAILED:
                 status = PaymentStatus.FAILED
 
             if status != PaymentStatus.PENDING:
@@ -161,7 +195,9 @@ class PaymentService:
                 payment_id=payment.id,
                 status=status.value.lower(),
                 charge_id=charge.id,
-                authorize_uri=charge.authorize_uri if hasattr(charge, "authorize_uri") else None,
+                authorize_uri=charge.authorize_uri
+                if hasattr(charge, "authorize_uri")
+                else None,
             )
 
         except omise.errors.BaseError as e:
@@ -191,9 +227,7 @@ class PaymentService:
             raise forbidden_error("You cannot purchase your own listing")
 
         # Check if seller is verified
-        seller_profile = await seller_crud.get_by_user_id(
-            self.db, user_id=post.user_id
-        )
+        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
         if (
             not seller_profile
             or seller_profile.verification_status != SellerVerificationStatus.VERIFIED
@@ -201,12 +235,16 @@ class PaymentService:
             raise bad_request_error("Seller is not verified")
 
         # Calculate total with all fees using pricing service
-        price_breakdown = calculate_order_total(post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY)
-        
+        price_breakdown = self.pricing_service.calculate_order_total(
+            post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY
+        )
+
         # Convert total to satang
-        amount = int(price_breakdown.total * 100)
-        platform_fee_satang = int(price_breakdown.platform_fee * 100)
-        currency = "THB"
+        amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
+        platform_fee_satang = int(
+            price_breakdown.platform_fee * CURRENCY_SUBUNIT_MULTIPLIER
+        )
+        currency = DEFAULT_CURRENCY
 
         try:
             # Create PromptPay source
@@ -216,8 +254,9 @@ class PaymentService:
             )
 
             # Only pass platform_fee if Omise Connect is enabled
-            settings = get_settings()
-            omise_platform_fee = platform_fee_satang if settings.OMISE_CONNECT_ENABLED else None
+            omise_platform_fee = (
+                platform_fee_satang if self._settings.OMISE_CONNECT_ENABLED else None
+            )
 
             # Create charge with source and platform_fee for Omise Connect
             charge = self.omise_service.create_charge_with_source(
@@ -248,11 +287,15 @@ class PaymentService:
 
             # If still no QR code, log the charge structure for debugging
             if not qr_code_uri:
-                logger.warning(f"No QR code found in charge. Charge source: {charge_source}")
+                logger.warning(
+                    f"No QR code found in charge. Charge source: {charge_source}"
+                )
                 # Try alternate path: directly from charge
                 if hasattr(charge, "scannable_code"):
                     scannable = charge.scannable_code
-                    if hasattr(scannable, "image") and hasattr(scannable.image, "download_uri"):
+                    if hasattr(scannable, "image") and hasattr(
+                        scannable.image, "download_uri"
+                    ):
                         qr_code_uri = scannable.image.download_uri
                         logger.info(f"Got QR from alternate path: {qr_code_uri}")
 
@@ -263,7 +306,9 @@ class PaymentService:
                 try:
                     # Handle ISO format with Z suffix
                     if isinstance(expires_at_str, str):
-                        expires_at = datetime.fromisoformat(expires_at_str.replace("Z", "+00:00"))
+                        expires_at = datetime.fromisoformat(
+                            expires_at_str.replace("Z", "+00:00")
+                        )
                     else:
                         expires_at = expires_at_str
                 except (ValueError, TypeError):
@@ -284,12 +329,20 @@ class PaymentService:
                 expires_at=expires_at,
                 description=f"Purchase: {post.title}",
                 # Fee breakdown for accounting (all in satang)
-                item_price=int(price_breakdown.item_price * 100),
-                shipping_cost=int(price_breakdown.shipping_cost * 100),
+                item_price=int(
+                    price_breakdown.item_price * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
+                shipping_cost=int(
+                    price_breakdown.shipping_cost * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
                 platform_fee=platform_fee_satang,
-                processing_fee=int(price_breakdown.processing_fee * 100),
-                total_vat=int(price_breakdown.total_vat * 100),
-                seller_payout=int(price_breakdown.seller_payout * 100),
+                processing_fee=int(
+                    price_breakdown.processing_fee * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
+                total_vat=int(price_breakdown.total_vat * CURRENCY_SUBUNIT_MULTIPLIER),
+                seller_payout=int(
+                    price_breakdown.seller_payout * CURRENCY_SUBUNIT_MULTIPLIER
+                ),
                 # Shipping address
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
@@ -337,20 +390,17 @@ class PaymentService:
             raise forbidden_error("You are not authorized to view this payment")
 
         # Check if status needs updating from Omise
-        if (
-            payment.status == PaymentStatus.PENDING
-            and payment.omise_charge_id
-        ):
+        if payment.status == PaymentStatus.PENDING and payment.omise_charge_id:
             try:
                 charge = self.omise_service.get_charge(payment.omise_charge_id)
 
-                if charge.status == "successful":
+                if charge.status == ChargeStatus.SUCCESSFUL:
                     await payment_crud.update_status(
                         self.db,
                         payment=payment,
                         status=PaymentStatus.SUCCESSFUL,
                     )
-                elif charge.status == "failed":
+                elif charge.status == ChargeStatus.FAILED:
                     await payment_crud.update_status(
                         self.db,
                         payment=payment,
@@ -358,7 +408,7 @@ class PaymentService:
                         failure_code=getattr(charge, "failure_code", None),
                         failure_message=getattr(charge, "failure_message", None),
                     )
-                elif charge.status == "expired":
+                elif charge.status == ChargeStatus.EXPIRED:
                     await payment_crud.update_status(
                         self.db,
                         payment=payment,
@@ -389,11 +439,11 @@ class PaymentService:
         """
         logger.info(f"Processing webhook: {event_key}")
 
-        if event_key == "charge.complete":
+        if event_key == EventKey.CHARGE_COMPLETE:
             await self._handle_charge_complete(event_data)
-        elif event_key == "transfer.pay":
+        elif event_key == EventKey.TRANSFER_PAY:
             await self._handle_transfer_pay(event_data)
-        elif event_key == "recipient.verify":
+        elif event_key == EventKey.RECIPIENT_VERIFY:
             await self._handle_recipient_verify(event_data)
 
     async def _handle_charge_complete(self, data: dict) -> None:
@@ -408,14 +458,14 @@ class PaymentService:
             return
 
         status = data.get("status")
-        if status == "successful":
+        if status == ChargeStatus.SUCCESSFUL:
             await payment_crud.update_status(
                 self.db,
                 payment=payment,
                 status=PaymentStatus.SUCCESSFUL,
             )
             logger.info(f"Payment {payment.id} marked as successful")
-        elif status == "failed":
+        elif status == ChargeStatus.FAILED:
             await payment_crud.update_status(
                 self.db,
                 payment=payment,
@@ -446,7 +496,9 @@ class PaymentService:
 
         verified = data.get("verified", False)
         if verified:
-            user = await user_crud.get_by_id_with_relations(self.db, id=seller_profile.user_id)
+            user = await user_crud.get_by_id_with_relations(
+                self.db, id=seller_profile.user_id
+            )
             if user:
                 await seller_crud.update_verification_status(
                     self.db,
@@ -463,3 +515,81 @@ class PaymentService:
                 rejection_reason=data.get("failure_code"),
             )
             logger.info(f"Seller {seller_profile.user_id} rejected via webhook")
+
+    async def add_tracking(
+        self,
+        payment_id: int,
+        user: User,
+        tracking_number: str,
+        carrier: str,
+    ) -> None:
+        """
+        Add tracking number to a payment (seller action).
+
+        Args:
+            payment_id: The payment ID.
+            user: The user adding tracking (must be seller).
+            tracking_number: The tracking number.
+            carrier: The shipping carrier.
+
+        Raises:
+            NotFoundError: If payment not found.
+            ForbiddenError: If user is not seller or payment not successful.
+        """
+        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        if not payment:
+            raise not_found_error("Payment not found")
+
+        if payment.seller_id != user.id:
+            raise forbidden_error("Only the seller can add tracking information")
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            raise forbidden_error("Can only add tracking to successful payments")
+
+        await payment_crud.add_tracking_number(
+            self.db,
+            payment=payment,
+            tracking_number=tracking_number,
+            carrier=carrier,
+        )
+
+    async def confirm_delivery(
+        self,
+        payment_id: int,
+        user: User,
+    ) -> None:
+        """
+        Confirm delivery of an item (buyer action).
+
+        Args:
+            payment_id: The payment ID.
+            user: The user confirming delivery (must be buyer).
+
+        Raises:
+            NotFoundError: If payment not found.
+            ForbiddenError: If user is not buyer or payment not successful.
+        """
+        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        if not payment:
+            raise not_found_error("Payment not found")
+
+        if payment.buyer_id != user.id:
+            raise forbidden_error("Only the buyer can confirm delivery")
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            raise forbidden_error("Can only confirm delivery for successful payments")
+
+        await payment_crud.confirm_delivery(self.db, payment=payment)
+
+
+def _get_payment_service(
+    omise_service: AnnotatedOmiseService,
+    settings: AnnotatedSettings,
+    pricing_service: AnnotatedPricingService,
+    db: AsyncSession = Depends(get_async_db),
+) -> PaymentService:
+    """Factory function to create PaymentService instance."""
+    return PaymentService(db, omise_service, settings, pricing_service)
+
+
+AnnotatedPaymentService = Annotated[PaymentService, Depends(_get_payment_service)]

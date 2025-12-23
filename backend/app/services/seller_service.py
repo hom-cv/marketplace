@@ -1,12 +1,15 @@
 """Seller service for handling seller registration and verification."""
 
 import logging
+from typing import Annotated
 
 import omise.errors
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error
 from app.crud.seller import seller_crud
+from app.db.utils import get_async_db
 from app.models.seller import SellerProfile, SellerVerificationStatus
 from app.models.user import User
 from app.schemas.seller import (
@@ -14,7 +17,7 @@ from app.schemas.seller import (
     SellerVerificationRequest,
     SellerVerificationResponse,
 )
-from app.services.omise_service import OmiseService
+from app.services.omise_service import AnnotatedOmiseService, OmiseService
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +25,14 @@ logger = logging.getLogger(__name__)
 class SellerService:
     """Service for seller registration and verification operations."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(
+        self,
+        db: AsyncSession,
+        omise_service: OmiseService,
+    ) -> None:
         """Initialize seller service with database session."""
         self.db = db
-        self.omise_service = OmiseService()
+        self.omise_service = omise_service
 
     async def register_seller(
         self, user: User, verification_request: SellerVerificationRequest
@@ -47,9 +54,14 @@ class SellerService:
         # Check if user already has a seller profile
         existing_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
         if existing_profile:
-            if existing_profile.verification_status == SellerVerificationStatus.VERIFIED:
+            if (
+                existing_profile.verification_status
+                == SellerVerificationStatus.VERIFIED
+            ):
                 raise conflict_error("User is already a verified seller")
-            elif existing_profile.verification_status == SellerVerificationStatus.PENDING:
+            elif (
+                existing_profile.verification_status == SellerVerificationStatus.PENDING
+            ):
                 raise conflict_error("Seller verification is already in progress")
 
         try:
@@ -189,3 +201,14 @@ class SellerService:
             SellerStatusResponse: The current seller status.
         """
         return await self.check_and_update_verification(user)
+
+
+def _get_seller_service(
+    omise_service: AnnotatedOmiseService,
+    db: AsyncSession = Depends(get_async_db),
+) -> SellerService:
+    """Factory function to create SellerService instance."""
+    return SellerService(db, omise_service)
+
+
+AnnotatedSellerService = Annotated[SellerService, Depends(_get_seller_service)]
