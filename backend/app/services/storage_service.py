@@ -17,7 +17,7 @@ from app.core.exceptions import (
     too_many_images_error,
     upload_error,
 )
-from app.core.settings import Settings, get_settings
+from app.core.settings import AnnotatedSettings, Settings
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 class StorageService:
     """Service for uploading files to Digital Ocean Spaces (S3-compatible)."""
 
-    def __init__(self, settings: Settings | None = None) -> None:
+    def __init__(self, settings: Settings) -> None:
         """Initialize the StorageService.
 
         Args:
-            settings: Application settings. If None, defaults are loaded via get_settings().
+            settings: Application settings.
         """
-        self._settings = settings or get_settings()
+        self._settings = settings
         self.enabled = all(
             [
                 self._settings.DO_SPACES_KEY,
@@ -173,16 +173,11 @@ class StorageService:
             raise delete_error("Failed to delete image from storage") from e
 
 
-def get_storage_service(settings: Settings | None = None) -> StorageService:
-    """Factory function to create StorageService instance.
-
-    Args:
-        settings: Optional settings to inject. Uses get_settings() if not provided.
-
-    Returns:
-        StorageService instance.
-    """
+def _get_storage_service(
+    settings: AnnotatedSettings,
+) -> StorageService:
+    """Factory function to create StorageService instance."""
     return StorageService(settings)
 
 
-AnnotatedStorageService = Annotated[StorageService, Depends(get_storage_service)]
+AnnotatedStorageService = Annotated[StorageService, Depends(_get_storage_service)]

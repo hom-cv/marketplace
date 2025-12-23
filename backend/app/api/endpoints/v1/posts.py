@@ -15,10 +15,7 @@ from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
-from app.services.pricing_service import (
-    calculate_order_total,
-    get_price_breakdown_for_post,
-)
+from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -142,7 +139,7 @@ async def get_post(
     response_model=PriceBreakdownResponse,
 )
 async def get_price_breakdown(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    pricing_service: AnnotatedPricingService,
     post_id: int,
     payment_method: Literal["card", "promptpay"] = Query(
         "card", description="Payment method"
@@ -155,7 +152,7 @@ async def get_price_breakdown(
     VAT, platform fee, processing fee, and total.
     """
     method = PaymentMethodType(payment_method)
-    breakdown = await get_price_breakdown_for_post(db, post_id, method)
+    breakdown = await pricing_service.get_price_breakdown_for_post(post_id, method)
 
     return PriceBreakdownResponse.model_validate(breakdown)
 

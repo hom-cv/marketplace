@@ -9,7 +9,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
 from app.core.jwt import create_email_verification_token
-from app.core.settings import Settings, get_settings
+from app.core.settings import AnnotatedSettings, Settings
 from app.templates.email_verification import get_verification_email_html
 
 logger = logging.getLogger(__name__)
@@ -20,9 +20,9 @@ class EmailService:
 
     def __init__(self, settings: Settings) -> None:
         """Initialize the EmailService with SendGrid client.
-        
+
         Args:
-            settings: Application settings. If None, defaults are loaded via get_settings().
+            settings: Application settings.
         """
         self._settings = settings
         self.client = SendGridAPIClient(self._settings.SENDGRID_API_KEY)
@@ -96,17 +96,11 @@ class EmailService:
         )
 
 
-def get_email_service(settings: Settings | None = None) -> EmailService:
-    """Factory function to create EmailService instance.
-
-    Args:
-        settings: Optional settings to inject. Uses get_settings() if not provided.
-
-    Returns:
-        EmailService instance.
-    """
-    return EmailService(settings or get_settings())
+def _get_email_service(
+    settings: AnnotatedSettings,
+) -> EmailService:
+    """Factory function to create EmailService instance."""
+    return EmailService(settings)
 
 
-AnnotatedEmailService = Annotated[EmailService, Depends(get_email_service)]
-
+AnnotatedEmailService = Annotated[EmailService, Depends(_get_email_service)]

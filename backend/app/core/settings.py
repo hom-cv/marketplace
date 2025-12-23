@@ -1,8 +1,9 @@
-from functools import lru_cache
-from typing import Self
-from urllib import parse
 from decimal import Decimal
+from functools import lru_cache
+from typing import Annotated, Self
+from urllib import parse
 
+from fastapi import Depends
 from pydantic import PostgresDsn, model_validator
 from pydantic_settings import BaseSettings
 
@@ -42,10 +43,12 @@ class Settings(BaseSettings):
     # Transaction fees (percentages)
     PLATFORM_FEE_PERCENT: Decimal = Decimal("10.0")  # Platform fee to us
     VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on item price
-    
+
     # Payment processing fees (Omise fees passed to buyer)
     CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("3.65")  # Credit card processing fee
-    PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal("1.65")  # PromptPay processing fee
+    PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal(
+        "1.65"
+    )  # PromptPay processing fee
     PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
 
     @property
@@ -96,3 +99,5 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore
+
+AnnotatedSettings = Annotated[Settings, Depends(get_settings)]

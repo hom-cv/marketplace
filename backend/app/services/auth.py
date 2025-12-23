@@ -15,10 +15,10 @@ from app.core.exceptions import (
 from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
 from app.crud.user import user_crud
+from app.db.utils import get_async_db
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
-from app.services.email_service import EmailService, get_email_service
-from app.db.utils import get_async_db
+from app.services.email_service import AnnotatedEmailService, EmailService
 
 logger = logging.getLogger(__name__)
 
@@ -172,11 +172,12 @@ class AuthService:
             )
 
 
-def get_auth_service(
+def _get_auth_service(
+    email_service: AnnotatedEmailService,
     db: AsyncSession = Depends(get_async_db),
-    email_service: EmailService = Depends(get_email_service),
 ) -> AuthService:
     """Factory function to create AuthService instance."""
     return AuthService(db, email_service)
 
-AnnotatedAuthService = Annotated[AuthService, Depends(get_auth_service)]
+
+AnnotatedAuthService = Annotated[AuthService, Depends(_get_auth_service)]

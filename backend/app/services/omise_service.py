@@ -6,7 +6,7 @@ from typing import Annotated, Any
 import omise
 from fastapi import Depends
 
-from app.core.settings import Settings, get_settings
+from app.core.settings import AnnotatedSettings, Settings
 
 logger = logging.getLogger(__name__)
 
@@ -14,13 +14,13 @@ logger = logging.getLogger(__name__)
 class OmiseService:
     """Service for Omise API interactions."""
 
-    def __init__(self, settings: Settings | None = None) -> None:
+    def __init__(self, settings: Settings) -> None:
         """Initialize Omise with API keys.
 
         Args:
-            settings: Application settings. If None, defaults are loaded via get_settings().
+            settings: Application settings.
         """
-        self._settings = settings or get_settings()
+        self._settings = settings
         omise.api_secret = self._settings.OMISE_SECRET_KEY
         omise.api_public = self._settings.OMISE_PUBLIC_KEY
 
@@ -243,16 +243,11 @@ class OmiseService:
             raise
 
 
-def get_omise_service(settings: Settings | None = None) -> OmiseService:
-    """Factory function to create OmiseService instance.
-
-    Args:
-        settings: Optional settings to inject. Uses get_settings() if not provided.
-
-    Returns:
-        OmiseService instance.
-    """
+def _get_omise_service(
+    settings: AnnotatedSettings,
+) -> OmiseService:
+    """Factory function to create OmiseService instance."""
     return OmiseService(settings)
 
 
-AnnotatedOmiseService = Annotated[OmiseService, Depends(get_omise_service)]
+AnnotatedOmiseService = Annotated[OmiseService, Depends(_get_omise_service)]
