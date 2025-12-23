@@ -15,7 +15,15 @@ from fastapi.exceptions import HTTPException
 
 
 def _build_error(detail: str, status_code: int) -> HTTPException:
-    """Build an HTTPException with a specific status code and detail message."""
+    """
+    Build an HTTPException with a specific status code and detail message.
+
+    Args:
+        detail (str): The detail message describing the error.
+        status_code (int): The HTTP status code for the error.
+    Returns:
+        HTTPException: The constructed HTTPException object with the provided status code and detail.
+    """
     return HTTPException(status_code=status_code, detail=detail)
 
 
