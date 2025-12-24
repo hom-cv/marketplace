@@ -1,32 +1,57 @@
 """Post CRUD operations."""
 
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import server_error
 from app.crud._base import BaseCRUD
+from app.models.payment import Payment, PaymentStatus
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.post import PostCreateSchema, PostUpdateSchema
 
 
+@dataclass
+class PostWithSoldStatus:
+    """Post with computed is_sold status."""
+
+    post: Post
+    is_sold: bool
+
+
 class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     """CRUD operations for Post model."""
 
-    async def get_all_posts(
+    def _successful_payment_exists_subquery(self, post_id_column):
+        """
+        Create a correlated subquery to check if a successful payment exists.
+
+        This is used in SELECT to compute is_sold as a scalar subquery.
+        """
+        return (
+            select(Payment.id)
+            .where(Payment.post_id == post_id_column)
+            .where(Payment.status == PaymentStatus.SUCCESSFUL)
+            .exists()
+        )
+
+    async def get_all_posts_with_sold_status(
         self,
         db: AsyncSession,
         *,
         skip: int = 0,
         limit: int = 50,
         include_deleted: bool = False,
-    ) -> Sequence[Post]:
+    ) -> Sequence[PostWithSoldStatus]:
         """
-        Get all posts with pagination.
+        Get all posts with pagination and sold status in a single query.
+
+        Uses a correlated subquery to check for successful payments.
 
         Args:
             db: The async database session.
@@ -35,10 +60,12 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             include_deleted: If True, include soft-deleted posts.
 
         Returns:
-            Sequence of posts with user info loaded.
+            Sequence of PostWithSoldStatus containing post and is_sold flag.
         """
+        is_sold_subquery = self._successful_payment_exists_subquery(self.model.id)
+
         query = (
-            select(self.model)
+            select(self.model, is_sold_subquery.label("is_sold"))
             .options(
                 selectinload(self.model.user).selectinload(User.seller_profile)
             )
@@ -48,10 +75,13 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         )
         if not include_deleted:
             query = query.where(self.model.deleted_at.is_(None))
-        result = await db.scalars(query)
-        return result.all()
 
-    async def get_by_user_id(
+        result = await db.execute(query)
+        rows = result.all()
+
+        return [PostWithSoldStatus(post=row[0], is_sold=row[1]) for row in rows]
+
+    async def get_by_user_id_with_sold_status(
         self,
         db: AsyncSession,
         *,
@@ -59,9 +89,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         skip: int = 0,
         limit: int = 50,
         include_deleted: bool = False,
-    ) -> Sequence[Post]:
+    ) -> Sequence[PostWithSoldStatus]:
         """
-        Get all posts by a specific user.
+        Get all posts by a specific user with sold status in a single query.
 
         Args:
             db: The async database session.
@@ -71,10 +101,12 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             include_deleted: If True, include soft-deleted posts.
 
         Returns:
-            Sequence of posts by the user.
+            Sequence of PostWithSoldStatus by the user.
         """
+        is_sold_subquery = self._successful_payment_exists_subquery(self.model.id)
+
         query = (
-            select(self.model)
+            select(self.model, is_sold_subquery.label("is_sold"))
             .options(
                 selectinload(self.model.user).selectinload(User.seller_profile)
             )
@@ -85,8 +117,49 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         )
         if not include_deleted:
             query = query.where(self.model.deleted_at.is_(None))
-        result = await db.scalars(query)
-        return result.all()
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        return [PostWithSoldStatus(post=row[0], is_sold=row[1]) for row in rows]
+
+    async def get_by_id_with_sold_status(
+        self,
+        db: AsyncSession,
+        *,
+        id: int,
+        include_deleted: bool = False,
+    ) -> PostWithSoldStatus | None:
+        """
+        Get a post by ID with user info and sold status in a single query.
+
+        Args:
+            db: The async database session.
+            id: The post ID.
+            include_deleted: If True, include soft-deleted posts.
+
+        Returns:
+            PostWithSoldStatus if found, or None.
+        """
+        is_sold_subquery = self._successful_payment_exists_subquery(self.model.id)
+
+        query = (
+            select(self.model, is_sold_subquery.label("is_sold"))
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
+            .where(self.model.id == id)
+        )
+        if not include_deleted:
+            query = query.where(self.model.deleted_at.is_(None))
+
+        result = await db.execute(query)
+        row = result.one_or_none()
+
+        if row is None:
+            return None
+
+        return PostWithSoldStatus(post=row[0], is_sold=row[1])
 
     async def get_by_id_with_user(
         self,
@@ -166,4 +239,5 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
 
 
 post_crud = PostCRUD(Post)
+
 

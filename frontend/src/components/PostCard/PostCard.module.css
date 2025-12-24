@@ -1,4 +1,4 @@
-/* PostCard styles with hover effects and modern aesthetics */
+/* PostCard styles - clean, minimal design */
 
 .card {
   cursor: pointer;
@@ -7,8 +7,17 @@
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+}
+
+.soldCard {
+  opacity: 0.9;
+}
+
+.soldCard:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .imageSection {
@@ -21,14 +30,24 @@
 }
 
 .card:hover .image {
-  transform: scale(1.05);
+  transform: scale(1.03);
 }
 
-.typeBadge {
+.soldCard:hover .image {
+  transform: none;
+}
+
+.soldBadge {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.5px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  z-index: 10;
+}
+
+.soldOverlay {
+  z-index: 5 !important;
 }

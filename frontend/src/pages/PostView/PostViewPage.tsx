@@ -23,6 +23,7 @@ import {
   Center,
   Divider,
   Avatar,
+  Overlay,
 } from "@mantine/core";
 import {
   IconAlertCircle,
@@ -119,15 +120,45 @@ export function PostViewPage() {
           <Grid.Col span={{ base: 12, md: 6 }}>
             <Box className={styles.imageSection}>
               {/* Main Image Display */}
-              <Box className={styles.mainImageWrapper}>
+              <Box className={styles.mainImageWrapper} pos="relative">
                 {imageUrls.length > 0 ? (
-                  <Image
-                    src={imageUrls[selectedImageIndex]}
-                    alt={post.title}
-                    className={styles.mainImage}
-                    fit="contain"
-                    radius="md"
-                  />
+                  <>
+                    <Image
+                      src={imageUrls[selectedImageIndex]}
+                      alt={post.title}
+                      className={styles.mainImage}
+                      fit="contain"
+                      radius="md"
+                      style={{ opacity: post.is_sold ? 0.7 : 1 }}
+                    />
+                    {post.is_sold && (
+                      <>
+                        <Overlay
+                          color="#000"
+                          backgroundOpacity={0.4}
+                          radius="md"
+                        />
+                        <Badge
+                          color="red"
+                          variant="filled"
+                          size="xl"
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: "50%",
+                            transform: "translate(-50%, -50%)",
+                            textTransform: "uppercase",
+                            fontSize: "20px",
+                            letterSpacing: "2px",
+                            padding: "12px 24px",
+                            zIndex: 10,
+                          }}
+                        >
+                          SOLD
+                        </Badge>
+                      </>
+                    )}
+                  </>
                 ) : (
                   <Box className={styles.imagePlaceholder}>
                     <IconPhoto size={64} stroke={1} color="var(--mantine-color-gray-4)" />
@@ -165,6 +196,11 @@ export function PostViewPage() {
             <Stack gap="md">
               {/* Category badge */}
               <Group>
+                {post.is_sold && (
+                  <Badge color="red" size="lg" variant="filled">
+                    SOLD
+                  </Badge>
+                )}
                 <Badge color={typeColors[post.type]} size="lg" variant="light">
                   {typeLabels[post.type]}
                 </Badge>
@@ -179,7 +215,12 @@ export function PostViewPage() {
               <Title order={1}>{post.title}</Title>
 
               {/* Price */}
-              <Text size="2rem" fw={700} c="dark">
+              <Text
+                size="2rem"
+                fw={700}
+                c={post.is_sold ? "dimmed" : "dark"}
+                td={post.is_sold ? "line-through" : undefined}
+              >
                 ฿{price.toLocaleString()}
               </Text>
 
@@ -212,8 +253,8 @@ export function PostViewPage() {
                 </Group>
               </Paper>
 
-              {/* Buy Button */}
-              {!isOwner && (
+              {/* Buy Button or Sold Message */}
+              {!isOwner && !post.is_sold && (
                 <Button
                   size="xl"
                   leftSection={<IconShoppingCart size={20} />}
@@ -224,7 +265,27 @@ export function PostViewPage() {
                 </Button>
               )}
 
-              {isOwner && (
+              {!isOwner && post.is_sold && (
+                <Alert
+                  color="gray"
+                  title="This item has been sold"
+                  mt="md"
+                >
+                  This listing is no longer available for purchase.
+                </Alert>
+              )}
+
+              {isOwner && post.is_sold && (
+                <Alert
+                  color="green"
+                  title="Item Sold!"
+                  mt="md"
+                >
+                  This item has been sold. Check your sold listings for details.
+                </Alert>
+              )}
+
+              {isOwner && !post.is_sold && (
                 <EarningsPreview
                   postId={postId ?? undefined}
                   title="Your Earnings (if sold)"

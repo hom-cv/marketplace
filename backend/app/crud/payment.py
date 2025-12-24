@@ -304,5 +304,49 @@ class PaymentCRUD(
 
         return payment
 
+    async def get_sold_post_ids(
+        self,
+        db: AsyncSession,
+        *,
+        post_ids: list[int] | None = None,
+    ) -> set[int]:
+        """
+        Get all post IDs that have been sold (have successful payment).
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            post_ids (list[int] | None): Optional list of post IDs to filter by.
+                If None, returns all sold post IDs.
+
+        Returns:
+            set[int]: Set of post IDs that have successful payments.
+        """
+        query = select(self.model.post_id).where(
+            self.model.status == PaymentStatus.SUCCESSFUL
+        )
+        if post_ids is not None:
+            query = query.where(self.model.post_id.in_(post_ids))
+        result = await db.scalars(query)
+        return set(result.all())
+
+    async def is_post_sold(
+        self,
+        db: AsyncSession,
+        *,
+        post_id: int,
+    ) -> bool:
+        """
+        Check if a post has been sold (has successful payment).
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            post_id (int): The post ID to check.
+
+        Returns:
+            bool: True if the post has been sold.
+        """
+        sold_ids = await self.get_sold_post_ids(db, post_ids=[post_id])
+        return post_id in sold_ids
+
 
 payment_crud = PaymentCRUD(Payment)

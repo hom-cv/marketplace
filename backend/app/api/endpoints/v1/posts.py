@@ -71,7 +71,11 @@ async def create_post(
     )
 
     created_post = await post_crud.create_post(db, post=post)
-    return PostResponseSchema.model_validate(created_post)
+
+    return PostResponseSchema(
+        **PostResponseSchema.model_validate(created_post).model_dump(exclude={"is_sold"}),
+        is_sold=False,
+    )
 
 
 @router.get(
@@ -89,8 +93,18 @@ async def list_posts(
 
     Supports pagination with skip and limit parameters.
     """
-    posts = await post_crud.get_all_posts(db, skip=skip, limit=limit)
-    return posts
+
+    posts_with_status = await post_crud.get_all_posts_with_sold_status(
+        db, skip=skip, limit=limit
+    )
+
+    return [
+        PostResponseSchema(
+            **PostResponseSchema.model_validate(item.post).model_dump(exclude={"is_sold"}),
+            is_sold=item.is_sold,
+        )
+        for item in posts_with_status
+    ]
 
 
 @router.get(
@@ -106,11 +120,21 @@ async def get_my_posts(
 ) -> list[PostResponseSchema]:
     """
     Get all posts created by the current user.
+
+    Uses a single query with JOIN to get posts and sold status.
     """
-    posts = await post_crud.get_by_user_id(
+
+    posts_with_status = await post_crud.get_by_user_id_with_sold_status(
         db, user_id=current_user.id, skip=skip, limit=limit
     )
-    return [PostResponseSchema.model_validate(p) for p in posts]
+
+    return [
+        PostResponseSchema(
+            **PostResponseSchema.model_validate(item.post).model_dump(exclude={"is_sold"}),
+            is_sold=item.is_sold,
+        )
+        for item in posts_with_status
+    ]
 
 
 @router.get(
@@ -125,12 +149,15 @@ async def get_post(
     """
     Get a specific post by ID.
     """
-    post = await post_crud.get_by_id_with_user(db, id=post_id)
+    result = await post_crud.get_by_id_with_sold_status(db, id=post_id)
 
-    if not post:
+    if not result:
         raise not_found_error("Post not found")
 
-    return PostResponseSchema.model_validate(post)
+    return PostResponseSchema(
+        **PostResponseSchema.model_validate(result.post).model_dump(exclude={"is_sold"}),
+        is_sold=result.is_sold,
+    )
 
 
 @router.get(
