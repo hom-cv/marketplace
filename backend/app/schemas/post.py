@@ -76,6 +76,17 @@ class PostResponseSchema(BaseModel):
     image_url: str | None
     image_urls: list[str] | None = None
     user: UserResponseSchema
+    is_sold: bool = False
 
     class Config:
         from_attributes = True
+
+
+class PaginatedPostsResponse(BaseModel):
+    """Paginated posts response with total count."""
+
+    items: list[PostResponseSchema]
+    total: int
+    skip: int
+    limit: int
+

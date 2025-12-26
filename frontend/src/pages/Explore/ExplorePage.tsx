@@ -15,18 +15,20 @@ import {
   Button,
   Paper,
   Badge,
+  TextInput,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
+import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
+import { IconAlertCircle, IconAdjustments, IconX, IconSearch } from "@tabler/icons-react";
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
-import type { PostType } from "@/api/types/post";
+import type { PostType, PostFilters } from "@/api/types/post";
 import styles from "./ExplorePage.module.css";
 
 interface FiltersState {
   types: PostType[];
   priceRange: [number, number];
+  search: string;
 }
 
 const typeOptions: { value: PostType; label: string }[] = [
@@ -43,33 +45,54 @@ export function ExplorePage() {
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
     priceRange: [0, 10000],
+    search: "",
   });
 
+  // Debounce search and price range to avoid too many API calls
+  const [debouncedSearch] = useDebouncedValue(filters.search, 300);
+  const [debouncedPriceRange] = useDebouncedValue(filters.priceRange, 300);
+
+  // Build query filters for API
+  const queryFilters = useMemo<PostFilters>(() => {
+    const apiFilters: PostFilters = {};
+
+    if (filters.types.length > 0) {
+      apiFilters.types = filters.types;
+    }
+    if (debouncedPriceRange[0] > 0) {
+      apiFilters.minPrice = debouncedPriceRange[0];
+    }
+    if (debouncedPriceRange[1] < 10000) {
+      apiFilters.maxPrice = debouncedPriceRange[1];
+    }
+    if (debouncedSearch.trim()) {
+      apiFilters.search = debouncedSearch.trim();
+    }
+
+    return apiFilters;
+  }, [filters.types, debouncedPriceRange, debouncedSearch]);
+
   const {
-    data: posts,
+    data: postsResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["posts"],
-    queryFn: () => getPosts(),
+    queryKey: ["posts", queryFilters],
+    queryFn: () => getPosts(0, 50, queryFilters),
   });
 
-  const filteredPosts = useMemo(() => {
-    if (!posts) return [];
-    return posts.filter((post) => {
-      if (filters.types.length > 0 && !filters.types.includes(post.type)) {
-        return false;
-      }
-      const price = parseFloat(post.price);
-      if (price < filters.priceRange[0] || price > filters.priceRange[1]) {
-        return false;
-      }
-      return true;
-    });
-  }, [posts, filters]);
+  const posts = postsResponse?.items ?? [];
+  const totalCount = postsResponse?.total ?? 0;
 
-  const hasActiveFilters = filters.types.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 10000;
-  const activeFilterCount = filters.types.length + (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000 ? 1 : 0);
+  const hasActiveFilters =
+    filters.types.length > 0 ||
+    filters.priceRange[0] > 0 ||
+    filters.priceRange[1] < 10000 ||
+    filters.search.trim() !== "";
+  const activeFilterCount =
+    filters.types.length +
+    (filters.priceRange[0] > 0 || filters.priceRange[1] < 10000 ? 1 : 0) +
+    (filters.search.trim() ? 1 : 0);
 
   const handleTypeToggle = (type: PostType) => {
     const newTypes = filters.types.includes(type)
@@ -79,7 +102,7 @@ export function ExplorePage() {
   };
 
   const handleClearFilters = () => {
-    setFilters({ types: [], priceRange: [0, 10000] });
+    setFilters({ types: [], priceRange: [0, 10000], search: "" });
   };
 
   if (isLoading) {
@@ -100,10 +123,26 @@ export function ExplorePage() {
 
   return (
     <Stack gap="lg">
-      {/* Header */}
-      <Group justify="space-between" align="center">
+      {/* Header with Search */}
+      <Group justify="space-between" align="center" wrap="wrap">
         <Title order={2}>Explore</Title>
         <Group gap="xs">
+          <TextInput
+            placeholder="Search listings..."
+            leftSection={<IconSearch size={16} />}
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+            style={{ minWidth: 200 }}
+            rightSection={
+              filters.search && (
+                <IconX
+                  size={14}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFilters({ ...filters, search: "" })}
+                />
+              )
+            }
+          />
           {hasActiveFilters && (
             <Button
               variant="subtle"
@@ -119,11 +158,13 @@ export function ExplorePage() {
             variant={filtersOpen ? "filled" : "light"}
             size="sm"
             leftSection={<IconAdjustments size={16} />}
-            rightSection={activeFilterCount > 0 && (
-              <Badge size="xs" circle variant="filled" color="white" c="blue">
-                {activeFilterCount}
-              </Badge>
-            )}
+            rightSection={
+              activeFilterCount > 0 && (
+                <Badge size="xs" circle variant="filled" color="white" c="blue">
+                  {activeFilterCount}
+                </Badge>
+              )
+            }
             onClick={toggleFilters}
           >
             Filters
@@ -137,7 +178,9 @@ export function ExplorePage() {
           <Stack gap="md">
             {/* Category Chips */}
             <div>
-              <Text size="sm" fw={500} mb="xs" c="dimmed">Category</Text>
+              <Text size="sm" fw={500} mb="xs" c="dimmed">
+                Category
+              </Text>
               <Group gap="xs">
                 {typeOptions.map((option) => (
                   <Chip
@@ -155,7 +198,9 @@ export function ExplorePage() {
 
             {/* Price Range */}
             <div>
-              <Text size="sm" fw={500} mb="xs" c="dimmed">Price Range</Text>
+              <Text size="sm" fw={500} mb="xs" c="dimmed">
+                Price Range
+              </Text>
               <Group gap="md" align="flex-end">
                 <Box style={{ flex: 1, maxWidth: 400 }}>
                   <RangeSlider
@@ -180,6 +225,22 @@ export function ExplorePage() {
       {/* Active Filters Display */}
       {hasActiveFilters && !filtersOpen && (
         <Group gap="xs">
+          {filters.search.trim() && (
+            <Badge
+              variant="light"
+              size="lg"
+              rightSection={
+                <IconX
+                  size={12}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFilters({ ...filters, search: "" })}
+                />
+              }
+              style={{ cursor: "pointer" }}
+            >
+              Search: "{filters.search}"
+            </Badge>
+          )}
           {filters.types.map((type) => (
             <Badge
               key={type}
@@ -218,13 +279,13 @@ export function ExplorePage() {
 
       {/* Results Count */}
       <Text size="sm" c="dimmed">
-        {filteredPosts.length} {filteredPosts.length === 1 ? "listing" : "listings"}
+        {totalCount} {totalCount === 1 ? "listing" : "listings"}
         {hasActiveFilters && " found"}
       </Text>
 
       {/* Desktop Grid */}
       <Box visibleFrom="sm">
-        {filteredPosts.length === 0 ? (
+        {posts.length === 0 ? (
           <Center h={200}>
             <Stack align="center" gap="xs">
               <Text c="dimmed">{hasActiveFilters ? "No listings match your filters" : "No listings yet"}</Text>
@@ -237,7 +298,7 @@ export function ExplorePage() {
           </Center>
         ) : (
           <div className={styles.grid}>
-            {filteredPosts.map((post) => (
+            {posts.map((post) => (
               <PostCard key={post.id} post={post} />
             ))}
           </div>
@@ -246,7 +307,7 @@ export function ExplorePage() {
 
       {/* Mobile Feed */}
       <Box hiddenFrom="sm">
-        {filteredPosts.length === 0 ? (
+        {posts.length === 0 ? (
           <Center h={200}>
             <Stack align="center" gap="xs">
               <Text c="dimmed">{hasActiveFilters ? "No listings match your filters" : "No listings yet"}</Text>
@@ -259,7 +320,7 @@ export function ExplorePage() {
           </Center>
         ) : (
           <Stack gap={0}>
-            {filteredPosts.map((post) => (
+            {posts.map((post) => (
               <PostFeedItem key={post.id} post={post} />
             ))}
           </Stack>

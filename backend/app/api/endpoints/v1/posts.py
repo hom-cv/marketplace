@@ -13,7 +13,7 @@ from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
-from app.schemas.post import PostResponseSchema
+from app.schemas.post import PaginatedPostsResponse, PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
@@ -77,20 +77,67 @@ async def create_post(
 @router.get(
     "",
     status_code=status.HTTP_200_OK,
-    response_model=list[PostResponseSchema],
+    response_model=PaginatedPostsResponse,
 )
 async def list_posts(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
-) -> list[PostResponseSchema]:
+    types: Annotated[list[PostTypeSchema] | None, Query()] = None,
+    min_price: Annotated[Decimal | None, Query(ge=0)] = None,
+    max_price: Annotated[Decimal | None, Query(ge=0)] = None,
+    search: Annotated[str | None, Query(max_length=200)] = None,
+) -> PaginatedPostsResponse:
     """
-    List all posts in the marketplace.
+    List all posts in the marketplace with filtering and pagination.
 
-    Supports pagination with skip and limit parameters.
+    Posts are sorted with non-sold items first, then sold items.
+    Within each group, posts are sorted by newest first.
+
+    Query parameters:
+    - skip: Number of records to skip (for pagination)
+    - limit: Maximum number of records to return
+    - types: Filter by post types (can specify multiple)
+    - min_price: Minimum price filter
+    - max_price: Maximum price filter
+    - search: Search query for title/description
     """
-    posts = await post_crud.get_all_posts(db, skip=skip, limit=limit)
-    return posts
+    # Convert schema types to model types for CRUD
+    model_types = [PostType[t.value] for t in types] if types else None
+
+    posts_with_sold, total = await post_crud.get_posts_with_filters(
+        db,
+        skip=skip,
+        limit=limit,
+        types=model_types,
+        min_price=min_price,
+        max_price=max_price,
+        search=search,
+    )
+
+    # Convert to response schema with is_sold
+    items = [
+        PostResponseSchema(
+            id=post.id,
+            title=post.title,
+            description=post.description,
+            type=PostTypeSchema(post.type.value),
+            price=post.price,
+            shipping_cost=post.shipping_cost,
+            image_url=post.image_url,
+            image_urls=post.image_urls,
+            user=post.user,
+            is_sold=is_sold,
+        )
+        for post, is_sold in posts_with_sold
+    ]
+
+    return PaginatedPostsResponse(
+        items=items,
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
 
 
 @router.get(

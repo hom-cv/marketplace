@@ -56,7 +56,7 @@ export function PostCard({ post }: PostCardProps) {
           height={220}
           alt={post.title}
           fallbackSrc="https://placehold.co/400x400?text=No+Image"
-          className={styles.image}
+          className={post.is_sold ? styles.imageSold : styles.image}
         />
         <Badge
           className={styles.typeBadge}
@@ -66,6 +66,16 @@ export function PostCard({ post }: PostCardProps) {
         >
           {typeLabels[post.type]}
         </Badge>
+        {post.is_sold && (
+          <Badge
+            className={styles.soldBadge}
+            color="red"
+            variant="filled"
+            size="lg"
+          >
+            Sold
+          </Badge>
+        )}
       </Card.Section>
 
       <Box p="md">

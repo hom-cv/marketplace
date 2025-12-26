@@ -58,6 +58,11 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
             ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
           <Group gap="xs">
+            {post.is_sold && (
+              <Badge color="red" variant="filled">
+                Sold
+              </Badge>
+            )}
             {isOwner && (
               <Badge variant="light" color="gray">
                 Your listing
