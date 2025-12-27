@@ -3,7 +3,7 @@
  */
 
 import { apiRequest, API_BASE_URL } from "@/api/api";
-import type { Post, CreatePostRequest } from "@/api/types/post";
+import type { Post, CreatePostRequest, PostFilters, PaginatedPostsResponse } from "@/api/types/post";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -41,10 +41,31 @@ export async function createPost(data: CreatePostRequest): Promise<Post> {
 }
 
 /**
- * Get all posts with optional pagination
+ * Get all posts with optional pagination and filters
  */
-export async function getPosts(skip = 0, limit = 50): Promise<Post[]> {
-  return apiRequest<Post[]>(`/posts?skip=${skip}&limit=${limit}`);
+export async function getPosts(
+  skip = 0,
+  limit = 50,
+  filters?: PostFilters
+): Promise<PaginatedPostsResponse> {
+  const params = new URLSearchParams();
+  params.append("skip", String(skip));
+  params.append("limit", String(limit));
+
+  if (filters?.types && filters.types.length > 0) {
+    filters.types.forEach((type) => params.append("types", type));
+  }
+  if (filters?.minPrice !== undefined) {
+    params.append("min_price", String(filters.minPrice));
+  }
+  if (filters?.maxPrice !== undefined) {
+    params.append("max_price", String(filters.maxPrice));
+  }
+  if (filters?.search) {
+    params.append("search", filters.search);
+  }
+
+  return apiRequest<PaginatedPostsResponse>(`/posts?${params.toString()}`);
 }
 
 /**

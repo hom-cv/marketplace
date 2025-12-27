@@ -16,6 +16,7 @@ export interface Post {
   image_url: string | null;
   image_urls: string[] | null;
   user: User;
+  is_sold: boolean;
 }
 
 export interface CreatePostRequest {
@@ -27,3 +28,16 @@ export interface CreatePostRequest {
   images?: File[];
 }
 
+export interface PostFilters {
+  types?: PostType[];
+  minPrice?: number;
+  maxPrice?: number;
+  search?: string;
+}
+
+export interface PaginatedPostsResponse {
+  items: Post[];
+  total: number;
+  skip: number;
+  limit: number;
+}

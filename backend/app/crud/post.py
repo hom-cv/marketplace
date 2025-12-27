@@ -3,13 +3,16 @@
 from datetime import datetime, timezone
 from typing import Sequence
 
-from sqlalchemy import select
+from decimal import Decimal
+
+from sqlalchemy import case, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import server_error
 from app.crud._base import BaseCRUD
-from app.models.post import Post
+from app.models.payment import Payment, PaymentStatus
+from app.models.post import Post, PostType
 from app.models.user import User
 from app.schemas.post import PostCreateSchema, PostUpdateSchema
 
@@ -50,6 +53,91 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             query = query.where(self.model.deleted_at.is_(None))
         result = await db.scalars(query)
         return result.all()
+
+    async def get_posts_with_filters(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 50,
+        types: list[PostType] | None = None,
+        min_price: Decimal | None = None,
+        max_price: Decimal | None = None,
+        search: str | None = None,
+    ) -> tuple[list[tuple[Post, bool]], int]:
+        """
+        Get posts with filtering, sorting (sold last), and pagination.
+
+        Posts are sorted by:
+        1. Sold status (non-sold first, sold last)
+        2. Created date descending (newest first)
+
+        Args:
+            db: The async database session.
+            skip: Number of records to skip.
+            limit: Maximum number of records to return.
+            types: Filter by post types.
+            min_price: Minimum price filter.
+            max_price: Maximum price filter.
+            search: Search query for title/description.
+
+        Returns:
+            Tuple of (list of (Post, is_sold) tuples, total count).
+        """
+        # Subquery to determine if a post is sold
+        is_sold_subquery = (
+            exists()
+            .where(Payment.post_id == self.model.id)
+            .where(Payment.status == PaymentStatus.SUCCESSFUL)
+        )
+
+        # Use case() to get a sortable value (0 for non-sold, 1 for sold)
+        is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
+
+        # Base query selecting Post and is_sold
+        base_query = (
+            select(self.model, is_sold_expr)
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
+            .where(self.model.deleted_at.is_(None))
+        )
+
+        # Apply filters
+        if types:
+            base_query = base_query.where(self.model.type.in_(types))
+
+        if min_price is not None:
+            base_query = base_query.where(self.model.price >= min_price)
+
+        if max_price is not None:
+            base_query = base_query.where(self.model.price <= max_price)
+
+        if search:
+            search_pattern = f"%{search}%"
+            base_query = base_query.where(
+                (self.model.title.ilike(search_pattern))
+                | (self.model.description.ilike(search_pattern))
+            )
+
+        # Count total before pagination
+        count_query = select(func.count()).select_from(base_query.subquery())
+        total = await db.scalar(count_query) or 0
+
+        # Apply sorting: non-sold first (is_sold=0), then by created_date desc
+        data_query = (
+            base_query.order_by(is_sold_expr.asc(), self.model.created_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        result = await db.execute(data_query)
+        rows = result.all()
+
+        # Convert to list of (Post, is_sold bool)
+        posts_with_sold = [(row[0], bool(row[1])) for row in rows]
+
+        return posts_with_sold, total
 
     async def get_by_user_id(
         self,
