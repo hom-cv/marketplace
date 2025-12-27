@@ -48,7 +48,7 @@ export function DashboardPage() {
     },
     {
       title: "Marketplace Items",
-      value: allPosts?.length || 0,
+      value: allPosts?.total || 0,
       icon: IconTrendingUp,
       color: "green",
       link: "/app/explore",

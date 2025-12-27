@@ -50,9 +50,9 @@ export function AppPage() {
 
   // Filter posts based on selected filters
   const filteredPosts = useMemo(() => {
-    if (!posts) return [];
+    if (!posts?.items) return [];
 
-    return posts.filter((post) => {
+    return posts.items.filter((post) => {
       if (filters.types.length > 0 && !filters.types.includes(post.type)) {
         return false;
       }

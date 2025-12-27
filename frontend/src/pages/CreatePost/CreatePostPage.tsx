@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Container,
   Title,
@@ -26,6 +26,8 @@ import {
   Badge,
   Paper,
   ThemeIcon,
+  Loader,
+  Center,
 } from "@mantine/core";
 import {
   IconAlertCircle,
@@ -37,7 +39,7 @@ import {
 } from "@tabler/icons-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { createPost } from "@/api/posts";
-import { useAuthStore } from "@/stores/authStore";
+import { getSellerStatus } from "@/api/seller";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import type { PostType } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
@@ -54,7 +56,14 @@ const postTypeOptions = [
 export function CreatePostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const user = useAuthStore((state) => state.user);
+
+  // Fetch seller status fresh on every page load
+  const { data: sellerStatus, isLoading: isLoadingStatus } = useQuery({
+    queryKey: ["sellerStatus"],
+    queryFn: getSellerStatus,
+    staleTime: 0, // Always refetch when component mounts
+    refetchOnMount: "always",
+  });
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -109,8 +118,19 @@ export function CreatePostPage() {
 
   const isValid = title && description && type && price;
 
+  // Show loading while checking seller status
+  if (isLoadingStatus) {
+    return (
+      <Center h={400}>
+        <Loader size="lg" />
+      </Center>
+    );
+  }
+
   // Check if user is a verified seller
-  if (!user?.is_seller) {
+  const isVerifiedSeller = sellerStatus?.is_seller && sellerStatus?.verification_status === "verified";
+
+  if (!isVerifiedSeller) {
     return (
       <Container size="sm" py="xl">
         <Paper shadow="sm" p="xl" radius="md">

@@ -7,7 +7,9 @@ import {
   IconPackage,
   IconReceipt,
   IconPlus,
+  IconShield,
 } from "@tabler/icons-react";
+import { useAuthStore } from "@/stores/authStore";
 import styles from "./DashboardLayout.module.css";
 
 interface NavLinkProps {
@@ -32,6 +34,8 @@ function NavLink({ to, icon, label }: NavLinkProps) {
 }
 
 function SidebarContent() {
+  const user = useAuthStore((state) => state.user);
+
   return (
     <>
       <div className={styles.navSection}>
@@ -49,6 +53,13 @@ function SidebarContent() {
         <NavLink to="/app/my-listings" icon={<IconPackage size={20} />} label="My Listings" />
         <NavLink to="/app/sales" icon={<IconReceipt size={20} />} label="Sold Listings" />
       </div>
+
+      {user?.is_admin && (
+        <div className={styles.navSection}>
+          <div className={styles.navHeader}>Admin</div>
+          <NavLink to="/admin" icon={<IconShield size={20} />} label="Admin Dashboard" />
+        </div>
+      )}
 
       <Link to="/app/posts/new" style={{ textDecoration: "none" }}>
         <Button fullWidth leftSection={<IconPlus size={16} />}>
@@ -74,4 +85,5 @@ export function DashboardLayout() {
     </div>
   );
 }
+
 

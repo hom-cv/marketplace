@@ -23,17 +23,25 @@ import {
   Center,
   Divider,
   Avatar,
+  Menu,
+  ActionIcon,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
   IconPhoto,
+  IconDotsVertical,
+  IconFlag,
+  IconUser,
 } from "@tabler/icons-react";
 import { getPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
+import { ReportModal } from "@/components/ReportModal";
 import type { PostType } from "@/api/types/post";
+import type { ReportType } from "@/api/types/admin";
 import styles from "./PostViewPage.module.css";
 
 const typeColors: Record<PostType, string> = {
@@ -61,6 +69,8 @@ export function PostViewPage() {
   const currentUser = useAuthStore((state) => state.user);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [reportOpened, { open: openReport, close: closeReport }] = useDisclosure(false);
+  const [reportType, setReportType] = useState<ReportType>("post");
 
   const {
     data: post,
@@ -80,6 +90,16 @@ export function PostViewPage() {
       : [];
 
   const isOwner = currentUser?.id === post?.user.id;
+
+  const handleReportListing = () => {
+    setReportType("post");
+    openReport();
+  };
+
+  const handleReportUser = () => {
+    setReportType("user");
+    openReport();
+  };
 
   if (isLoading) {
     return (
@@ -104,15 +124,43 @@ export function PostViewPage() {
   return (
     <>
       <Container size="lg">
-        {/* Back button */}
-        <Button
-          variant="subtle"
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate({ to: "/app/explore" })}
-          mb="lg"
-        >
-          Back to Explore
-        </Button>
+        {/* Back button and actions */}
+        <Group justify="space-between" mb="lg">
+          <Button
+            variant="subtle"
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate({ to: "/app/explore" })}
+          >
+            Back to Explore
+          </Button>
+
+          {!isOwner && (
+            <Menu shadow="md" width={200} position="bottom-end">
+              <Menu.Target>
+                <ActionIcon variant="subtle" size="lg">
+                  <IconDotsVertical size={20} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Report</Menu.Label>
+                <Menu.Item
+                  leftSection={<IconFlag size={14} />}
+                  color="red"
+                  onClick={handleReportListing}
+                >
+                  Report Listing
+                </Menu.Item>
+                <Menu.Item
+                  leftSection={<IconUser size={14} />}
+                  color="red"
+                  onClick={handleReportUser}
+                >
+                  Report Seller
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          )}
+        </Group>
 
         <Grid gutter="xl">
           {/* Left: Image Gallery */}
@@ -234,6 +282,16 @@ export function PostViewPage() {
           </Grid.Col>
         </Grid>
       </Container>
+
+      {/* Report Modal */}
+      <ReportModal
+        opened={reportOpened}
+        onClose={closeReport}
+        reportType={reportType}
+        targetId={reportType === "post" ? post.id : post.user.id}
+        targetName={reportType === "post" ? post.title : `@${post.user.username}`}
+      />
     </>
   );
 }
+

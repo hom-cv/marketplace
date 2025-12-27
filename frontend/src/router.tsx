@@ -17,6 +17,8 @@ import { SoldListingsPage } from "@/pages/SoldListings";
 import { PaymentReturnPage } from "@/pages/PaymentReturn";
 import { PostViewPage } from "@/pages/PostView";
 import { CheckoutPage } from "@/pages/Checkout";
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminDashboard, InvitesPage, ReportsPage, UserBansPage, PostBansPage } from "@/pages/Admin";
 
 const rootRoute = createRootRoute({
     component: () => (
@@ -133,6 +135,44 @@ const checkoutRoute = createRoute({
     component: CheckoutPage,
 });
 
+// Admin layout with sidebar - parent for all /admin routes
+const adminLayout = createRoute({
+    getParentRoute: () => protectedLayout,
+    path: "/admin",
+    component: AdminLayout,
+});
+
+// Admin pages
+const adminDashboardRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/",
+    component: AdminDashboard,
+});
+
+const adminInvitesRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/invites",
+    component: InvitesPage,
+});
+
+const adminReportsRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/reports",
+    component: ReportsPage,
+});
+
+const adminUserBansRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/bans/users",
+    component: UserBansPage,
+});
+
+const adminPostBansRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/bans/posts",
+    component: PostBansPage,
+});
+
 const routeTree = rootRoute.addChildren([
     indexRoute,
     loginRoute,
@@ -151,6 +191,13 @@ const routeTree = rootRoute.addChildren([
             paymentReturnRoute,
             checkoutRoute,
         ]),
+        adminLayout.addChildren([
+            adminDashboardRoute,
+            adminInvitesRoute,
+            adminReportsRoute,
+            adminUserBansRoute,
+            adminPostBansRoute,
+        ]),
     ]),
 ]);
 
@@ -161,4 +208,3 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
-

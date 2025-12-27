@@ -16,9 +16,10 @@ import {
   Alert,
   Group,
   LoadingOverlay,
+  Loader,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconBuildingBank, IconCheck, IconAlertCircle, IconLoader } from "@tabler/icons-react";
+import { IconBuildingBank, IconCheck, IconAlertCircle } from "@tabler/icons-react";
 import { registerSeller, getSellerStatus, BANK_BRANDS } from "@/api/seller";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate } from "@tanstack/react-router";
@@ -53,11 +54,14 @@ export function BecomeSellerPage() {
 
   const form = useForm<SellerVerificationRequest>({
     initialValues: {
+      invite_code: "",
       bank_brand: "",
       bank_account_number: "",
       bank_account_name: "",
     },
     validate: {
+      invite_code: (value) =>
+        value.length >= 6 ? null : "Please enter your invite code",
       bank_brand: (value) => (value ? null : "Please select a bank"),
       bank_account_number: (value) =>
         value.length >= 10 ? null : "Account number must be at least 10 digits",
@@ -97,7 +101,7 @@ export function BecomeSellerPage() {
       <Container size="sm" py="xl">
         <Paper shadow="sm" p="xl" radius="md" className={styles.paper}>
           <Stack align="center" gap="lg">
-            <IconLoader size={64} color="var(--mantine-color-blue-6)" className={styles.spinner} />
+            <Loader size="xl" />
             <Title order={2}>Verification in Progress</Title>
             <Text c="dimmed" ta="center">
               Your bank account is being verified. This usually takes a few moments.
@@ -166,6 +170,13 @@ export function BecomeSellerPage() {
                   {success}
                 </Alert>
               )}
+
+              <TextInput
+                label="Invite Code"
+                placeholder="Enter your seller invite code"
+                description="You need an invite code from an admin to become a seller"
+                {...form.getInputProps("invite_code")}
+              />
 
               <Select
                 label="Bank"
