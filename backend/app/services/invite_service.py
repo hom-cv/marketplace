@@ -9,7 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import bad_request_error, not_found_error
 from app.crud.invite import invite_crud
 from app.db.utils import get_async_db
-from app.models.invite import InviteStatus, SellerInvite
+from app.constants.invite import InviteStatus
+from app.models.invite import SellerInvite
 from app.models.user import User
 from app.schemas.invite import InviteListResponse, InviteResponse
 

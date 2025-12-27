@@ -12,7 +12,7 @@ from app.crud.post import post_crud
 from app.crud.report import report_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
-from app.models.report import ReportReason, ReportStatus, ReportType
+from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models.user import User
 from app.schemas.ban import (
     PostBanListResponse,

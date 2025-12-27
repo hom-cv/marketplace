@@ -8,7 +8,8 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.invite import InviteStatus, SellerInvite
+from app.constants.invite import InviteStatus
+from app.models.invite import SellerInvite
 
 
 def _generate_invite_code(length: int = 8) -> str:

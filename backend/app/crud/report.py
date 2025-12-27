@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.report import Report, ReportReason, ReportStatus, ReportType
+from app.constants.report import ReportReason, ReportStatus, ReportType
+from app.models.report import Report
 
 
 class ReportCRUD:

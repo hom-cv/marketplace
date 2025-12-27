@@ -5,7 +5,8 @@ from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.ban import PostBan, UserBan
+from app.models.post_ban import PostBan
+from app.models.user_ban import UserBan
 
 
 class BanCRUD:
@@ -40,7 +41,7 @@ class BanCRUD:
         """Get an active ban for a user, if any."""
         query = select(UserBan).where(
             UserBan.user_id == user_id,
-            UserBan.is_active == True,  # noqa: E712
+            UserBan.is_active is True,
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -86,8 +87,8 @@ class BanCRUD:
         count_query = select(func.count(UserBan.id))
 
         if active_only:
-            query = query.where(UserBan.is_active == True)  # noqa: E712
-            count_query = count_query.where(UserBan.is_active == True)  # noqa: E712
+            query = query.where(UserBan.is_active is True)
+            count_query = count_query.where(UserBan.is_active is True)
 
         query = query.order_by(UserBan.created_date.desc())
         query = query.offset(skip).limit(limit)
@@ -99,13 +100,13 @@ class BanCRUD:
 
     async def get_banned_user_ids(self, db: AsyncSession) -> list[int]:
         """Get all currently banned user IDs."""
-        query = select(UserBan.user_id).where(UserBan.is_active == True)  # noqa: E712
+        query = select(UserBan.user_id).where(UserBan.is_active is True)
         result = await db.execute(query)
         return list(result.scalars().all())
 
     async def count_active_user_bans(self, db: AsyncSession) -> int:
         """Get count of active user bans."""
-        query = select(func.count(UserBan.id)).where(UserBan.is_active == True)  # noqa: E712
+        query = select(func.count(UserBan.id)).where(UserBan.is_active is True)
         result = await db.scalar(query)
         return result or 0
 
@@ -138,7 +139,7 @@ class BanCRUD:
         """Get an active ban for a post, if any."""
         query = select(PostBan).where(
             PostBan.post_id == post_id,
-            PostBan.is_active == True,  # noqa: E712
+            PostBan.is_active is True,
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
@@ -184,8 +185,8 @@ class BanCRUD:
         count_query = select(func.count(PostBan.id))
 
         if active_only:
-            query = query.where(PostBan.is_active == True)  # noqa: E712
-            count_query = count_query.where(PostBan.is_active == True)  # noqa: E712
+            query = query.where(PostBan.is_active is True)
+            count_query = count_query.where(PostBan.is_active is True)
 
         query = query.order_by(PostBan.created_date.desc())
         query = query.offset(skip).limit(limit)
@@ -197,13 +198,13 @@ class BanCRUD:
 
     async def get_banned_post_ids(self, db: AsyncSession) -> list[int]:
         """Get all currently banned post IDs."""
-        query = select(PostBan.post_id).where(PostBan.is_active == True)  # noqa: E712
+        query = select(PostBan.post_id).where(PostBan.is_active is True)
         result = await db.execute(query)
         return list(result.scalars().all())
 
     async def count_active_post_bans(self, db: AsyncSession) -> int:
         """Get count of active post bans."""
-        query = select(func.count(PostBan.id)).where(PostBan.is_active == True)  # noqa: E712
+        query = select(func.count(PostBan.id)).where(PostBan.is_active is True)
         result = await db.scalar(query)
         return result or 0
 

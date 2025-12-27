@@ -11,7 +11,8 @@ from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import server_error
 from app.crud._base import BaseCRUD
-from app.models.ban import PostBan, UserBan
+from app.models.post_ban import PostBan
+from app.models.user_ban import UserBan
 from app.models.payment import Payment, PaymentStatus
 from app.models.post import Post, PostType
 from app.models.user import User
@@ -101,14 +102,14 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         is_post_banned_subquery = (
             exists()
             .where(PostBan.post_id == self.model.id)
-            .where(PostBan.is_active == True)  # noqa: E712
+            .where(PostBan.is_active is True)
         )
 
         # Subquery to check if user is banned
         is_user_banned_subquery = (
             exists()
             .where(UserBan.user_id == self.model.user_id)
-            .where(UserBan.is_active == True)  # noqa: E712
+            .where(UserBan.is_active is True)
         )
 
         # Use case() to get a sortable value (0 for non-sold, 1 for sold)

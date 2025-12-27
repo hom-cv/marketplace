@@ -1,38 +1,12 @@
 """Report model for user and listing reports."""
 
 from datetime import datetime
-from enum import auto
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.utils import AutoName
+from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models._base import Base
-
-
-class ReportReason(AutoName):
-    """Report reason enumeration."""
-
-    COUNTERFEIT = auto()
-    ABUSE_OF_SYSTEM = auto()
-    PROHIBITED_ITEM = auto()
-    SCAM = auto()
-
-
-class ReportStatus(AutoName):
-    """Report status enumeration."""
-
-    PENDING = auto()    # Awaiting review
-    REVIEWED = auto()   # Seen by admin, no action yet
-    RESOLVED = auto()   # Action taken
-    DISMISSED = auto()  # Report rejected
-
-
-class ReportType(AutoName):
-    """Report type enumeration."""
-
-    USER = auto()
-    POST = auto()
 
 
 class Report(Base):
@@ -50,7 +24,7 @@ class Report(Base):
     # Reporter
     reporter_user_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )
@@ -68,13 +42,13 @@ class Report(Base):
     )
     reported_user_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
     )
     reported_post_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("posts.id", ondelete="SET NULL"),
+        ForeignKey("posts.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
     )
@@ -109,7 +83,7 @@ class Report(Base):
     )
     reviewed_by_user_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
     )
     reviewed_at: Mapped[datetime | None] = mapped_column(

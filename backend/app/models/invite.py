@@ -1,21 +1,12 @@
 """Seller invite model for controlling seller access via invite codes."""
 
 from datetime import datetime
-from enum import auto
 
 from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.utils import AutoName
+from app.constants.invite import InviteStatus
 from app.models._base import Base
-
-
-class InviteStatus(AutoName):
-    """Invite code status enumeration."""
-
-    ACTIVE = auto()   # Available for use
-    USED = auto()     # Already redeemed
-    REVOKED = auto()  # Manually revoked by admin
 
 
 class SellerInvite(Base):
@@ -50,7 +41,7 @@ class SellerInvite(Base):
     # Who created the invite (admin)
     created_by_user_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
         index=True,
     )
@@ -58,7 +49,7 @@ class SellerInvite(Base):
     # Who used the invite (nullable until redeemed)
     used_by_user_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
         index=True,
     )
