@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models.report import Report
@@ -59,7 +60,11 @@ class ReportCRUD:
         limit: int = 50,
     ) -> tuple[list[Report], int]:
         """Get all reports with optional filters."""
-        query = select(Report)
+        query = select(Report).options(
+            selectinload(Report.reporter),
+            selectinload(Report.reported_user),
+            selectinload(Report.reported_post),
+        )
         count_query = select(func.count(Report.id))
 
         if status:

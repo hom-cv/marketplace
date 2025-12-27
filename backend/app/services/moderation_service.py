@@ -21,6 +21,10 @@ from app.schemas.ban import (
     UserBanResponse,
 )
 from app.schemas.report import ReportListResponse, ReportResponse
+from app.constants.report import ReportStatus
+from app.models.post_ban import PostBan
+from app.models.report import Report
+from app.models.user_ban import UserBan
 
 logger = logging.getLogger(__name__)
 
@@ -153,9 +157,34 @@ class ModerationService:
         logger.info(f"Admin {admin_user.id} reviewed report #{report_id} as {status}")
         return self._report_to_response(report)
 
-    async def get_pending_report_count(self) -> int:
-        """Get count of pending reports."""
-        return await report_crud.get_pending_count(self.db)
+    async def get_admin_stats(self) -> tuple[int, int, int]:
+        """Get all admin stats in a single query.
+        
+        Returns:
+            Tuple of (pending_reports, active_user_bans, active_post_bans).
+        """
+
+        pending_reports = (
+            select(func.count(Report.id))
+            .where(Report.status == ReportStatus.PENDING)
+            .scalar_subquery()
+        )
+        active_user_bans = (
+            select(func.count(UserBan.id))
+            .where(UserBan.is_active is True)
+            .scalar_subquery()
+        )
+        active_post_bans = (
+            select(func.count(PostBan.id))
+            .where(PostBan.is_active is True)
+            .scalar_subquery()
+        )
+
+        query = select(pending_reports, active_user_bans, active_post_bans)
+        result = await self.db.execute(query)
+        row = result.one()
+
+        return row[0] or 0, row[1] or 0, row[2] or 0
 
     async def ban_user(
         self,
@@ -238,10 +267,6 @@ class ModerationService:
         ban = await ban_crud.get_active_user_ban(self.db, user_id=user_id)
         return ban is not None
 
-    async def get_active_user_ban_count(self) -> int:
-        """Get count of active user bans."""
-        return await ban_crud.count_active_user_bans(self.db)
-
     async def ban_post(
         self,
         admin_user: User,
@@ -316,10 +341,6 @@ class ModerationService:
         """Check if a post is currently banned."""
         ban = await ban_crud.get_active_post_ban(self.db, post_id=post_id)
         return ban is not None
-
-    async def get_active_post_ban_count(self) -> int:
-        """Get count of active post bans."""
-        return await ban_crud.count_active_post_bans(self.db)
 
     def _report_to_response(self, report) -> ReportResponse:
         """Convert report model to response schema."""

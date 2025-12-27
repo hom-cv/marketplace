@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.post_ban import PostBan
 from app.models.user_ban import UserBan
@@ -83,7 +84,7 @@ class BanCRUD:
         limit: int = 50,
     ) -> tuple[list[UserBan], int]:
         """Get all user bans with optional active filter."""
-        query = select(UserBan)
+        query = select(UserBan).options(selectinload(UserBan.user))
         count_query = select(func.count(UserBan.id))
 
         if active_only:
@@ -181,7 +182,7 @@ class BanCRUD:
         limit: int = 50,
     ) -> tuple[list[PostBan], int]:
         """Get all post bans with optional active filter."""
-        query = select(PostBan)
+        query = select(PostBan).options(selectinload(PostBan.post))
         count_query = select(func.count(PostBan.id))
 
         if active_only:

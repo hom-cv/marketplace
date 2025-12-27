@@ -89,7 +89,10 @@ class InviteCRUD:
         limit: int = 50,
     ) -> tuple[list[SellerInvite], int]:
         """Get all invites with optional status filter."""
-        query = select(SellerInvite)
+        query = select(SellerInvite).options(
+            selectinload(SellerInvite.created_by),
+            selectinload(SellerInvite.used_by),
+        )
         count_query = select(func.count(SellerInvite.id))
 
         if status:

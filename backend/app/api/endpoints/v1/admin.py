@@ -24,12 +24,6 @@ class AdminStatsResponse(BaseModel):
     active_user_bans: int
     active_post_bans: int
 
-
-# =============================================================================
-# Dashboard Stats
-# =============================================================================
-
-
 @router.get(
     "/stats",
     status_code=status.HTTP_200_OK,
@@ -44,20 +38,15 @@ async def get_admin_stats(
 
     **Admin only.** Returns counts of pending reports and active bans.
     """
-    pending_reports = await moderation_service.get_pending_report_count()
-    active_user_bans = await moderation_service.get_active_user_ban_count()
-    active_post_bans = await moderation_service.get_active_post_ban_count()
+    pending_reports, active_user_bans, active_post_bans = (
+        await moderation_service.get_admin_stats()
+    )
 
     return AdminStatsResponse(
         pending_reports=pending_reports,
         active_user_bans=active_user_bans,
         active_post_bans=active_post_bans,
     )
-
-
-# =============================================================================
-# User Bans
-# =============================================================================
 
 
 @router.post(
@@ -125,12 +114,6 @@ async def list_user_bans(
         skip=skip,
         limit=limit,
     )
-
-
-# =============================================================================
-# Post Bans
-# =============================================================================
-
 
 @router.post(
     "/bans/posts",
