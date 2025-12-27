@@ -346,7 +346,6 @@ class ModerationService:
             id=ban.id,
             user_id=ban.user_id,
             username=ban.user.username,
-            email=ban.user.email_address,
             reason=ban.reason,
             is_active=ban.is_active,
             created_date=ban.created_date,
