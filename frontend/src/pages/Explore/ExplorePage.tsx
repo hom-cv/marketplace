@@ -338,13 +338,11 @@ export function ExplorePage() {
             </Stack>
           </Center>
         ) : (
-          <>
-            <div className={styles.grid}>
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
-          </>
+          <div className={styles.grid}>
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
         )}
       </Box>
 
