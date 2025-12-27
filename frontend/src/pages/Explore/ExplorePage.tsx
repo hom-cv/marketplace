@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   Loader,
   Center,
@@ -40,6 +40,8 @@ const typeOptions: { value: PostType; label: string }[] = [
   { value: "OTHER", label: "Other" },
 ];
 
+const ITEMS_PER_PAGE = 20;
+
 export function ExplorePage() {
   const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
@@ -47,6 +49,9 @@ export function ExplorePage() {
     priceRange: [0, 10000],
     search: "",
   });
+
+  // Ref for intersection observer sentinel element
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Debounce search and price range to avoid too many API calls
   const [debouncedSearch] = useDebouncedValue(filters.search, 300);
@@ -73,16 +78,52 @@ export function ExplorePage() {
   }, [filters.types, debouncedPriceRange, debouncedSearch]);
 
   const {
-    data: postsResponse,
+    data,
     isLoading,
     error,
-  } = useQuery({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ["posts", queryFilters],
-    queryFn: () => getPosts(0, 50, queryFilters),
+    queryFn: ({ pageParam = 0 }) => getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
+    getNextPageParam: (lastPage) => {
+      const nextSkip = lastPage.skip + lastPage.limit;
+      return nextSkip < lastPage.total ? nextSkip : undefined;
+    },
+    initialPageParam: 0,
   });
 
-  const posts = postsResponse?.items ?? [];
-  const totalCount = postsResponse?.total ?? 0;
+  const posts = useMemo(() => {
+    return data?.pages.flatMap((page) => page.items) ?? [];
+  }, [data]);
+
+  const totalCount = data?.pages[0]?.total ?? 0;
+
+  // Intersection Observer for infinite scroll
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const element = loadMoreRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, {
+      root: null,
+      rootMargin: "100px",
+      threshold: 0,
+    });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [handleObserver]);
 
   const hasActiveFilters =
     filters.types.length > 0 ||
@@ -297,11 +338,13 @@ export function ExplorePage() {
             </Stack>
           </Center>
         ) : (
-          <div className={styles.grid}>
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
+          <>
+            <div className={styles.grid}>
+              {posts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+          </>
         )}
       </Box>
 
@@ -326,6 +369,23 @@ export function ExplorePage() {
           </Stack>
         )}
       </Box>
+
+      {/* Infinite scroll sentinel and loading indicator */}
+      {posts.length > 0 && (
+        <>
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          {isFetchingNextPage && (
+            <Center py="xl">
+              <Loader size="sm" />
+            </Center>
+          )}
+          {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
+            <Text ta="center" c="dimmed" size="sm" py="md">
+              No more listings to load
+            </Text>
+          )}
+        </>
+      )}
     </Stack>
   );
 }
