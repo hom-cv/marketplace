@@ -5,6 +5,7 @@ import string
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.invite import InviteStatus, SellerInvite
@@ -26,24 +27,36 @@ class InviteCRUD:
         db: AsyncSession,
         *,
         created_by_user_id: int,
+        max_retries: int = 5,
     ) -> SellerInvite:
-        """Create a new invite code."""
-        # Generate unique code
-        code = _generate_invite_code()
+        """Create a new invite code.
         
-        # Ensure code is unique
-        while await self.get_by_code(db, code=code):
+        Handles race conditions by catching IntegrityError on duplicate code
+        and retrying with a new code.
+        """
+        for attempt in range(max_retries):
             code = _generate_invite_code()
 
-        invite = SellerInvite(
-            code=code,
-            status=InviteStatus.ACTIVE,
-            created_by_user_id=created_by_user_id,
-        )
-        db.add(invite)
-        await db.commit()
-        await db.refresh(invite)
-        return invite
+            invite = SellerInvite(
+                code=code,
+                status=InviteStatus.ACTIVE,
+                created_by_user_id=created_by_user_id,
+            )
+            db.add(invite)
+
+            try:
+                await db.commit()
+                await db.refresh(invite)
+                return invite
+            except IntegrityError:
+                await db.rollback()
+                if attempt == max_retries - 1:
+                    raise ValueError(
+                        f"Failed to generate unique invite code after {max_retries} attempts"
+                    )
+                continue
+
+        raise ValueError("Failed to generate unique invite code")
 
     async def get_by_code(
         self,
