@@ -11,10 +11,6 @@ from app.models.ban import PostBan, UserBan
 class BanCRUD:
     """CRUD operations for user and post bans."""
 
-    # =========================================================================
-    # User Bans
-    # =========================================================================
-
     async def ban_user(
         self,
         db: AsyncSession,
@@ -107,9 +103,11 @@ class BanCRUD:
         result = await db.execute(query)
         return list(result.scalars().all())
 
-    # =========================================================================
-    # Post Bans
-    # =========================================================================
+    async def count_active_user_bans(self, db: AsyncSession) -> int:
+        """Get count of active user bans."""
+        query = select(func.count(UserBan.id)).where(UserBan.is_active == True)  # noqa: E712
+        result = await db.scalar(query)
+        return result or 0
 
     async def ban_post(
         self,
@@ -202,6 +200,12 @@ class BanCRUD:
         query = select(PostBan.post_id).where(PostBan.is_active == True)  # noqa: E712
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    async def count_active_post_bans(self, db: AsyncSession) -> int:
+        """Get count of active post bans."""
+        query = select(func.count(PostBan.id)).where(PostBan.is_active == True)  # noqa: E712
+        result = await db.scalar(query)
+        return result or 0
 
 
 ban_crud = BanCRUD()

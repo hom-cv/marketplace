@@ -32,10 +32,6 @@ class ModerationService:
         """Initialize moderation service with database session."""
         self.db = db
 
-    # =========================================================================
-    # Reports
-    # =========================================================================
-
     async def submit_report(
         self,
         reporter_user: User,
@@ -161,10 +157,6 @@ class ModerationService:
         """Get count of pending reports."""
         return await report_crud.get_pending_count(self.db)
 
-    # =========================================================================
-    # User Bans
-    # =========================================================================
-
     async def ban_user(
         self,
         admin_user: User,
@@ -246,9 +238,9 @@ class ModerationService:
         ban = await ban_crud.get_active_user_ban(self.db, user_id=user_id)
         return ban is not None
 
-    # =========================================================================
-    # Post Bans
-    # =========================================================================
+    async def get_active_user_ban_count(self) -> int:
+        """Get count of active user bans."""
+        return await ban_crud.count_active_user_bans(self.db)
 
     async def ban_post(
         self,
@@ -325,9 +317,9 @@ class ModerationService:
         ban = await ban_crud.get_active_post_ban(self.db, post_id=post_id)
         return ban is not None
 
-    # =========================================================================
-    # Response Helpers
-    # =========================================================================
+    async def get_active_post_ban_count(self) -> int:
+        """Get count of active post bans."""
+        return await ban_crud.count_active_post_bans(self.db)
 
     def _report_to_response(self, report) -> ReportResponse:
         """Convert report model to response schema."""

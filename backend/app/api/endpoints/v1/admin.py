@@ -45,13 +45,13 @@ async def get_admin_stats(
     **Admin only.** Returns counts of pending reports and active bans.
     """
     pending_reports = await moderation_service.get_pending_report_count()
-    user_bans = await moderation_service.get_user_bans(active_only=True, limit=1)
-    post_bans = await moderation_service.get_post_bans(active_only=True, limit=1)
+    active_user_bans = await moderation_service.get_active_user_ban_count()
+    active_post_bans = await moderation_service.get_active_post_ban_count()
 
     return AdminStatsResponse(
         pending_reports=pending_reports,
-        active_user_bans=user_bans.total,
-        active_post_bans=post_bans.total,
+        active_user_bans=active_user_bans,
+        active_post_bans=active_post_bans,
     )
 
 
