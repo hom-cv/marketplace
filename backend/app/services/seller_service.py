@@ -17,6 +17,7 @@ from app.schemas.seller import (
     SellerVerificationRequest,
     SellerVerificationResponse,
 )
+from app.services.invite_service import AnnotatedInviteService, InviteService
 from app.services.omise_service import AnnotatedOmiseService, OmiseService
 
 logger = logging.getLogger(__name__)
@@ -29,10 +30,12 @@ class SellerService:
         self,
         db: AsyncSession,
         omise_service: OmiseService,
+        invite_service: InviteService,
     ) -> None:
         """Initialize seller service with database session."""
         self.db = db
         self.omise_service = omise_service
+        self.invite_service = invite_service
 
     async def register_seller(
         self, user: User, verification_request: SellerVerificationRequest
@@ -63,6 +66,12 @@ class SellerService:
                 existing_profile.verification_status == SellerVerificationStatus.PENDING
             ):
                 raise conflict_error("Seller verification is already in progress")
+
+        # Validate and consume invite code
+        await self.invite_service.validate_and_consume(
+            code=verification_request.invite_code,
+            user_id=user.id,
+        )
 
         try:
             # Create Omise recipient
@@ -205,10 +214,12 @@ class SellerService:
 
 def _get_seller_service(
     omise_service: AnnotatedOmiseService,
+    invite_service: AnnotatedInviteService,
     db: AsyncSession = Depends(get_async_db),
 ) -> SellerService:
     """Factory function to create SellerService instance."""
-    return SellerService(db, omise_service)
+    return SellerService(db, omise_service, invite_service)
 
 
 AnnotatedSellerService = Annotated[SellerService, Depends(_get_seller_service)]
+
