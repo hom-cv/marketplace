@@ -161,7 +161,7 @@ class InviteService:
         return InviteResponse(
             code=invite.code,
             status=invite.status.value.lower(),
-            created_at=invite.created_date,
+            created_date=invite.created_date,
             used_at=invite.used_at,
             created_by_username=invite.created_by.username if invite.created_by else None,
             used_by_username=invite.used_by.username if invite.used_by else None,

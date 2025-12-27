@@ -42,7 +42,7 @@ class ReportResponse(BaseModel):
     reason: str
     description: str
     status: str
-    created_at: datetime
+    created_date: datetime
     # Reporter info (only for admins)
     reporter_username: str | None = None
     # Reported entity info

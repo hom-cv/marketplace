@@ -38,7 +38,7 @@ class UserBanResponse(BaseModel):
     email: str
     reason: str
     is_active: bool
-    created_at: datetime
+    created_date: datetime
     banned_by_username: str
     lifted_at: datetime | None = None
     lifted_by_username: str | None = None
@@ -55,7 +55,7 @@ class PostBanResponse(BaseModel):
     seller_username: str
     reason: str
     is_active: bool
-    created_at: datetime
+    created_date: datetime
     banned_by_username: str
     lifted_at: datetime | None = None
     lifted_by_username: str | None = None

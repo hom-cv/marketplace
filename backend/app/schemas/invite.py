@@ -21,7 +21,7 @@ class InviteResponse(BaseModel):
 
     code: str
     status: str
-    created_at: datetime
+    created_date: datetime
     used_at: datetime | None = None
     created_by_username: str | None = None
     used_by_username: str | None = None
