@@ -48,6 +48,7 @@ class InviteCRUD:
             try:
                 await db.commit()
                 await db.refresh(invite)
+                
                 return invite
             except IntegrityError:
                 await db.rollback()
@@ -56,8 +57,6 @@ class InviteCRUD:
                         f"Failed to generate unique invite code after {max_retries} attempts"
                     )
                 continue
-
-        raise ValueError("Failed to generate unique invite code")
 
     async def get_by_code(
         self,
