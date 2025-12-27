@@ -11,6 +11,8 @@ from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import server_error
 from app.crud._base import BaseCRUD
+from app.models.post_ban import PostBan
+from app.models.user_ban import UserBan
 from app.models.payment import Payment, PaymentStatus
 from app.models.post import Post, PostType
 from app.models.user import User
@@ -72,6 +74,11 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         1. Sold status (non-sold first, sold last)
         2. Created date descending (newest first)
 
+        Excludes:
+        - Soft-deleted posts
+        - Banned posts
+        - Posts from banned users
+
         Args:
             db: The async database session.
             skip: Number of records to skip.
@@ -91,6 +98,20 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             .where(Payment.status == PaymentStatus.SUCCESSFUL)
         )
 
+        # Subquery to check if post is banned
+        is_post_banned_subquery = (
+            exists()
+            .where(PostBan.post_id == self.model.id)
+            .where(PostBan.is_active is True)
+        )
+
+        # Subquery to check if user is banned
+        is_user_banned_subquery = (
+            exists()
+            .where(UserBan.user_id == self.model.user_id)
+            .where(UserBan.is_active is True)
+        )
+
         # Use case() to get a sortable value (0 for non-sold, 1 for sold)
         is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
 
@@ -101,6 +122,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
                 selectinload(self.model.user).selectinload(User.seller_profile)
             )
             .where(self.model.deleted_at.is_(None))
+            .where(~is_post_banned_subquery)  # Exclude banned posts
+            .where(~is_user_banned_subquery)  # Exclude posts from banned users
         )
 
         # Apply filters

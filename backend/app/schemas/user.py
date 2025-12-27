@@ -51,6 +51,7 @@ class UserResponseSchema(BaseModel):
     email_verified: bool
     is_seller: bool = False
     seller_status: str | None = None
+    is_admin: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -70,4 +71,5 @@ class UserResponseSchema(BaseModel):
             email_verified=user.email_verified,
             is_seller=user.is_seller,
             seller_status=seller_status,
+            is_admin=user.is_admin,
         )

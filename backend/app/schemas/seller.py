@@ -8,6 +8,12 @@ from pydantic import BaseModel, Field
 class SellerVerificationRequest(BaseModel):
     """Schema for initiating seller verification with bank account details."""
 
+    invite_code: str = Field(
+        ...,
+        min_length=6,
+        max_length=16,
+        description="Invite code required to become a seller",
+    )
     bank_brand: str = Field(
         ...,
         min_length=1,
