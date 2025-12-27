@@ -33,7 +33,7 @@ class PostBan(Base):
     # Admin who imposed the ban
     banned_by_user_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
 
@@ -55,7 +55,7 @@ class PostBan(Base):
     )
     lifted_by_user_id: Mapped[int | None] = mapped_column(
         BigInteger,
-        ForeignKey("users.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=True,
     )
 

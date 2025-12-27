@@ -1,8 +1,8 @@
 """add_seller_invites_reports_bans
 
-Revision ID: 3be4bea499cd
+Revision ID: ce94eea0220a
 Revises: 1fe65bf8d5df
-Create Date: 2025-12-27 17:17:34.985868
+Create Date: 2025-12-28 00:26:03.307652
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '3be4bea499cd'
+revision: str = 'ce94eea0220a'
 down_revision: Union[str, Sequence[str], None] = '1fe65bf8d5df'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,8 +30,8 @@ def upgrade() -> None:
     sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('last_modified_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['used_by_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['created_by_user_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['used_by_user_id'], ['users.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_seller_invites_code'), 'seller_invites', ['code'], unique=True)
@@ -50,8 +50,8 @@ def upgrade() -> None:
     sa.Column('lifted_by_user_id', sa.BigInteger(), nullable=True),
     sa.Column('created_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('last_modified_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['banned_by_user_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['lifted_by_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['banned_by_user_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['lifted_by_user_id'], ['users.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -69,8 +69,8 @@ def upgrade() -> None:
     sa.Column('lifted_by_user_id', sa.BigInteger(), nullable=True),
     sa.Column('created_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('last_modified_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['banned_by_user_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['lifted_by_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['banned_by_user_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['lifted_by_user_id'], ['users.id'], ondelete='RESTRICT'),
     sa.ForeignKeyConstraint(['post_id'], ['posts.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -92,10 +92,10 @@ def upgrade() -> None:
     sa.Column('admin_notes', sa.Text(), nullable=True),
     sa.Column('created_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('last_modified_date', sa.TIMESTAMP(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['reported_post_id'], ['posts.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['reported_user_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['reporter_user_id'], ['users.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['reviewed_by_user_id'], ['users.id'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['reported_post_id'], ['posts.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['reported_user_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['reporter_user_id'], ['users.id'], ondelete='RESTRICT'),
+    sa.ForeignKeyConstraint(['reviewed_by_user_id'], ['users.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_reports_created_date'), 'reports', ['created_date'], unique=False)
@@ -138,4 +138,10 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_seller_invites_created_by_user_id'), table_name='seller_invites')
     op.drop_index(op.f('ix_seller_invites_code'), table_name='seller_invites')
     op.drop_table('seller_invites')
+    op.execute('DROP TYPE invite_status_enum')
+    op.execute('DROP TYPE report_type_enum')
+    op.execute('DROP TYPE report_reason_enum')
+    op.execute('DROP TYPE report_status_enum')
+
+
     # ### end Alembic commands ###
