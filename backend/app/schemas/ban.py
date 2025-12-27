@@ -35,7 +35,6 @@ class UserBanResponse(BaseModel):
     id: int
     user_id: int
     username: str
-    email: str
     reason: str
     is_active: bool
     created_date: datetime
