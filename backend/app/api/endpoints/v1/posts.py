@@ -116,21 +116,10 @@ async def list_posts(
     )
 
     # Convert to response schema with is_sold
-    items = [
-        PostResponseSchema(
-            id=post.id,
-            title=post.title,
-            description=post.description,
-            type=PostTypeSchema(post.type.value),
-            price=post.price,
-            shipping_cost=post.shipping_cost,
-            image_url=post.image_url,
-            image_urls=post.image_urls,
-            user=post.user,
-            is_sold=is_sold,
-        )
-        for post, is_sold in posts_with_sold
-    ]
+    items = []
+    for post, is_sold in posts_with_sold:
+        post.is_sold = is_sold
+        items.append(PostResponseSchema.model_validate(post))
 
     return PaginatedPostsResponse(
         items=items,
