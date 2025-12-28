@@ -120,8 +120,15 @@ class ModerationService:
             limit=limit,
         )
 
+        # Batch fetch ban status to avoid N+1 queries
+        banned_user_ids = set(await ban_crud.get_banned_user_ids(self.db))
+        banned_post_ids = set(await ban_crud.get_banned_post_ids(self.db))
+
         return ReportListResponse(
-            items=[self._report_to_response(r) for r in reports],
+            items=[
+                self._report_to_response(r, banned_user_ids, banned_post_ids)
+                for r in reports
+            ],
             total=total,
             skip=skip,
             limit=limit,
@@ -172,12 +179,12 @@ class ModerationService:
         )
         active_user_bans = (
             select(func.count(UserBan.id))
-            .where(UserBan.is_active is True)
+            .where(UserBan.is_active == True)
             .scalar_subquery()
         )
         active_post_bans = (
             select(func.count(PostBan.id))
-            .where(PostBan.is_active is True)
+            .where(PostBan.is_active == True)
             .scalar_subquery()
         )
 
@@ -343,8 +350,24 @@ class ModerationService:
         ban = await ban_crud.get_active_post_ban(self.db, post_id=post_id)
         return ban is not None
 
-    def _report_to_response(self, report) -> ReportResponse:
+    def _report_to_response(
+        self,
+        report,
+        banned_user_ids: set[int] | None = None,
+        banned_post_ids: set[int] | None = None,
+    ) -> ReportResponse:
         """Convert report model to response schema."""
+        is_user_banned = (
+            report.reported_user_id in banned_user_ids
+            if banned_user_ids and report.reported_user_id
+            else False
+        )
+        is_post_banned = (
+            report.reported_post_id in banned_post_ids
+            if banned_post_ids and report.reported_post_id
+            else False
+        )
+
         return ReportResponse(
             id=report.id,
             report_type=report.report_type.value.lower(),
@@ -360,6 +383,8 @@ class ModerationService:
             reviewed_by_username=report.reviewed_by.username if report.reviewed_by else None,
             reviewed_at=report.reviewed_at,
             admin_notes=report.admin_notes,
+            is_user_banned=is_user_banned,
+            is_post_banned=is_post_banned,
         )
 
     def _user_ban_to_response(self, ban) -> UserBanResponse:

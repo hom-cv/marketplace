@@ -8,6 +8,7 @@ import {
   Badge,
   Divider,
   Paper,
+  Tooltip,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -173,28 +174,39 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
           </Text>
           <Group grow>
             {report.report_type === "post" && report.reported_post_id && (
+              <Tooltip
+                label="This listing is already banned"
+                disabled={!report.is_post_banned}
+              >
+                <Button
+                  color="red"
+                  variant="light"
+                  leftSection={<IconTrash size={16} />}
+                  onClick={() => banPostMutation.mutate(report.reported_post_id!)}
+                  loading={banPostMutation.isPending}
+                  disabled={report.is_post_banned}
+                  radius="md"
+                >
+                  {report.is_post_banned ? "Listing Removed" : "Remove Listing"}
+                </Button>
+              </Tooltip>
+            )}
+            <Tooltip
+              label="This user is already banned"
+              disabled={!report.is_user_banned}
+            >
               <Button
                 color="red"
-                variant="light"
-                leftSection={<IconTrash size={16} />}
-                onClick={() => banPostMutation.mutate(report.reported_post_id!)}
-                loading={banPostMutation.isPending}
+                variant="outline"
+                leftSection={<IconUserCancel size={16} />}
+                onClick={() => banUserMutation.mutate(report.reported_user_id!)}
+                disabled={!report.reported_user_id || report.is_user_banned}
+                loading={banUserMutation.isPending}
                 radius="md"
               >
-                Remove Listing
+                {report.is_user_banned ? "User Banned" : "Ban User"}
               </Button>
-            )}
-            <Button
-              color="red"
-              variant="outline"
-              leftSection={<IconUserCancel size={16} />}
-              onClick={() => banUserMutation.mutate(report.reported_user_id!)}
-              disabled={!report.reported_user_id}
-              loading={banUserMutation.isPending}
-              radius="md"
-            >
-              Ban User
-            </Button>
+            </Tooltip>
           </Group>
         </div>
 

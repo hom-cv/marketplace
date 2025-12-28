@@ -50,6 +50,8 @@ export interface Report {
   reviewed_by_username: string | null;
   reviewed_at: string | null;
   admin_notes: string | null;
+  is_user_banned: boolean;
+  is_post_banned: boolean;
 }
 
 export interface ReportListResponse {
