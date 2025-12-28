@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Title, Text, SimpleGrid, Paper, Group, Badge, Stack, Loader, Center } from "@mantine/core";
 import { IconFlag, IconUserOff, IconBan } from "@tabler/icons-react";
 import { getAdminStats } from "@/api/admin";
-import type { AdminStatsResponse } from "@/api/types/admin";
 
 interface StatCardProps {
   title: string;
@@ -38,25 +37,12 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
 }
 
 export function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: stats, isLoading, error } = useQuery({
+    queryKey: ["adminStats"],
+    queryFn: getAdminStats,
+  });
 
-  useEffect(() => {
-    async function loadStats() {
-      try {
-        const data = await getAdminStats();
-        setStats(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load stats");
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadStats();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Center h={400}>
         <Loader size="xl" />
@@ -67,7 +53,7 @@ export function AdminDashboard() {
   if (error) {
     return (
       <Center h={400}>
-        <Text c="red">{error}</Text>
+        <Text c="red">{error instanceof Error ? error.message : "Failed to load stats"}</Text>
       </Center>
     );
   }
@@ -115,3 +101,4 @@ export function AdminDashboard() {
     </Stack>
   );
 }
+
