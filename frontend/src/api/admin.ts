@@ -20,6 +20,18 @@ import type {
   AdminStatsResponse,
 } from '@/api/types/admin';
 
+/** Builds a query string from params, filtering out undefined/null values */
+function buildQueryString(params: Record<string, unknown>): string {
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) {
+      searchParams.set(key, String(value));
+    }
+  }
+  const qs = searchParams.toString();
+  return qs ? `?${qs}` : '';
+}
+
 // =============================================================================
 // Invites
 // =============================================================================
@@ -33,13 +45,7 @@ export async function listInvites(params?: {
   skip?: number;
   limit?: number;
 }): Promise<InviteListResponse> {
-  const searchParams = new URLSearchParams();
-  if (params?.status) searchParams.set('status', params.status);
-  if (params?.skip) searchParams.set('skip', params.skip.toString());
-  if (params?.limit) searchParams.set('limit', params.limit.toString());
-
-  const queryString = searchParams.toString();
-  return apiRequest<InviteListResponse>(`/invites${queryString ? `?${queryString}` : ''}`);
+  return apiRequest<InviteListResponse>(`/invites${buildQueryString(params ?? {})}`);
 }
 
 export async function revokeInvite(code: string): Promise<InviteResponse> {
@@ -60,14 +66,7 @@ export async function listReports(params?: {
   skip?: number;
   limit?: number;
 }): Promise<ReportListResponse> {
-  const searchParams = new URLSearchParams();
-  if (params?.status) searchParams.set('status', params.status);
-  if (params?.type) searchParams.set('type', params.type);
-  if (params?.skip) searchParams.set('skip', params.skip.toString());
-  if (params?.limit) searchParams.set('limit', params.limit.toString());
-
-  const queryString = searchParams.toString();
-  return apiRequest<ReportListResponse>(`/reports${queryString ? `?${queryString}` : ''}`);
+  return apiRequest<ReportListResponse>(`/reports${buildQueryString(params ?? {})}`);
 }
 
 export async function reviewReport(
@@ -98,13 +97,7 @@ export async function listUserBans(params?: {
   skip?: number;
   limit?: number;
 }): Promise<UserBanListResponse> {
-  const searchParams = new URLSearchParams();
-  if (params?.active_only) searchParams.set('active_only', 'true');
-  if (params?.skip) searchParams.set('skip', params.skip.toString());
-  if (params?.limit) searchParams.set('limit', params.limit.toString());
-
-  const queryString = searchParams.toString();
-  return apiRequest<UserBanListResponse>(`/admin/bans/users${queryString ? `?${queryString}` : ''}`);
+  return apiRequest<UserBanListResponse>(`/admin/bans/users${buildQueryString(params ?? {})}`);
 }
 
 // =============================================================================
@@ -124,13 +117,7 @@ export async function listPostBans(params?: {
   skip?: number;
   limit?: number;
 }): Promise<PostBanListResponse> {
-  const searchParams = new URLSearchParams();
-  if (params?.active_only) searchParams.set('active_only', 'true');
-  if (params?.skip) searchParams.set('skip', params.skip.toString());
-  if (params?.limit) searchParams.set('limit', params.limit.toString());
-
-  const queryString = searchParams.toString();
-  return apiRequest<PostBanListResponse>(`/admin/bans/posts${queryString ? `?${queryString}` : ''}`);
+  return apiRequest<PostBanListResponse>(`/admin/bans/posts${buildQueryString(params ?? {})}`);
 }
 
 // =============================================================================
