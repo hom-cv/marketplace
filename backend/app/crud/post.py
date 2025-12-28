@@ -293,19 +293,12 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         Returns:
             Tuple of (is_post_banned, is_user_banned).
         """
-        # Check if post is banned
-        post_ban_query = select(exists().where(
-            PostBan.post_id == post_id,
-            PostBan.is_active.is_(True)
-        ))
-        is_post_banned = await db.scalar(post_ban_query) or False
-
-        # Check if user is banned
-        user_ban_query = select(exists().where(
-            UserBan.user_id == user_id,
-            UserBan.is_active.is_(True)
-        ))
-        is_user_banned = await db.scalar(user_ban_query) or False
+        # Check ban status in a single query
+        ban_status_query = select(
+            exists().where(PostBan.post_id == post_id, PostBan.is_active.is_(True)),
+            exists().where(UserBan.user_id == user_id, UserBan.is_active.is_(True)),
+        )
+        is_post_banned, is_user_banned = (await db.execute(ban_status_query)).one()
 
         return is_post_banned, is_user_banned
 
