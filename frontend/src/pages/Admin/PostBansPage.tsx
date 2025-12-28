@@ -24,6 +24,7 @@ import {
   IconCheck,
 } from "@tabler/icons-react";
 import { getPostBans, banPost, liftPostBan } from "@/api/admin";
+import type { BanPostRequest } from "@/api/types/admin";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 
 export function PostBansPage() {
@@ -39,7 +40,7 @@ export function PostBansPage() {
   });
 
   const banMutation = useMutation({
-    mutationFn: () => banPost({ post_id: postId as number, reason }),
+    mutationFn: (request: BanPostRequest) => banPost(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-post-bans"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
@@ -192,9 +193,13 @@ export function PostBansPage() {
             <Button variant="light" onClick={close}>Cancel</Button>
             <Button
               color="grape"
-              onClick={() => banMutation.mutate()}
+              onClick={() => {
+                if (typeof postId === "number") {
+                  banMutation.mutate({ post_id: postId, reason });
+                }
+              }}
               loading={banMutation.isPending}
-              disabled={!postId || reason.length < 5}
+              disabled={typeof postId !== "number" || reason.length < 5}
             >
               Ban Post
             </Button>

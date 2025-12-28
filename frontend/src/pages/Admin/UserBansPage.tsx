@@ -13,7 +13,6 @@ import {
   Loader,
   Alert,
   Modal,
-  TextInput,
   Textarea,
   NumberInput,
 } from "@mantine/core";
@@ -25,6 +24,7 @@ import {
   IconCheck,
 } from "@tabler/icons-react";
 import { getUserBans, banUser, liftUserBan } from "@/api/admin";
+import type { BanUserRequest } from "@/api/types/admin";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 
 export function UserBansPage() {
@@ -40,7 +40,7 @@ export function UserBansPage() {
   });
 
   const banMutation = useMutation({
-    mutationFn: () => banUser({ user_id: userId as number, reason }),
+    mutationFn: (request: BanUserRequest) => banUser(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-bans"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
@@ -191,9 +191,13 @@ export function UserBansPage() {
             <Button variant="light" onClick={close}>Cancel</Button>
             <Button
               color="red"
-              onClick={() => banMutation.mutate()}
+              onClick={() => {
+                if (typeof userId === 'number') {
+                  banMutation.mutate({ user_id: userId, reason });
+                }
+              }}
               loading={banMutation.isPending}
-              disabled={!userId || reason.length < 5}
+              disabled={typeof userId !== "number" || reason.length < 5}
             >
               Ban User
             </Button>
