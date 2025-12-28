@@ -3,18 +3,23 @@
  * Premium, modern design with subtle animations
  */
 
-import { useState } from "react";
 import { Card, Image, Text, Badge, Group, Stack, Box, Menu, ActionIcon } from "@mantine/core";
 import { useNavigate } from "@tanstack/react-router";
 import { IconDotsVertical, IconFlag, IconUserExclamation } from "@tabler/icons-react";
 import type { Post, PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
-import { ReportModal } from "@/components/ReportModal";
 import styles from "./PostCard.module.css";
+
+export interface ReportTarget {
+  reportType: ReportType;
+  entityId: number;
+  entityName: string;
+}
 
 interface PostCardProps {
   post: Post;
+  onReportClick?: (target: ReportTarget) => void;
 }
 
 const typeColors: Record<PostType, string> = {
@@ -35,146 +40,145 @@ const typeLabels: Record<PostType, string> = {
   OTHER: "Other",
 };
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, onReportClick }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
 
-  const [reportModalOpened, setReportModalOpened] = useState(false);
-  const [reportType, setReportType] = useState<ReportType>("post");
-
   const handleClick = () => {
     navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
   };
 
+  const handleReportListing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReportClick?.({
+      reportType: "post",
+      entityId: post.id,
+      entityName: post.title,
+    });
+  };
+
+  const handleReportUser = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReportClick?.({
+      reportType: "user",
+      entityId: post.user.id,
+      entityName: `@${post.user.username}`,
+    });
+  };
+
   return (
-    <>
-      <Card
-        className={styles.card}
-        shadow="sm"
-        padding={0}
-        radius="lg"
-        withBorder
-        onClick={handleClick}
-      >
-        <Card.Section className={styles.imageSection}>
-          <Image
-            src={post.image_url || "https://placehold.co/400x400?text=No+Image"}
-            height={220}
-            alt={post.title}
-            fallbackSrc="https://placehold.co/400x400?text=No+Image"
-            className={post.is_sold ? styles.imageSold : styles.image}
-          />
+    <Card
+      className={styles.card}
+      shadow="sm"
+      padding={0}
+      radius="lg"
+      withBorder
+      onClick={handleClick}
+    >
+      <Card.Section className={styles.imageSection}>
+        <Image
+          src={post.image_url || "https://placehold.co/400x400?text=No+Image"}
+          height={220}
+          alt={post.title}
+          fallbackSrc="https://placehold.co/400x400?text=No+Image"
+          className={post.is_sold ? styles.imageSold : styles.image}
+        />
+        <Badge
+          className={styles.typeBadge}
+          color={typeColors[post.type]}
+          variant="filled"
+          size="sm"
+        >
+          {typeLabels[post.type]}
+        </Badge>
+        {post.is_sold && (
           <Badge
-            className={styles.typeBadge}
-            color={typeColors[post.type]}
+            className={styles.soldBadge}
+            color="red"
             variant="filled"
-            size="sm"
+            size="lg"
           >
-            {typeLabels[post.type]}
+            Sold
           </Badge>
-          {post.is_sold && (
-            <Badge
-              className={styles.soldBadge}
-              color="red"
-              variant="filled"
-              size="lg"
-            >
-              Sold
-            </Badge>
-          )}
-          {post.is_banned && (
-            <Badge
-              className={styles.soldBadge}
-              color="dark"
-              variant="filled"
-              size="lg"
-            >
-              Removed
-            </Badge>
-          )}
+        )}
+        {post.is_banned && (
+          <Badge
+            className={styles.soldBadge}
+            color="dark"
+            variant="filled"
+            size="lg"
+          >
+            Removed
+          </Badge>
+        )}
 
-          {/* Report Menu - only show for non-owners */}
-          {!isOwner && (
-            <div className={styles.menuWrapper}>
-              <Menu shadow="md" width={180} position="bottom-end">
-                <Menu.Target>
-                  <ActionIcon
-                    className={styles.menuButton}
-                    variant="white"
-                    color="gray"
-                    size="sm"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <IconDotsVertical size={16} />
-                  </ActionIcon>
-                </Menu.Target>
-                <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
-                  <Menu.Item
-                    color="red"
-                    leftSection={<IconFlag size={14} />}
-                    onClick={() => {
-                      setReportType("post");
-                      setReportModalOpened(true);
-                    }}
-                  >
-                    Report Listing
-                  </Menu.Item>
-                  <Menu.Item
-                    color="red"
-                    leftSection={<IconUserExclamation size={14} />}
-                    onClick={() => {
-                      setReportType("user");
-                      setReportModalOpened(true);
-                    }}
-                  >
-                    Report User
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
-            </div>
-          )}
-        </Card.Section>
+        {/* Report Menu - only show for non-owners when handler is provided */}
+        {!isOwner && onReportClick && (
+          <div className={styles.menuWrapper}>
+            <Menu shadow="md" width={180} position="bottom-end">
+              <Menu.Target>
+                <ActionIcon
+                  className={styles.menuButton}
+                  variant="white"
+                  color="gray"
+                  size="sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconDotsVertical size={16} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconFlag size={14} />}
+                  onClick={handleReportListing}
+                >
+                  Report Listing
+                </Menu.Item>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconUserExclamation size={14} />}
+                  onClick={handleReportUser}
+                >
+                  Report User
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </div>
+        )}
+      </Card.Section>
 
-        <Box p="md">
-          <Stack gap={6}>
-            <Text fw={600} size="md" lineClamp={1}>
-              {post.title}
+      <Box p="md">
+        <Stack gap={6}>
+          <Text fw={600} size="md" lineClamp={1}>
+            {post.title}
+          </Text>
+
+          <Group justify="space-between" align="center">
+            <Text size="xl" fw={700} c="dark">
+              ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
+            {isOwner && (
+              <Badge variant="light" color="gray" size="sm">
+                Your listing
+              </Badge>
+            )}
+          </Group>
 
-            <Group justify="space-between" align="center">
-              <Text size="xl" fw={700} c="dark">
-                ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </Text>
-              {isOwner && (
-                <Badge variant="light" color="gray" size="sm">
-                  Your listing
-                </Badge>
-              )}
-            </Group>
+          <Text size="sm" c="dimmed" lineClamp={2}>
+            {post.description}
+          </Text>
 
-            <Text size="sm" c="dimmed" lineClamp={2}>
-              {post.description}
+          <Group gap={4} mt={4}>
+            <Text size="xs" c="dimmed">
+              @{post.user.username}
             </Text>
-
-            <Group gap={4} mt={4}>
-              <Text size="xs" c="dimmed">
-                @{post.user.username}
-              </Text>
-            </Group>
-          </Stack>
-        </Box>
-      </Card>
-
-
-      <ReportModal
-        opened={reportModalOpened}
-        onClose={() => setReportModalOpened(false)}
-        reportType={reportType}
-        entityId={reportType === "post" ? post.id : post.user.id}
-        entityName={reportType === "post" ? post.title : `@${post.user.username}`}
-      />
-    </>
+          </Group>
+        </Stack>
+      </Box>
+    </Card>
   );
 }
+
