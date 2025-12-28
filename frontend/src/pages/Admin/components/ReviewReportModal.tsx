@@ -67,7 +67,7 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
 
   const banUserMutation = useMutation({
     mutationFn: (userId: number) =>
-      banUser({ user_id: userId, reason: `Report Resolved: ${form.values.admin_notes.trim() || report?.reason || "Rules violation"}` }),
+      banUser({ user_id: userId, reason: `Report Resolved: ${form.values.admin_notes.trim() || REASON_LABELS[report!.reason] || "Rules violation"}` }),
     onSuccess: () => {
       notifications.show({
         title: "User Banned",
