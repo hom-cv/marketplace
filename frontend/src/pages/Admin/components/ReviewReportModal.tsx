@@ -51,7 +51,7 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
     } else {
       form.reset();
     }
-  }, [report]);
+  }, [report, form]);
 
   const reviewMutation = useMutation({
     mutationFn: ({ reportId, status }: { reportId: number; status: "reviewed" | "resolved" | "dismissed"; notes?: string }) =>
