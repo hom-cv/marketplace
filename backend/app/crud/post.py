@@ -321,7 +321,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         if row is None:
             return None
 
-        return (row[0], bool(row[1]), bool(row[2]))
+        post, is_post_banned, is_user_banned = row
+        return (post, bool(is_post_banned), bool(is_user_banned))
 
     async def create_post(
         self,
