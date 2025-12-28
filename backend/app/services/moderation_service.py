@@ -363,9 +363,9 @@ class ModerationService:
             else False
         )
         is_post_banned = (
-            report.reported_post_id in banned_post_ids
-            if banned_post_ids and report.reported_post_id
-            else False
+            banned_post_ids is not None
+            and report.reported_post_id is not None
+            and report.reported_post_id in banned_post_ids
         )
 
         return ReportResponse(
