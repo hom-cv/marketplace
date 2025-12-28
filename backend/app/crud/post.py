@@ -253,7 +253,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         result = await db.execute(query)
         rows = result.all()
 
-        return [(row[0], bool(row[1]), bool(row[2])) for row in rows]
+        return [(post, bool(is_post_banned), bool(is_user_banned)) for post, is_post_banned, is_user_banned in rows]
 
     async def get_by_id_with_user(
         self,
