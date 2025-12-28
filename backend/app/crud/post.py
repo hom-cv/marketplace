@@ -22,6 +22,28 @@ from app.schemas.post import PostCreateSchema, PostUpdateSchema
 class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     """CRUD operations for Post model."""
 
+    def _post_ban_subquery(self):
+        """Build exists subquery to check if a post is banned."""
+        return (
+            exists()
+            .where(PostBan.post_id == self.model.id)
+            .where(PostBan.is_active.is_(True))
+        )
+
+    def _user_ban_subquery(self):
+        """Build exists subquery to check if a user is banned."""
+        return (
+            exists()
+            .where(UserBan.user_id == self.model.user_id)
+            .where(UserBan.is_active.is_(True))
+        )
+
+    def _ban_status_expressions(self):
+        """Build labeled case expressions for ban status columns."""
+        is_post_banned_expr = case((self._post_ban_subquery(), 1), else_=0).label("is_post_banned")
+        is_user_banned_expr = case((self._user_ban_subquery(), 1), else_=0).label("is_user_banned")
+        return is_post_banned_expr, is_user_banned_expr
+
     async def get_all_posts(
         self,
         db: AsyncSession,
@@ -98,19 +120,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             .where(Payment.status == PaymentStatus.SUCCESSFUL)
         )
 
-        # Subquery to check if post is banned
-        is_post_banned_subquery = (
-            exists()
-            .where(PostBan.post_id == self.model.id)
-            .where(PostBan.is_active.is_(True))
-        )
-
-        # Subquery to check if user is banned
-        is_user_banned_subquery = (
-            exists()
-            .where(UserBan.user_id == self.model.user_id)
-            .where(UserBan.is_active.is_(True))
-        )
+        # Use helper methods for ban subqueries
+        is_post_banned_subquery = self._post_ban_subquery()
+        is_user_banned_subquery = self._user_ban_subquery()
 
         # Use case() to get a sortable value (0 for non-sold, 1 for sold)
         is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
@@ -223,20 +235,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         Returns:
             List of (Post, is_post_banned, is_user_banned) tuples.
         """
-        # Subqueries for ban status
-        is_post_banned_subquery = (
-            exists()
-            .where(PostBan.post_id == self.model.id)
-            .where(PostBan.is_active.is_(True))
-        )
-        is_user_banned_subquery = (
-            exists()
-            .where(UserBan.user_id == self.model.user_id)
-            .where(UserBan.is_active.is_(True))
-        )
-
-        is_post_banned_expr = case((is_post_banned_subquery, 1), else_=0).label("is_post_banned")
-        is_user_banned_expr = case((is_user_banned_subquery, 1), else_=0).label("is_user_banned")
+        is_post_banned_expr, is_user_banned_expr = self._ban_status_expressions()
 
         query = (
             select(self.model, is_post_banned_expr, is_user_banned_expr)
@@ -304,20 +303,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         Returns:
             Tuple of (Post, is_post_banned, is_user_banned) or None if not found.
         """
-        # Subqueries for ban status
-        is_post_banned_subquery = (
-            exists()
-            .where(PostBan.post_id == self.model.id)
-            .where(PostBan.is_active.is_(True))
-        )
-        is_user_banned_subquery = (
-            exists()
-            .where(UserBan.user_id == self.model.user_id)
-            .where(UserBan.is_active.is_(True))
-        )
-
-        is_post_banned_expr = case((is_post_banned_subquery, 1), else_=0).label("is_post_banned")
-        is_user_banned_expr = case((is_user_banned_subquery, 1), else_=0).label("is_user_banned")
+        is_post_banned_expr, is_user_banned_expr = self._ban_status_expressions()
 
         query = (
             select(self.model, is_post_banned_expr, is_user_banned_expr)

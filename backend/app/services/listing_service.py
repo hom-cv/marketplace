@@ -65,6 +65,16 @@ def _payment_to_list_item(
     )
 
 
+def _post_with_ban_to_response(
+    post: "Post", is_banned: bool, is_user_banned: bool
+) -> PostResponseSchema:
+    """Convert a post with ban status tuple to PostResponseSchema."""
+    response = PostResponseSchema.model_validate(post)
+    response.is_banned = is_banned
+    response.is_user_banned = is_user_banned
+    return response
+
+
 class ListingService:
     """Service for purchase and sales listing operations."""
 
@@ -108,14 +118,10 @@ class ListingService:
             self.db, user_id=user_id, skip=skip, limit=limit
         )
 
-        result = []
-        for post, is_banned, is_user_banned in posts_with_ban_status:
-            response = PostResponseSchema.model_validate(post)
-            response.is_banned = is_banned
-            response.is_user_banned = is_user_banned
-            result.append(response)
-
-        return result
+        return [
+            _post_with_ban_to_response(post, is_banned, is_user_banned)
+            for post, is_banned, is_user_banned in posts_with_ban_status
+        ]
 
     async def get_listing(self, post_id: int) -> PostResponseSchema | None:
         """
@@ -134,11 +140,7 @@ class ListingService:
         if result is None:
             return None
 
-        post, is_banned, is_user_banned = result
-        response = PostResponseSchema.model_validate(post)
-        response.is_banned = is_banned
-        response.is_user_banned = is_user_banned
-        return response
+        return _post_with_ban_to_response(*result)
 
 
 def _get_listing_service(
