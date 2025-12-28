@@ -54,6 +54,9 @@ class ReportResponse(BaseModel):
     reviewed_by_username: str | None = None
     reviewed_at: datetime | None = None
     admin_notes: str | None = None
+    # Ban status
+    is_user_banned: bool = False
+    is_post_banned: bool = False
 
     model_config = {"from_attributes": True}
 

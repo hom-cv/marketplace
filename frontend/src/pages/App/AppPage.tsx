@@ -29,6 +29,8 @@ import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { FiltersSidebar, type FiltersState } from "@/components/FiltersSidebar";
+import { ReportModal } from "@/components/ReportModal";
+import { useReportModal } from "@/hooks/useReportModal";
 import styles from "./AppPage.module.css";
 
 export function AppPage() {
@@ -38,6 +40,9 @@ export function AppPage() {
     types: [],
     priceRange: [0, 1000],
   });
+
+  // Report modal state (lifted from PostCard)
+  const reportModal = useReportModal();
 
   const {
     data: posts,
@@ -139,7 +144,7 @@ export function AppPage() {
           ) : (
             <div className={styles.dynamicGrid}>
               {filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
+                <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
               ))}
             </div>
           )}
@@ -176,13 +181,24 @@ export function AppPage() {
             <Container py="md" className={styles.landscapeOnly}>
               <SimpleGrid cols={2} spacing="md">
                 {filteredPosts.map((post) => (
-                  <PostCard key={post.id} post={post} />
+                  <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
                 ))}
               </SimpleGrid>
             </Container>
           </>
         )}
       </Box>
+
+      {/* Single shared ReportModal for all cards */}
+      {reportModal.target && (
+        <ReportModal
+          opened={reportModal.opened}
+          onClose={reportModal.close}
+          reportType={reportModal.target.reportType}
+          entityId={reportModal.target.entityId}
+          entityName={reportModal.target.entityName}
+        />
+      )}
     </>
   );
 }

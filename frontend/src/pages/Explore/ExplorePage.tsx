@@ -22,6 +22,8 @@ import { IconAlertCircle, IconAdjustments, IconX, IconSearch } from "@tabler/ico
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
+import { ReportModal } from "@/components/ReportModal";
+import { useReportModal } from "@/hooks/useReportModal";
 import type { PostType, PostFilters } from "@/api/types/post";
 import styles from "./ExplorePage.module.css";
 
@@ -49,6 +51,9 @@ export function ExplorePage() {
     priceRange: [0, 10000],
     search: "",
   });
+
+  // Report modal state (lifted from PostCard)
+  const reportModal = useReportModal();
 
   // Ref for intersection observer sentinel element
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -340,7 +345,7 @@ export function ExplorePage() {
         ) : (
           <div className={styles.grid}>
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
             ))}
           </div>
         )}
@@ -383,6 +388,17 @@ export function ExplorePage() {
             </Text>
           )}
         </>
+      )}
+
+      {/* Single shared ReportModal for all cards */}
+      {reportModal.target && (
+        <ReportModal
+          opened={reportModal.opened}
+          onClose={reportModal.close}
+          reportType={reportModal.target.reportType}
+          entityId={reportModal.target.entityId}
+          entityName={reportModal.target.entityName}
+        />
       )}
     </Stack>
   );

@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   Title,
   Text,
   Stack,
-  Table,
   Badge,
   Button,
   Group,
@@ -12,21 +11,21 @@ import {
   Center,
   Loader,
   Alert,
-  Modal,
-  Textarea,
   Accordion,
   Paper,
+  Grid,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconFlag,
   IconAlertCircle,
   IconCheck,
-  IconX,
+  IconExternalLink,
 } from "@tabler/icons-react";
-import { getReports, reviewReport } from "@/api/admin";
+import { getReports } from "@/api/admin";
 import type { Report, ReportStatus, ReportType } from "@/api/types/admin";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { ReviewReportModal } from "./components/ReviewReportModal";
 
 const STATUS_COLORS: Record<ReportStatus, string> = {
   pending: "orange",
@@ -48,11 +47,9 @@ const REASON_LABELS: Record<string, string> = {
 };
 
 export function ReportsPage() {
-  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [adminNotes, setAdminNotes] = useState("");
   const [opened, { open, close }] = useDisclosure(false);
 
   const { data: reportsData, isLoading, error } = useQuery({
@@ -60,21 +57,8 @@ export function ReportsPage() {
     queryFn: () => getReports(statusFilter || undefined, typeFilter || undefined),
   });
 
-  const reviewMutation = useMutation({
-    mutationFn: ({ reportId, status }: { reportId: number; status: "reviewed" | "resolved" | "dismissed" }) =>
-      reviewReport(reportId, { status, admin_notes: adminNotes || undefined }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
-      close();
-      setSelectedReport(null);
-      setAdminNotes("");
-    },
-  });
-
   const handleAction = (report: Report) => {
     setSelectedReport(report);
-    setAdminNotes("");
     open();
   };
 
@@ -97,43 +81,54 @@ export function ReportsPage() {
   const reports = reportsData?.items ?? [];
 
   return (
-    <Stack gap="lg">
+    <Stack gap="xl">
       <div>
         <Title order={2} mb="xs">Reports</Title>
         <Text c="dimmed">Review and manage user and listing reports.</Text>
       </div>
 
-      <Group>
-        <Select
-          placeholder="Filter by status"
-          value={statusFilter}
-          onChange={setStatusFilter}
-          data={[
-            { value: "", label: "All" },
-            { value: "pending", label: "Pending" },
-            { value: "reviewed", label: "Reviewed" },
-            { value: "resolved", label: "Resolved" },
-            { value: "dismissed", label: "Dismissed" },
-          ]}
-          clearable
-          w={160}
-        />
-        <Select
-          placeholder="Filter by type"
-          value={typeFilter}
-          onChange={setTypeFilter}
-          data={[
-            { value: "", label: "All Types" },
-            { value: "user", label: "User" },
-            { value: "post", label: "Post" },
-          ]}
-          clearable
-          w={140}
-        />
-        <Text size="sm" c="dimmed">
-          {reportsData?.total ?? 0} total reports
-        </Text>
-      </Group>
+      <Paper withBorder p="md" radius="md" shadow="sm">
+        <Group justify="space-between">
+          <Group>
+            <Select
+              label="Status"
+              placeholder="Filter by status"
+              value={statusFilter}
+              onChange={setStatusFilter}
+              data={[
+                { value: "", label: "All Statuses" },
+                { value: "pending", label: "Pending" },
+                { value: "reviewed", label: "Reviewed" },
+                { value: "resolved", label: "Resolved" },
+                { value: "dismissed", label: "Dismissed" },
+              ]}
+              clearable
+              w={180}
+            />
+            <Select
+              label="Type"
+              placeholder="Filter by type"
+              value={typeFilter}
+              onChange={setTypeFilter}
+              data={[
+                { value: "", label: "All Types" },
+                { value: "user", label: "User" },
+                { value: "post", label: "Listing" },
+              ]}
+              clearable
+              w={160}
+            />
+          </Group>
+          <Stack gap={0} align="flex-end">
+            <Text size="xl" fw={700}>
+              {reportsData?.total ?? 0}
+            </Text>
+            <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
+              Total Reports
+            </Text>
+          </Stack>
+        </Group>
+      </Paper>
 
       {reports.length === 0 ? (
         <EmptyStateCard
@@ -142,78 +137,97 @@ export function ReportsPage() {
           description="No reports match the current filters."
         />
       ) : (
-        <Accordion variant="separated" radius="md">
+        <Accordion variant="separated" radius="lg">
           {reports.map((report) => (
-            <Accordion.Item key={report.id} value={String(report.id)}>
+            <Accordion.Item key={report.id} value={String(report.id)} style={{ backgroundColor: "white" }}>
               <Accordion.Control>
                 <Group justify="space-between" wrap="nowrap" pr="md">
-                  <Group gap="sm">
-                    <Badge color={TYPE_COLORS[report.report_type]} variant="light" size="sm">
-                      {report.report_type}
+                  <Group gap="md">
+                    <Badge color={TYPE_COLORS[report.report_type]} variant="filled" size="sm" radius="sm">
+                      {report.report_type.toUpperCase()}
                     </Badge>
-                    <Text size="sm" fw={500}>
-                      {report.report_type === "user"
-                        ? report.reported_username
-                        : report.reported_post_title}
-                    </Text>
+                    <Stack gap={0}>
+                      <Text size="sm" fw={600}>
+                        {report.report_type === "user"
+                          ? report.reported_username
+                          : report.reported_post_title}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        Reported by {report.reporter_username || "anonymous"}
+                      </Text>
+                    </Stack>
                   </Group>
-                  <Group gap="xs">
+                  <Group gap="xl">
                     <Badge color={STATUS_COLORS[report.status]} variant="light" size="sm">
                       {report.status}
                     </Badge>
-                    <Text size="xs" c="dimmed">
-                      {new Date(report.created_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                    <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }}>
+                      {new Date(report.created_date).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                      })}
                     </Text>
                   </Group>
                 </Group>
               </Accordion.Control>
               <Accordion.Panel>
-                <Stack gap="sm">
-                  <Paper withBorder p="sm" radius="sm">
-                    <Group gap="lg">
-                      <div>
-                        <Text size="xs" c="dimmed">Reason</Text>
-                        <Badge variant="outline" size="sm">
+                <Stack gap="md" pt="xs">
+                  <Paper withBorder p="md" radius="md" bg="gray.0">
+                    <Grid>
+                      <Grid.Col span={{ base: 12, sm: 4 }}>
+                        <Text size="xs" c="dimmed" fw={700} tt="uppercase">Reason</Text>
+                        <Text fw={600} mt={4}>
                           {REASON_LABELS[report.reason] || report.reason}
-                        </Badge>
-                      </div>
-                      <div>
-                        <Text size="xs" c="dimmed">Reporter</Text>
-                        <Text size="sm">{report.reporter_username || "Unknown"}</Text>
-                      </div>
-                      {report.reviewed_by_username && (
-                        <div>
-                          <Text size="xs" c="dimmed">Reviewed By</Text>
-                          <Text size="sm">{report.reviewed_by_username}</Text>
-                        </div>
-                      )}
-                    </Group>
+                        </Text>
+                      </Grid.Col>
+                      <Grid.Col span={{ base: 12, sm: 8 }}>
+                        <Text size="xs" c="dimmed" fw={700} tt="uppercase">Description</Text>
+                        <Text size="sm" mt={4} style={{ whiteSpace: "pre-wrap" }}>
+                          {report.description}
+                        </Text>
+                      </Grid.Col>
+                    </Grid>
                   </Paper>
 
-                  <div>
-                    <Text size="xs" c="dimmed" mb={4}>Description</Text>
-                    <Text size="sm">{report.description}</Text>
-                  </div>
-
                   {report.admin_notes && (
-                    <div>
-                      <Text size="xs" c="dimmed" mb={4}>Admin Notes</Text>
-                      <Text size="sm" fs="italic">{report.admin_notes}</Text>
-                    </div>
+                    <Paper p="md" radius="md" withBorder style={{ borderStyle: "dashed" }} bg="blue.0">
+                      <Text size="xs" c="blue.7" fw={700} tt="uppercase" mb={4}>Admin Decision Notes</Text>
+                      <Text size="sm" c="blue.9">{report.admin_notes}</Text>
+                      {report.reviewed_by_username && (
+                        <Text size="xs" c="blue.6" mt={8}>Reviewed by {report.reviewed_by_username}</Text>
+                      )}
+                    </Paper>
                   )}
 
-                  {report.status === "pending" && (
-                    <Group mt="sm">
+                  <Group justify="flex-start" mt="sm">
+                    {report.status === "pending" && (
                       <Button
-                        size="xs"
+                        size="sm"
+                        variant="filled"
                         color="green"
-                        leftSection={<IconCheck size={14} />}
+                        leftSection={<IconCheck size={16} />}
                         onClick={() => handleAction(report)}
                       >
                         Take Action
                       </Button>
-                    </Group>
-                  )}
+                    )}
+                    {report.report_type === "post" && report.reported_post_id && (
+                      <Button
+                        variant="subtle"
+                        size="sm"
+                        color="gray"
+                        component="a"
+                        href={`/app/posts/${report.reported_post_id}`}
+                        target="_blank"
+                        leftSection={<IconExternalLink size={14} />}
+                      >
+                        View Listing
+                      </Button>
+                    )}
+                  </Group>
                 </Stack>
               </Accordion.Panel>
             </Accordion.Item>
@@ -221,57 +235,11 @@ export function ReportsPage() {
         </Accordion>
       )}
 
-      <Modal opened={opened} onClose={close} title="Review Report" centered>
-        {selectedReport && (
-          <Stack gap="md">
-            <Text size="sm">
-              <strong>Reported:</strong>{" "}
-              {selectedReport.report_type === "user"
-                ? selectedReport.reported_username
-                : selectedReport.reported_post_title}
-            </Text>
-            <Text size="sm">
-              <strong>Reason:</strong> {REASON_LABELS[selectedReport.reason] || selectedReport.reason}
-            </Text>
-
-            <Textarea
-              label="Admin Notes"
-              placeholder="Optional notes about your decision..."
-              value={adminNotes}
-              onChange={(e) => setAdminNotes(e.currentTarget.value)}
-              rows={3}
-            />
-
-            <Group justify="flex-end">
-              <Button
-                variant="light"
-                color="gray"
-                leftSection={<IconX size={14} />}
-                onClick={() => reviewMutation.mutate({ reportId: selectedReport.id, status: "dismissed" })}
-                loading={reviewMutation.isPending}
-              >
-                Dismiss
-              </Button>
-              <Button
-                variant="light"
-                color="blue"
-                onClick={() => reviewMutation.mutate({ reportId: selectedReport.id, status: "reviewed" })}
-                loading={reviewMutation.isPending}
-              >
-                Mark as Reviewed
-              </Button>
-              <Button
-                color="green"
-                leftSection={<IconCheck size={14} />}
-                onClick={() => reviewMutation.mutate({ reportId: selectedReport.id, status: "resolved" })}
-                loading={reviewMutation.isPending}
-              >
-                Resolve
-              </Button>
-            </Group>
-          </Stack>
-        )}
-      </Modal>
+      <ReviewReportModal
+        opened={opened}
+        onClose={close}
+        report={selectedReport}
+      />
     </Stack>
   );
 }

@@ -3,6 +3,7 @@
  */
 
 export interface SellerVerificationRequest {
+  invite_code: string;
   bank_brand: string;
   bank_account_number: string;
   bank_account_name: string;

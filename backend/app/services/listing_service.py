@@ -1,4 +1,4 @@
-"""Listing service for purchase and sales history."""
+"""Listing service for purchase, sales, and user listings."""
 
 from typing import Annotated
 
@@ -6,9 +6,12 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.payment import payment_crud
+from app.crud.post import post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
+from app.models.post import Post
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
+from app.schemas.post import PostResponseSchema
 
 
 def _payment_to_list_item(
@@ -63,6 +66,16 @@ def _payment_to_list_item(
     )
 
 
+def _post_with_ban_to_response(
+    post: Post, is_banned: bool, is_user_banned: bool
+) -> PostResponseSchema:
+    """Convert a post with ban status tuple to PostResponseSchema."""
+    response = PostResponseSchema.model_validate(post)
+    response.is_banned = is_banned
+    response.is_user_banned = is_user_banned
+    return response
+
+
 class ListingService:
     """Service for purchase and sales listing operations."""
 
@@ -82,6 +95,53 @@ class ListingService:
         return [
             _payment_to_list_item(p, include_shipping_address=True) for p in payments
         ]
+
+    async def get_my_listings(
+        self,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> list[PostResponseSchema]:
+        """
+        Get all listings by a user with ban status.
+
+        Uses an optimized single query to avoid N+1 issues.
+
+        Args:
+            user_id: The user ID.
+            skip: Number of records to skip.
+            limit: Maximum number of records to return.
+
+        Returns:
+            List of PostResponseSchema with is_banned and is_user_banned populated.
+        """
+        posts_with_ban_status = await post_crud.get_by_user_id_with_ban_status(
+            self.db, user_id=user_id, skip=skip, limit=limit
+        )
+
+        return [
+            _post_with_ban_to_response(post, is_banned, is_user_banned)
+            for post, is_banned, is_user_banned in posts_with_ban_status
+        ]
+
+    async def get_listing(self, post_id: int) -> PostResponseSchema | None:
+        """
+        Get a single listing by ID with ban status.
+
+        Uses an optimized single query to fetch post and ban status.
+
+        Args:
+            post_id: The post ID.
+
+        Returns:
+            PostResponseSchema with is_banned and is_user_banned, or None if not found.
+        """
+        result = await post_crud.get_by_id_with_ban_status(self.db, id=post_id)
+
+        if result is None:
+            return None
+
+        return _post_with_ban_to_response(*result)
 
 
 def _get_listing_service(

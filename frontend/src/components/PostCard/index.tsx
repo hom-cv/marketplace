@@ -3,14 +3,23 @@
  * Premium, modern design with subtle animations
  */
 
-import { Card, Image, Text, Badge, Group, Stack, Box } from "@mantine/core";
+import { Card, Image, Text, Badge, Group, Stack, Box, Menu, ActionIcon } from "@mantine/core";
 import { useNavigate } from "@tanstack/react-router";
+import { IconDotsVertical, IconFlag, IconUserExclamation } from "@tabler/icons-react";
 import type { Post, PostType } from "@/api/types/post";
+import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./PostCard.module.css";
 
+export interface ReportTarget {
+  reportType: ReportType;
+  entityId: number;
+  entityName: string;
+}
+
 interface PostCardProps {
   post: Post;
+  onReportClick?: (target: ReportTarget) => void;
 }
 
 const typeColors: Record<PostType, string> = {
@@ -31,7 +40,7 @@ const typeLabels: Record<PostType, string> = {
   OTHER: "Other",
 };
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, onReportClick }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
@@ -39,6 +48,24 @@ export function PostCard({ post }: PostCardProps) {
 
   const handleClick = () => {
     navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+  };
+
+  const handleReportListing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReportClick?.({
+      reportType: "post",
+      entityId: post.id,
+      entityName: post.title,
+    });
+  };
+
+  const handleReportUser = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReportClick?.({
+      reportType: "user",
+      entityId: post.user.id,
+      entityName: `@${post.user.username}`,
+    });
   };
 
   return (
@@ -76,6 +103,51 @@ export function PostCard({ post }: PostCardProps) {
             Sold
           </Badge>
         )}
+        {post.is_banned && (
+          <Badge
+            className={styles.soldBadge}
+            color="dark"
+            variant="filled"
+            size="lg"
+          >
+            Removed
+          </Badge>
+        )}
+
+        {/* Report Menu - only show for non-owners when handler is provided */}
+        {!isOwner && onReportClick && (
+          <div className={styles.menuWrapper}>
+            <Menu shadow="md" width={180} position="bottom-end">
+              <Menu.Target>
+                <ActionIcon
+                  className={styles.menuButton}
+                  variant="white"
+                  color="gray"
+                  size="sm"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconDotsVertical size={16} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconFlag size={14} />}
+                  onClick={handleReportListing}
+                >
+                  Report Listing
+                </Menu.Item>
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconUserExclamation size={14} />}
+                  onClick={handleReportUser}
+                >
+                  Report User
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </div>
+        )}
       </Card.Section>
 
       <Box p="md">
@@ -109,3 +181,4 @@ export function PostCard({ post }: PostCardProps) {
     </Card>
   );
 }
+

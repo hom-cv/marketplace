@@ -17,6 +17,7 @@ from app.schemas.post import PaginatedPostsResponse, PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
+from app.services.listing_service import AnnotatedListingService
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -136,18 +137,19 @@ async def list_posts(
     response_model=list[PostResponseSchema],
 )
 async def get_my_posts(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    listing_service: AnnotatedListingService,
     current_user: Annotated[User, Depends(get_current_user)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> list[PostResponseSchema]:
     """
     Get all posts created by the current user.
+
+    Includes ban status for each post (optimized single query).
     """
-    posts = await post_crud.get_by_user_id(
-        db, user_id=current_user.id, skip=skip, limit=limit
+    return await listing_service.get_my_listings(
+        user_id=current_user.id, skip=skip, limit=limit
     )
-    return [PostResponseSchema.model_validate(p) for p in posts]
 
 
 @router.get(
@@ -156,18 +158,20 @@ async def get_my_posts(
     response_model=PostResponseSchema,
 )
 async def get_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    listing_service: AnnotatedListingService,
     post_id: int,
 ) -> PostResponseSchema:
     """
     Get a specific post by ID.
+
+    Includes ban status for the post and user (optimized single query).
     """
-    post = await post_crud.get_by_id_with_user(db, id=post_id)
+    post = await listing_service.get_listing(post_id)
 
     if not post:
         raise not_found_error("Post not found")
 
-    return PostResponseSchema.model_validate(post)
+    return post
 
 
 @router.get(
