@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "@tanstack/react-router";
+import { Link, Outlet } from "@tanstack/react-router";
 import { Box, Button, Stack } from "@mantine/core";
 import {
   IconHome,
@@ -10,28 +10,8 @@ import {
   IconShield,
 } from "@tabler/icons-react";
 import { useAuthStore } from "@/stores/authStore";
+import { SidebarNavLink } from "@/components/shared/SidebarNavLink";
 import styles from "./DashboardLayout.module.css";
-
-interface NavLinkProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-}
-
-function NavLink({ to, icon, label }: NavLinkProps) {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      className={`${styles.navLink} ${isActive ? styles.active : ""}`}
-    >
-      {icon}
-      {label}
-    </Link>
-  );
-}
 
 function SidebarContent() {
   const user = useAuthStore((state) => state.user);
@@ -40,19 +20,49 @@ function SidebarContent() {
   return (
     <>
       <div className={styles.navSection}>
-        <NavLink to="/app" icon={<IconHome size={20} />} label="Home" />
+        <SidebarNavLink
+          to="/app"
+          icon={<IconHome size={20} />}
+          label="Home"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
 
       <div className={styles.navSection}>
         <div className={styles.navHeader}>Buying</div>
-        <NavLink to="/app/explore" icon={<IconSearch size={20} />} label="Explore" />
-        <NavLink to="/app/purchases" icon={<IconShoppingBag size={20} />} label="Purchase History" />
+        <SidebarNavLink
+          to="/app/explore"
+          icon={<IconSearch size={20} />}
+          label="Explore"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/app/purchases"
+          icon={<IconShoppingBag size={20} />}
+          label="Purchase History"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
 
       <div className={styles.navSection}>
         <div className={styles.navHeader}>Selling</div>
-        <NavLink to="/app/my-listings" icon={<IconPackage size={20} />} label="My Listings" />
-        <NavLink to="/app/sales" icon={<IconReceipt size={20} />} label="Sold Listings" />
+        <SidebarNavLink
+          to="/app/my-listings"
+          icon={<IconPackage size={20} />}
+          label="My Listings"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/app/sales"
+          icon={<IconReceipt size={20} />}
+          label="Sold Listings"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
 
       <Stack gap="xs">

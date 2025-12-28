@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "@tanstack/react-router";
+import { Link, Outlet } from "@tanstack/react-router";
 import { Box } from "@mantine/core";
 import {
   IconHome,
@@ -8,28 +8,8 @@ import {
   IconPackageOff,
   IconArrowLeft,
 } from "@tabler/icons-react";
+import { SidebarNavLink } from "@/components/shared/SidebarNavLink";
 import styles from "./AdminLayout.module.css";
-
-interface NavLinkProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-}
-
-function NavLink({ to, icon, label }: NavLinkProps) {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-
-  return (
-    <Link
-      to={to}
-      className={`${styles.navLink} ${isActive ? styles.active : ""}`}
-    >
-      {icon}
-      {label}
-    </Link>
-  );
-}
 
 function SidebarContent() {
   return (
@@ -41,19 +21,49 @@ function SidebarContent() {
 
       <div className={styles.navSection}>
         <div className={styles.navHeader}>Admin</div>
-        <NavLink to="/admin" icon={<IconHome size={20} />} label="Dashboard" />
+        <SidebarNavLink
+          to="/admin"
+          icon={<IconHome size={20} />}
+          label="Dashboard"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
 
       <div className={styles.navSection}>
         <div className={styles.navHeader}>Management</div>
-        <NavLink to="/admin/invites" icon={<IconTicket size={20} />} label="Invite Codes" />
-        <NavLink to="/admin/reports" icon={<IconFlag size={20} />} label="Reports" />
+        <SidebarNavLink
+          to="/admin/invites"
+          icon={<IconTicket size={20} />}
+          label="Invite Codes"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/admin/reports"
+          icon={<IconFlag size={20} />}
+          label="Reports"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
 
       <div className={styles.navSection}>
         <div className={styles.navHeader}>Bans</div>
-        <NavLink to="/admin/bans/users" icon={<IconUserOff size={20} />} label="User Bans" />
-        <NavLink to="/admin/bans/posts" icon={<IconPackageOff size={20} />} label="Post Bans" />
+        <SidebarNavLink
+          to="/admin/bans/users"
+          icon={<IconUserOff size={20} />}
+          label="User Bans"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/admin/bans/posts"
+          icon={<IconPackageOff size={20} />}
+          label="Post Bans"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
     </>
   );
