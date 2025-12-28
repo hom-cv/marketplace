@@ -108,7 +108,7 @@ export function ReportModal({
             placeholder="Select a reason"
             data={reasonOptions}
             value={reason}
-            onChange={(val) => setReason(val as ReportReason)}
+            onChange={(val) => setReason(val as ReportReason | null)}
             required
           />
 

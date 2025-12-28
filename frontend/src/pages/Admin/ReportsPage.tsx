@@ -54,7 +54,7 @@ export function ReportsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["reports", statusFilter, typeFilter],
     queryFn: () => listReports({
-      status: statusFilter as 'pending' | 'reviewed' | 'resolved' | 'dismissed' | undefined,
+      status: statusFilter as ReportStatus | undefined,
       type: typeFilter as 'user' | 'post' | undefined,
     }),
   });
