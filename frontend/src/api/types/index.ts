@@ -7,3 +7,5 @@ export * from "./user";
 export * from "./post";
 export * from "./seller";
 export * from "./payment";
+export * from "./admin";
+

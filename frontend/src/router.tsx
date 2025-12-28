@@ -8,6 +8,7 @@ import { VerifyEmailPage } from "@/pages/VerifyEmail";
 import { CreatePostPage } from "@/pages/CreatePost";
 import { BecomeSellerPage } from "@/pages/BecomeSeller";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardPage } from "@/pages/Dashboard";
 import { ExplorePage } from "@/pages/Explore";
@@ -17,6 +18,14 @@ import { SoldListingsPage } from "@/pages/SoldListings";
 import { PaymentReturnPage } from "@/pages/PaymentReturn";
 import { PostViewPage } from "@/pages/PostView";
 import { CheckoutPage } from "@/pages/Checkout";
+import { AdminLayout } from "@/components/AdminLayout";
+import {
+    AdminDashboardPage,
+    InviteCodesPage,
+    ReportsPage,
+    UserBansPage,
+    PostBansPage,
+} from "@/pages/Admin";
 
 const rootRoute = createRootRoute({
     component: () => (
@@ -133,6 +142,51 @@ const checkoutRoute = createRoute({
     component: CheckoutPage,
 });
 
+// Admin protected route wrapper - ensures user is admin
+const adminProtectedLayout = createRoute({
+    getParentRoute: () => protectedLayout,
+    id: "admin-protected",
+    component: AdminProtectedRoute,
+});
+
+// Admin layout with sidebar - parent for all /admin routes
+const adminLayout = createRoute({
+    getParentRoute: () => adminProtectedLayout,
+    path: "/admin",
+    component: AdminLayout,
+});
+
+// Admin pages
+const adminDashboardRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/",
+    component: AdminDashboardPage,
+});
+
+const adminInvitesRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/invites",
+    component: InviteCodesPage,
+});
+
+const adminReportsRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/reports",
+    component: ReportsPage,
+});
+
+const adminUserBansRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/bans/users",
+    component: UserBansPage,
+});
+
+const adminPostBansRoute = createRoute({
+    getParentRoute: () => adminLayout,
+    path: "/bans/posts",
+    component: PostBansPage,
+});
+
 const routeTree = rootRoute.addChildren([
     indexRoute,
     loginRoute,
@@ -151,6 +205,15 @@ const routeTree = rootRoute.addChildren([
             paymentReturnRoute,
             checkoutRoute,
         ]),
+        adminProtectedLayout.addChildren([
+            adminLayout.addChildren([
+                adminDashboardRoute,
+                adminInvitesRoute,
+                adminReportsRoute,
+                adminUserBansRoute,
+                adminPostBansRoute,
+            ]),
+        ]),
     ]),
 ]);
 
@@ -161,4 +224,3 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
-

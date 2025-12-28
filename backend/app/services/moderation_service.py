@@ -4,6 +4,7 @@ import logging
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error, not_found_error
