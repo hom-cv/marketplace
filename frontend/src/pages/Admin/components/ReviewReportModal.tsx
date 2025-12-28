@@ -15,6 +15,7 @@ import { IconTrash, IconUserCancel, IconCheck, IconX, IconEye, IconGavel } from 
 import { notifications } from "@mantine/notifications";
 import { reviewReport, banUser, banPost } from "@/api/admin";
 import type { Report, ReportType } from "@/api/types/admin";
+import { useEffect } from "react";
 
 interface ReviewReportModalProps {
   opened: boolean;
@@ -43,10 +44,13 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
     },
   });
 
-  // Re-initialize form when report changes
-  if (report && form.values.admin_notes === "" && report.admin_notes) {
-    form.setValues({ admin_notes: report.admin_notes });
-  }
+  useEffect(() => {
+    if (report) {
+      form.setValues({ admin_notes: report.admin_notes || "" });
+    } else {
+      form.reset();
+    }
+  }, [report]);
 
   const reviewMutation = useMutation({
     mutationFn: ({ reportId, status, notes }: { reportId: number; status: "reviewed" | "resolved" | "dismissed"; notes?: string }) =>
