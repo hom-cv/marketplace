@@ -61,7 +61,7 @@ export function BecomeSellerPage() {
     },
     validate: {
       invite_code: (value) =>
-        value.length >= 6 ? null : "Please enter a valid invite code",
+        value.trim().length >= 6 ? null : "Please enter a valid invite code",
       bank_brand: (value) => (value ? null : "Please select a bank"),
       bank_account_number: (value) =>
         value.length >= 10 ? null : "Account number must be at least 10 digits",
