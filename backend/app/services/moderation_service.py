@@ -358,9 +358,9 @@ class ModerationService:
     ) -> ReportResponse:
         """Convert report model to response schema."""
         is_user_banned = (
-            report.reported_user_id in banned_user_ids
-            if banned_user_ids and report.reported_user_id
-            else False
+            banned_user_ids is not None
+            and report.reported_user_id is not None
+            and report.reported_user_id in banned_user_ids
         )
         is_post_banned = (
             banned_post_ids is not None
