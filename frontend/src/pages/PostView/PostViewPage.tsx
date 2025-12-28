@@ -291,8 +291,8 @@ export function PostViewPage() {
         opened={reportModalOpened}
         onClose={() => setReportModalOpened(false)}
         reportType={reportType}
-        entityId={reportType === "post" ? (post?.id ?? 0) : (post?.user.id ?? 0)}
-        entityName={reportType === "post" ? (post?.title ?? "") : `@${post?.user.username}`}
+        entityId={reportType === "post" ? post.id : post.user.id}
+        entityName={reportType === "post" ? post.title : `@${post.user.username}`}
       />
     </>
   );
