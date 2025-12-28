@@ -135,7 +135,7 @@ export function PostBansPage() {
                   </Table.Td>
                   <Table.Td>{ban.banned_by_username}</Table.Td>
                   <Table.Td>
-                    <Text size="sm">{new Date(ban.created_date).toLocaleDateString()}</Text>
+                    <Text size="sm">{new Date(ban.created_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</Text>
                   </Table.Td>
                   <Table.Td>
                     <Badge color={ban.is_active ? "grape" : "gray"} variant="light">

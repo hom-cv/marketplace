@@ -172,14 +172,14 @@ export function InviteCodesPage() {
                     </Badge>
                   </Table.Td>
                   <Table.Td>
-                    {new Date(invite.created_date).toLocaleDateString()}
+                    {new Date(invite.created_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                   </Table.Td>
                   <Table.Td>{invite.created_by_username || "-"}</Table.Td>
                   <Table.Td>
                     {invite.used_by_username || "-"}
                     {invite.used_at && (
                       <Text size="xs" c="dimmed">
-                        {new Date(invite.used_at).toLocaleDateString()}
+                        {new Date(invite.used_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                       </Text>
                     )}
                   </Table.Td>

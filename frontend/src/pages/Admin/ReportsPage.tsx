@@ -162,7 +162,7 @@ export function ReportsPage() {
                       {report.status}
                     </Badge>
                     <Text size="xs" c="dimmed">
-                      {new Date(report.created_date).toLocaleDateString()}
+                      {new Date(report.created_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                     </Text>
                   </Group>
                 </Group>
