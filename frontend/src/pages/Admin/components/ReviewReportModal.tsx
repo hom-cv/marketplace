@@ -184,7 +184,7 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
               color="red"
               variant="outline"
               leftSection={<IconUserCancel size={16} />}
-              onClick={() => banUserMutation.mutate(report.reported_user_id || 0)}
+              onClick={() => banUserMutation.mutate(report.reported_user_id!)}
               disabled={!report.reported_user_id}
               loading={banUserMutation.isPending}
               radius="md"
