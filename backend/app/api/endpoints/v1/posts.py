@@ -143,11 +143,25 @@ async def get_my_posts(
 ) -> list[PostResponseSchema]:
     """
     Get all posts created by the current user.
+    
+    Includes ban status for each post.
     """
     posts = await post_crud.get_by_user_id(
         db, user_id=current_user.id, skip=skip, limit=limit
     )
-    return [PostResponseSchema.model_validate(p) for p in posts]
+    
+    # Add ban status for each post
+    result = []
+    for post in posts:
+        is_banned, is_user_banned = await post_crud.get_ban_status(
+            db, post_id=post.id, user_id=post.user_id
+        )
+        response = PostResponseSchema.model_validate(post)
+        response.is_banned = is_banned
+        response.is_user_banned = is_user_banned
+        result.append(response)
+    
+    return result
 
 
 @router.get(
@@ -161,13 +175,23 @@ async def get_post(
 ) -> PostResponseSchema:
     """
     Get a specific post by ID.
+    
+    Includes ban status for the post and user.
     """
     post = await post_crud.get_by_id_with_user(db, id=post_id)
 
     if not post:
         raise not_found_error("Post not found")
 
-    return PostResponseSchema.model_validate(post)
+    # Check ban status
+    is_banned, is_user_banned = await post_crud.get_ban_status(
+        db, post_id=post.id, user_id=post.user_id
+    )
+
+    response = PostResponseSchema.model_validate(post)
+    response.is_banned = is_banned
+    response.is_user_banned = is_user_banned
+    return response
 
 
 @router.get(

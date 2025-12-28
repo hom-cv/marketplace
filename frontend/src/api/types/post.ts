@@ -17,6 +17,8 @@ export interface Post {
   image_urls: string[] | null;
   user: User;
   is_sold: boolean;
+  is_banned?: boolean;
+  is_user_banned?: boolean;
 }
 
 export interface CreatePostRequest {

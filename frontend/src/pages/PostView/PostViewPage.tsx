@@ -89,6 +89,7 @@ export function PostViewPage() {
       : [];
 
   const isOwner = currentUser?.id === post?.user.id;
+  const isBanned = post?.is_banned || post?.is_user_banned;
 
   if (isLoading) {
     return (
@@ -254,6 +255,15 @@ export function PostViewPage() {
                 </Group>
               </Paper>
 
+              {/* Ban Warning */}
+              {isBanned && (
+                <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+                  {post.is_banned
+                    ? "This listing has been removed due to a policy violation."
+                    : "This seller's account has been suspended."}
+                </Alert>
+              )}
+
               {/* Buy Button */}
               {!isOwner && (
                 <Button
@@ -261,6 +271,7 @@ export function PostViewPage() {
                   leftSection={<IconShoppingCart size={20} />}
                   onClick={() => navigate({ to: `/app/checkout/${postId}` })}
                   mt="md"
+                  disabled={isBanned}
                 >
                   Buy Now - ฿{price.toLocaleString()}
                 </Button>

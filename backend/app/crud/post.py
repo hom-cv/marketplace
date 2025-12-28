@@ -102,14 +102,14 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         is_post_banned_subquery = (
             exists()
             .where(PostBan.post_id == self.model.id)
-            .where(PostBan.is_active is True)
+            .where(PostBan.is_active.is_(True))
         )
 
         # Subquery to check if user is banned
         is_user_banned_subquery = (
             exists()
             .where(UserBan.user_id == self.model.user_id)
-            .where(UserBan.is_active is True)
+            .where(UserBan.is_active.is_(True))
         )
 
         # Use case() to get a sortable value (0 for non-sold, 1 for sold)
@@ -274,6 +274,40 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         await db.commit()
         await db.refresh(post)
         return post
+
+    async def get_ban_status(
+        self,
+        db: AsyncSession,
+        *,
+        post_id: int,
+        user_id: int,
+    ) -> tuple[bool, bool]:
+        """
+        Check if a post or its owner is banned.
+
+        Args:
+            db: The async database session.
+            post_id: The post ID to check.
+            user_id: The user ID to check.
+
+        Returns:
+            Tuple of (is_post_banned, is_user_banned).
+        """
+        # Check if post is banned
+        post_ban_query = select(exists().where(
+            PostBan.post_id == post_id,
+            PostBan.is_active.is_(True)
+        ))
+        is_post_banned = await db.scalar(post_ban_query) or False
+
+        # Check if user is banned
+        user_ban_query = select(exists().where(
+            UserBan.user_id == user_id,
+            UserBan.is_active.is_(True)
+        ))
+        is_user_banned = await db.scalar(user_ban_query) or False
+
+        return is_post_banned, is_user_banned
 
 
 post_crud = PostCRUD(Post)

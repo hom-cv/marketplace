@@ -77,6 +77,8 @@ class PostResponseSchema(BaseModel):
     image_urls: list[str] | None = None
     user: UserResponseSchema
     is_sold: bool = False
+    is_banned: bool = False
+    is_user_banned: bool = False
 
     class Config:
         from_attributes = True

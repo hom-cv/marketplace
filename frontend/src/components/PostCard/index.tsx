@@ -84,6 +84,16 @@ export function PostCard({ post }: PostCardProps) {
               Sold
             </Badge>
           )}
+          {post.is_banned && (
+            <Badge
+              className={styles.soldBadge}
+              color="dark"
+              variant="filled"
+              size="lg"
+            >
+              Removed
+            </Badge>
+          )}
 
           {/* Report Menu - only show for non-owners */}
           {!isOwner && (
