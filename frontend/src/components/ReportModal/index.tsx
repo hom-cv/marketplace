@@ -77,7 +77,7 @@ export function ReportModal({
   };
 
   const handleSubmit = () => {
-    if (!reason || description.length < 10) return;
+    if (!reason || description.trim().length < 10) return;
 
     const request: ReportCreateRequest = {
       report_type: reportType,
