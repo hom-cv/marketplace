@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Box, Button } from "@mantine/core";
+import { Box, Button, Stack } from "@mantine/core";
 import {
   IconHome,
   IconSearch,
@@ -7,6 +7,7 @@ import {
   IconPackage,
   IconReceipt,
   IconPlus,
+  IconShield,
 } from "@tabler/icons-react";
 import styles from "./DashboardLayout.module.css";
 
@@ -50,11 +51,18 @@ function SidebarContent() {
         <NavLink to="/app/sales" icon={<IconReceipt size={20} />} label="Sold Listings" />
       </div>
 
-      <Link to="/app/posts/new" style={{ textDecoration: "none" }}>
-        <Button fullWidth leftSection={<IconPlus size={16} />}>
-          Create Listing
-        </Button>
-      </Link>
+      <Stack gap="xs">
+        <Link to="/app/posts/new" style={{ textDecoration: "none" }}>
+          <Button fullWidth leftSection={<IconPlus size={16} />}>
+            Create Listing
+          </Button>
+        </Link>
+        <Link to="/admin" style={{ textDecoration: "none" }}>
+          <Button fullWidth leftSection={<IconShield size={16} />} color="orange">
+            Admin Dashboard
+          </Button>
+        </Link>
+      </Stack>
     </>
   );
 }
