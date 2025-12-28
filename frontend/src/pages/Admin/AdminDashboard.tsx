@@ -27,9 +27,10 @@ function StatCard({ title, value, icon, color }: StatCardProps) {
           radius="md"
           variant="light"
           color={color}
-          styles={{ root: { padding: 12 } }}
         >
-          {icon}
+          <Center>
+            {icon}
+          </Center>
         </Badge>
       </Group>
     </Paper>
