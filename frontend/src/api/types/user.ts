@@ -11,6 +11,7 @@ export interface User {
   email_verified: boolean;
   is_seller: boolean;
   seller_status: string | null;
+  is_admin: boolean;
 }
 
 export interface RegisterRequest {

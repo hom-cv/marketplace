@@ -9,6 +9,7 @@ import {
   IconPlus,
   IconShield,
 } from "@tabler/icons-react";
+import { useAuthStore } from "@/stores/authStore";
 import styles from "./DashboardLayout.module.css";
 
 interface NavLinkProps {
@@ -33,6 +34,9 @@ function NavLink({ to, icon, label }: NavLinkProps) {
 }
 
 function SidebarContent() {
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.is_admin ?? false;
+
   return (
     <>
       <div className={styles.navSection}>
@@ -57,11 +61,13 @@ function SidebarContent() {
             Create Listing
           </Button>
         </Link>
-        <Link to="/admin" style={{ textDecoration: "none" }}>
-          <Button fullWidth leftSection={<IconShield size={16} />} color="orange">
-            Admin Dashboard
-          </Button>
-        </Link>
+        {isAdmin && (
+          <Link to="/admin" style={{ textDecoration: "none" }}>
+            <Button fullWidth leftSection={<IconShield size={16} />} color="orange">
+              Admin Dashboard
+            </Button>
+          </Link>
+        )}
       </Stack>
     </>
   );

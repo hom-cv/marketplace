@@ -8,6 +8,7 @@ import { VerifyEmailPage } from "@/pages/VerifyEmail";
 import { CreatePostPage } from "@/pages/CreatePost";
 import { BecomeSellerPage } from "@/pages/BecomeSeller";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardPage } from "@/pages/Dashboard";
 import { ExplorePage } from "@/pages/Explore";
@@ -141,9 +142,16 @@ const checkoutRoute = createRoute({
     component: CheckoutPage,
 });
 
+// Admin protected route wrapper - ensures user is admin
+const adminProtectedLayout = createRoute({
+    getParentRoute: () => protectedLayout,
+    id: "admin-protected",
+    component: AdminProtectedRoute,
+});
+
 // Admin layout with sidebar - parent for all /admin routes
 const adminLayout = createRoute({
-    getParentRoute: () => protectedLayout,
+    getParentRoute: () => adminProtectedLayout,
     path: "/admin",
     component: AdminLayout,
 });
@@ -197,12 +205,14 @@ const routeTree = rootRoute.addChildren([
             paymentReturnRoute,
             checkoutRoute,
         ]),
-        adminLayout.addChildren([
-            adminDashboardRoute,
-            adminInvitesRoute,
-            adminReportsRoute,
-            adminUserBansRoute,
-            adminPostBansRoute,
+        adminProtectedLayout.addChildren([
+            adminLayout.addChildren([
+                adminDashboardRoute,
+                adminInvitesRoute,
+                adminReportsRoute,
+                adminUserBansRoute,
+                adminPostBansRoute,
+            ]),
         ]),
     ]),
 ]);
