@@ -53,8 +53,8 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
   }, [report]);
 
   const reviewMutation = useMutation({
-    mutationFn: ({ reportId, status, notes }: { reportId: number; status: "reviewed" | "resolved" | "dismissed"; notes?: string }) =>
-      reviewReport(reportId, { status, admin_notes: notes || form.values.admin_notes || undefined }),
+    mutationFn: ({ reportId, status }: { reportId: number; status: "reviewed" | "resolved" | "dismissed"; notes?: string }) =>
+      reviewReport(reportId, { status, admin_notes: form.values.admin_notes || undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
       queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
