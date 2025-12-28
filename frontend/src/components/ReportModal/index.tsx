@@ -91,7 +91,7 @@ export function ReportModal({
     reportMutation.mutate(request);
   };
 
-  const isValid = reason !== null && description.length >= 10;
+  const isValid = reason !== null && description.trim().length >= 10;
   const entityLabel = reportType === "user" ? "User" : "Listing";
 
   return (
