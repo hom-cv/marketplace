@@ -199,6 +199,63 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         result = await db.scalars(query)
         return result.all()
 
+    async def get_by_user_id_with_ban_status(
+        self,
+        db: AsyncSession,
+        *,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 50,
+        include_deleted: bool = False,
+    ) -> list[tuple[Post, bool, bool]]:
+        """
+        Get all posts by a specific user with ban status in a single query.
+
+        Avoids N+1 query issue by computing ban status in the same query.
+
+        Args:
+            db: The async database session.
+            user_id: The user's ID.
+            skip: Number of records to skip.
+            limit: Maximum number of records to return.
+            include_deleted: If True, include soft-deleted posts.
+
+        Returns:
+            List of (Post, is_post_banned, is_user_banned) tuples.
+        """
+        # Subqueries for ban status
+        is_post_banned_subquery = (
+            exists()
+            .where(PostBan.post_id == self.model.id)
+            .where(PostBan.is_active.is_(True))
+        )
+        is_user_banned_subquery = (
+            exists()
+            .where(UserBan.user_id == self.model.user_id)
+            .where(UserBan.is_active.is_(True))
+        )
+
+        is_post_banned_expr = case((is_post_banned_subquery, 1), else_=0).label("is_post_banned")
+        is_user_banned_expr = case((is_user_banned_subquery, 1), else_=0).label("is_user_banned")
+
+        query = (
+            select(self.model, is_post_banned_expr, is_user_banned_expr)
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
+            .where(self.model.user_id == user_id)
+            .order_by(self.model.created_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        if not include_deleted:
+            query = query.where(self.model.deleted_at.is_(None))
+
+        result = await db.execute(query)
+        rows = result.all()
+
+        return [(row[0], bool(row[1]), bool(row[2])) for row in rows]
+
     async def get_by_id_with_user(
         self,
         db: AsyncSession,

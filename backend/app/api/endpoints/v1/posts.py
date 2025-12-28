@@ -17,6 +17,7 @@ from app.schemas.post import PaginatedPostsResponse, PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
+from app.services.listing_service import AnnotatedListingService
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -136,32 +137,19 @@ async def list_posts(
     response_model=list[PostResponseSchema],
 )
 async def get_my_posts(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    listing_service: AnnotatedListingService,
     current_user: Annotated[User, Depends(get_current_user)],
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> list[PostResponseSchema]:
     """
     Get all posts created by the current user.
-    
-    Includes ban status for each post.
+
+    Includes ban status for each post (optimized single query).
     """
-    posts = await post_crud.get_by_user_id(
-        db, user_id=current_user.id, skip=skip, limit=limit
+    return await listing_service.get_my_listings(
+        user_id=current_user.id, skip=skip, limit=limit
     )
-    
-    # Add ban status for each post
-    result = []
-    for post in posts:
-        is_banned, is_user_banned = await post_crud.get_ban_status(
-            db, post_id=post.id, user_id=post.user_id
-        )
-        response = PostResponseSchema.model_validate(post)
-        response.is_banned = is_banned
-        response.is_user_banned = is_user_banned
-        result.append(response)
-    
-    return result
 
 
 @router.get(
