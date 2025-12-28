@@ -52,3 +52,21 @@
 .card:hover .imageSold {
   transform: scale(1.05);
 }
+
+.menuWrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 50;
+}
+
+.menuButton {
+  background-color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+}
+
+.menuButton:hover {
+  background-color: #f8f9fa !important;
+  transform: scale(1.1);
+}
