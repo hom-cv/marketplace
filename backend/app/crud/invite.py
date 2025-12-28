@@ -1,5 +1,6 @@
 """CRUD operations for seller invites."""
 
+from sqlalchemy.orm.strategy_options import selectinload
 import secrets
 import string
 from datetime import datetime, timezone
