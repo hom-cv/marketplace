@@ -117,6 +117,29 @@ class ListingService:
 
         return result
 
+    async def get_listing(self, post_id: int) -> PostResponseSchema | None:
+        """
+        Get a single listing by ID with ban status.
+
+        Uses an optimized single query to fetch post and ban status.
+
+        Args:
+            post_id: The post ID.
+
+        Returns:
+            PostResponseSchema with is_banned and is_user_banned, or None if not found.
+        """
+        result = await post_crud.get_by_id_with_ban_status(self.db, id=post_id)
+
+        if result is None:
+            return None
+
+        post, is_banned, is_user_banned = result
+        response = PostResponseSchema.model_validate(post)
+        response.is_banned = is_banned
+        response.is_user_banned = is_user_banned
+        return response
+
 
 def _get_listing_service(
     db: AsyncSession = Depends(get_async_db),

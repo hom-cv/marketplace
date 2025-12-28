@@ -286,6 +286,57 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_by_id_with_ban_status(
+        self,
+        db: AsyncSession,
+        *,
+        id: int,
+        include_deleted: bool = False,
+    ) -> tuple[Post, bool, bool] | None:
+        """
+        Get a post by ID with ban status in a single query.
+
+        Args:
+            db: The async database session.
+            id: The post ID.
+            include_deleted: If True, include soft-deleted posts.
+
+        Returns:
+            Tuple of (Post, is_post_banned, is_user_banned) or None if not found.
+        """
+        # Subqueries for ban status
+        is_post_banned_subquery = (
+            exists()
+            .where(PostBan.post_id == self.model.id)
+            .where(PostBan.is_active.is_(True))
+        )
+        is_user_banned_subquery = (
+            exists()
+            .where(UserBan.user_id == self.model.user_id)
+            .where(UserBan.is_active.is_(True))
+        )
+
+        is_post_banned_expr = case((is_post_banned_subquery, 1), else_=0).label("is_post_banned")
+        is_user_banned_expr = case((is_user_banned_subquery, 1), else_=0).label("is_user_banned")
+
+        query = (
+            select(self.model, is_post_banned_expr, is_user_banned_expr)
+            .options(
+                selectinload(self.model.user).selectinload(User.seller_profile)
+            )
+            .where(self.model.id == id)
+        )
+        if not include_deleted:
+            query = query.where(self.model.deleted_at.is_(None))
+
+        result = await db.execute(query)
+        row = result.one_or_none()
+
+        if row is None:
+            return None
+
+        return (row[0], bool(row[1]), bool(row[2]))
+
     async def create_post(
         self,
         db: AsyncSession,

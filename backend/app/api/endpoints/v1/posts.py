@@ -158,28 +158,20 @@ async def get_my_posts(
     response_model=PostResponseSchema,
 )
 async def get_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    listing_service: AnnotatedListingService,
     post_id: int,
 ) -> PostResponseSchema:
     """
     Get a specific post by ID.
-    
-    Includes ban status for the post and user.
+
+    Includes ban status for the post and user (optimized single query).
     """
-    post = await post_crud.get_by_id_with_user(db, id=post_id)
+    post = await listing_service.get_listing(post_id)
 
     if not post:
         raise not_found_error("Post not found")
 
-    # Check ban status
-    is_banned, is_user_banned = await post_crud.get_ban_status(
-        db, post_id=post.id, user_id=post.user_id
-    )
-
-    response = PostResponseSchema.model_validate(post)
-    response.is_banned = is_banned
-    response.is_user_banned = is_user_banned
-    return response
+    return post
 
 
 @router.get(
