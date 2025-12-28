@@ -20,13 +20,32 @@ import type {
   BanPostRequest,
 } from "@/api/types/admin";
 
-// ============ Dashboard ============
+/**
+ * Build URLSearchParams for paginated list endpoints
+ */
+function buildPaginatedParams(
+  skip: number,
+  limit: number,
+  filters?: Record<string, string | boolean | undefined>
+): string {
+  const params = new URLSearchParams();
+  params.append("skip", String(skip));
+  params.append("limit", String(limit));
+
+  if (filters) {
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== "") {
+        params.append(key, String(value));
+      }
+    }
+  }
+
+  return params.toString();
+}
 
 export function getAdminStats(): Promise<AdminStats> {
   return apiRequest<AdminStats>("/admin/stats");
 }
-
-// ============ Invite Codes ============
 
 export function generateInvites(count: number): Promise<Invite[]> {
   const request: InviteCreateRequest = { count };
@@ -38,20 +57,13 @@ export function getInvites(
   skip = 0,
   limit = 50
 ): Promise<InviteListResponse> {
-  const params = new URLSearchParams();
-  params.append("skip", String(skip));
-  params.append("limit", String(limit));
-  if (status) {
-    params.append("status", status);
-  }
-  return apiRequest<InviteListResponse>(`/invites?${params.toString()}`);
+  const query = buildPaginatedParams(skip, limit, { status });
+  return apiRequest<InviteListResponse>(`/invites?${query}`);
 }
 
 export function revokeInvite(code: string): Promise<Invite> {
   return apiRequest<Invite>(`/invites/${code}`, { method: "DELETE" });
 }
-
-// ============ Reports ============
 
 export function getReports(
   status?: string,
@@ -59,16 +71,8 @@ export function getReports(
   skip = 0,
   limit = 50
 ): Promise<ReportListResponse> {
-  const params = new URLSearchParams();
-  params.append("skip", String(skip));
-  params.append("limit", String(limit));
-  if (status) {
-    params.append("status", status);
-  }
-  if (type) {
-    params.append("type", type);
-  }
-  return apiRequest<ReportListResponse>(`/reports?${params.toString()}`);
+  const query = buildPaginatedParams(skip, limit, { status, type });
+  return apiRequest<ReportListResponse>(`/reports?${query}`);
 }
 
 export function reviewReport(
@@ -78,18 +82,13 @@ export function reviewReport(
   return jsonRequest<Report>(`/reports/${reportId}`, "PATCH", request);
 }
 
-// ============ User Bans ============
-
 export function getUserBans(
   activeOnly = false,
   skip = 0,
   limit = 50
 ): Promise<UserBanListResponse> {
-  const params = new URLSearchParams();
-  params.append("skip", String(skip));
-  params.append("limit", String(limit));
-  params.append("active_only", String(activeOnly));
-  return apiRequest<UserBanListResponse>(`/admin/bans/users?${params.toString()}`);
+  const query = buildPaginatedParams(skip, limit, { active_only: activeOnly });
+  return apiRequest<UserBanListResponse>(`/admin/bans/users?${query}`);
 }
 
 export function banUser(request: BanUserRequest): Promise<UserBan> {
@@ -100,18 +99,13 @@ export function liftUserBan(banId: number): Promise<UserBan> {
   return apiRequest<UserBan>(`/admin/bans/users/${banId}`, { method: "DELETE" });
 }
 
-// ============ Post Bans ============
-
 export function getPostBans(
   activeOnly = false,
   skip = 0,
   limit = 50
 ): Promise<PostBanListResponse> {
-  const params = new URLSearchParams();
-  params.append("skip", String(skip));
-  params.append("limit", String(limit));
-  params.append("active_only", String(activeOnly));
-  return apiRequest<PostBanListResponse>(`/admin/bans/posts?${params.toString()}`);
+  const query = buildPaginatedParams(skip, limit, { active_only: activeOnly });
+  return apiRequest<PostBanListResponse>(`/admin/bans/posts?${query}`);
 }
 
 export function banPost(request: BanPostRequest): Promise<PostBan> {
