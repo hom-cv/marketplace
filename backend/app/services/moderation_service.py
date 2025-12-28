@@ -179,7 +179,7 @@ class ModerationService:
         )
         active_user_bans = (
             select(func.count(UserBan.id))
-            .where(UserBan.is_active == True)
+            .where(UserBan.is_active.is_(True))
             .scalar_subquery()
         )
         active_post_bans = (
