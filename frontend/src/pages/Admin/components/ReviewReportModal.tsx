@@ -87,7 +87,7 @@ export function ReviewReportModal({ opened, onClose, report, onSuccess }: Review
 
   const banPostMutation = useMutation({
     mutationFn: (postId: number) =>
-      banPost({ post_id: postId, reason: `Report Resolved: ${form.values.admin_notes || report?.reason || "Inappropriate content"}` }),
+      banPost({ post_id: postId, reason: `Report Resolved: ${form.values.admin_notes.trim() || report?.reason || "Inappropriate content"}` }),
     onSuccess: () => {
       notifications.show({
         title: "Listing Removed",
