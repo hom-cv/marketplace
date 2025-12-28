@@ -2,10 +2,6 @@
  * Admin-related types for invites, reports, and bans
  */
 
-// =============================================================================
-// Invite Types
-// =============================================================================
-
 export interface InviteCreateRequest {
   count?: number; // 1-50, defaults to 1
 }
@@ -25,10 +21,6 @@ export interface InviteListResponse {
   skip: number;
   limit: number;
 }
-
-// =============================================================================
-// Report Types
-// =============================================================================
 
 export type ReportType = 'user' | 'post';
 export type ReportReason = 'counterfeit' | 'abuse_of_system' | 'prohibited_item' | 'scam';
@@ -70,10 +62,6 @@ export interface ReportListResponse {
   skip: number;
   limit: number;
 }
-
-// =============================================================================
-// Ban Types
-// =============================================================================
 
 export interface BanUserRequest {
   user_id: number;
@@ -124,10 +112,6 @@ export interface PostBanListResponse {
   skip: number;
   limit: number;
 }
-
-// =============================================================================
-// Admin Dashboard
-// =============================================================================
 
 export interface AdminStatsResponse {
   pending_reports: number;
