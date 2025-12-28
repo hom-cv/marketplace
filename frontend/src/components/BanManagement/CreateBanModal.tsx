@@ -48,7 +48,7 @@ export function CreateBanModal({
           label={`${entityType} ID`}
           placeholder={`Enter ${entityLower} ID to ban`}
           value={idValue}
-          onChange={(val) => onIdChange(Number(val) || undefined)}
+          onChange={(val) => onIdChange(val === '' ? undefined : val)}
           required
         />
         <Textarea
