@@ -61,7 +61,7 @@ export function ReportsPage() {
   });
 
   const reviewMutation = useMutation({
-    mutationFn: ({ reportId, status }: { reportId: number; status: "resolved" | "dismissed" }) =>
+    mutationFn: ({ reportId, status }: { reportId: number; status: "reviewed" | "resolved" | "dismissed" }) =>
       reviewReport(reportId, { status, admin_notes: adminNotes || undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
