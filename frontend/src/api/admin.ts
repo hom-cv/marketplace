@@ -52,10 +52,6 @@ export async function revokeInvite(code: string): Promise<InviteResponse> {
   return apiRequest<InviteResponse>(`/invites/${code}`, { method: 'DELETE' });
 }
 
-// =============================================================================
-// Reports
-// =============================================================================
-
 export async function submitReport(request: ReportCreateRequest): Promise<ReportResponse> {
   return jsonRequest<ReportResponse>('/reports', 'POST', request);
 }
@@ -73,16 +69,8 @@ export async function reviewReport(
   reportId: number,
   request: ReportReviewRequest
 ): Promise<ReportResponse> {
-  return apiRequest<ReportResponse>(`/reports/${reportId}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
-  });
+  return jsonRequest<ReportResponse>(`/reports/${reportId}`, 'PATCH', request);
 }
-
-// =============================================================================
-// User Bans
-// =============================================================================
 
 export async function banUser(request: BanUserRequest): Promise<UserBanResponse> {
   return jsonRequest<UserBanResponse>('/admin/bans/users', 'POST', request);
