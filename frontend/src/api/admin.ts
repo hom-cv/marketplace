@@ -32,10 +32,6 @@ function buildQueryString(params: Record<string, unknown>): string {
   return qs ? `?${qs}` : '';
 }
 
-// =============================================================================
-// Invites
-// =============================================================================
-
 export async function generateInvites(request: InviteCreateRequest): Promise<InviteResponse[]> {
   return jsonRequest<InviteResponse[]>('/invites', 'POST', request);
 }
@@ -88,10 +84,6 @@ export async function listUserBans(params?: {
   return apiRequest<UserBanListResponse>(`/admin/bans/users${buildQueryString(params ?? {})}`);
 }
 
-// =============================================================================
-// Post Bans
-// =============================================================================
-
 export async function banPost(request: BanPostRequest): Promise<PostBanResponse> {
   return jsonRequest<PostBanResponse>('/admin/bans/posts', 'POST', request);
 }
@@ -107,10 +99,6 @@ export async function listPostBans(params?: {
 }): Promise<PostBanListResponse> {
   return apiRequest<PostBanListResponse>(`/admin/bans/posts${buildQueryString(params ?? {})}`);
 }
-
-// =============================================================================
-// Dashboard
-// =============================================================================
 
 export async function getAdminStats(): Promise<AdminStatsResponse> {
   return apiRequest<AdminStatsResponse>('/admin/stats');
