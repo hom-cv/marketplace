@@ -9,6 +9,7 @@ from app.crud.payment import payment_crud
 from app.crud.post import post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
+from app.models.post import Post
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
 from app.schemas.post import PostResponseSchema
 
@@ -66,7 +67,7 @@ def _payment_to_list_item(
 
 
 def _post_with_ban_to_response(
-    post: "Post", is_banned: bool, is_user_banned: bool
+    post: Post, is_banned: bool, is_user_banned: bool
 ) -> PostResponseSchema:
     """Convert a post with ban status tuple to PostResponseSchema."""
     response = PostResponseSchema.model_validate(post)
