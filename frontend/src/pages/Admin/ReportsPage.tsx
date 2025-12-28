@@ -253,6 +253,14 @@ export function ReportsPage() {
                 Dismiss
               </Button>
               <Button
+                variant="light"
+                color="blue"
+                onClick={() => reviewMutation.mutate({ reportId: selectedReport.id, status: "reviewed" })}
+                loading={reviewMutation.isPending}
+              >
+                Mark as Reviewed
+              </Button>
+              <Button
                 color="green"
                 leftSection={<IconCheck size={14} />}
                 onClick={() => reviewMutation.mutate({ reportId: selectedReport.id, status: "resolved" })}
