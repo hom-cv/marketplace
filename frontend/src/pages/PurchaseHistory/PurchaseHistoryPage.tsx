@@ -28,7 +28,6 @@ import { FULFILLMENT_LABELS, FULFILLMENT_COLORS } from "@/constants/shipping";
 export function PurchaseHistoryPage() {
   const queryClient = useQueryClient();
   const { t } = useTranslation("common");
-  const { t: tNav } = useTranslation("navigation");
 
   const { data: purchases, isLoading, error } = useQuery({
     queryKey: ["my-purchases"],
