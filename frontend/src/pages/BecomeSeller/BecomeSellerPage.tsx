@@ -19,7 +19,8 @@ import {
   Loader,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconBuildingBank, IconCheck, IconAlertCircle, IconLoader, IconTicket } from "@tabler/icons-react";
+import { IconBuildingBank, IconCheck, IconAlertCircle, IconTicket } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { registerSeller, getSellerStatus, BANK_BRANDS } from "@/api/seller";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate } from "@tanstack/react-router";
@@ -30,6 +31,7 @@ export function BecomeSellerPage() {
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { t } = useTranslation("common");
 
   // Query current seller status
   const { data: sellerStatus, isLoading: isLoadingStatus } = useQuery({
@@ -61,12 +63,12 @@ export function BecomeSellerPage() {
     },
     validate: {
       invite_code: (value) =>
-        value.trim().length >= 6 ? null : "Please enter a valid invite code",
-      bank_brand: (value) => (value ? null : "Please select a bank"),
+        value.trim().length >= 6 ? null : t("seller.validation.inviteCodeMin"),
+      bank_brand: (value) => (value ? null : t("seller.validation.selectBank")),
       bank_account_number: (value) =>
-        value.length >= 10 ? null : "Account number must be at least 10 digits",
+        value.length >= 10 ? null : t("seller.validation.accountNumberMin"),
       bank_account_name: (value) =>
-        value.length >= 2 ? null : "Please enter the account holder name",
+        value.length >= 2 ? null : t("seller.validation.accountNameMin"),
     },
   });
 
@@ -81,13 +83,12 @@ export function BecomeSellerPage() {
         <Paper shadow="sm" p="xl" radius="md" className={styles.paper}>
           <Stack align="center" gap="lg">
             <IconCheck size={64} color="var(--mantine-color-green-6)" />
-            <Title order={2}>You're a Verified Seller!</Title>
+            <Title order={2}>{t("seller.verified")}</Title>
             <Text c="dimmed" ta="center">
-              Your bank account ending in ****{sellerStatus.bank_last_digits} has been verified.
-              You can now create listings and receive payments.
+              {t("seller.verifiedMessage", { digits: sellerStatus.bank_last_digits })}
             </Text>
             <Button onClick={() => navigate({ to: "/app/posts/new" })}>
-              Create a Listing
+              {t("seller.createListing")}
             </Button>
           </Stack>
         </Paper>
@@ -102,13 +103,12 @@ export function BecomeSellerPage() {
         <Paper shadow="sm" p="xl" radius="md" className={styles.paper}>
           <Stack align="center" gap="lg">
             <Loader />
-            <Title order={2}>Verification in Progress</Title>
+            <Title order={2}>{t("seller.pendingTitle")}</Title>
             <Text c="dimmed" ta="center">
-              Your bank account is being verified. This usually takes a few moments.
-              Please check back shortly.
+              {t("seller.pendingMessage")}
             </Text>
             <Button variant="light" onClick={() => queryClient.invalidateQueries({ queryKey: ["sellerStatus"] })}>
-              Check Status
+              {t("seller.checkStatus")}
             </Button>
           </Stack>
         </Paper>
@@ -123,10 +123,9 @@ export function BecomeSellerPage() {
         <Paper shadow="sm" p="xl" radius="md" className={styles.paper}>
           <Stack align="center" gap="lg">
             <IconAlertCircle size={64} color="var(--mantine-color-red-6)" />
-            <Title order={2}>Verification Failed</Title>
+            <Title order={2}>{t("seller.rejectedTitle")}</Title>
             <Text c="dimmed" ta="center">
-              Unfortunately, we couldn't verify your bank account.
-              Please contact support for assistance.
+              {t("seller.rejectedMessage")}
             </Text>
           </Stack>
         </Paper>
@@ -140,9 +139,9 @@ export function BecomeSellerPage() {
 
       <Stack gap="lg">
         <div>
-          <Title order={1}>Become a Seller</Title>
+          <Title order={1}>{t("seller.becomeSeller")}</Title>
           <Text c="dimmed" mt="sm">
-            Register as a seller to start listing your products and receive payments.
+            {t("seller.registerSubtitle")}
           </Text>
         </div>
 
@@ -151,36 +150,35 @@ export function BecomeSellerPage() {
             <Stack gap="md">
               <Group gap="xs">
                 <IconBuildingBank size={24} />
-                <Text fw={500} size="lg">Bank Account Details</Text>
+                <Text fw={500} size="lg">{t("seller.bankDetails")}</Text>
               </Group>
 
               <Text size="sm" c="dimmed">
-                We use Omise to verify your bank account and process payments.
-                Your earnings will be transferred to this account.
+                {t("seller.bankDescription")}
               </Text>
 
               {error && (
-                <Alert color="red" title="Error">
+                <Alert color="red" title={t("status.error")}>
                   {error}
                 </Alert>
               )}
 
               {success && (
-                <Alert color="green" title="Success">
+                <Alert color="green" title={t("status.success")}>
                   {success}
                 </Alert>
               )}
 
               <TextInput
-                label="Invite Code"
-                placeholder="Enter your invite code"
+                label={t("seller.inviteCode")}
+                placeholder={t("seller.invitePlaceholder")}
                 leftSection={<IconTicket size={16} />}
                 {...form.getInputProps("invite_code")}
               />
 
               <Select
-                label="Bank"
-                placeholder="Select your bank"
+                label={t("seller.bank")}
+                placeholder={t("seller.selectBank")}
                 data={BANK_BRANDS.map((bank) => ({
                   value: bank.value,
                   label: bank.label,
@@ -190,14 +188,14 @@ export function BecomeSellerPage() {
               />
 
               <TextInput
-                label="Account Holder Name"
-                placeholder="Name on your bank account"
+                label={t("seller.accountHolderName")}
+                placeholder={t("seller.accountNamePlaceholder")}
                 {...form.getInputProps("bank_account_name")}
               />
 
               <TextInput
-                label="Account Number"
-                placeholder="Your bank account number"
+                label={t("seller.accountNumber")}
+                placeholder={t("seller.accountNumberPlaceholder")}
                 {...form.getInputProps("bank_account_number")}
               />
 
@@ -207,12 +205,11 @@ export function BecomeSellerPage() {
                 mt="md"
                 loading={registerMutation.isPending}
               >
-                Verify Bank Account
+                {t("seller.verifyBank")}
               </Button>
 
               <Text size="xs" c="dimmed" ta="center">
-                By registering, you agree to our seller terms and conditions.
-                Your bank account information is securely processed by Omise.
+                {t("seller.termsNote")}
               </Text>
             </Stack>
           </form>

@@ -19,6 +19,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconCreditCard, IconMapPin, IconArrowLeft } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { createCardPayment, createPromptPayPayment, getPaymentStatus, getPriceBreakdown } from "@/api/payments";
 import { getPost } from "@/api/posts";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
@@ -53,6 +54,7 @@ declare global {
 export function CheckoutPage() {
   const { postId } = useParams({ from: "/protected/app/checkout/$postId" });
   const navigate = useNavigate();
+  const { t } = useTranslation("common");
   const [step, setStep] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [error, setError] = useState<string | null>(null);
@@ -69,11 +71,11 @@ export function CheckoutPage() {
       cvv: "",
     },
     validate: {
-      name: (value) => (value.trim().length < 2 ? "Name is required" : null),
-      number: (value) => (value.replace(/\s/g, "").length < 13 ? "Valid card number required" : null),
-      expMonth: (value) => (/^(0[1-9]|1[0-2]|[1-9])$/.test(value) ? null : "Valid month required"),
-      expYear: (value) => (/^\d{2,4}$/.test(value) ? null : "Valid year required"),
-      cvv: (value) => (/^\d{3,4}$/.test(value) ? null : "Valid CVV required"),
+      name: (value) => (value.trim().length < 2 ? t("checkout.form.nameRequired") : null),
+      number: (value) => (value.replace(/\s/g, "").length < 13 ? t("checkout.form.cardRequired") : null),
+      expMonth: (value) => (/^(0[1-9]|1[0-2]|[1-9])$/.test(value) ? null : t("checkout.form.validMonth")),
+      expYear: (value) => (/^\d{2,4}$/.test(value) ? null : t("checkout.form.validYear")),
+      cvv: (value) => (/^\d{3,4}$/.test(value) ? null : t("checkout.form.validCvv")),
     },
   });
 
@@ -88,12 +90,12 @@ export function CheckoutPage() {
       postal_code: "",
     },
     validate: {
-      name: (value) => (value.trim().length < 2 ? "Name is required" : null),
-      phone: (value) => (value.trim().length < 9 ? "Valid phone number required" : null),
-      address: (value) => (value.trim().length < 5 ? "Address is required" : null),
-      district: (value) => (value.trim().length < 2 ? "District is required" : null),
-      province: (value) => (value.trim().length < 2 ? "Province is required" : null),
-      postal_code: (value) => (/^\d{5}$/.test(value) ? null : "Valid 5-digit postal code required"),
+      name: (value) => (value.trim().length < 2 ? t("checkout.form.nameRequired") : null),
+      phone: (value) => (value.trim().length < 9 ? t("checkout.form.phoneRequired") : null),
+      address: (value) => (value.trim().length < 5 ? t("checkout.form.addressRequired") : null),
+      district: (value) => (value.trim().length < 2 ? t("checkout.form.districtRequired") : null),
+      province: (value) => (value.trim().length < 2 ? t("checkout.form.provinceRequired") : null),
+      postal_code: (value) => (/^\d{5}$/.test(value) ? null : t("checkout.form.postalRequired")),
     },
   });
 
@@ -166,7 +168,7 @@ export function CheckoutPage() {
   const handleCardSubmit = () => {
     if (cardForm.validate().hasErrors) return;
     if (!window.Omise || !post) {
-      setError("Payment system not loaded. Please refresh.");
+      setError(t("checkout.paymentSystemNotLoaded"));
       return;
     }
 
@@ -223,11 +225,11 @@ export function CheckoutPage() {
   if (postError || !post) {
     return (
       <Container size="md" py="xl">
-        <Alert color="red" title="Error">
-          Failed to load product. Please go back and try again.
+        <Alert color="red" title={t("status.error")}>
+          {t("checkout.failedToLoadProduct")}
         </Alert>
         <Button mt="md" variant="light" leftSection={<IconArrowLeft size={16} />} onClick={() => navigate({ to: "/app/explore" })}>
-          Back to Explore
+          {t("checkout.backToExplore")}
         </Button>
       </Container>
     );
@@ -244,10 +246,10 @@ export function CheckoutPage() {
         mb="lg"
         onClick={() => navigate({ to: `/app/posts/${postId}` })}
       >
-        Back to listing
+        {t("checkout.backToListing")}
       </Button>
 
-      <Title order={1} mb="xl">Checkout</Title>
+      <Title order={1} mb="xl">{t("checkout.title")}</Title>
 
       <Grid gutter="xl">
         {/* LEFT SIDE - Forms */}
@@ -262,8 +264,8 @@ export function CheckoutPage() {
             {!hasPaymentResponse && (
               <>
                 <Stepper active={step} size="sm">
-                  <Stepper.Step label="Shipping" icon={<IconMapPin size={18} />} />
-                  <Stepper.Step label="Payment" icon={<IconCreditCard size={18} />} />
+                  <Stepper.Step label={t("checkout.shipping")} icon={<IconMapPin size={18} />} />
+                  <Stepper.Step label={t("checkout.payment")} icon={<IconCreditCard size={18} />} />
                 </Stepper>
 
                 {step === 0 && (

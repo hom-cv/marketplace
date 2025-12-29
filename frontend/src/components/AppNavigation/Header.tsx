@@ -4,7 +4,9 @@
 
 import { Container, Group, Title, Button, Burger } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { UserInfo } from "./types";
 import styles from "./AppNavigation.module.css";
 
@@ -17,6 +19,8 @@ interface HeaderProps {
 }
 
 export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, onLogout }: HeaderProps) {
+  const { t } = useTranslation("navigation");
+
   return (
     <header className={styles.header}>
       <Container size="md" className={styles.headerContent}>
@@ -25,15 +29,16 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
         </Link>
 
         <Group visibleFrom="xs">
+          <LanguageSwitcher />
           {isAuthenticated ? (
             <UserMenu user={user} onLogout={onLogout} />
           ) : (
             <>
               <Button component={Link} to="/login">
-                Login
+                {t("header.login")}
               </Button>
               <Button component={Link} to="/sign-up">
-                Sign up
+                {t("header.signUp")}
               </Button>
             </>
           )}

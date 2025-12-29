@@ -1,5 +1,6 @@
 import { Text, Paper, Group, Stack } from "@mantine/core";
 import { IconMapPin } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 
 interface ShippingAddressCardProps {
   name: string;
@@ -18,13 +19,18 @@ export function ShippingAddressCard({
   district,
   province,
   postalCode,
-  label = "Ship To",
+  label,
 }: ShippingAddressCardProps) {
+  const { t } = useTranslation("common");
+
+  // Use provided label or default from translations
+  const displayLabel = label !== undefined ? label : t("shipTo");
+
   return (
     <Paper withBorder p="xs" radius="sm">
       <Group gap={4} mb={4}>
         <IconMapPin size={12} color="var(--mantine-color-dimmed)" />
-        <Text size="xs" fw={600} c="dimmed">{label}</Text>
+        <Text size="xs" fw={600} c="dimmed">{displayLabel}</Text>
       </Group>
       <Stack gap={0}>
         <Text size="xs" fw={500}>{name}</Text>

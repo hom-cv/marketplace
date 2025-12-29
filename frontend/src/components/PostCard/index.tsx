@@ -3,9 +3,11 @@
  * Premium, modern design with subtle animations
  */
 
+import { useMemo } from "react";
 import { Card, Image, Text, Badge, Group, Stack, Box, Menu, ActionIcon } from "@mantine/core";
 import { useNavigate } from "@tanstack/react-router";
 import { IconDotsVertical, IconFlag, IconUserExclamation } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
@@ -31,20 +33,23 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-const typeLabels: Record<PostType, string> = {
-  SHIRT: "Shirt",
-  PANTS: "Pants",
-  JACKET: "Jacket",
-  SHOES: "Shoes",
-  ACCESSORIES: "Accessories",
-  OTHER: "Other",
-};
-
 export function PostCard({ post, onReportClick }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
+  const { t } = useTranslation("common");
+  const { t: tListings } = useTranslation("listings");
+
+  // Type labels with translations
+  const typeLabels: Record<PostType, string> = useMemo(() => ({
+    SHIRT: tListings("categories.shirt"),
+    PANTS: tListings("categories.pants"),
+    JACKET: tListings("categories.jacket"),
+    SHOES: tListings("categories.shoes"),
+    ACCESSORIES: tListings("categories.accessories"),
+    OTHER: tListings("categories.other"),
+  }), [tListings]);
 
   const handleClick = () => {
     navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
@@ -100,7 +105,7 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
             variant="filled"
             size="lg"
           >
-            Sold
+            {t("badges.sold")}
           </Badge>
         )}
         {post.is_banned && (
@@ -110,7 +115,7 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
             variant="filled"
             size="lg"
           >
-            Removed
+            {t("badges.removed")}
           </Badge>
         )}
 
@@ -135,14 +140,14 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
                   leftSection={<IconFlag size={14} />}
                   onClick={handleReportListing}
                 >
-                  Report Listing
+                  {t("postCard.reportListing")}
                 </Menu.Item>
                 <Menu.Item
                   color="red"
                   leftSection={<IconUserExclamation size={14} />}
                   onClick={handleReportUser}
                 >
-                  Report User
+                  {t("postCard.reportUser")}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -162,7 +167,7 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
             </Text>
             {isOwner && (
               <Badge variant="light" color="gray" size="sm">
-                Your listing
+                {t("badges.yourListing")}
               </Badge>
             )}
           </Group>

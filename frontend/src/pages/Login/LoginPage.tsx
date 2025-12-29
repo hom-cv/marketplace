@@ -12,6 +12,7 @@ import {
   Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useTranslation } from "react-i18next";
 import { useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -19,6 +20,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
   const { token } = useAuthStore();
+  const { t } = useTranslation("auth");
 
   useEffect(() => {
     if (token) {
@@ -32,9 +34,9 @@ export function LoginPage() {
       password: "",
     },
     validate: {
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
+      email: (value) => (/^\S+@\S+$/.test(value) ? null : t("validation.invalidEmail")),
       password: (value) =>
-        value.length >= 6 ? null : "Password must be at least 6 characters",
+        value.length >= 6 ? null : t("validation.passwordMin6"),
     },
   });
 
@@ -51,11 +53,11 @@ export function LoginPage() {
 
   return (
     <Container size={420} my={40}>
-      <Title ta="center">Welcome back</Title>
+      <Title ta="center">{t("login.title")}</Title>
       <Text c="dimmed" size="sm" ta="center" mt={5}>
-        Don't have an account yet?{" "}
+        {t("login.noAccount")}{" "}
         <Link to="/sign-up" style={{ color: "var(--mantine-color-blue-6)" }}>
-          Sign up
+          {t("login.signUpLink")}
         </Link>
       </Text>
 
@@ -63,19 +65,19 @@ export function LoginPage() {
         <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack>
             {loginMutation.isError && (
-              <Alert color="red" title="Login failed">
-                {loginMutation.error?.message || "Invalid credentials"}
+              <Alert color="red" title={t("login.failed")}>
+                {loginMutation.error?.message || t("login.invalidCredentials")}
               </Alert>
             )}
             <TextInput
-              label="Email"
-              placeholder="you@example.com"
+              label={t("login.email")}
+              placeholder={t("login.emailPlaceholder")}
               required
               {...form.getInputProps("email")}
             />
             <PasswordInput
-              label="Password"
-              placeholder="Your password"
+              label={t("login.password")}
+              placeholder={t("login.passwordPlaceholder")}
               required
               {...form.getInputProps("password")}
             />
@@ -85,7 +87,7 @@ export function LoginPage() {
               mt="xl"
               loading={loginMutation.isPending}
             >
-              Sign in
+              {t("login.submit")}
             </Button>
           </Stack>
         </form>

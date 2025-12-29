@@ -17,6 +17,7 @@ import {
   SimpleGrid,
 } from "@mantine/core";
 import { IconShoppingBag, IconAlertCircle, IconPackage, IconTruck, IconCheck } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
@@ -26,6 +27,8 @@ import { FULFILLMENT_LABELS, FULFILLMENT_COLORS } from "@/constants/shipping";
 
 export function PurchaseHistoryPage() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation("common");
+  const { t: tNav } = useTranslation("navigation");
 
   const { data: purchases, isLoading, error } = useQuery({
     queryKey: ["my-purchases"],
@@ -49,8 +52,8 @@ export function PurchaseHistoryPage() {
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : "Failed to load purchases"}
+      <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
+        {error instanceof Error ? error.message : t("errors.failedToLoad")}
       </Alert>
     );
   }
@@ -69,15 +72,15 @@ export function PurchaseHistoryPage() {
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2} mb="xs">Purchase History</Title>
-        <Text c="dimmed">Track your orders and confirm deliveries.</Text>
+        <Title order={2} mb="xs">{t("purchases.title")}</Title>
+        <Text c="dimmed">{t("purchases.subtitle")}</Text>
       </div>
 
       {successfulPurchases.length === 0 ? (
         <EmptyStateCard
           icon={<IconShoppingBag size={24} />}
-          title="No purchases yet"
-          description="When you buy items from the marketplace, they'll appear here."
+          title={t("purchases.noPurchases")}
+          description={t("purchases.noPurchasesDesc")}
         />
       ) : (
         <Accordion variant="separated" radius="md">
@@ -122,15 +125,15 @@ export function PurchaseHistoryPage() {
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                   <Stack gap="sm">
                     <Paper withBorder p="xs" radius="sm">
-                      <Text size="xs" fw={600} mb="xs" c="dimmed">Order Progress</Text>
+                      <Text size="xs" fw={600} mb="xs" c="dimmed">{t("purchases.orderProgress")}</Text>
                       <Stepper
                         active={getFulfillmentStep(purchase.fulfillment_status)}
                         size="xs"
                         orientation="vertical"
                       >
-                        <Stepper.Step icon={<IconPackage size={14} />} label="Packing" />
-                        <Stepper.Step icon={<IconTruck size={14} />} label="In Transit" />
-                        <Stepper.Step icon={<IconCheck size={14} />} label="Delivered" />
+                        <Stepper.Step icon={<IconPackage size={14} />} label={t("purchases.packing")} />
+                        <Stepper.Step icon={<IconTruck size={14} />} label={t("purchases.inTransit")} />
+                        <Stepper.Step icon={<IconCheck size={14} />} label={t("purchases.delivered")} />
                       </Stepper>
                     </Paper>
 
@@ -143,14 +146,14 @@ export function PurchaseHistoryPage() {
                         loading={confirmMutation.isPending}
                         fullWidth
                       >
-                        Confirm Delivery
+                        {t("purchases.confirmDelivery")}
                       </Button>
                     )}
                   </Stack>
 
                   <Stack gap="sm">
                     {purchase.seller && (
-                      <UserCard username={purchase.seller.username} label="Seller" />
+                      <UserCard username={purchase.seller.username} label={tNav("menu.explore")} />
                     )}
 
                     {purchase.shipping_name && (
@@ -161,7 +164,7 @@ export function PurchaseHistoryPage() {
                         district={purchase.shipping_district}
                         province={purchase.shipping_province}
                         postalCode={purchase.shipping_postal_code}
-                        label="Shipping To"
+                        label={t("purchases.shippingTo")}
                       />
                     )}
 

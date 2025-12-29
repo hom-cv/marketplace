@@ -9,6 +9,7 @@ import {
   IconPlus,
   IconShield,
 } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { SidebarNavLink } from "@/components/shared/SidebarNavLink";
 import styles from "./DashboardLayout.module.css";
@@ -16,6 +17,7 @@ import styles from "./DashboardLayout.module.css";
 function SidebarContent() {
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.is_admin ?? false;
+  const { t } = useTranslation("navigation");
 
   return (
     <>
@@ -23,43 +25,43 @@ function SidebarContent() {
         <SidebarNavLink
           to="/app"
           icon={<IconHome size={20} />}
-          label="Home"
+          label={t("links.home")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
       </div>
 
       <div className={styles.navSection}>
-        <div className={styles.navHeader}>Buying</div>
+        <div className={styles.navHeader}>{t("sections.buying")}</div>
         <SidebarNavLink
           to="/app/explore"
           icon={<IconSearch size={20} />}
-          label="Explore"
+          label={t("menu.explore")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
         <SidebarNavLink
           to="/app/purchases"
           icon={<IconShoppingBag size={20} />}
-          label="Purchase History"
+          label={t("links.purchaseHistory")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
       </div>
 
       <div className={styles.navSection}>
-        <div className={styles.navHeader}>Selling</div>
+        <div className={styles.navHeader}>{t("sections.selling")}</div>
         <SidebarNavLink
           to="/app/my-listings"
           icon={<IconPackage size={20} />}
-          label="My Listings"
+          label={t("menu.myListings")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
         <SidebarNavLink
           to="/app/sales"
           icon={<IconReceipt size={20} />}
-          label="Sold Listings"
+          label={t("links.soldListings")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
@@ -68,13 +70,13 @@ function SidebarContent() {
       <Stack gap="xs">
         <Link to="/app/posts/new" style={{ textDecoration: "none" }}>
           <Button fullWidth leftSection={<IconPlus size={16} />}>
-            Create Listing
+            {t("menu.createListing")}
           </Button>
         </Link>
         {isAdmin && (
           <Link to="/admin" style={{ textDecoration: "none" }}>
             <Button fullWidth leftSection={<IconShield size={16} />} color="orange">
-              Admin Dashboard
+              {t("menu.adminDashboard")}
             </Button>
           </Link>
         )}

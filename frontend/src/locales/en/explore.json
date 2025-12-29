@@ -1,0 +1,31 @@
+{
+  "title": "Explore",
+  "search": {
+    "placeholder": "Search listings..."
+  },
+  "filters": {
+    "title": "Filters",
+    "category": "Category",
+    "priceRange": "Price Range",
+    "clearFilters": "Clear filters"
+  },
+  "categories": {
+    "shirts": "Shirts",
+    "pants": "Pants",
+    "jackets": "Jackets",
+    "shoes": "Shoes",
+    "accessories": "Accessories",
+    "other": "Other"
+  },
+  "results": {
+    "listing": "listing",
+    "listings": "listings",
+    "found": "found",
+    "noListings": "No listings yet",
+    "noMatch": "No listings match your filters",
+    "noMore": "No more listings to load"
+  },
+  "errors": {
+    "failedToLoad": "Failed to load posts"
+  }
+}

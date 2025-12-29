@@ -3,7 +3,7 @@
  * Similar layout to CreatePost page but for viewing/purchasing
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
@@ -35,6 +35,7 @@ import {
   IconFlag,
   IconUserExclamation,
 } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
@@ -52,20 +53,22 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-const typeLabels: Record<PostType, string> = {
-  SHIRT: "Shirt",
-  PANTS: "Pants",
-  JACKET: "Jacket",
-  SHOES: "Shoes",
-  ACCESSORIES: "Accessories",
-  OTHER: "Other",
-};
-
 export function PostViewPage() {
   const navigate = useNavigate();
   const { postId: postIdString } = useParams({ from: "/protected/app/posts/$postId" });
   const postId = postIdString ? parseInt(postIdString, 10) : null;
   const currentUser = useAuthStore((state) => state.user);
+  const { t } = useTranslation("listings");
+
+  // Type labels with translations
+  const typeLabels: Record<PostType, string> = useMemo(() => ({
+    SHIRT: t("categories.shirt"),
+    PANTS: t("categories.pants"),
+    JACKET: t("categories.jacket"),
+    SHOES: t("categories.shoes"),
+    ACCESSORIES: t("categories.accessories"),
+    OTHER: t("categories.other"),
+  }), [t]);
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportModalOpened, setReportModalOpened] = useState(false);
@@ -103,7 +106,7 @@ export function PostViewPage() {
     return (
       <Container size="lg" my={40}>
         <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error instanceof Error ? error.message : "Failed to load post"}
+          {error instanceof Error ? error.message : t("view.failedToLoad")}
         </Alert>
       </Container>
     );
@@ -121,7 +124,7 @@ export function PostViewPage() {
             leftSection={<IconArrowLeft size={16} />}
             onClick={() => navigate({ to: "/app/explore" })}
           >
-            Back to Explore
+            {t("view.backToExplore")}
           </Button>
 
           {!isOwner && (
@@ -140,7 +143,7 @@ export function PostViewPage() {
                     setReportModalOpened(true);
                   }}
                 >
-                  Report Listing
+                  {t("view.reportListing")}
                 </Menu.Item>
                 <Menu.Item
                   color="red"
@@ -150,7 +153,7 @@ export function PostViewPage() {
                     setReportModalOpened(true);
                   }}
                 >
-                  Report User
+                  {t("view.reportUser")}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
@@ -175,7 +178,7 @@ export function PostViewPage() {
                   <Box className={styles.imagePlaceholder}>
                     <IconPhoto size={64} stroke={1} color="var(--mantine-color-gray-4)" />
                     <Text c="dimmed" size="sm" mt="md">
-                      No images available
+                      {t("images.noImagesAvailable")}
                     </Text>
                   </Box>
                 )}
@@ -213,7 +216,7 @@ export function PostViewPage() {
                 </Badge>
                 {isOwner && (
                   <Badge color="gray" size="lg" variant="light">
-                    Your Listing
+                    {t("view.yourListing")}
                   </Badge>
                 )}
               </Group>
@@ -231,7 +234,7 @@ export function PostViewPage() {
               {/* Description */}
               <div>
                 <Text size="sm" fw={500} c="dimmed" mb="xs">
-                  Description
+                  {t("view.description")}
                 </Text>
                 <Text style={{ whiteSpace: "pre-wrap" }}>
                   {post.description}
@@ -259,8 +262,8 @@ export function PostViewPage() {
               {isBanned && (
                 <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
                   {post.is_banned
-                    ? "This listing has been removed due to a policy violation."
-                    : "This seller's account has been suspended."}
+                    ? t("view.listingRemoved")
+                    : t("view.sellerSuspended")}
                 </Alert>
               )}
 
@@ -273,14 +276,14 @@ export function PostViewPage() {
                   mt="md"
                   disabled={isBanned}
                 >
-                  Buy Now - ฿{price.toLocaleString()}
+                  {t("view.buyNow")} - ฿{price.toLocaleString()}
                 </Button>
               )}
 
               {isOwner && (
                 <EarningsPreview
                   postId={postId ?? undefined}
-                  title="Your Earnings (if sold)"
+                  title={t("view.yourEarnings")}
                 />
               )}
             </Stack>

@@ -1,0 +1,31 @@
+{
+  "title": "สำรวจ",
+  "search": {
+    "placeholder": "ค้นหาสินค้า..."
+  },
+  "filters": {
+    "title": "ตัวกรอง",
+    "category": "หมวดหมู่",
+    "priceRange": "ช่วงราคา",
+    "clearFilters": "ล้างตัวกรอง"
+  },
+  "categories": {
+    "shirts": "เสื้อ",
+    "pants": "กางเกง",
+    "jackets": "แจ็คเก็ต",
+    "shoes": "รองเท้า",
+    "accessories": "เครื่องประดับ",
+    "other": "อื่นๆ"
+  },
+  "results": {
+    "listing": "รายการ",
+    "listings": "รายการ",
+    "found": "ที่พบ",
+    "noListings": "ยังไม่มีรายการ",
+    "noMatch": "ไม่มีรายการที่ตรงกับตัวกรอง",
+    "noMore": "ไม่มีรายการเพิ่มเติม"
+  },
+  "errors": {
+    "failedToLoad": "ไม่สามารถโหลดโพสต์ได้"
+  }
+}

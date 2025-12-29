@@ -4,6 +4,7 @@
 
 import { Drawer, Stack, Group, Avatar, Divider, Text, NavLink, Button } from "@mantine/core";
 import { Link, useLocation } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
   IconLogout,
   IconBuildingStore,
@@ -15,6 +16,7 @@ import {
   IconReceipt,
 } from "@tabler/icons-react";
 import { getInitials, type UserInfo } from "./types";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 interface MobileDrawerProps {
   opened: boolean;
@@ -27,6 +29,7 @@ interface MobileDrawerProps {
 export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout }: MobileDrawerProps) {
   const location = useLocation();
   const isInDashboard = location.pathname.startsWith("/app");
+  const { t } = useTranslation("navigation");
 
   return (
     <Drawer opened={opened} onClose={onClose} size="100%">
@@ -44,27 +47,32 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
           </Group>
         )}
 
+        {/* Language Switcher */}
+        <Group px="md" mb="sm">
+          <LanguageSwitcher />
+        </Group>
+
         {isAuthenticated && isInDashboard && (
           <>
             <Divider my="sm" />
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mb="xs">
-              Dashboard
+              {t("sections.dashboard")}
             </Text>
             <NavLink
               component={Link}
               to="/app"
-              label="Home"
+              label={t("links.home")}
               leftSection={<IconHome size={18} />}
               active={location.pathname === "/app"}
               onClick={onClose}
             />
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mt="md" mb="xs">
-              Buying
+              {t("sections.buying")}
             </Text>
             <NavLink
               component={Link}
               to="/app/explore"
-              label="Explore"
+              label={t("menu.explore")}
               leftSection={<IconSearch size={18} />}
               active={location.pathname === "/app/explore"}
               onClick={onClose}
@@ -72,18 +80,18 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
             <NavLink
               component={Link}
               to="/app/purchases"
-              label="Purchase History"
+              label={t("links.purchaseHistory")}
               leftSection={<IconShoppingBag size={18} />}
               active={location.pathname === "/app/purchases"}
               onClick={onClose}
             />
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mt="md" mb="xs">
-              Selling
+              {t("sections.selling")}
             </Text>
             <NavLink
               component={Link}
               to="/app/my-listings"
-              label="My Listings"
+              label={t("menu.myListings")}
               leftSection={<IconPackage size={18} />}
               active={location.pathname === "/app/my-listings"}
               onClick={onClose}
@@ -91,7 +99,7 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
             <NavLink
               component={Link}
               to="/app/sales"
-              label="Sold Listings"
+              label={t("links.soldListings")}
               leftSection={<IconReceipt size={18} />}
               active={location.pathname === "/app/sales"}
               onClick={onClose}
@@ -111,7 +119,7 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
                 variant="light"
                 leftSection={<IconBuildingStore size={16} />}
               >
-                Become a Seller
+                {t("menu.becomeSeller")}
               </Button>
             )}
             {user?.is_seller && (
@@ -122,7 +130,7 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
                 fullWidth
                 leftSection={<IconPlus size={16} />}
               >
-                Create Listing
+                {t("menu.createListing")}
               </Button>
             )}
             <Button
@@ -132,16 +140,16 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
               onClick={onLogout}
               leftSection={<IconLogout size={16} />}
             >
-              Logout
+              {t("menu.logout")}
             </Button>
           </>
         ) : (
           <>
             <Button component={Link} to="/login" onClick={onClose}>
-              Log in
+              {t("header.login")}
             </Button>
             <Button component={Link} to="/sign-up" onClick={onClose}>
-              Sign up
+              {t("header.signUp")}
             </Button>
           </>
         )}

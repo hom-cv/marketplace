@@ -3,6 +3,7 @@
  * Contains filters for post type, price range, etc.
  */
 
+import { useMemo } from "react";
 import {
   Stack,
   Text,
@@ -14,6 +15,7 @@ import {
   Group,
 } from "@mantine/core";
 import { IconFilter, IconX } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import type { PostType } from "@/api/types/post";
 
 interface FiltersState {
@@ -26,16 +28,20 @@ interface FiltersSidebarProps {
   onFiltersChange: (filters: FiltersState) => void;
 }
 
-const typeOptions: { value: PostType; label: string }[] = [
-  { value: "SHIRT", label: "Shirts" },
-  { value: "PANTS", label: "Pants" },
-  { value: "JACKET", label: "Jackets" },
-  { value: "SHOES", label: "Shoes" },
-  { value: "ACCESSORIES", label: "Accessories" },
-  { value: "OTHER", label: "Other" },
-];
-
 export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps) {
+  const { t } = useTranslation("common");
+  const { t: tListings } = useTranslation("listings");
+
+  // Type labels with translations
+  const typeOptions: { value: PostType; label: string }[] = useMemo(() => [
+    { value: "SHIRT", label: tListings("categories.shirt") },
+    { value: "PANTS", label: tListings("categories.pants") },
+    { value: "JACKET", label: tListings("categories.jacket") },
+    { value: "SHOES", label: tListings("categories.shoes") },
+    { value: "ACCESSORIES", label: tListings("categories.accessories") },
+    { value: "OTHER", label: tListings("categories.other") },
+  ], [tListings]);
+
   const handleTypeToggle = (type: PostType) => {
     const newTypes = filters.types.includes(type)
       ? filters.types.filter((t) => t !== type)
@@ -64,7 +70,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
       <Group justify="space-between" mb="md">
         <Group gap="xs">
           <IconFilter size={18} />
-          <Text fw={600}>Filters</Text>
+          <Text fw={600}>{t("filtersSidebar.filters")}</Text>
         </Group>
         {hasActiveFilters && (
           <Button
@@ -74,7 +80,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
             leftSection={<IconX size={14} />}
             onClick={handleClearFilters}
           >
-            Clear
+            {t("filtersSidebar.clear")}
           </Button>
         )}
       </Group>
@@ -83,7 +89,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
         {/* Category Filter */}
         <Box>
           <Text size="sm" fw={500} mb="sm">
-            Category
+            {t("filtersSidebar.category")}
           </Text>
           <Stack gap="xs">
             {typeOptions.map((option) => (
@@ -102,10 +108,10 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
         {/* Price Range Filter */}
         <Box>
           <Text size="sm" fw={500} mb="sm">
-            Price Range
+            {t("filtersSidebar.priceRange")}
           </Text>
           <Text size="xs" c="dimmed" mb="md">
-            ${filters.priceRange[0]} - ${filters.priceRange[1]}
+            ฿{filters.priceRange[0]} - ฿{filters.priceRange[1]}
           </Text>
           <RangeSlider
             min={0}
@@ -114,9 +120,9 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
             value={filters.priceRange}
             onChange={handlePriceChange}
             marks={[
-              { value: 0, label: "$0" },
-              { value: 500, label: "$500" },
-              { value: 1000, label: "$1000" },
+              { value: 0, label: "฿0" },
+              { value: 500, label: "฿500" },
+              { value: 1000, label: "฿1000" },
             ]}
           />
         </Box>

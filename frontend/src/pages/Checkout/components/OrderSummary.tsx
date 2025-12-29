@@ -14,6 +14,7 @@ import {
   Stack,
   Divider,
 } from "@mantine/core";
+import { useTranslation } from "react-i18next";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
 
 interface Post {
@@ -29,13 +30,14 @@ interface OrderSummaryProps {
 }
 
 export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
+  const { t } = useTranslation("common");
   const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
   const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
   const total = parseFloat(priceBreakdown?.total ?? "0");
 
   return (
     <Paper withBorder p="xl" radius="md" pos="sticky" top={100}>
-      <Title order={4} mb="lg">Order Summary</Title>
+      <Title order={4} mb="lg">{t("checkout.orderSummary")}</Title>
 
       {/* Item */}
       <Card withBorder p="sm" radius="md" mb="lg">
@@ -52,7 +54,7 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
           )}
           <Box style={{ flex: 1 }}>
             <Text fw={500} lineClamp={2}>{post.title}</Text>
-            <Text size="sm" c="dimmed">Sold by @{post.user.username}</Text>
+            <Text size="sm" c="dimmed">{t("checkout.soldBy", { username: post.user.username })}</Text>
           </Box>
         </Group>
       </Card>
@@ -61,13 +63,13 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
 
       <Stack gap="xs">
         <Group justify="space-between">
-          <Text size="sm">Item Price</Text>
+          <Text size="sm">{t("checkout.itemPrice")}</Text>
           <Text size="sm" fw={500}>฿{itemPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
         </Group>
         <Group justify="space-between">
-          <Text size="sm">Shipping</Text>
+          <Text size="sm">{t("checkout.shippingLabel")}</Text>
           <Text size="sm" fw={500} c={shippingCost === 0 ? "green" : undefined}>
-            {shippingCost === 0 ? "Free" : `฿${shippingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+            {shippingCost === 0 ? t("checkout.freeShipping") : `฿${shippingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
           </Text>
         </Group>
       </Stack>
@@ -75,7 +77,7 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
       <Divider my="md" />
 
       <Group justify="space-between">
-        <Text size="lg" fw={600}>Total</Text>
+        <Text size="lg" fw={600}>{t("checkout.total")}</Text>
         <Text size="xl" fw={700}>฿{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
       </Group>
     </Paper>

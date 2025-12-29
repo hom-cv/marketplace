@@ -3,7 +3,7 @@
  * Premium design with form validation
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Modal,
@@ -17,6 +17,7 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconAlertTriangle, IconCheck, IconFlag } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { submitReport, type ReportCreateRequest } from "@/api/reports";
 import type { ReportReason, ReportType } from "@/api/types/admin";
 
@@ -28,15 +29,10 @@ interface ReportModalProps {
   entityName: string;
 }
 
-const reasonOptions: { value: ReportReason; label: string }[] = [
-  { value: "counterfeit", label: "Counterfeit Item" },
-  { value: "prohibited_item", label: "Prohibited Item" },
-  { value: "scam", label: "Scam / Fraud" },
-  { value: "abuse_of_system", label: "Abuse of System" },
-];
+const reasonValues: ReportReason[] = ["counterfeit", "prohibited_item", "scam", "abuse_of_system"];
 
 function isValidReportReason(value: string | null): value is ReportReason {
-  return reasonOptions.some((option) => option.value === value);
+  return reasonValues.includes(value as ReportReason);
 }
 
 export function ReportModal({
@@ -48,13 +44,22 @@ export function ReportModal({
 }: ReportModalProps) {
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [description, setDescription] = useState("");
+  const { t } = useTranslation("common");
+
+  // Reason options with translations
+  const reasonOptions = useMemo(() => [
+    { value: "counterfeit", label: t("report.reasons.counterfeit") },
+    { value: "prohibited_item", label: t("report.reasons.prohibited_item") },
+    { value: "scam", label: t("report.reasons.scam") },
+    { value: "abuse_of_system", label: t("report.reasons.abuse_of_system") },
+  ], [t]);
 
   const reportMutation = useMutation({
     mutationFn: (request: ReportCreateRequest) => submitReport(request),
     onSuccess: () => {
       notifications.show({
-        title: "Report Submitted",
-        message: "Thank you for your report. We will review it shortly.",
+        title: t("report.submitted"),
+        message: t("report.submittedMessage"),
         color: "green",
         icon: <IconCheck size={16} />,
       });
@@ -62,8 +67,8 @@ export function ReportModal({
     },
     onError: (error: Error) => {
       notifications.show({
-        title: "Failed to Submit Report",
-        message: error.message || "Something went wrong. Please try again.",
+        title: t("report.failedToSubmit"),
+        message: error.message || t("errors.generic"),
         color: "red",
         icon: <IconAlertTriangle size={16} />,
       });
@@ -92,7 +97,7 @@ export function ReportModal({
   };
 
   const isValid = reason !== null && description.trim().length >= 10;
-  const entityLabel = reportType === "user" ? "User" : "Listing";
+  const entityLabel = reportType === "user" ? t("report.user") : t("report.listing");
 
   return (
     <Modal
@@ -101,7 +106,7 @@ export function ReportModal({
       title={
         <Group gap="xs">
           <IconFlag size={20} />
-          <Text fw={600}>Report {entityLabel}</Text>
+          <Text fw={600}>{t("report.title", { type: entityLabel })}</Text>
         </Group>
       }
       size="md"
@@ -110,13 +115,13 @@ export function ReportModal({
       <Stack gap="md">
         <Alert color="gray" variant="light">
           <Text size="sm">
-            You are reporting <strong>{entityName}</strong>
+            {t("report.youAreReporting")} <strong>{entityName}</strong>
           </Text>
         </Alert>
 
         <Select
-          label="Reason for Report"
-          placeholder="Select a reason"
+          label={t("report.reason")}
+          placeholder={t("report.selectReason")}
           data={reasonOptions}
           value={reason}
           onChange={(value) => {
@@ -131,8 +136,8 @@ export function ReportModal({
         />
 
         <Textarea
-          label="Description"
-          placeholder="Please provide details about the issue (minimum 10 characters)"
+          label={t("report.description")}
+          placeholder={t("report.descriptionPlaceholder")}
           value={description}
           onChange={(e) => setDescription(e.currentTarget.value)}
           minRows={4}
@@ -141,14 +146,14 @@ export function ReportModal({
           withAsterisk
           error={
             description.length > 0 && description.length < 10
-              ? "Description must be at least 10 characters"
+              ? t("report.descriptionMinError")
               : undefined
           }
         />
 
         <Group justify="flex-end" mt="md">
           <Button variant="subtle" onClick={handleClose}>
-            Cancel
+            {t("buttons.cancel")}
           </Button>
           <Button
             color="red"
@@ -157,7 +162,7 @@ export function ReportModal({
             disabled={!isValid}
             leftSection={<IconFlag size={16} />}
           >
-            Submit Report
+            {t("report.submitReport")}
           </Button>
         </Group>
       </Stack>

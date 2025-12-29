@@ -19,6 +19,7 @@ import {
   SimpleGrid,
 } from "@mantine/core";
 import { IconReceipt, IconAlertCircle, IconTruck } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { getMySales, addTracking } from "@/api/payments";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
@@ -29,6 +30,7 @@ import { CARRIER_OPTIONS, FULFILLMENT_LABELS, FULFILLMENT_COLORS } from "@/const
 
 export function SoldListingsPage() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation("common");
   const [trackingInputs, setTrackingInputs] = useState<Record<number, string>>({});
   const [carrierInputs, setCarrierInputs] = useState<Record<number, string | null>>({});
 
@@ -55,8 +57,8 @@ export function SoldListingsPage() {
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : "Failed to load sales"}
+      <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
+        {error instanceof Error ? error.message : t("errors.failedToLoad")}
       </Alert>
     );
   }
@@ -80,15 +82,15 @@ export function SoldListingsPage() {
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2} mb="xs">Sold Listings</Title>
-        <Text c="dimmed">Track your completed sales and add shipping information.</Text>
+        <Title order={2} mb="xs">{t("sales.title")}</Title>
+        <Text c="dimmed">{t("sales.subtitle")}</Text>
       </div>
 
       {successfulSales.length === 0 ? (
         <EmptyStateCard
           icon={<IconReceipt size={24} />}
-          title="No sales yet"
-          description="When you sell items, they'll appear here."
+          title={t("sales.noSales")}
+          description={t("sales.noSalesDesc")}
         />
       ) : (
         <Accordion variant="separated" radius="md">
@@ -122,7 +124,7 @@ export function SoldListingsPage() {
                         {FULFILLMENT_LABELS[sale.fulfillment_status || ""] || "Processing"}
                       </Badge>
                       {sale.tracking_number && (
-                        <Badge size="xs" variant="outline" color="gray">Shipped</Badge>
+                        <Badge size="xs" variant="outline" color="gray">{t("sales.shipped")}</Badge>
                       )}
                       <Text size="xs" c="dimmed">
                         {new Date(sale.created_at).toLocaleDateString()}
@@ -136,7 +138,7 @@ export function SoldListingsPage() {
                 <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
                   <Stack gap="sm">
                     <Paper withBorder p="xs" radius="sm">
-                      <Text size="xs" fw={600} mb="xs" c="dimmed">Earnings</Text>
+                      <Text size="xs" fw={600} mb="xs" c="dimmed">{t("sales.earnings")}</Text>
                       <EarningsPreview
                         breakdown={{
                           itemPrice: (sale.item_price ?? 0) / 100,
@@ -151,7 +153,7 @@ export function SoldListingsPage() {
                     </Paper>
 
                     {sale.buyer && (
-                      <UserCard username={sale.buyer.username} label="Buyer" />
+                      <UserCard username={sale.buyer.username} label={t("sales.buyer")} />
                     )}
                   </Stack>
 
@@ -176,11 +178,11 @@ export function SoldListingsPage() {
                       <Paper withBorder p="xs" radius="sm">
                         <Group gap={4} mb={4}>
                           <IconTruck size={12} color="var(--mantine-color-dimmed)" />
-                          <Text size="xs" fw={600} c="dimmed">Add Shipping</Text>
+                          <Text size="xs" fw={600} c="dimmed">{t("sales.addShipping")}</Text>
                         </Group>
                         <Stack gap={6}>
                           <Select
-                            placeholder="Carrier"
+                            placeholder={t("sales.carrier")}
                             size="xs"
                             data={CARRIER_OPTIONS}
                             value={carrierInputs[sale.payment_id] || null}
@@ -192,7 +194,7 @@ export function SoldListingsPage() {
                           />
                           <Group gap={4}>
                             <TextInput
-                              placeholder="Tracking #"
+                              placeholder={t("sales.trackingNumber")}
                               size="xs"
                               style={{ flex: 1 }}
                               value={trackingInputs[sale.payment_id] || ""}
@@ -208,7 +210,7 @@ export function SoldListingsPage() {
                               loading={trackingMutation.isPending}
                               disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
                             >
-                              Ship
+                              {t("sales.ship")}
                             </Button>
                           </Group>
                         </Stack>

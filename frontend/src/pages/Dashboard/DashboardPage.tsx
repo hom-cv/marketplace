@@ -17,9 +17,12 @@ import {
   IconTrendingUp,
 } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { getPosts, getMyPosts } from "@/api/posts";
 
 export function DashboardPage() {
+  const { t } = useTranslation("dashboard");
+
   const { data: allPosts, isLoading: loadingAll } = useQuery({
     queryKey: ["posts"],
     queryFn: () => getPosts(),
@@ -40,28 +43,28 @@ export function DashboardPage() {
 
   const stats = [
     {
-      title: "My Listings",
+      title: t("stats.totalListings"),
       value: myPosts?.length || 0,
       icon: IconPackage,
       color: "blue",
       link: "/app/my-listings",
     },
     {
-      title: "Marketplace Items",
-      value: allPosts?.length || 0,
+      title: t("stats.marketplaceItems"),
+      value: allPosts?.total || 0,
       icon: IconTrendingUp,
       color: "green",
       link: "/app/explore",
     },
     {
-      title: "Purchases",
+      title: t("stats.totalPurchases"),
       value: 0,
       icon: IconShoppingBag,
       color: "orange",
       link: "/app/purchases",
     },
     {
-      title: "Sales",
+      title: t("stats.earnings"),
       value: 0,
       icon: IconReceipt,
       color: "grape",
@@ -72,8 +75,8 @@ export function DashboardPage() {
   return (
     <Stack gap="xl">
       <div>
-        <Title order={2} mb="xs">Dashboard</Title>
-        <Text c="dimmed">Welcome back! Here's an overview of your activity.</Text>
+        <Title order={2} mb="xs">{t("title")}</Title>
+        <Text c="dimmed">{t("welcome")}! {t("welcomeMessage")}</Text>
       </div>
 
       <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="lg">
@@ -99,9 +102,9 @@ export function DashboardPage() {
       </SimpleGrid>
 
       <div>
-        <Title order={3} mb="md">Quick Actions</Title>
+        <Title order={3} mb="md">{t("sections.quickActions")}</Title>
         <Text c="dimmed" size="sm">
-          Use the sidebar to navigate between sections, or click on the stats above to view details.
+          {t("sidebarHint")}
         </Text>
       </div>
     </Stack>
