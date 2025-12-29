@@ -153,7 +153,7 @@ export function PurchaseHistoryPage() {
 
                   <Stack gap="sm">
                     {purchase.seller && (
-                      <UserCard username={purchase.seller.username} label={tNav("menu.explore")} />
+                      <UserCard username={purchase.seller.username} label={t("purchases.seller")} />
                     )}
 
                     {purchase.shipping_name && (
