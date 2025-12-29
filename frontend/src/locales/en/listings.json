@@ -50,6 +50,7 @@
   },
   "myListings": {
     "title": "My Listings",
+    "subtitle": "Manage your marketplace listings",
     "noListings": "You haven't created any listings yet",
     "createFirst": "Create your first listing",
     "failedToLoad": "Failed to load your listings"

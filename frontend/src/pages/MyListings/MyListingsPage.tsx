@@ -46,7 +46,7 @@ export function MyListingsPage() {
     <Stack gap="lg">
       <div>
         <Title order={2} mb="xs">{t("myListings.title")}</Title>
-        <Text c="dimmed">{tNav("menu.myListings")}</Text>
+        <Text c="dimmed">{t("myListings.subtitle")}</Text>
       </div>
 
       {!posts || posts.length === 0 ? (
