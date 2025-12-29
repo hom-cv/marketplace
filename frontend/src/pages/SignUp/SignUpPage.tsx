@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
     TextInput,
@@ -15,6 +15,7 @@ import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import { PolicyAgreementModal } from "@/components/PolicyAgreementModal";
 
 export function SignUpPage() {
     const navigate = useNavigate();
@@ -22,6 +23,8 @@ export function SignUpPage() {
     const loginMutation = useLoginMutation();
     const { token, setToken, setUser } = useAuthStore();
     const { t } = useTranslation("auth");
+    const [showPolicyModal, setShowPolicyModal] = useState(false);
+    const [policiesAccepted, setPoliciesAccepted] = useState(false);
 
     useEffect(() => {
         if (token) {
@@ -54,6 +57,12 @@ export function SignUpPage() {
     });
 
     const handleSubmit = (values: typeof form.values) => {
+        // If policies not accepted, show modal first
+        if (!policiesAccepted) {
+            setShowPolicyModal(true);
+            return;
+        }
+
         registerMutation.mutate(
             {
                 username: values.username,
@@ -82,6 +91,13 @@ export function SignUpPage() {
                 },
             }
         );
+    };
+
+    const handlePolicyAccepted = () => {
+        setPoliciesAccepted(true);
+        setShowPolicyModal(false);
+        // Submit form after policies are accepted
+        form.onSubmit(handleSubmit)();
     };
 
     return (
@@ -149,6 +165,13 @@ export function SignUpPage() {
                     </Stack>
                 </form>
             </Paper>
+
+            <PolicyAgreementModal
+                opened={showPolicyModal}
+                onClose={() => setShowPolicyModal(false)}
+                onAccept={handlePolicyAccepted}
+            />
         </Container>
     );
 }
+

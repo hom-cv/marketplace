@@ -1,5 +1,6 @@
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
+import { Footer } from "@/components/Footer";
 import { Outlet } from "@tanstack/react-router";
 import { LoginPage } from "@/pages/Login";
 import { SignUpPage } from "@/pages/SignUp";
@@ -7,6 +8,7 @@ import { HomePage } from "@/pages/Home";
 import { VerifyEmailPage } from "@/pages/VerifyEmail";
 import { CreatePostPage } from "@/pages/CreatePost";
 import { BecomeSellerPage } from "@/pages/BecomeSeller";
+import { PoliciesPage } from "@/pages/Policies";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -29,10 +31,13 @@ import {
 
 const rootRoute = createRootRoute({
     component: () => (
-        <>
+        <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
             <AppNavigation />
-            <Outlet />
-        </>
+            <main style={{ flex: 1 }}>
+                <Outlet />
+            </main>
+            <Footer />
+        </div>
     ),
 });
 
@@ -40,6 +45,12 @@ const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/",
     component: HomePage,
+});
+
+const policiesRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/policies",
+    component: PoliciesPage,
 });
 
 const loginRoute = createRoute({
@@ -189,6 +200,7 @@ const adminPostBansRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([
     indexRoute,
+    policiesRoute,
     loginRoute,
     signUpRoute,
     verifyEmailRoute,

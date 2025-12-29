@@ -1,0 +1,87 @@
+{
+  "policies": {
+    "title": "Policies",
+    "termsAndConditions": "Terms and Conditions",
+    "privacyPolicy": "Privacy Policy",
+    "dataProtection": "Data Protection",
+    "refundPolicy": "Refund Policy",
+    "lastUpdated": "Last updated: {{date}}",
+    "modal": {
+      "title": "Terms and Policies",
+      "subtitle": "Please review and accept our policies to continue",
+      "iAgree": "I have read and agree to the Terms and Conditions, Privacy Policy, Data Protection Policy, and Refund Policy",
+      "accept": "Accept & Continue",
+      "decline": "Decline",
+      "mustAccept": "You must accept the policies to continue"
+    },
+    "checkout": {
+      "refundNotice": "By completing this purchase, you agree to our",
+      "refundPolicyLink": "Refund Policy",
+      "refundSummary": "Items can be returned within 7 days of delivery. Digital items are non-refundable."
+    },
+    "footer": {
+      "allRightsReserved": "All rights reserved.",
+      "legal": "Legal"
+    },
+    "content": {
+      "terms": {
+        "title": "Terms and Conditions",
+        "intro": "Welcome to our marketplace. By accessing or using our platform, you agree to be bound by these Terms and Conditions.",
+        "section1Title": "1. Acceptance of Terms",
+        "section1Content": "By registering for an account, browsing, or making purchases on our platform, you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions. If you do not agree, please do not use our services.",
+        "section2Title": "2. User Accounts",
+        "section2Content": "You must be at least 18 years old to create an account. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to provide accurate and complete information during registration.",
+        "section3Title": "3. Marketplace Rules",
+        "section3Content": "Users must not list prohibited items, engage in fraudulent activities, or violate any applicable laws. All listings must accurately describe the item being sold. Sellers are responsible for fulfilling orders in a timely manner.",
+        "section4Title": "4. Payments and Fees",
+        "section4Content": "All transactions are processed through our secure payment system. Sellers agree to pay applicable platform fees and transaction fees. Prices listed must include all applicable costs or clearly state additional charges.",
+        "section5Title": "5. Intellectual Property",
+        "section5Content": "Users retain ownership of their content but grant us a license to use, display, and distribute content on our platform. Users must not infringe on the intellectual property rights of others.",
+        "section6Title": "6. Limitation of Liability",
+        "section6Content": "We provide the platform 'as is' and are not liable for any disputes between buyers and sellers. Our liability is limited to the amount of fees paid to us."
+      },
+      "privacy": {
+        "title": "Privacy Policy",
+        "intro": "Your privacy is important to us. This policy explains how we collect, use, and protect your personal information.",
+        "section1Title": "1. Information We Collect",
+        "section1Content": "We collect information you provide directly (name, email, phone number, address) and information collected automatically (IP address, device information, browsing behavior). Payment information is processed securely by our payment provider.",
+        "section2Title": "2. How We Use Your Information",
+        "section2Content": "We use your information to provide and improve our services, process transactions, communicate with you, prevent fraud, and comply with legal obligations. We may use anonymized data for analytics and service improvement.",
+        "section3Title": "3. Information Sharing",
+        "section3Content": "We share necessary information with sellers to fulfill orders (shipping address, contact information). We may share data with service providers who help us operate the platform. We do not sell your personal information.",
+        "section4Title": "4. Data Security",
+        "section4Content": "We implement appropriate technical and organizational measures to protect your data. However, no method of transmission over the internet is 100% secure.",
+        "section5Title": "5. Your Rights",
+        "section5Content": "You have the right to access, correct, or delete your personal information. You can update your account settings or contact us to exercise these rights."
+      },
+      "dataProtection": {
+        "title": "Data Protection Policy",
+        "intro": "We are committed to protecting your personal data in accordance with applicable data protection laws, including the Personal Data Protection Act (PDPA).",
+        "section1Title": "1. Data Controller",
+        "section1Content": "Our company acts as the data controller for personal data collected through this platform. We determine the purposes and means of processing your personal data.",
+        "section2Title": "2. Legal Basis for Processing",
+        "section2Content": "We process personal data based on: consent you provide, contractual necessity to provide our services, legal obligations, and legitimate business interests.",
+        "section3Title": "3. Data Retention",
+        "section3Content": "We retain your personal data only as long as necessary for the purposes for which it was collected, or as required by law. Transaction records are kept for accounting and legal purposes.",
+        "section4Title": "4. Cross-Border Transfers",
+        "section4Content": "Your data may be transferred to and processed in countries outside of Thailand. We ensure appropriate safeguards are in place for such transfers.",
+        "section5Title": "5. Data Subject Rights",
+        "section5Content": "Under PDPA, you have rights including: right to access, right to rectification, right to erasure, right to restriction of processing, right to data portability, and right to object to processing."
+      },
+      "refund": {
+        "title": "Refund Policy",
+        "intro": "We want you to be satisfied with your purchase. Please review our refund policy below.",
+        "section1Title": "1. Return Eligibility",
+        "section1Content": "Items may be returned within 7 days of delivery if they are unused, in original packaging, and in the same condition as received. Digital items, perishables, and customized products are generally non-refundable.",
+        "section2Title": "2. Refund Process",
+        "section2Content": "To request a refund, contact the seller through the platform. If an agreement cannot be reached, you may submit a dispute. Refunds are processed within 5-7 business days after approval.",
+        "section3Title": "3. Refund Method",
+        "section3Content": "Refunds will be issued to the original payment method. Credit card refunds may take 5-10 business days to appear on your statement. PromptPay refunds are typically processed within 1-3 business days.",
+        "section4Title": "4. Shipping Costs",
+        "section4Content": "Original shipping costs are non-refundable unless the item was defective or incorrectly described. Return shipping costs are the responsibility of the buyer unless otherwise agreed.",
+        "section5Title": "5. Dispute Resolution",
+        "section5Content": "If you and the seller cannot resolve a dispute, our customer service team will mediate. We reserve the right to make final decisions on disputed refunds."
+      }
+    }
+  }
+}

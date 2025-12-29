@@ -13,8 +13,12 @@ import {
   Box,
   Stack,
   Divider,
+  Anchor,
+  Alert,
 } from "@mantine/core";
+import { IconInfoCircle } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
 
 interface Post {
@@ -30,7 +34,7 @@ interface OrderSummaryProps {
 }
 
 export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation(["common", "policies"]);
   const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
   const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
   const total = parseFloat(priceBreakdown?.total ?? "0");
@@ -80,6 +84,26 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
         <Text size="lg" fw={600}>{t("checkout.total")}</Text>
         <Text size="xl" fw={700}>฿{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
       </Group>
+
+      {/* Refund Policy Notice */}
+      <Alert
+        variant="light"
+        color="blue"
+        icon={<IconInfoCircle size={16} />}
+        mt="lg"
+        p="sm"
+      >
+        <Text size="xs">
+          {t("policies:policies.checkout.refundNotice")}{" "}
+          <Anchor component={Link} to="/policies#refund" target="_blank" size="xs">
+            {t("policies:policies.checkout.refundPolicyLink")}
+          </Anchor>
+        </Text>
+        <Text size="xs" c="dimmed" mt={4}>
+          {t("policies:policies.checkout.refundSummary")}
+        </Text>
+      </Alert>
     </Paper>
   );
 }
+
