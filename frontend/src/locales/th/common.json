@@ -176,7 +176,8 @@
     "inTransit": "กำลังจัดส่ง",
     "delivered": "จัดส่งแล้ว",
     "confirmDelivery": "ยืนยันการรับสินค้า",
-    "shippingTo": "จัดส่งถึง"
+    "shippingTo": "จัดส่งถึง",
+    "seller": "ผู้ขาย"
   },
   "sales": {
     "title": "สินค้าที่ขายแล้ว",

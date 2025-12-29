@@ -176,7 +176,8 @@
     "inTransit": "In Transit",
     "delivered": "Delivered",
     "confirmDelivery": "Confirm Delivery",
-    "shippingTo": "Shipping To"
+    "shippingTo": "Shipping To",
+    "seller": "Seller"
   },
   "sales": {
     "title": "Sold Listings",
