@@ -12,11 +12,15 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle, IconPlus, IconPackage } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { getMyPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import styles from "./MyListingsPage.module.css";
 
 export function MyListingsPage() {
+  const { t } = useTranslation("listings");
+  const { t: tNav } = useTranslation("navigation");
+
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ["posts", "me"],
     queryFn: () => getMyPosts(),
@@ -33,7 +37,7 @@ export function MyListingsPage() {
   if (error) {
     return (
       <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : "Failed to load listings"}
+        {error instanceof Error ? error.message : t("myListings.failedToLoad")}
       </Alert>
     );
   }
@@ -41,8 +45,8 @@ export function MyListingsPage() {
   return (
     <Stack gap="lg">
       <div>
-        <Title order={2} mb="xs">My Listings</Title>
-        <Text c="dimmed">Manage your marketplace listings.</Text>
+        <Title order={2} mb="xs">{t("myListings.title")}</Title>
+        <Text c="dimmed">{t("myListings.subtitle")}</Text>
       </div>
 
       {!posts || posts.length === 0 ? (
@@ -53,12 +57,12 @@ export function MyListingsPage() {
                 <IconPackage size={24} />
               </ThemeIcon>
               <div>
-                <Text fw={500}>No listings yet</Text>
+                <Text fw={500}>{t("myListings.noListings")}</Text>
                 <Text size="sm" c="dimmed" mb="md">
-                  Create your first listing to start selling.
+                  {t("myListings.createFirst")}
                 </Text>
                 <Link to="/app/posts/new">
-                  <Button leftSection={<IconPlus size={16} />}>Create Listing</Button>
+                  <Button leftSection={<IconPlus size={16} />}>{tNav("menu.createListing")}</Button>
                 </Link>
               </div>
             </Stack>

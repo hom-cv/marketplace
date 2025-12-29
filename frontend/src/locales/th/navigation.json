@@ -1,0 +1,25 @@
+{
+  "header": {
+    "login": "เข้าสู่ระบบ",
+    "signUp": "สมัครสมาชิก"
+  },
+  "menu": {
+    "dashboard": "แดชบอร์ด",
+    "explore": "สำรวจ",
+    "myListings": "รายการของฉัน",
+    "becomeSeller": "เป็นผู้ขาย",
+    "createListing": "สร้างรายการ",
+    "logout": "ออกจากระบบ",
+    "adminDashboard": "แดชบอร์ดผู้ดูแล"
+  },
+  "sections": {
+    "dashboard": "แดชบอร์ด",
+    "buying": "การซื้อ",
+    "selling": "การขาย"
+  },
+  "links": {
+    "home": "หน้าหลัก",
+    "purchaseHistory": "ประวัติการซื้อ",
+    "soldListings": "สินค้าที่ขายแล้ว"
+  }
+}

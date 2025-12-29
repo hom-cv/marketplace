@@ -14,6 +14,7 @@ import {
   Center,
 } from "@mantine/core";
 import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
 
@@ -52,14 +53,17 @@ export function PaymentMethodForm({
   isCardLoading,
   isPromptPayLoading,
 }: PaymentMethodFormProps) {
+  const { t } = useTranslation("common");
+  const formatAmount = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
   return (
     <Stack gap="lg">
       {/* Address confirmation */}
       <Paper withBorder p="lg" radius="md" bg="gray.0">
         <Group justify="space-between" mb="xs">
-          <Text size="sm" fw={600}>Ship to:</Text>
+          <Text size="sm" fw={600}>{t("checkout.shipToLabel")}</Text>
           <Button size="xs" variant="subtle" onClick={onEditShipping}>
-            Edit
+            {t("buttons.edit")}
           </Button>
         </Group>
         <Text size="sm" fw={500}>{shippingAddress.name}</Text>
@@ -71,7 +75,7 @@ export function PaymentMethodForm({
       </Paper>
 
       <Paper withBorder p="xl" radius="md">
-        <Title order={4} mb="lg">Payment Method</Title>
+        <Title order={4} mb="lg">{t("checkout.paymentMethod")}</Title>
 
         <SegmentedControl
           value={paymentMethod}
@@ -82,7 +86,7 @@ export function PaymentMethodForm({
               label: (
                 <Center>
                   <IconCreditCard size={18} />
-                  <Text ml="xs">Credit Card</Text>
+                  <Text ml="xs">{t("checkout.creditCard")}</Text>
                 </Center>
               ),
             },
@@ -105,34 +109,34 @@ export function PaymentMethodForm({
         {paymentMethod === "card" && (
           <Stack gap="md">
             <TextInput
-              label="Cardholder Name"
-              placeholder="Name on card"
+              label={t("checkout.cardholderName")}
+              placeholder={t("checkout.nameOnCard")}
               size="md"
               {...cardForm.getInputProps("name")}
             />
             <TextInput
-              label="Card Number"
-              placeholder="4242 4242 4242 4242"
+              label={t("checkout.cardNumber")}
+              placeholder={t("checkout.cardPlaceholder")}
               size="md"
               {...cardForm.getInputProps("number")}
             />
             <Group grow>
               <TextInput
-                label="Exp. Month"
+                label={t("checkout.expMonth")}
                 placeholder="MM"
                 size="md"
                 maxLength={2}
                 {...cardForm.getInputProps("expMonth")}
               />
               <TextInput
-                label="Exp. Year"
+                label={t("checkout.expYear")}
                 placeholder="YY"
                 size="md"
                 maxLength={4}
                 {...cardForm.getInputProps("expYear")}
               />
               <TextInput
-                label="CVV"
+                label={t("checkout.cvv")}
                 placeholder="123"
                 size="md"
                 maxLength={4}
@@ -146,7 +150,7 @@ export function PaymentMethodForm({
               loading={isCardLoading}
               disabled={!cardForm.isValid()}
             >
-              Pay ฿{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {t("checkout.payAmount", { amount: formatAmount(total) })}
             </Button>
           </Stack>
         )}
@@ -159,7 +163,7 @@ export function PaymentMethodForm({
             onClick={onPromptPaySubmit}
             loading={isPromptPayLoading}
           >
-            Generate QR Code - ฿{total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {t("checkout.generateQR", { amount: formatAmount(total) })}
           </Button>
         )}
       </Paper>

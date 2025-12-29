@@ -1,0 +1,63 @@
+{
+  "create": {
+    "title": "Create Listing",
+    "subtitle": "List your item on the marketplace",
+    "form": {
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g., Vintage Levi's Denim Jacket",
+      "description": "Description",
+      "descriptionPlaceholder": "Describe your item - condition, size, brand, etc.",
+      "category": "Category",
+      "categoryPlaceholder": "Select type",
+      "price": "Price (฿)",
+      "shippingCost": "Shipping Cost (฿)",
+      "shippingDescription": "Set to 0 for free shipping",
+      "submit": "Create Listing"
+    },
+    "success": "Listing created successfully!",
+    "error": "Failed to create listing"
+  },
+  "categories": {
+    "shirt": "Shirt",
+    "pants": "Pants",
+    "jacket": "Jacket",
+    "shoes": "Shoes",
+    "accessories": "Accessories",
+    "other": "Other"
+  },
+  "images": {
+    "noImages": "No images uploaded",
+    "noImagesAvailable": "No images available",
+    "cover": "Cover"
+  },
+  "seller": {
+    "verificationRequired": "Seller Verification Required",
+    "verificationMessage": "You need to be a verified seller to create listings. Complete seller verification to start selling on the marketplace.",
+    "becomeSeller": "Become a Seller",
+    "info": "Seller"
+  },
+  "view": {
+    "backToExplore": "Back to Explore",
+    "yourListing": "Your Listing",
+    "description": "Description",
+    "buyNow": "Buy Now",
+    "yourEarnings": "Your Earnings (if sold)",
+    "reportListing": "Report Listing",
+    "reportUser": "Report User",
+    "listingRemoved": "This listing has been removed due to a policy violation.",
+    "sellerSuspended": "This seller's account has been suspended.",
+    "failedToLoad": "Failed to load post"
+  },
+  "myListings": {
+    "title": "My Listings",
+    "subtitle": "Manage your marketplace listings",
+    "noListings": "You haven't created any listings yet",
+    "createFirst": "Create your first listing",
+    "failedToLoad": "Failed to load your listings"
+  },
+  "soldListings": {
+    "title": "Sold Listings",
+    "noSales": "No sales yet",
+    "waitingForSale": "Your listings will appear here once they're sold"
+  }
+}

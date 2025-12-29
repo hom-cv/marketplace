@@ -1,0 +1,25 @@
+{
+  "header": {
+    "login": "Login",
+    "signUp": "Sign up"
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "explore": "Explore",
+    "myListings": "My Listings",
+    "becomeSeller": "Become a Seller",
+    "createListing": "Create Listing",
+    "logout": "Logout",
+    "adminDashboard": "Admin Dashboard"
+  },
+  "sections": {
+    "dashboard": "Dashboard",
+    "buying": "Buying",
+    "selling": "Selling"
+  },
+  "links": {
+    "home": "Home",
+    "purchaseHistory": "Purchase History",
+    "soldListings": "Sold Listings"
+  }
+}

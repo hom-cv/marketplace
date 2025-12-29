@@ -3,8 +3,10 @@
  * Full-width image with user info and details below
  */
 
+import { useMemo } from "react";
 import { Box, Group, Text, Badge, Stack, Image } from "@mantine/core";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -21,20 +23,23 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-const typeLabels: Record<PostType, string> = {
-  SHIRT: "Shirt",
-  PANTS: "Pants",
-  JACKET: "Jacket",
-  SHOES: "Shoes",
-  ACCESSORIES: "Accessories",
-  OTHER: "Other",
-};
-
 export function PostFeedItem({ post }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
+  const { t } = useTranslation("common");
+  const { t: tListings } = useTranslation("listings");
+
+  // Type labels with translations
+  const typeLabels: Record<PostType, string> = useMemo(() => ({
+    SHIRT: tListings("categories.shirt"),
+    PANTS: tListings("categories.pants"),
+    JACKET: tListings("categories.jacket"),
+    SHOES: tListings("categories.shoes"),
+    ACCESSORIES: tListings("categories.accessories"),
+    OTHER: tListings("categories.other"),
+  }), [tListings]);
 
   const handleClick = () => {
     navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
@@ -60,12 +65,12 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
           <Group gap="xs">
             {post.is_sold && (
               <Badge color="red" variant="filled">
-                Sold
+                {t("badges.sold")}
               </Badge>
             )}
             {isOwner && (
               <Badge variant="light" color="gray">
-                Your listing
+                {t("badges.yourListing")}
               </Badge>
             )}
             <Badge color={typeColors[post.type]} variant="light">

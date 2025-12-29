@@ -20,6 +20,7 @@ import {
   Alert,
 } from "@mantine/core";
 import { IconCheck, IconX, IconMail, IconAlertCircle } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { verifyEmail, resendVerificationEmail, getCurrentUser } from "@/api/auth";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -33,6 +34,7 @@ export function VerifyEmailPage() {
   const search = useSearch({ from: "/verify-email" });
   const token = (search as { token?: string }).token;
   const { user, token: authToken, setUser } = useAuthStore();
+  const { t } = useTranslation("common");
 
   const [mode, setMode] = useState<PageMode>("loading");
   const [message, setMessage] = useState("");
@@ -129,7 +131,7 @@ export function VerifyEmailPage() {
           {mode === "loading" && (
             <Stack align="center" gap="md">
               <Loader size="xl" />
-              <Title order={2}>Loading...</Title>
+              <Title order={2}>{t("verifyEmail.loading")}</Title>
             </Stack>
           )}
 
@@ -137,8 +139,8 @@ export function VerifyEmailPage() {
           {mode === "verify" && (
             <Stack align="center" gap="md">
               <Loader size="xl" />
-              <Title order={2}>Verifying your email...</Title>
-              <Text c="dimmed">Please wait while we verify your email address.</Text>
+              <Title order={2}>{t("verifyEmail.verifying")}</Title>
+              <Text c="dimmed">{t("verifyEmail.pleaseWait")}</Text>
             </Stack>
           )}
 
@@ -148,19 +150,19 @@ export function VerifyEmailPage() {
               <ThemeIcon size={80} radius="xl" color="green">
                 <IconCheck size={48} />
               </ThemeIcon>
-              <Title order={2}>Email Verified!</Title>
+              <Title order={2}>{t("verifyEmail.verified")}</Title>
               <Text c="dimmed" ta="center">
                 {message}
               </Text>
               <Text c="dimmed" ta="center" size="sm">
-                Redirecting to login in {countdown} seconds...
+                {t("verifyEmail.redirecting", { count: countdown })}
               </Text>
               <Button
                 size="md"
                 onClick={() => navigate({ to: "/login" })}
                 mt="md"
               >
-                Continue to Login
+                {t("verifyEmail.continueToLogin")}
               </Button>
             </Stack>
           )}
@@ -171,7 +173,7 @@ export function VerifyEmailPage() {
               <ThemeIcon size={80} radius="xl" color="red">
                 <IconX size={48} />
               </ThemeIcon>
-              <Title order={2}>Verification Failed</Title>
+              <Title order={2}>{t("verifyEmail.failed")}</Title>
               <Text c="dimmed" ta="center">
                 {message}
               </Text>
@@ -181,7 +183,7 @@ export function VerifyEmailPage() {
                 onClick={() => navigate({ to: "/" })}
                 mt="md"
               >
-                Go to Home
+                {t("verifyEmail.goHome")}
               </Button>
             </Stack>
           )}
@@ -194,19 +196,19 @@ export function VerifyEmailPage() {
               </ThemeIcon>
 
               <Title order={2} ta="center">
-                Verify Your Email
+                {t("verifyEmail.verifyYourEmail")}
               </Title>
 
               <Text c="dimmed" ta="center" size="md">
-                We've sent a verification email to{" "}
+                {t("verifyEmail.sentTo")}{" "}
                 <Text component="span" fw={600} c="blue">
                   {user?.email_address}
                 </Text>
-                . Please check your inbox and click the verification link to activate your account.
+                . {t("verifyEmail.checkInbox")}
               </Text>
 
               <Text c="dimmed" ta="center" size="sm">
-                Didn't receive the email? Check your spam folder or click below to resend.
+                {t("verifyEmail.didntReceive")}
               </Text>
 
               {resendStatus === "success" && (
@@ -239,7 +241,7 @@ export function VerifyEmailPage() {
                 leftSection={<IconMail size={18} />}
                 mt="sm"
               >
-                {resendStatus === "success" ? "Email Sent!" : "Resend Verification Email"}
+                {resendStatus === "success" ? t("verifyEmail.emailSent") : t("verifyEmail.resendEmail")}
               </Button>
 
               <Button
@@ -247,7 +249,7 @@ export function VerifyEmailPage() {
                 variant="subtle"
                 onClick={handleCheckStatus}
               >
-                I've verified my email
+                {t("verifyEmail.alreadyVerified")}
               </Button>
             </Stack>
           )}

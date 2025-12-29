@@ -19,6 +19,7 @@ import {
   Group,
 } from "@mantine/core";
 import { IconCheck, IconX, IconShoppingBag, IconArrowRight } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { getPaymentStatus } from "@/api/payments";
 
 export function PaymentReturnPage() {
@@ -26,6 +27,7 @@ export function PaymentReturnPage() {
   const search = useSearch({ from: "/protected/app/payment-return" });
   const paymentId = search.payment_id ? parseInt(search.payment_id, 10) : null;
   const [pollCount, setPollCount] = useState(0);
+  const { t } = useTranslation("common");
 
   // Fetch payment status
   const {
@@ -61,8 +63,8 @@ export function PaymentReturnPage() {
   if (!paymentId) {
     return (
       <Center h={400}>
-        <Alert color="yellow" title="No Payment Found">
-          No payment information was provided. Please return to the shop.
+        <Alert color="yellow" title={t("paymentReturn.noPayment")}>
+          {t("paymentReturn.noPaymentMessage")}
         </Alert>
       </Center>
     );
@@ -74,7 +76,7 @@ export function PaymentReturnPage() {
       <Center h={400}>
         <Stack align="center" gap="md">
           <Loader size="lg" />
-          <Text c="dimmed">Loading payment status...</Text>
+          <Text c="dimmed">{t("paymentReturn.loadingStatus")}</Text>
         </Stack>
       </Center>
     );
@@ -84,8 +86,8 @@ export function PaymentReturnPage() {
   if (error) {
     return (
       <Center h={400}>
-        <Alert color="red" title="Error">
-          {error instanceof Error ? error.message : "Failed to load payment status"}
+        <Alert color="red" title={t("status.error")}>
+          {error instanceof Error ? error.message : t("errors.failedToLoad")}
         </Alert>
       </Center>
     );
@@ -102,11 +104,10 @@ export function PaymentReturnPage() {
                 <IconCheck size={48} />
               </ThemeIcon>
               <Title order={2} ta="center">
-                Payment Successful!
+                {t("paymentReturn.success")}
               </Title>
               <Text c="dimmed" ta="center">
-                Your payment of ฿{(paymentStatus.amount / 100).toLocaleString()} has been processed.
-                The seller has been notified.
+                {t("paymentReturn.successMessage", { amount: (paymentStatus.amount / 100).toLocaleString() })}
               </Text>
               <Group justify="center">
                 <Button
@@ -114,13 +115,13 @@ export function PaymentReturnPage() {
                   leftSection={<IconShoppingBag size={18} />}
                   onClick={() => navigate({ to: "/app/purchases" })}
                 >
-                  View Purchases
+                  {t("paymentReturn.viewPurchases")}
                 </Button>
                 <Button
                   rightSection={<IconArrowRight size={18} />}
                   onClick={() => navigate({ to: "/app/explore" })}
                 >
-                  Continue Shopping
+                  {t("paymentReturn.continueShopping")}
                 </Button>
               </Group>
             </>
@@ -133,20 +134,20 @@ export function PaymentReturnPage() {
                 <IconX size={48} />
               </ThemeIcon>
               <Title order={2} ta="center">
-                Payment Failed
+                {t("paymentReturn.failed")}
               </Title>
               <Text c="dimmed" ta="center">
-                {paymentStatus?.failure_message || "Your payment could not be processed. Please try again."}
+                {paymentStatus?.failure_message || t("paymentReturn.failedMessage")}
               </Text>
               {paymentStatus?.failure_code && (
                 <Text size="xs" c="dimmed">
-                  Error code: {paymentStatus.failure_code}
+                  {t("paymentReturn.errorCode", { code: paymentStatus.failure_code })}
                 </Text>
               )}
               <Button
                 onClick={() => navigate({ to: "/app/explore" })}
               >
-                Return to Shop
+                {t("paymentReturn.returnToShop")}
               </Button>
             </>
           )}
@@ -156,14 +157,14 @@ export function PaymentReturnPage() {
             <>
               <Loader size="lg" />
               <Title order={2} ta="center">
-                Processing Payment
+                {t("paymentReturn.processing")}
               </Title>
               <Text c="dimmed" ta="center">
-                Please wait while we confirm your payment...
+                {t("paymentReturn.processingMessage")}
               </Text>
               {pollCount >= 15 && (
                 <Text size="xs" c="dimmed" ta="center">
-                  This is taking longer than usual. You can check your purchase history later.
+                  {t("paymentReturn.takingLong")}
                 </Text>
               )}
             </>

@@ -19,6 +19,7 @@ import {
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { IconAlertCircle, IconAdjustments, IconX, IconSearch } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
@@ -33,24 +34,26 @@ interface FiltersState {
   search: string;
 }
 
-const typeOptions: { value: PostType; label: string }[] = [
-  { value: "SHIRT", label: "Shirts" },
-  { value: "PANTS", label: "Pants" },
-  { value: "JACKET", label: "Jackets" },
-  { value: "SHOES", label: "Shoes" },
-  { value: "ACCESSORIES", label: "Accessories" },
-  { value: "OTHER", label: "Other" },
-];
-
 const ITEMS_PER_PAGE = 20;
 
 export function ExplorePage() {
+  const { t } = useTranslation("explore");
   const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
     priceRange: [0, 10000],
     search: "",
   });
+
+  // Category options with translations
+  const typeOptions: { value: PostType; label: string }[] = useMemo(() => [
+    { value: "SHIRT", label: t("categories.shirts") },
+    { value: "PANTS", label: t("categories.pants") },
+    { value: "JACKET", label: t("categories.jackets") },
+    { value: "SHOES", label: t("categories.shoes") },
+    { value: "ACCESSORIES", label: t("categories.accessories") },
+    { value: "OTHER", label: t("categories.other") },
+  ], [t]);
 
   // Report modal state (lifted from PostCard)
   const reportModal = useReportModal();
@@ -162,7 +165,7 @@ export function ExplorePage() {
   if (error) {
     return (
       <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : "Failed to load posts"}
+        {error instanceof Error ? error.message : t("errors.failedToLoad")}
       </Alert>
     );
   }
@@ -171,10 +174,10 @@ export function ExplorePage() {
     <Stack gap="lg">
       {/* Header with Search */}
       <Group justify="space-between" align="center" wrap="wrap">
-        <Title order={2}>Explore</Title>
+        <Title order={2}>{t("title")}</Title>
         <Group gap="xs">
           <TextInput
-            placeholder="Search listings..."
+            placeholder={t("search.placeholder")}
             leftSection={<IconSearch size={16} />}
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
@@ -197,7 +200,7 @@ export function ExplorePage() {
               leftSection={<IconX size={14} />}
               onClick={handleClearFilters}
             >
-              Clear all
+              {t("common:buttons.clearAll")}
             </Button>
           )}
           <Button
@@ -213,7 +216,7 @@ export function ExplorePage() {
             }
             onClick={toggleFilters}
           >
-            Filters
+            {t("filters.title")}
           </Button>
         </Group>
       </Group>
@@ -225,7 +228,7 @@ export function ExplorePage() {
             {/* Category Chips */}
             <div>
               <Text size="sm" fw={500} mb="xs" c="dimmed">
-                Category
+                {t("filters.category")}
               </Text>
               <Group gap="xs">
                 {typeOptions.map((option) => (
@@ -245,7 +248,7 @@ export function ExplorePage() {
             {/* Price Range */}
             <div>
               <Text size="sm" fw={500} mb="xs" c="dimmed">
-                Price Range
+                {t("filters.priceRange")}
               </Text>
               <Group gap="md" align="flex-end">
                 <Box style={{ flex: 1, maxWidth: 400 }}>
@@ -325,8 +328,8 @@ export function ExplorePage() {
 
       {/* Results Count */}
       <Text size="sm" c="dimmed">
-        {totalCount} {totalCount === 1 ? "listing" : "listings"}
-        {hasActiveFilters && " found"}
+        {totalCount} {totalCount === 1 ? t("results.listing") : t("results.listings")}
+        {hasActiveFilters && ` ${t("results.found")}`}
       </Text>
 
       {/* Desktop Grid */}
@@ -334,10 +337,10 @@ export function ExplorePage() {
         {posts.length === 0 ? (
           <Center h={200}>
             <Stack align="center" gap="xs">
-              <Text c="dimmed">{hasActiveFilters ? "No listings match your filters" : "No listings yet"}</Text>
+              <Text c="dimmed">{hasActiveFilters ? t("results.noMatch") : t("results.noListings")}</Text>
               {hasActiveFilters && (
                 <Button variant="subtle" size="sm" onClick={handleClearFilters}>
-                  Clear filters
+                  {t("filters.clearFilters")}
                 </Button>
               )}
             </Stack>
@@ -356,10 +359,10 @@ export function ExplorePage() {
         {posts.length === 0 ? (
           <Center h={200}>
             <Stack align="center" gap="xs">
-              <Text c="dimmed">{hasActiveFilters ? "No listings match your filters" : "No listings yet"}</Text>
+              <Text c="dimmed">{hasActiveFilters ? t("results.noMatch") : t("results.noListings")}</Text>
               {hasActiveFilters && (
                 <Button variant="subtle" size="sm" onClick={handleClearFilters}>
-                  Clear filters
+                  {t("filters.clearFilters")}
                 </Button>
               )}
             </Stack>
@@ -384,7 +387,7 @@ export function ExplorePage() {
           )}
           {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
             <Text ta="center" c="dimmed" size="sm" py="md">
-              No more listings to load
+              {t("results.noMore")}
             </Text>
           )}
         </>

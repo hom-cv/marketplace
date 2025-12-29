@@ -25,6 +25,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { IconAlertCircle, IconPlus, IconFilter } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
@@ -35,6 +36,8 @@ import styles from "./AppPage.module.css";
 
 export function AppPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation("common");
+  const { t: tNav } = useTranslation("navigation");
   const [filtersOpened, { open: openFilters, close: closeFilters }] = useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
@@ -57,7 +60,7 @@ export function AppPage() {
   const filteredPosts = useMemo(() => {
     if (!posts) return [];
 
-    return posts.filter((post) => {
+    return posts.items.filter((post) => {
       if (filters.types.length > 0 && !filters.types.includes(post.type)) {
         return false;
       }
@@ -82,8 +85,8 @@ export function AppPage() {
   if (error) {
     return (
       <Container size="lg" py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error instanceof Error ? error.message : "Failed to load posts"}
+        <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
+          {error instanceof Error ? error.message : t("errors.failedToLoad")}
         </Alert>
       </Container>
     );
@@ -93,7 +96,7 @@ export function AppPage() {
     <Center h={300}>
       <Stack align="center" gap="md">
         <Text c="dimmed" size="lg">
-          {hasActiveFilters ? "No listings match your filters" : "No listings yet"}
+          {hasActiveFilters ? t("app.noListingsMatch") : t("app.noListingsYet")}
         </Text>
         {!hasActiveFilters && (
           <Button
@@ -101,7 +104,7 @@ export function AppPage() {
             leftSection={<IconPlus size={16} />}
             onClick={() => navigate({ to: "/app/posts/new" })}
           >
-            Be the first to post
+            {t("app.beFirstToPost")}
           </Button>
         )}
       </Stack>
@@ -114,7 +117,7 @@ export function AppPage() {
       <Drawer
         opened={filtersOpened}
         onClose={closeFilters}
-        title="Filters"
+        title={t("filters")}
         size="xs"
       >
         <FiltersSidebar filters={filters} onFiltersChange={setFilters} />
@@ -130,12 +133,12 @@ export function AppPage() {
         {/* Main Content */}
         <Box className={styles.mainContent}>
           <Group justify="space-between" mb="lg">
-            <Title order={2}>Listings</Title>
+            <Title order={2}>{t("app.listings")}</Title>
             <Button
               leftSection={<IconPlus size={16} />}
               onClick={() => navigate({ to: "/app/posts/new" })}
             >
-              Create Listing
+              {tNav("menu.createListing")}
             </Button>
           </Group>
 

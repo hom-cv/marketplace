@@ -12,6 +12,7 @@ import {
     Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { useTranslation } from "react-i18next";
 import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -20,6 +21,7 @@ export function SignUpPage() {
     const registerMutation = useRegisterMutation();
     const loginMutation = useLoginMutation();
     const { token, setToken, setUser } = useAuthStore();
+    const { t } = useTranslation("auth");
 
     useEffect(() => {
         if (token) {
@@ -38,16 +40,16 @@ export function SignUpPage() {
         },
         validate: {
             username: (value) =>
-                value.trim().length > 0 ? null : "Username is required",
+                value.trim().length > 0 ? null : t("validation.usernameRequired"),
             firstName: (value) =>
-                value.trim().length > 0 ? null : "First name is required",
+                value.trim().length > 0 ? null : t("validation.firstNameRequired"),
             lastName: (value) =>
-                value.trim().length > 0 ? null : "Last name is required",
-            email: (value) => (/^\S+@\S+$/.test(value) ? null : "Invalid email"),
+                value.trim().length > 0 ? null : t("validation.lastNameRequired"),
+            email: (value) => (/^\S+@\S+$/.test(value) ? null : t("validation.invalidEmail")),
             password: (value) =>
-                value.length >= 8 ? null : "Password must be at least 8 characters",
+                value.length >= 8 ? null : t("validation.passwordMin8"),
             confirmPassword: (value, values) =>
-                value === values.password ? null : "Passwords do not match",
+                value === values.password ? null : t("validation.passwordsNoMatch"),
         },
     });
 
@@ -84,11 +86,11 @@ export function SignUpPage() {
 
     return (
         <Container size={420} my={40}>
-            <Title ta="center">Create an account</Title>
+            <Title ta="center">{t("signup.title")}</Title>
             <Text c="dimmed" size="sm" ta="center" mt={5}>
-                Already have an account?{" "}
+                {t("signup.hasAccount")}{" "}
                 <Link to="/login" style={{ color: "var(--mantine-color-blue-6)" }}>
-                    Sign in
+                    {t("signup.signInLink")}
                 </Link>
             </Text>
 
@@ -96,43 +98,43 @@ export function SignUpPage() {
                 <form onSubmit={form.onSubmit(handleSubmit)}>
                     <Stack>
                         {registerMutation.isError && (
-                            <Alert color="red" title="Registration failed">
-                                {registerMutation.error?.message || "Could not create account"}
+                            <Alert color="red" title={t("signup.failed")}>
+                                {registerMutation.error?.message || t("signup.couldNotCreate")}
                             </Alert>
                         )}
                         <TextInput
-                            label="Username"
-                            placeholder="Your username"
+                            label={t("signup.username")}
+                            placeholder={t("signup.usernamePlaceholder")}
                             required
                             {...form.getInputProps("username")}
                         />
                         <TextInput
-                            label="First Name"
-                            placeholder="Your first name"
+                            label={t("signup.firstName")}
+                            placeholder={t("signup.firstNamePlaceholder")}
                             required
                             {...form.getInputProps("firstName")}
                         />
                         <TextInput
-                            label="Last Name"
-                            placeholder="Your last name"
+                            label={t("signup.lastName")}
+                            placeholder={t("signup.lastNamePlaceholder")}
                             required
                             {...form.getInputProps("lastName")}
                         />
                         <TextInput
-                            label="Email"
-                            placeholder="you@example.com"
+                            label={t("signup.email")}
+                            placeholder={t("signup.emailPlaceholder")}
                             required
                             {...form.getInputProps("email")}
                         />
                         <PasswordInput
-                            label="Password"
-                            placeholder="Your password"
+                            label={t("signup.password")}
+                            placeholder={t("signup.passwordPlaceholder")}
                             required
                             {...form.getInputProps("password")}
                         />
                         <PasswordInput
-                            label="Confirm Password"
-                            placeholder="Confirm your password"
+                            label={t("signup.confirmPassword")}
+                            placeholder={t("signup.confirmPasswordPlaceholder")}
                             required
                             {...form.getInputProps("confirmPassword")}
                         />
@@ -142,7 +144,7 @@ export function SignUpPage() {
                             mt="xl"
                             loading={registerMutation.isPending}
                         >
-                            Sign up
+                            {t("signup.submit")}
                         </Button>
                     </Stack>
                 </form>
@@ -150,4 +152,3 @@ export function SignUpPage() {
         </Container>
     );
 }
-

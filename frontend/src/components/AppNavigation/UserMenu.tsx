@@ -4,6 +4,7 @@
 
 import { Menu, Avatar, UnstyledButton } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import {
   IconLogout,
   IconBuildingStore,
@@ -21,6 +22,8 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ user, onLogout }: UserMenuProps) {
+  const { t } = useTranslation("navigation");
+
   return (
     <Menu shadow="md" width={200} position="bottom-end">
       <Menu.Target>
@@ -37,13 +40,13 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         </Menu.Label>
 
         <Menu.Item leftSection={<IconHome size={14} />} component={Link} to="/app">
-          Dashboard
+          {t("menu.dashboard")}
         </Menu.Item>
         <Menu.Item leftSection={<IconSearch size={14} />} component={Link} to="/app/explore">
-          Explore
+          {t("menu.explore")}
         </Menu.Item>
         <Menu.Item leftSection={<IconPackage size={14} />} component={Link} to="/app/my-listings">
-          My Listings
+          {t("menu.myListings")}
         </Menu.Item>
 
         <Menu.Divider />
@@ -54,20 +57,20 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
             component={Link}
             to="/app/become-seller"
           >
-            Become a Seller
+            {t("menu.becomeSeller")}
           </Menu.Item>
         )}
 
         {user?.is_seller && (
           <Menu.Item leftSection={<IconPlus size={14} />} component={Link} to="/app/posts/new">
-            Create Listing
+            {t("menu.createListing")}
           </Menu.Item>
         )}
 
         <Menu.Divider />
 
         <Menu.Item color="red" leftSection={<IconLogout size={14} />} onClick={onLogout}>
-          Logout
+          {t("menu.logout")}
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>

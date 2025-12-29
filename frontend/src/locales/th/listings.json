@@ -1,0 +1,63 @@
+{
+  "create": {
+    "title": "สร้างรายการ",
+    "subtitle": "ลงสินค้าของคุณในมาร์เก็ตเพลส",
+    "form": {
+      "titleLabel": "ชื่อสินค้า",
+      "titlePlaceholder": "เช่น, แจ็คเก็ตยีนส์ Levi's วินเทจ",
+      "description": "รายละเอียด",
+      "descriptionPlaceholder": "อธิบายสินค้าของคุณ - สภาพ, ขนาด, แบรนด์, ฯลฯ",
+      "category": "หมวดหมู่",
+      "categoryPlaceholder": "เลือกประเภท",
+      "price": "ราคา (฿)",
+      "shippingCost": "ค่าจัดส่ง (฿)",
+      "shippingDescription": "ตั้งค่าเป็น 0 สำหรับจัดส่งฟรี",
+      "submit": "สร้างรายการ"
+    },
+    "success": "สร้างรายการเรียบร้อยแล้ว!",
+    "error": "ไม่สามารถสร้างรายการได้"
+  },
+  "categories": {
+    "shirt": "เสื้อ",
+    "pants": "กางเกง",
+    "jacket": "แจ็คเก็ต",
+    "shoes": "รองเท้า",
+    "accessories": "เครื่องประดับ",
+    "other": "อื่นๆ"
+  },
+  "images": {
+    "noImages": "ยังไม่ได้อัปโหลดรูปภาพ",
+    "noImagesAvailable": "ไม่มีรูปภาพ",
+    "cover": "หน้าปก"
+  },
+  "seller": {
+    "verificationRequired": "ต้องยืนยันตัวตนผู้ขาย",
+    "verificationMessage": "คุณต้องเป็นผู้ขายที่ได้รับการยืนยันเพื่อสร้างรายการ กรุณาดำเนินการยืนยันตัวตนผู้ขายเพื่อเริ่มขายในมาร์เก็ตเพลส",
+    "becomeSeller": "เป็นผู้ขาย",
+    "info": "ผู้ขาย"
+  },
+  "view": {
+    "backToExplore": "กลับไปสำรวจ",
+    "yourListing": "รายการของคุณ",
+    "description": "รายละเอียด",
+    "buyNow": "ซื้อเลย",
+    "yourEarnings": "รายได้ของคุณ (หากขายได้)",
+    "reportListing": "รายงานรายการ",
+    "reportUser": "รายงานผู้ใช้",
+    "listingRemoved": "รายการนี้ถูกลบเนื่องจากละเมิดนโยบาย",
+    "sellerSuspended": "บัญชีของผู้ขายนี้ถูกระงับ",
+    "failedToLoad": "ไม่สามารถโหลดโพสต์ได้"
+  },
+  "myListings": {
+    "title": "สินค้าของฉัน",
+    "subtitle": "จัดการรายการของคุณ",
+    "noListings": "คุณยังไม่ได้สร้างรายการใดๆ",
+    "createFirst": "สร้างรายการแรกของคุณ",
+    "failedToLoad": "ไม่สามารถโหลดรายการของคุณได้"
+  },
+  "soldListings": {
+    "title": "สินค้าที่ขายแล้ว",
+    "noSales": "ยังไม่มียอดขาย",
+    "waitingForSale": "รายการของคุณจะปรากฏที่นี่เมื่อขายได้"
+  }
+}

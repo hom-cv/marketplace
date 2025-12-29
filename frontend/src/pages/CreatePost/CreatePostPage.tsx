@@ -36,25 +36,28 @@ import {
   IconBuildingStore,
 } from "@tabler/icons-react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import type { PostType } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
 
-const postTypeOptions = [
-  { value: "SHIRT", label: "Shirt" },
-  { value: "PANTS", label: "Pants" },
-  { value: "JACKET", label: "Jacket" },
-  { value: "SHOES", label: "Shoes" },
-  { value: "ACCESSORIES", label: "Accessories" },
-  { value: "OTHER", label: "Other" },
-];
-
 export function CreatePostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const { t } = useTranslation("listings");
+
+  // Category options with translations
+  const postTypeOptions = useMemo(() => [
+    { value: "SHIRT", label: t("categories.shirt") },
+    { value: "PANTS", label: t("categories.pants") },
+    { value: "JACKET", label: t("categories.jacket") },
+    { value: "SHOES", label: t("categories.shoes") },
+    { value: "ACCESSORIES", label: t("categories.accessories") },
+    { value: "OTHER", label: t("categories.other") },
+  ], [t]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -119,11 +122,10 @@ export function CreatePostPage() {
               <IconBuildingStore size={32} />
             </ThemeIcon>
             <Title order={2} ta="center">
-              Seller Verification Required
+              {t("seller.verificationRequired")}
             </Title>
             <Text c="dimmed" ta="center" maw={400}>
-              You need to be a verified seller to create listings.
-              Complete seller verification to start selling on the marketplace.
+              {t("seller.verificationMessage")}
             </Text>
             <Button
               component={Link}
@@ -131,7 +133,7 @@ export function CreatePostPage() {
               size="lg"
               leftSection={<IconBuildingStore size={18} />}
             >
-              Become a Seller
+              {t("seller.becomeSeller")}
             </Button>
           </Stack>
         </Paper>
@@ -155,7 +157,7 @@ export function CreatePostPage() {
           <Box className={styles.imagePlaceholder}>
             <IconPhoto size={64} stroke={1} color="var(--mantine-color-gray-4)" />
             <Text c="dimmed" size="sm" mt="md">
-              No images uploaded
+              {t("images.noImages")}
             </Text>
           </Box>
         )}
@@ -181,7 +183,7 @@ export function CreatePostPage() {
                 size="xs"
                 color="blue"
               >
-                Cover
+                {t("images.cover")}
               </Badge>
             )}
             <ActionIcon
@@ -214,21 +216,21 @@ export function CreatePostPage() {
   return (
     <Container size="lg" my={40}>
       <Title order={2} mb="xs">
-        Create Listing
+        {t("create.title")}
       </Title>
       <Text c="dimmed" mb="xl">
-        List your item on the marketplace
+        {t("create.subtitle")}
       </Text>
 
       {mutation.error && (
         <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="lg">
-          {mutation.error instanceof Error ? mutation.error.message : "Failed to create listing"}
+          {mutation.error instanceof Error ? mutation.error.message : t("create.error")}
         </Alert>
       )}
 
       {mutation.isSuccess && (
         <Alert icon={<IconCheck size={16} />} title="Success" color="green" mb="lg">
-          Listing created successfully!
+          {t("create.success")}
         </Alert>
       )}
 
@@ -243,8 +245,8 @@ export function CreatePostPage() {
           <Grid.Col span={{ base: 12, md: 7 }}>
             <Stack gap="md">
               <TextInput
-                label="Title"
-                placeholder="e.g., Vintage Levi's Denim Jacket"
+                label={t("create.form.titleLabel")}
+                placeholder={t("create.form.titlePlaceholder")}
                 required
                 value={title}
                 onChange={(e) => setTitle(e.currentTarget.value)}
@@ -252,8 +254,8 @@ export function CreatePostPage() {
               />
 
               <Textarea
-                label="Description"
-                placeholder="Describe your item - condition, size, brand, etc."
+                label={t("create.form.description")}
+                placeholder={t("create.form.descriptionPlaceholder")}
                 required
                 minRows={4}
                 value={description}
@@ -263,8 +265,8 @@ export function CreatePostPage() {
 
               <SimpleGrid cols={2}>
                 <Select
-                  label="Category"
-                  placeholder="Select type"
+                  label={t("create.form.category")}
+                  placeholder={t("create.form.categoryPlaceholder")}
                   required
                   data={postTypeOptions}
                   value={type}
@@ -272,7 +274,7 @@ export function CreatePostPage() {
                 />
 
                 <NumberInput
-                  label="Price (฿)"
+                  label={t("create.form.price")}
                   placeholder="0.00"
                   required
                   min={0.01}
@@ -285,8 +287,8 @@ export function CreatePostPage() {
               </SimpleGrid>
 
               <NumberInput
-                label="Shipping Cost (฿)"
-                description="Set to 0 for free shipping"
+                label={t("create.form.shippingCost")}
+                description={t("create.form.shippingDescription")}
                 placeholder="0.00"
                 min={0}
                 max={10000}
@@ -311,7 +313,7 @@ export function CreatePostPage() {
                 loading={mutation.isPending}
                 disabled={!isValid}
               >
-                Create Listing
+                {t("create.form.submit")}
               </Button>
             </Stack>
           </Grid.Col>
@@ -320,4 +322,3 @@ export function CreatePostPage() {
     </Container>
   );
 }
-

@@ -8,6 +8,7 @@
  */
 import { Paper, Text, Stack, Group, Loader, Center } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getPriceBreakdown, getEarningsPreview } from "@/api/payments";
 
 interface BreakdownData {
@@ -39,10 +40,15 @@ export function EarningsPreview({
   breakdown,
   itemPrice,
   shippingCost = 0,
-  title = "Your Earnings Preview",
+  title,
   compact = false,
   hideExplanation = false,
 }: EarningsPreviewProps) {
+  const { t } = useTranslation("common");
+
+  // Use provided title or default from translations
+  const displayTitle = title !== undefined ? title : t("earnings.title");
+
   // Mode 1: Fetch by post ID
   const postQuery = useQuery({
     queryKey: ["price-breakdown", postId],
@@ -76,11 +82,11 @@ export function EarningsPreview({
   if (isLoading) {
     return (
       <Paper withBorder={!compact} p={compact ? "" : "md"} radius="md" bg={compact ? "transparent" : "gray.0"}>
-        {title && <Text size={textSize} fw={600} mb="xs">{title}</Text>}
+        {displayTitle && <Text size={textSize} fw={600} mb="xs">{displayTitle}</Text>}
         <Center py="sm">
           <Stack align="center" gap={4}>
             <Loader size="sm" />
-            <Text size="xs" c="dimmed">Calculating...</Text>
+            <Text size="xs" c="dimmed">{t("earnings.calculating")}</Text>
           </Stack>
         </Center>
       </Paper>
@@ -93,20 +99,20 @@ export function EarningsPreview({
 
   return (
     <Paper withBorder={!compact} p={compact ? "" : "md"} radius="md" bg={compact ? "transparent" : "gray.0"}>
-      {title && <Text size={textSize} fw={600} mb="xs">{title}</Text>}
+      {displayTitle && <Text size={textSize} fw={600} mb="xs">{displayTitle}</Text>}
       <Stack gap={2}>
         <Group justify="space-between">
-          <Text size={textSize} c="dimmed">Item Price</Text>
+          <Text size={textSize} c="dimmed">{t("earnings.itemPrice")}</Text>
           <Text size={textSize}>฿{format(data.itemPrice)}</Text>
         </Group>
         {data.shippingCost > 0 && (
           <Group justify="space-between">
-            <Text size={textSize} c="dimmed">+ Shipping</Text>
+            <Text size={textSize} c="dimmed">{t("earnings.shipping")}</Text>
             <Text size={textSize}>฿{format(data.shippingCost)}</Text>
           </Group>
         )}
         <Group justify="space-between">
-          <Text size={textSize} c="dimmed">- Fees</Text>
+          <Text size={textSize} c="dimmed">{t("earnings.fees")}</Text>
           <Text size={textSize} c="red">-฿{format(data.totalFees)}</Text>
         </Group>
         <Group
@@ -115,7 +121,7 @@ export function EarningsPreview({
           pt={4}
           style={{ borderTop: "1px solid var(--mantine-color-gray-3)" }}
         >
-          <Text size={textSize} fw={600}>You receive</Text>
+          <Text size={textSize} fw={600}>{t("earnings.youReceive")}</Text>
           <Text size={textSize} fw={700} c="green">
             ฿{format(data.sellerPayout)}
           </Text>
@@ -123,7 +129,7 @@ export function EarningsPreview({
       </Stack>
       {!hideExplanation && (
         <Text size="xs" c="dimmed" mt="xs">
-          Fees include platform fee, processing fee, and VAT
+          {t("earnings.feesExplanation")}
         </Text>
       )}
     </Paper>
