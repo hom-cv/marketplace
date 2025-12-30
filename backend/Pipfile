@@ -4,21 +4,21 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = {extras = ["standard"], version = "*"}
-sqlalchemy = "*"
-inflect = "*"
-alembic = "*"
-pydantic-settings = "*"
-pyjwt = "*"
-asyncpg = "*"
-email-validator = "*"
-greenlet = "*"
-bcrypt = "*"
-sendgrid = "*"
-psycopg2-binary = "*"
-jinja2 = "*"
-boto3 = "*"
-omise = "*"
+alembic = "1.17.*"
+asyncpg = "0.31.*"
+bcrypt = "5.0.*"
+boto3 = "1.42.*"
+email-validator = "2.3.*"
+fastapi = {extras = ["standard"], version = "0.128.*"}
+greenlet = "3.3.*"
+inflect = "7.5.*"
+jinja2 = "3.1.*"
+omise = "0.15.*"
+psycopg2-binary = "2.9.*"
+pydantic-settings = "2.12.*"
+pyjwt = "2.10.*"
+sendgrid = "6.12.*"
+sqlalchemy = "2.0.*"
 
 [dev-packages]
 
