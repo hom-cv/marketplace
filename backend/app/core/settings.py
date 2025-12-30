@@ -25,7 +25,7 @@ class Settings(BaseSettings):
 
     SENDGRID_API_KEY: str
     SENDGRID_FROM_EMAIL: str
-    API_BASE_URL: str
+
     BASE_URL: str
 
     # Omise configuration
