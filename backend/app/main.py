@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.api_v1 import api_router as v1_router
+from app.core.settings import get_settings
 
 
 def init_routers(app: FastAPI) -> None:
@@ -9,6 +10,8 @@ def init_routers(app: FastAPI) -> None:
 
 
 def create_app() -> FastAPI:
+    settings = get_settings()
+
     app_ = FastAPI(
         title="AppName",  # TODO: Name application
         description="API for AppName",  # TODO: Name application
@@ -18,7 +21,7 @@ def create_app() -> FastAPI:
     # CORS middleware for frontend
     app_.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:5173"],
+        allow_origins=[settings.BASE_URL],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
