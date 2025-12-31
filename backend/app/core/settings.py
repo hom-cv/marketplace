@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
+    POSTGRES_PORT: int
+    POSTGRES_SSLMODE: str | None = None
 
     POSTGRES_URI: str | None = None
     ALEMBIC_URI: str | None = None
@@ -73,8 +75,12 @@ class Settings(BaseSettings):
                 password=parse.quote(self.POSTGRES_PASSWORD),
                 host=self.POSTGRES_HOST,
                 path=self.POSTGRES_DB,
+                port=self.POSTGRES_PORT,
             )
-            self.POSTGRES_URI = str(dsn)
+            uri = str(dsn)
+            if self.POSTGRES_SSLMODE:
+                uri = f"{uri}?ssl={self.POSTGRES_SSLMODE}"
+            self.POSTGRES_URI = uri
 
         return self
 
@@ -90,8 +96,12 @@ class Settings(BaseSettings):
                 password=parse.quote(self.POSTGRES_PASSWORD),
                 host=self.POSTGRES_HOST,
                 path=self.POSTGRES_DB,
+                port=self.POSTGRES_PORT,
             )
-            self.ALEMBIC_URI = str(dsn)
+            uri = str(dsn)
+            if self.POSTGRES_SSLMODE:
+                uri = f"{uri}?sslmode={self.POSTGRES_SSLMODE}"
+            self.ALEMBIC_URI = uri
 
         return self
 
