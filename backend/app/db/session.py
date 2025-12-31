@@ -1,3 +1,4 @@
+import ssl
 from functools import lru_cache
 
 from app.core.settings import Settings, get_settings
@@ -20,9 +21,17 @@ def build_async_engine() -> AsyncEngine:
 
     Ref: https://docs.pydantic.dev/latest/usage/serialization/#custom-serializers
     """
+    connect_args = {}
+    if settings.POSTGRES_SSLMODE == "true":
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        connect_args["ssl"] = ssl_context
+
     return create_async_engine(
         url=str(settings.POSTGRES_URI),
         pool_pre_ping=True,
+        connect_args=connect_args,
     )
 
 

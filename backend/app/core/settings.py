@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_PORT: int
-    POSTGRES_SSLMODE: str = "require"
+    POSTGRES_SSLMODE: str = "true"
 
     POSTGRES_URI: str | None = None
     ALEMBIC_URI: str | None = None
@@ -78,8 +78,8 @@ class Settings(BaseSettings):
                 port=self.POSTGRES_PORT,
             )
             uri = str(dsn)
-            if self.POSTGRES_SSLMODE:
-                uri = f"{uri}?ssl={self.POSTGRES_SSLMODE}"
+            if self.POSTGRES_SSLMODE == "true":
+                uri = f"{uri}?ssl=true"
             self.POSTGRES_URI = uri
 
         return self
