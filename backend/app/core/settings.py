@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str
     POSTGRES_DB: str
     POSTGRES_PORT: int
-    POSTGRES_SSLMODE: str | None = None
+    POSTGRES_SSLMODE: str = "require"
 
     POSTGRES_URI: str | None = None
     ALEMBIC_URI: str | None = None
