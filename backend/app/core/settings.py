@@ -78,8 +78,6 @@ class Settings(BaseSettings):
                 port=self.POSTGRES_PORT,
             )
             uri = str(dsn)
-            if self.POSTGRES_SSLMODE:
-                uri = f"{uri}?ssl={self.POSTGRES_SSLMODE}"
             self.POSTGRES_URI = uri
 
         return self
