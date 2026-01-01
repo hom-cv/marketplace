@@ -103,7 +103,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
           </Stack>
         </Box>
 
-        <Divider />
+        <Divider mx="calc(var(--mantine-spacing-md) * -1)" />
 
         {/* Price Range Filter */}
         <Box>

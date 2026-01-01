@@ -10,6 +10,7 @@ import {
     Container,
     Stack,
     Alert,
+    Anchor,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
@@ -22,6 +23,7 @@ export function SignUpPage() {
     const loginMutation = useLoginMutation();
     const { token, setToken, setUser } = useAuthStore();
     const { t } = useTranslation("auth");
+    const { t: tPolicies } = useTranslation("policies");
 
     useEffect(() => {
         if (token) {
@@ -141,14 +143,29 @@ export function SignUpPage() {
                         <Button
                             type="submit"
                             fullWidth
-                            mt="xl"
+                            mt="md"
                             loading={registerMutation.isPending}
                         >
                             {t("signup.submit")}
                         </Button>
+
+                        {/* Policy acceptance text - at bottom of form */}
+                        <Text size="xs" c="dimmed" ta="center">
+                            {tPolicies("signup.byCreating")}{" "}
+                            <Anchor component={Link} to="/terms" size="xs">
+                                {tPolicies("signup.termsLink")}
+                            </Anchor>
+                            {". "}{tPolicies("signup.forPrivacy")}{" "}
+                            <Anchor component={Link} to="/privacy" size="xs">
+                                {tPolicies("signup.clickHere")}
+                            </Anchor>
+                            {"."}
+                        </Text>
                     </Stack>
                 </form>
             </Paper>
         </Container>
     );
 }
+
+

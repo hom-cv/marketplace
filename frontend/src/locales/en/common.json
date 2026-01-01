@@ -237,5 +237,12 @@
     "processingMessage": "Please wait while we confirm your payment...",
     "takingLong": "This is taking longer than usual. You can check your purchase history later.",
     "returnToShop": "Return to Shop"
+  },
+  "footer": {
+    "terms": "Terms & Conditions",
+    "privacy": "Privacy Policy",
+    "dataProtection": "Data Protection",
+    "refund": "Refund Policy",
+    "copyright": "All rights reserved."
   }
 }

@@ -2,6 +2,8 @@
  * PaymentMethodForm - Payment method selection and card/promptpay forms
  */
 
+import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   Paper,
   Title,
@@ -12,8 +14,11 @@ import {
   Button,
   SegmentedControl,
   Center,
+  Checkbox,
+  Anchor,
+  Alert,
 } from "@mantine/core";
-import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
+import { IconCreditCard, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
@@ -54,6 +59,8 @@ export function PaymentMethodForm({
   isPromptPayLoading,
 }: PaymentMethodFormProps) {
   const { t } = useTranslation("common");
+  const { t: tPolicies } = useTranslation("policies");
+  const [refundAcknowledged, setRefundAcknowledged] = useState(false);
   const formatAmount = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
@@ -143,30 +150,64 @@ export function PaymentMethodForm({
                 {...cardForm.getInputProps("cvv")}
               />
             </Group>
-            <Button
-              size="lg"
-              mt="md"
-              onClick={onCardSubmit}
-              loading={isCardLoading}
-              disabled={!cardForm.isValid()}
-            >
-              {t("checkout.payAmount", { amount: formatAmount(total) })}
-            </Button>
           </Stack>
         )}
 
-        {/* PromptPay button */}
+        {/* Refund Policy Notice */}
+        <Alert
+          icon={<IconInfoCircle size={18} />}
+          color="blue"
+          variant="light"
+          mt="lg"
+          mb="md"
+        >
+          <Text size="sm">
+            {tPolicies("checkout.refundNotice")}{" "}
+            <Anchor component={Link} to="/terms" target="_blank" size="sm">
+              {tPolicies("checkout.refundPolicyLink")}
+            </Anchor>
+          </Text>
+        </Alert>
+
+        <Checkbox
+          label={tPolicies("checkout.refundAcknowledgment")}
+          checked={refundAcknowledged}
+          onChange={(e) => setRefundAcknowledged(e.currentTarget.checked)}
+          mb="md"
+        />
+
+        {/* Payment buttons */}
+        {paymentMethod === "card" && (
+          <Button
+            size="lg"
+            fullWidth
+            onClick={onCardSubmit}
+            loading={isCardLoading}
+            disabled={!cardForm.isValid() || !refundAcknowledged}
+          >
+            {t("checkout.payAmount", { amount: formatAmount(total) })}
+          </Button>
+        )}
+
         {paymentMethod === "promptpay" && (
           <Button
             size="lg"
             fullWidth
             onClick={onPromptPaySubmit}
             loading={isPromptPayLoading}
+            disabled={!refundAcknowledged}
           >
             {t("checkout.generateQR", { amount: formatAmount(total) })}
           </Button>
+        )}
+
+        {!refundAcknowledged && (
+          <Text size="xs" c="red" ta="center" mt="xs">
+            {tPolicies("checkout.refundRequired")}
+          </Text>
         )}
       </Paper>
     </Stack>
   );
 }
+

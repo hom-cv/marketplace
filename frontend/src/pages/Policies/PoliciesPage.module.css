@@ -1,0 +1,24 @@
+.navCard {
+  position: sticky;
+  top: 80px;
+}
+
+.navButton {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: var(--mantine-radius-md);
+  transition: background-color 150ms ease;
+}
+
+.navButton:hover {
+  background-color: var(--mantine-color-gray-1);
+}
+
+.navButtonActive {
+  background-color: var(--mantine-color-blue-0);
+}
+
+.chevron {
+  margin-left: auto;
+}
