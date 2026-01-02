@@ -159,6 +159,7 @@ export function SignUpPage() {
                     <Anchor
                       component={Link}
                       to="/terms"
+                      target="_blank"
                       rel="noopener noreferrer"
                       size="xs"
                     />
@@ -167,6 +168,7 @@ export function SignUpPage() {
                     <Anchor
                       component={Link}
                       to="/privacy"
+                      target="_blank"
                       rel="noopener noreferrer"
                       size="xs"
                     />
