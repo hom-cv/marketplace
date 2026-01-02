@@ -28,12 +28,13 @@ import {
     UserBansPage,
     PostBansPage,
 } from "@/pages/Admin";
+import styles from "./router.module.css";
 
 const rootRoute = createRootRoute({
     component: () => (
-        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        <div className={styles.rootLayout}>
             <AppNavigation />
-            <main style={{ flex: 1 }}>
+            <main className={styles.mainContent}>
                 <Outlet />
             </main>
             <Footer />
