@@ -21,9 +21,7 @@ export function Footer() {
 
   return (
     <footer className={styles.footer}>
-      <Box className={styles.dividerWrapper}>
-        <Divider />
-      </Box>
+      <Divider />
       <Container size="xl" pt="lg">
         <Stack gap="sm">
           <Group justify="center" gap="lg" wrap="wrap">
