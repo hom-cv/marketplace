@@ -4,6 +4,6 @@
  */
 
 export const CONTACT_EMAILS = {
-  privacyEmail: "privacy@marketarchives.com",
-  supportEmail: "support@marketarchives.com",
+  privacyEmail: import.meta.env.VITE_PRIVACY_EMAIL || "privacy@marketarchives.com",
+  supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || "support@marketarchives.com",
 };
