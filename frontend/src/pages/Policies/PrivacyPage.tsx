@@ -37,6 +37,11 @@ const DATA_PROTECTION_SECTIONS = [
   "breachNotification",
 ] as const;
 
+// Contact emails - should match your actual support emails
+const CONTACT_EMAILS = {
+  privacyEmail: "privacy@marketarchives.com",
+};
+
 export function PrivacyPage() {
   const { t } = useTranslation("policies");
 
@@ -62,7 +67,7 @@ export function PrivacyPage() {
           {PRIVACY_SECTIONS.map((section) => (
             <section key={section}>
               <Title order={3}>{t(`privacy.${section}.title`)}</Title>
-              <Text mt="sm">{t(`privacy.${section}.content`)}</Text>
+              <Text mt="sm">{t(`privacy.${section}.content`, CONTACT_EMAILS)}</Text>
             </section>
           ))}
         </Stack>
@@ -91,3 +96,4 @@ export function PrivacyPage() {
     </Container>
   );
 }
+

@@ -161,7 +161,7 @@ export function PaymentMethodForm({
               i18nKey="checkout.refundNotice"
               ns="policies"
               components={{
-                refundLink: <Anchor component={Link} to="/terms" target="_blank" size="sm" />,
+                refundLink: <Anchor component={Link} to="/terms#refund-policy" target="_blank" size="sm" />,
               }}
             />
           </Text>

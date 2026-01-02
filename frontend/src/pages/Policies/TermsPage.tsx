@@ -35,6 +35,11 @@ const REFUND_SECTIONS = [
   "contact",
 ] as const;
 
+// Contact emails - should match your actual support emails
+const CONTACT_EMAILS = {
+  supportEmail: "support@marketarchives.com",
+};
+
 export function TermsPage() {
   const { t } = useTranslation("policies");
 
@@ -70,7 +75,7 @@ export function TermsPage() {
         </Box>
 
         {/* Refund Policy Section */}
-        <div>
+        <div id="refund-policy">
           <Title order={2}>{t("refund.title")}</Title>
           <Text size="sm" c="dimmed" mt="xs">
             {t("refund.lastUpdated")}
@@ -81,7 +86,7 @@ export function TermsPage() {
           {REFUND_SECTIONS.map((section) => (
             <section key={section}>
               <Title order={3}>{t(`refund.${section}.title`)}</Title>
-              <Text mt="sm">{t(`refund.${section}.content`)}</Text>
+              <Text mt="sm">{t(`refund.${section}.content`, CONTACT_EMAILS)}</Text>
             </section>
           ))}
         </Stack>
@@ -89,3 +94,4 @@ export function TermsPage() {
     </Container>
   );
 }
+

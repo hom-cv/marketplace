@@ -82,7 +82,7 @@
     },
     "contact": {
       "title": "9. Contact Us",
-      "content": "For questions about this Privacy Policy or to exercise your data protection rights, please contact our Data Protection Officer at privacy@marketplace.com. We will respond to your requests within 30 days as required by the PDPA."
+      "content": "For questions about this Privacy Policy or to exercise your data protection rights, please contact our Data Protection Officer at {{privacyEmail}}. We will respond to your requests within 30 days as required by the PDPA."
     }
   },
   "data-protection": {
@@ -150,7 +150,7 @@
     },
     "contact": {
       "title": "7. Contact Information",
-      "content": "For refund inquiries or assistance, contact our customer support team at support@marketplace.com. Our operating hours are Monday-Friday, 9:00 AM - 6:00 PM (Thailand Time). We aim to respond to all inquiries within 24 business hours."
+      "content": "For refund inquiries or assistance, contact our customer support team at {{supportEmail}}. Our operating hours are Monday-Friday, 9:00 AM - 6:00 PM (Thailand Time). We aim to respond to all inquiries within 24 business hours."
     }
   },
   "signup": {
