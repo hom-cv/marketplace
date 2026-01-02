@@ -13,7 +13,7 @@ import {
     Anchor,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -23,7 +23,6 @@ export function SignUpPage() {
     const loginMutation = useLoginMutation();
     const { token, setToken, setUser } = useAuthStore();
     const { t } = useTranslation("auth");
-    const { t: tPolicies } = useTranslation("policies");
 
     useEffect(() => {
         if (token) {
@@ -151,15 +150,14 @@ export function SignUpPage() {
 
                         {/* Policy acceptance text - at bottom of form */}
                         <Text size="xs" c="dimmed" ta="center">
-                            {tPolicies("signup.byCreating")}{" "}
-                            <Anchor component={Link} to="/terms" size="xs">
-                                {tPolicies("signup.termsLink")}
-                            </Anchor>
-                            {". "}{tPolicies("signup.forPrivacy")}{" "}
-                            <Anchor component={Link} to="/privacy" size="xs">
-                                {tPolicies("signup.clickHere")}
-                            </Anchor>
-                            {"."}
+                            <Trans
+                                i18nKey="signup.policyAcceptance"
+                                ns="policies"
+                                components={{
+                                    termsLink: <Anchor component={Link} to="/terms" size="xs" />,
+                                    privacyLink: <Anchor component={Link} to="/privacy" size="xs" />,
+                                }}
+                            />
                         </Text>
                     </Stack>
                 </form>

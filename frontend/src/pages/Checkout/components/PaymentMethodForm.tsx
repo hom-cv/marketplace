@@ -17,7 +17,7 @@ import {
   Alert,
 } from "@mantine/core";
 import { IconCreditCard, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
 
@@ -57,7 +57,6 @@ export function PaymentMethodForm({
   isPromptPayLoading,
 }: PaymentMethodFormProps) {
   const { t } = useTranslation("common");
-  const { t: tPolicies } = useTranslation("policies");
   const formatAmount = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
@@ -150,7 +149,6 @@ export function PaymentMethodForm({
           </Stack>
         )}
 
-        {/* Refund Policy Notice */}
         <Alert
           icon={<IconInfoCircle size={18} />}
           color="blue"
@@ -159,10 +157,13 @@ export function PaymentMethodForm({
           mb="md"
         >
           <Text size="sm">
-            {tPolicies("checkout.refundNotice")}{" "}
-            <Anchor component={Link} to="/terms" target="_blank" size="sm">
-              {tPolicies("checkout.refundPolicyLink")}
-            </Anchor>
+            <Trans
+              i18nKey="checkout.refundNotice"
+              ns="policies"
+              components={{
+                refundLink: <Anchor component={Link} to="/terms" target="_blank" size="sm" />,
+              }}
+            />
           </Text>
         </Alert>
 
@@ -192,14 +193,14 @@ export function PaymentMethodForm({
 
         {/* Policy acknowledgment text */}
         <Text size="xs" c="dimmed" ta="center" mt="md">
-          {tPolicies("checkout.paymentAcknowledgment")}{" "}
-          <Anchor component={Link} to="/terms" target="_blank" size="xs">
-            {tPolicies("nav.terms")}
-          </Anchor>
-          {" "}&{" "}
-          <Anchor component={Link} to="/privacy" target="_blank" size="xs">
-            {tPolicies("nav.privacy")}
-          </Anchor>
+          <Trans
+            i18nKey="checkout.paymentAcknowledgment"
+            ns="policies"
+            components={{
+              termsLink: <Anchor component={Link} to="/terms" target="_blank" size="xs" />,
+              privacyLink: <Anchor component={Link} to="/privacy" target="_blank" size="xs" />,
+            }}
+          />
         </Text>
       </Paper>
     </Stack>

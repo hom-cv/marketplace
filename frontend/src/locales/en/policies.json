@@ -154,15 +154,11 @@
     }
   },
   "signup": {
-    "byCreating": "By creating an account, I accept marketplace's",
-    "termsLink": "Terms of Service",
-    "forPrivacy": "For our Privacy Policy,",
-    "clickHere": "click here"
+    "policyAcceptance": "By creating an account, I accept marketplace's <termsLink>Terms of Service</termsLink>. For our Privacy Policy, <privacyLink>click here</privacyLink>."
   },
   "checkout": {
-    "refundNotice": "By proceeding with payment, you acknowledge that you have read and understand our",
-    "refundPolicyLink": "Refund Policy",
-    "paymentAcknowledgment": "By proceeding with payment, you agree to our"
+    "refundNotice": "By proceeding with payment, you acknowledge that you have read and understand our <refundLink>Refund Policy</refundLink>.",
+    "paymentAcknowledgment": "By proceeding with payment, you agree to our <termsLink>Terms & Conditions</termsLink> and <privacyLink>Privacy Policy</privacyLink>."
   },
   "seller": {
     "complianceNotice": "By registering as a seller, you agree to comply with our Terms of Service and Privacy Policy. You are responsible for accurate product descriptions, timely shipping, and handling customer inquiries professionally."
