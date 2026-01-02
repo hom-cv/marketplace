@@ -13,6 +13,7 @@ import {
   Box,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { CONTACT_EMAILS } from "@/constants/contact";
 
 const PRIVACY_SECTIONS = [
   "introduction",
@@ -36,11 +37,6 @@ const DATA_PROTECTION_SECTIONS = [
   "internationalTransfers",
   "breachNotification",
 ] as const;
-
-// Contact emails - should match your actual support emails
-const CONTACT_EMAILS = {
-  privacyEmail: "privacy@marketarchives.com",
-};
 
 export function PrivacyPage() {
   const { t } = useTranslation("policies");

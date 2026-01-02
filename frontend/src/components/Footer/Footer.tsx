@@ -3,15 +3,7 @@
  */
 
 import { Link } from "@tanstack/react-router";
-import {
-  Container,
-  Group,
-  Text,
-  Anchor,
-  Divider,
-  Stack,
-  Box,
-} from "@mantine/core";
+import { Container, Group, Text, Anchor, Divider, Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import styles from "./Footer.module.css";
 
@@ -40,4 +32,3 @@ export function Footer() {
     </footer>
   );
 }
-

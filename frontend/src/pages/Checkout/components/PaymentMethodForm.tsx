@@ -16,7 +16,11 @@ import {
   Anchor,
   Alert,
 } from "@mantine/core";
-import { IconCreditCard, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconCreditCard,
+  IconQrcode,
+  IconInfoCircle,
+} from "@tabler/icons-react";
 import { Trans, useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
@@ -57,28 +61,41 @@ export function PaymentMethodForm({
   isPromptPayLoading,
 }: PaymentMethodFormProps) {
   const { t } = useTranslation("common");
-  const formatAmount = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatAmount = (v: number) =>
+    v.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   return (
     <Stack gap="lg">
       {/* Address confirmation */}
       <Paper withBorder p="lg" radius="md" bg="gray.0">
         <Group justify="space-between" mb="xs">
-          <Text size="sm" fw={600}>{t("checkout.shipToLabel")}</Text>
+          <Text size="sm" fw={600}>
+            {t("checkout.shipToLabel")}
+          </Text>
           <Button size="xs" variant="subtle" onClick={onEditShipping}>
             {t("buttons.edit")}
           </Button>
         </Group>
-        <Text size="sm" fw={500}>{shippingAddress.name}</Text>
-        <Text size="xs" c="dimmed">{shippingAddress.phone}</Text>
+        <Text size="sm" fw={500}>
+          {shippingAddress.name}
+        </Text>
+        <Text size="xs" c="dimmed">
+          {shippingAddress.phone}
+        </Text>
         <Text size="xs">{shippingAddress.address}</Text>
         <Text size="xs">
-          {shippingAddress.district}, {shippingAddress.province} {shippingAddress.postal_code}
+          {shippingAddress.district}, {shippingAddress.province}{" "}
+          {shippingAddress.postal_code}
         </Text>
       </Paper>
 
       <Paper withBorder p="xl" radius="md">
-        <Title order={4} mb="lg">{t("checkout.paymentMethod")}</Title>
+        <Title order={4} mb="lg">
+          {t("checkout.paymentMethod")}
+        </Title>
 
         <SegmentedControl
           value={paymentMethod}
@@ -161,7 +178,15 @@ export function PaymentMethodForm({
               i18nKey="checkout.refundNotice"
               ns="policies"
               components={{
-                refundLink: <Anchor component={Link} to="/terms#refund-policy" target="_blank" size="sm" />,
+                refundLink: (
+                  <Anchor
+                    component={Link}
+                    to="/terms#refund-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="sm"
+                  />
+                ),
               }}
             />
           </Text>
@@ -197,8 +222,24 @@ export function PaymentMethodForm({
             i18nKey="checkout.paymentAcknowledgment"
             ns="policies"
             components={{
-              termsLink: <Anchor component={Link} to="/terms" target="_blank" size="xs" />,
-              privacyLink: <Anchor component={Link} to="/privacy" target="_blank" size="xs" />,
+              termsLink: (
+                <Anchor
+                  component={Link}
+                  to="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="xs"
+                />
+              ),
+              privacyLink: (
+                <Anchor
+                  component={Link}
+                  to="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="xs"
+                />
+              ),
             }}
           />
         </Text>

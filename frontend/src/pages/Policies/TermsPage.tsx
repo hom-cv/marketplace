@@ -13,6 +13,7 @@ import {
   Box,
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
+import { CONTACT_EMAILS } from "@/constants/contact";
 
 const TERMS_SECTIONS = [
   "acceptance",
@@ -34,11 +35,6 @@ const REFUND_SECTIONS = [
   "disputes",
   "contact",
 ] as const;
-
-// Contact emails - should match your actual support emails
-const CONTACT_EMAILS = {
-  supportEmail: "support@marketarchives.com",
-};
 
 export function TermsPage() {
   const { t } = useTranslation("policies");
