@@ -14,6 +14,29 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 
+const PRIVACY_SECTIONS = [
+  "introduction",
+  "dataCollection",
+  "dataUsage",
+  "dataSharing",
+  "dataSecurity",
+  "userRights",
+  "cookies",
+  "pdpaCompliance",
+  "contact",
+] as const;
+
+const DATA_PROTECTION_SECTIONS = [
+  "introduction",
+  "dataController",
+  "dataProcessing",
+  "securityMeasures",
+  "dataRetention",
+  "userRights",
+  "internationalTransfers",
+  "breachNotification",
+] as const;
+
 export function PrivacyPage() {
   const { t } = useTranslation("policies");
 
@@ -36,50 +59,12 @@ export function PrivacyPage() {
         </Box>
 
         <Stack gap="xl">
-          <section>
-            <Title order={3}>{t("privacy.introduction.title")}</Title>
-            <Text mt="sm">{t("privacy.introduction.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.dataCollection.title")}</Title>
-            <Text mt="sm">{t("privacy.dataCollection.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.dataUsage.title")}</Title>
-            <Text mt="sm">{t("privacy.dataUsage.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.dataSharing.title")}</Title>
-            <Text mt="sm">{t("privacy.dataSharing.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.dataSecurity.title")}</Title>
-            <Text mt="sm">{t("privacy.dataSecurity.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.userRights.title")}</Title>
-            <Text mt="sm">{t("privacy.userRights.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.cookies.title")}</Title>
-            <Text mt="sm">{t("privacy.cookies.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.pdpaCompliance.title")}</Title>
-            <Text mt="sm">{t("privacy.pdpaCompliance.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("privacy.contact.title")}</Title>
-            <Text mt="sm">{t("privacy.contact.content")}</Text>
-          </section>
+          {PRIVACY_SECTIONS.map((section) => (
+            <section key={section}>
+              <Title order={3}>{t(`privacy.${section}.title`)}</Title>
+              <Text mt="sm">{t(`privacy.${section}.content`)}</Text>
+            </section>
+          ))}
         </Stack>
 
         <Box mx="calc(var(--mantine-spacing-md) * -1)" my="xl">
@@ -95,45 +80,12 @@ export function PrivacyPage() {
         </div>
 
         <Stack gap="xl">
-          <section>
-            <Title order={3}>{t("data-protection.introduction.title")}</Title>
-            <Text mt="sm">{t("data-protection.introduction.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.dataController.title")}</Title>
-            <Text mt="sm">{t("data-protection.dataController.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.dataProcessing.title")}</Title>
-            <Text mt="sm">{t("data-protection.dataProcessing.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.securityMeasures.title")}</Title>
-            <Text mt="sm">{t("data-protection.securityMeasures.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.dataRetention.title")}</Title>
-            <Text mt="sm">{t("data-protection.dataRetention.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.userRights.title")}</Title>
-            <Text mt="sm">{t("data-protection.userRights.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.internationalTransfers.title")}</Title>
-            <Text mt="sm">{t("data-protection.internationalTransfers.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("data-protection.breachNotification.title")}</Title>
-            <Text mt="sm">{t("data-protection.breachNotification.content")}</Text>
-          </section>
+          {DATA_PROTECTION_SECTIONS.map((section) => (
+            <section key={section}>
+              <Title order={3}>{t(`data-protection.${section}.title`)}</Title>
+              <Text mt="sm">{t(`data-protection.${section}.content`)}</Text>
+            </section>
+          ))}
         </Stack>
       </Stack>
     </Container>

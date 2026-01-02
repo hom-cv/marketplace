@@ -14,6 +14,27 @@ import {
 } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 
+const TERMS_SECTIONS = [
+  "acceptance",
+  "eligibility",
+  "userAccounts",
+  "prohibitedItems",
+  "transactions",
+  "liability",
+  "modifications",
+  "governingLaw",
+] as const;
+
+const REFUND_SECTIONS = [
+  "overview",
+  "eligibility",
+  "process",
+  "timeline",
+  "nonRefundable",
+  "disputes",
+  "contact",
+] as const;
+
 export function TermsPage() {
   const { t } = useTranslation("policies");
 
@@ -36,45 +57,12 @@ export function TermsPage() {
         </Box>
 
         <Stack gap="xl">
-          <section>
-            <Title order={3}>{t("terms.acceptance.title")}</Title>
-            <Text mt="sm">{t("terms.acceptance.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.eligibility.title")}</Title>
-            <Text mt="sm">{t("terms.eligibility.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.userAccounts.title")}</Title>
-            <Text mt="sm">{t("terms.userAccounts.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.prohibitedItems.title")}</Title>
-            <Text mt="sm">{t("terms.prohibitedItems.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.transactions.title")}</Title>
-            <Text mt="sm">{t("terms.transactions.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.liability.title")}</Title>
-            <Text mt="sm">{t("terms.liability.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.modifications.title")}</Title>
-            <Text mt="sm">{t("terms.modifications.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("terms.governingLaw.title")}</Title>
-            <Text mt="sm">{t("terms.governingLaw.content")}</Text>
-          </section>
+          {TERMS_SECTIONS.map((section) => (
+            <section key={section}>
+              <Title order={3}>{t(`terms.${section}.title`)}</Title>
+              <Text mt="sm">{t(`terms.${section}.content`)}</Text>
+            </section>
+          ))}
         </Stack>
 
         <Box mx="calc(var(--mantine-spacing-md) * -1)" my="xl">
@@ -90,40 +78,12 @@ export function TermsPage() {
         </div>
 
         <Stack gap="xl">
-          <section>
-            <Title order={3}>{t("refund.overview.title")}</Title>
-            <Text mt="sm">{t("refund.overview.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("refund.eligibility.title")}</Title>
-            <Text mt="sm">{t("refund.eligibility.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("refund.process.title")}</Title>
-            <Text mt="sm">{t("refund.process.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("refund.timeline.title")}</Title>
-            <Text mt="sm">{t("refund.timeline.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("refund.nonRefundable.title")}</Title>
-            <Text mt="sm">{t("refund.nonRefundable.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("refund.disputes.title")}</Title>
-            <Text mt="sm">{t("refund.disputes.content")}</Text>
-          </section>
-
-          <section>
-            <Title order={3}>{t("refund.contact.title")}</Title>
-            <Text mt="sm">{t("refund.contact.content")}</Text>
-          </section>
+          {REFUND_SECTIONS.map((section) => (
+            <section key={section}>
+              <Title order={3}>{t(`refund.${section}.title`)}</Title>
+              <Text mt="sm">{t(`refund.${section}.content`)}</Text>
+            </section>
+          ))}
         </Stack>
       </Stack>
     </Container>
