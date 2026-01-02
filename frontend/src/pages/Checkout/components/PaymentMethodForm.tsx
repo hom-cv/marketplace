@@ -2,7 +2,6 @@
  * PaymentMethodForm - Payment method selection and card/promptpay forms
  */
 
-import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
   Paper,
@@ -14,7 +13,6 @@ import {
   Button,
   SegmentedControl,
   Center,
-  Checkbox,
   Anchor,
   Alert,
 } from "@mantine/core";
@@ -60,7 +58,6 @@ export function PaymentMethodForm({
 }: PaymentMethodFormProps) {
   const { t } = useTranslation("common");
   const { t: tPolicies } = useTranslation("policies");
-  const [refundAcknowledged, setRefundAcknowledged] = useState(false);
   const formatAmount = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   return (
@@ -169,13 +166,6 @@ export function PaymentMethodForm({
           </Text>
         </Alert>
 
-        <Checkbox
-          label={tPolicies("checkout.refundAcknowledgment")}
-          checked={refundAcknowledged}
-          onChange={(e) => setRefundAcknowledged(e.currentTarget.checked)}
-          mb="md"
-        />
-
         {/* Payment buttons */}
         {paymentMethod === "card" && (
           <Button
@@ -183,7 +173,7 @@ export function PaymentMethodForm({
             fullWidth
             onClick={onCardSubmit}
             loading={isCardLoading}
-            disabled={!cardForm.isValid() || !refundAcknowledged}
+            disabled={!cardForm.isValid()}
           >
             {t("checkout.payAmount", { amount: formatAmount(total) })}
           </Button>
@@ -195,19 +185,23 @@ export function PaymentMethodForm({
             fullWidth
             onClick={onPromptPaySubmit}
             loading={isPromptPayLoading}
-            disabled={!refundAcknowledged}
           >
             {t("checkout.generateQR", { amount: formatAmount(total) })}
           </Button>
         )}
 
-        {!refundAcknowledged && (
-          <Text size="xs" c="red" ta="center" mt="xs">
-            {tPolicies("checkout.refundRequired")}
-          </Text>
-        )}
+        {/* Policy acknowledgment text */}
+        <Text size="xs" c="dimmed" ta="center" mt="md">
+          {tPolicies("checkout.paymentAcknowledgment")}{" "}
+          <Anchor component={Link} to="/terms" target="_blank" size="xs">
+            {tPolicies("nav.terms")}
+          </Anchor>
+          {" "}&{" "}
+          <Anchor component={Link} to="/privacy" target="_blank" size="xs">
+            {tPolicies("nav.privacy")}
+          </Anchor>
+        </Text>
       </Paper>
     </Stack>
   );
 }
-
