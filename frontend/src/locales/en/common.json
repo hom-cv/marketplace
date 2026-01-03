@@ -11,7 +11,13 @@
     "confirm": "Confirm",
     "close": "Close",
     "clearAll": "Clear all",
-    "clear": "Clear"
+    "clear": "Clear",
+    "logIn": "Log in",
+    "signUp": "Sign up"
+  },
+  "guestExplore": {
+    "signUpToSeeMore": "Sign up to see more",
+    "subtitle": "Join thousands of fashion enthusiasts and discover unique pieces"
   },
   "status": {
     "loading": "Loading...",
@@ -242,5 +248,26 @@
     "terms": "Terms & Conditions",
     "privacy": "Privacy Policy",
     "copyright": "All rights reserved."
+  },
+  "landing": {
+    "hero": {
+      "title": "Discover Unique Fashion",
+      "subtitle": "Join the community-driven marketplace for unique fashion. Buy, sell, and discover items that tell a story.",
+      "cta": "Start Exploring"
+    },
+    "features": {
+      "secure": {
+        "title": "Secure Payments",
+        "description": "Every transaction is protected. We hold payments until you receive your item."
+      },
+      "community": {
+        "title": "Community First",
+        "description": "Connect with fashion enthusiasts who share your passion for style."
+      },
+      "global": {
+        "title": "Global Shipping",
+        "description": "Find unique pieces from sellers nationwide with reliable shipping options."
+      }
+    }
   }
 }

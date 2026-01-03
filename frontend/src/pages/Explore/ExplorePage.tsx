@@ -38,6 +38,7 @@ const ITEMS_PER_PAGE = 20;
 
 export function ExplorePage() {
   const { t } = useTranslation("explore");
+  const { t: tCommon } = useTranslation("common");
   const [filtersOpen, { toggle: toggleFilters }] = useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
@@ -200,7 +201,7 @@ export function ExplorePage() {
               leftSection={<IconX size={14} />}
               onClick={handleClearFilters}
             >
-              {t("common:buttons.clearAll")}
+              {tCommon("buttons.clearAll")}
             </Button>
           )}
           <Button
