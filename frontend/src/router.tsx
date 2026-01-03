@@ -1,5 +1,6 @@
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
+import { Footer } from "@/components/Footer";
 import { Outlet } from "@tanstack/react-router";
 import { LoginPage } from "@/pages/Login";
 import { SignUpPage } from "@/pages/SignUp";
@@ -19,6 +20,7 @@ import { PaymentReturnPage } from "@/pages/PaymentReturn";
 import { PostViewPage } from "@/pages/PostView";
 import { CheckoutPage } from "@/pages/Checkout";
 import { AdminLayout } from "@/components/AdminLayout";
+import { TermsPage, PrivacyPage } from "@/pages/Policies";
 import {
     AdminDashboardPage,
     InviteCodesPage,
@@ -26,13 +28,17 @@ import {
     UserBansPage,
     PostBansPage,
 } from "@/pages/Admin";
+import styles from "./router.module.css";
 
 const rootRoute = createRootRoute({
     component: () => (
-        <>
+        <div className={styles.rootLayout}>
             <AppNavigation />
-            <Outlet />
-        </>
+            <main className={styles.mainContent}>
+                <Outlet />
+            </main>
+            <Footer />
+        </div>
     ),
 });
 
@@ -61,6 +67,19 @@ const verifyEmailRoute = createRoute({
     validateSearch: (search: Record<string, unknown>) => ({
         token: (search.token as string) || undefined,
     }),
+});
+
+// Public policy routes
+const termsRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/terms",
+    component: TermsPage,
+});
+
+const privacyRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/privacy",
+    component: PrivacyPage,
 });
 
 // Protected routes wrapper
@@ -192,6 +211,8 @@ const routeTree = rootRoute.addChildren([
     loginRoute,
     signUpRoute,
     verifyEmailRoute,
+    termsRoute,
+    privacyRoute,
     protectedLayout.addChildren([
         dashboardLayout.addChildren([
             dashboardRoute,
@@ -224,3 +245,4 @@ declare module "@tanstack/react-router" {
         router: typeof router;
     }
 }
+

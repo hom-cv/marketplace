@@ -1,0 +1,166 @@
+{
+  "pageTitle": "Legal Policies",
+  "pageSubtitle": "Please read the policies that govern your use of our marketplace platform",
+  "navigation": "Policies",
+  "backToHome": "← Back to Home",
+  "nav": {
+    "terms": "Terms and Conditions",
+    "privacy": "Privacy Policy",
+    "dataProtection": "Data Protection Policy",
+    "refund": "Refund Policy"
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated: January 1, 2026",
+    "acceptance": {
+      "title": "1. Acceptance of Terms",
+      "content": "By accessing and using this online marketplace platform (\"Platform\"), you accept and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the Platform. These terms constitute a legally binding agreement between you and the Platform operator."
+    },
+    "eligibility": {
+      "title": "2. Eligibility",
+      "content": "You must be at least 20 years old or the age of legal majority under Thai law to use this Platform. By using the Platform, you represent and warrant that you meet this age requirement and have the legal capacity to enter into binding contracts under Thai law."
+    },
+    "userAccounts": {
+      "title": "3. User Accounts",
+      "content": "You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to provide accurate, current, and complete information during registration and to update such information as necessary. You must notify us immediately of any unauthorized use of your account or any other security breach."
+    },
+    "prohibitedItems": {
+      "title": "4. Prohibited Items",
+      "content": "The following items are strictly prohibited on our Platform: counterfeit or replica goods, illegal drugs and controlled substances, weapons and ammunition, stolen property, items that infringe intellectual property rights, hazardous materials, adult content without proper age verification, and any items prohibited under Thai law. Violation of this policy may result in immediate account termination and legal action."
+    },
+    "transactions": {
+      "title": "5. Transactions",
+      "content": "All transactions conducted through the Platform are subject to our payment processing terms. The Platform acts as an intermediary between buyers and sellers. We are not responsible for the quality, safety, or legality of items listed. Sellers are responsible for accurately describing items and shipping as promised. Buyers are responsible for reviewing listings carefully before purchase."
+    },
+    "liability": {
+      "title": "6. Limitation of Liability",
+      "content": "To the maximum extent permitted by Thai law, the Platform shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform. Our total liability for any claims arising from these terms shall not exceed the fees you have paid to the Platform in the twelve (12) months preceding the claim."
+    },
+    "modifications": {
+      "title": "7. Modifications to Terms",
+      "content": "We reserve the right to modify these Terms and Conditions at any time. We will notify users of significant changes via email or through a prominent notice on the Platform. Your continued use of the Platform after such modifications constitutes your acceptance of the updated terms."
+    },
+    "governingLaw": {
+      "title": "8. Governing Law",
+      "content": "These Terms and Conditions shall be governed by and construed in accordance with the laws of the Kingdom of Thailand. Any disputes arising from these terms shall be subject to the exclusive jurisdiction of the Thai courts. The Consumer Protection Act B.E. 2522 and Electronic Transactions Act B.E. 2544 shall apply to all transactions."
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: January 1, 2026",
+    "introduction": {
+      "title": "1. Introduction",
+      "content": "This Privacy Policy explains how we collect, use, disclose, and protect your personal information when you use our marketplace platform. We are committed to protecting your privacy and ensuring the security of your personal data in compliance with the Personal Data Protection Act B.E. 2562 (\"PDPA\")."
+    },
+    "dataCollection": {
+      "title": "2. Information We Collect",
+      "content": "We collect information you provide directly, including: name, email address, phone number, shipping address, payment information (processed securely through our payment provider), profile information, and communication records. We also automatically collect: device information, IP address, browser type, usage data, and cookies."
+    },
+    "dataUsage": {
+      "title": "3. How We Use Your Information",
+      "content": "We use your information to: provide and improve our services, process transactions, verify your identity, communicate with you about orders and updates, prevent fraud and ensure platform security, comply with legal obligations, and personalize your experience. We will not use your information for purposes other than those stated without your consent."
+    },
+    "dataSharing": {
+      "title": "4. Information Sharing",
+      "content": "We may share your information with: other users as necessary to complete transactions (e.g., shipping address with sellers), payment processors to process transactions, service providers who assist our operations, law enforcement when required by Thai law, and in the event of a merger or acquisition. We do not sell your personal information to third parties."
+    },
+    "dataSecurity": {
+      "title": "5. Data Security",
+      "content": "We implement appropriate technical and organizational measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction. These include encryption, secure servers, access controls, and regular security assessments. However, no method of transmission over the Internet is 100% secure."
+    },
+    "userRights": {
+      "title": "6. Your Rights Under PDPA",
+      "content": "Under Thailand's PDPA, you have the right to: access your personal data, correct inaccurate data, delete your data (subject to legal retention requirements), restrict processing of your data, object to certain processing activities, request data portability, and withdraw consent at any time. To exercise these rights, please contact us using the information provided below."
+    },
+    "cookies": {
+      "title": "7. Cookies and Tracking",
+      "content": "We use cookies and similar technologies to enhance your experience, analyze usage patterns, and deliver personalized content. You can control cookie preferences through your browser settings. Essential cookies required for Platform functionality cannot be disabled."
+    },
+    "pdpaCompliance": {
+      "title": "8. PDPA Compliance",
+      "content": "We comply with all requirements of Thailand's Personal Data Protection Act B.E. 2562. We maintain records of processing activities, conduct data protection impact assessments where required, and have appointed a Data Protection Officer to oversee compliance."
+    },
+    "contact": {
+      "title": "9. Contact Us",
+      "content": "For questions about this Privacy Policy or to exercise your data protection rights, please contact our Data Protection Officer at {{privacyEmail}}. We will respond to your requests within 30 days as required by the PDPA."
+    }
+  },
+  "data-protection": {
+    "title": "Data Protection Policy",
+    "lastUpdated": "Last updated: January 1, 2026",
+    "introduction": {
+      "title": "1. Introduction",
+      "content": "This Data Protection Policy outlines how we protect and manage personal data in accordance with Thailand's Personal Data Protection Act B.E. 2562 (\"PDPA\"). We are committed to maintaining the highest standards of data protection and privacy."
+    },
+    "dataController": {
+      "title": "2. Data Controller",
+      "content": "The Platform operator acts as the data controller for personal information collected through the Platform. We determine the purposes and means of processing personal data and are responsible for ensuring PDPA compliance. Our Data Protection Officer oversees all data protection matters."
+    },
+    "dataProcessing": {
+      "title": "3. Legal Basis for Processing",
+      "content": "We process personal data based on the following legal grounds under PDPA: consent from the data subject, performance of a contract to which you are a party, compliance with legal obligations, legitimate interests of the Platform (balanced against your rights), and vital interests of the data subject or another person."
+    },
+    "securityMeasures": {
+      "title": "4. Security Measures",
+      "content": "We implement comprehensive security measures including: SSL/TLS encryption for data in transit, encryption at rest for sensitive data, regular security audits and penetration testing, access control and authentication systems, employee training on data protection, incident response procedures, and secure backup systems."
+    },
+    "dataRetention": {
+      "title": "5. Data Retention",
+      "content": "We retain personal data only for as long as necessary to fulfill the purposes for which it was collected, or as required by Thai law. Transaction records are retained for 7 years for tax and accounting purposes. Account data is retained for the duration of the account plus 3 years. You may request deletion of your data subject to our legal retention obligations."
+    },
+    "userRights": {
+      "title": "6. Data Subject Rights",
+      "content": "Under PDPA, you have the following rights: right to be informed about data collection and processing, right to access your personal data, right to rectification of inaccurate data, right to erasure (\"right to be forgotten\"), right to restrict processing, right to data portability, right to object to processing, and right not to be subject to automated decision-making."
+    },
+    "internationalTransfers": {
+      "title": "7. International Data Transfers",
+      "content": "When we transfer personal data outside of Thailand, we ensure adequate protection through: standard contractual clauses, binding corporate rules, or certification that the destination country has adequate data protection laws as recognized by Thailand's Personal Data Protection Committee."
+    },
+    "breachNotification": {
+      "title": "8. Data Breach Notification",
+      "content": "In the event of a personal data breach that is likely to result in high risk to your rights and freedoms, we will notify the Personal Data Protection Committee within 72 hours and affected individuals without undue delay, as required by the PDPA."
+    }
+  },
+  "refund": {
+    "title": "Refund Policy",
+    "lastUpdated": "Last updated: January 1, 2026",
+    "overview": {
+      "title": "1. Policy Overview",
+      "content": "This Refund Policy governs all purchases made through our marketplace platform. We are committed to ensuring buyer satisfaction while maintaining fair practices for sellers. This policy is in compliance with the Consumer Protection Act B.E. 2522 and applicable e-commerce regulations."
+    },
+    "eligibility": {
+      "title": "2. Refund Eligibility",
+      "content": "You may be eligible for a refund if: the item received is significantly different from the listing description, the item is defective or damaged upon arrival, you did not receive the item within the estimated delivery time plus 7 business days, or the seller failed to ship the item within 5 business days of purchase. Refund requests must be submitted within 7 days of receiving the item."
+    },
+    "process": {
+      "title": "3. Refund Process",
+      "content": "To request a refund: submit a refund request through your order history, attach photos or evidence of the issue, wait for the seller to respond within 3 business days, if not resolved, our support team will mediate. Approved refunds will be processed to your original payment method. For items requiring return, you must ship within 7 days of refund approval."
+    },
+    "timeline": {
+      "title": "4. Refund Timeline",
+      "content": "Refund processing times: credit card refunds take 5-10 business days to appear on your statement, PromptPay refunds are processed within 1-3 business days, bank transfer refunds take 3-5 business days. Processing begins after refund approval. Actual timing may vary based on your financial institution."
+    },
+    "nonRefundable": {
+      "title": "5. Non-Refundable Items",
+      "content": "The following items are generally not eligible for refunds: items marked as \"final sale\" or \"non-refundable\", perishable goods, customized or made-to-order items, digital products after download or access, items damaged due to buyer misuse, items without original packaging when packaging is required for return, and items where the buyer simply changed their mind (unless the seller agrees)."
+    },
+    "disputes": {
+      "title": "6. Dispute Resolution",
+      "content": "If you disagree with a refund decision, you may escalate to our dispute resolution team within 7 days. Our team will review all evidence and make a final decision within 10 business days. Decisions made through dispute resolution are final. For matters not resolved through our platform, you may seek remedies under the Consumer Protection Act."
+    },
+    "contact": {
+      "title": "7. Contact Information",
+      "content": "For refund inquiries or assistance, contact our customer support team at {{supportEmail}}. Our operating hours are Monday-Friday, 9:00 AM - 6:00 PM (Thailand Time). We aim to respond to all inquiries within 24 business hours."
+    }
+  },
+  "signup": {
+    "policyAcceptance": "By creating an account, I accept marketplace's <termsLink>Terms of Service</termsLink>. For our Privacy Policy, <privacyLink>click here</privacyLink>."
+  },
+  "checkout": {
+    "refundNotice": "By proceeding with payment, you acknowledge that you have read and understand our <refundLink>Refund Policy</refundLink>.",
+    "paymentAcknowledgment": "By proceeding with payment, you agree to our <termsLink>Terms & Conditions</termsLink> and <privacyLink>Privacy Policy</privacyLink>."
+  },
+  "seller": {
+    "complianceNotice": "By registering as a seller, you agree to comply with our Terms of Service and Privacy Policy. You are responsible for accurate product descriptions, timely shipping, and handling customer inquiries professionally."
+  }
+}

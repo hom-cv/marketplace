@@ -32,6 +32,7 @@ export function BecomeSellerPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { t } = useTranslation("common");
+  const { t: tPolicies } = useTranslation("policies");
 
   // Query current seller status
   const { data: sellerStatus, isLoading: isLoadingStatus } = useQuery({
@@ -209,7 +210,7 @@ export function BecomeSellerPage() {
               </Button>
 
               <Text size="xs" c="dimmed" ta="center">
-                {t("seller.termsNote")}
+                {tPolicies("seller.complianceNotice")}
               </Text>
             </Stack>
           </form>

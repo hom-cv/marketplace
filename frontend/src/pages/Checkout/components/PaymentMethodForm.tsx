@@ -2,6 +2,7 @@
  * PaymentMethodForm - Payment method selection and card/promptpay forms
  */
 
+import { Link } from "@tanstack/react-router";
 import {
   Paper,
   Title,
@@ -12,9 +13,15 @@ import {
   Button,
   SegmentedControl,
   Center,
+  Anchor,
+  Alert,
 } from "@mantine/core";
-import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
-import { useTranslation } from "react-i18next";
+import {
+  IconCreditCard,
+  IconQrcode,
+  IconInfoCircle,
+} from "@tabler/icons-react";
+import { Trans, useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
 
@@ -54,28 +61,41 @@ export function PaymentMethodForm({
   isPromptPayLoading,
 }: PaymentMethodFormProps) {
   const { t } = useTranslation("common");
-  const formatAmount = (v: number) => v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatAmount = (v: number) =>
+    v.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
   return (
     <Stack gap="lg">
       {/* Address confirmation */}
       <Paper withBorder p="lg" radius="md" bg="gray.0">
         <Group justify="space-between" mb="xs">
-          <Text size="sm" fw={600}>{t("checkout.shipToLabel")}</Text>
+          <Text size="sm" fw={600}>
+            {t("checkout.shipToLabel")}
+          </Text>
           <Button size="xs" variant="subtle" onClick={onEditShipping}>
             {t("buttons.edit")}
           </Button>
         </Group>
-        <Text size="sm" fw={500}>{shippingAddress.name}</Text>
-        <Text size="xs" c="dimmed">{shippingAddress.phone}</Text>
+        <Text size="sm" fw={500}>
+          {shippingAddress.name}
+        </Text>
+        <Text size="xs" c="dimmed">
+          {shippingAddress.phone}
+        </Text>
         <Text size="xs">{shippingAddress.address}</Text>
         <Text size="xs">
-          {shippingAddress.district}, {shippingAddress.province} {shippingAddress.postal_code}
+          {shippingAddress.district}, {shippingAddress.province}{" "}
+          {shippingAddress.postal_code}
         </Text>
       </Paper>
 
       <Paper withBorder p="xl" radius="md">
-        <Title order={4} mb="lg">{t("checkout.paymentMethod")}</Title>
+        <Title order={4} mb="lg">
+          {t("checkout.paymentMethod")}
+        </Title>
 
         <SegmentedControl
           value={paymentMethod}
@@ -143,19 +163,48 @@ export function PaymentMethodForm({
                 {...cardForm.getInputProps("cvv")}
               />
             </Group>
-            <Button
-              size="lg"
-              mt="md"
-              onClick={onCardSubmit}
-              loading={isCardLoading}
-              disabled={!cardForm.isValid()}
-            >
-              {t("checkout.payAmount", { amount: formatAmount(total) })}
-            </Button>
           </Stack>
         )}
 
-        {/* PromptPay button */}
+        <Alert
+          icon={<IconInfoCircle size={18} />}
+          color="blue"
+          variant="light"
+          mt="lg"
+          mb="md"
+        >
+          <Text size="sm">
+            <Trans
+              i18nKey="checkout.refundNotice"
+              ns="policies"
+              components={{
+                refundLink: (
+                  <Anchor
+                    component={Link}
+                    to="/terms#refund-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="sm"
+                  />
+                ),
+              }}
+            />
+          </Text>
+        </Alert>
+
+        {/* Payment buttons */}
+        {paymentMethod === "card" && (
+          <Button
+            size="lg"
+            fullWidth
+            onClick={onCardSubmit}
+            loading={isCardLoading}
+            disabled={!cardForm.isValid()}
+          >
+            {t("checkout.payAmount", { amount: formatAmount(total) })}
+          </Button>
+        )}
+
         {paymentMethod === "promptpay" && (
           <Button
             size="lg"
@@ -166,6 +215,34 @@ export function PaymentMethodForm({
             {t("checkout.generateQR", { amount: formatAmount(total) })}
           </Button>
         )}
+
+        {/* Policy acknowledgment text */}
+        <Text size="xs" c="dimmed" ta="center" mt="md">
+          <Trans
+            i18nKey="checkout.paymentAcknowledgment"
+            ns="policies"
+            components={{
+              termsLink: (
+                <Anchor
+                  component={Link}
+                  to="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="xs"
+                />
+              ),
+              privacyLink: (
+                <Anchor
+                  component={Link}
+                  to="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="xs"
+                />
+              ),
+            }}
+          />
+        </Text>
       </Paper>
     </Stack>
   );
