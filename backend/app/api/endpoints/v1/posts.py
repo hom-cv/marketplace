@@ -18,15 +18,12 @@ from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import PaginatedPostsResponse, PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
-from app.services.listing_service import AnnotatedListingService
-from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
-
-
-AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
+import json
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 
 @router.post(
     "",
@@ -43,6 +40,8 @@ async def create_post(
     type: Annotated[PostTypeSchema, Form()],
     price: Annotated[Decimal, Form(gt=0, le=1000000)],
     shipping_cost: Annotated[Decimal, Form(ge=0, le=10000)] = Decimal("0"),
+    size: Annotated[str, Form(min_length=1, max_length=20)] = ...,
+    measurements: Annotated[str | None, Form()] = None,
     images: Annotated[list[UploadFile], File()] = [],
 ) -> PostResponseSchema:
     """
@@ -52,6 +51,14 @@ async def create_post(
     The first image will be used as the cover/display image.
     Maximum 5 images allowed. Supported formats: jpg, jpeg, png, gif, webp.
 
+    Size is required. Valid sizes depend on category:
+    - Shirts/Jackets/Tops: XS, S, M, L, XL, XXL, XXXL
+    - Pants: 26, 28, 30, 32, 34, 36, 38, 40, 42, 44
+    - Shoes: 35-48 (Italian/EU sizing)
+    - Accessories: ONE_SIZE
+
+    Measurements is an optional JSON string with cm values.
+
     Requires the user to be a verified seller.
     """
     # Check if user is a verified seller
@@ -60,6 +67,14 @@ async def create_post(
             "You must be a verified seller to create listings. "
             "Please complete seller verification first."
         )
+
+    # Parse measurements JSON if provided
+    measurements_dict = None
+    if measurements:
+        try:
+            measurements_dict = json.loads(measurements)
+        except json.JSONDecodeError:
+            raise bad_request_error("Invalid measurements JSON format")
 
     image_urls = await storage_service.upload_images(images, folder="posts")
 
@@ -71,6 +86,8 @@ async def create_post(
         type=PostType[type.value],
         price=price,
         shipping_cost=shipping_cost,
+        size=size,
+        measurements=measurements_dict,
         image_url=image_url,
         image_urls=image_urls,
         user_id=current_user.id,
@@ -91,6 +108,7 @@ async def list_posts(
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     types: Annotated[list[PostTypeSchema] | None, Query()] = None,
+    sizes: Annotated[list[str] | None, Query()] = None,
     min_price: Annotated[Decimal | None, Query(ge=0)] = None,
     max_price: Annotated[Decimal | None, Query(ge=0)] = None,
     search: Annotated[str | None, Query(max_length=200)] = None,
@@ -105,6 +123,7 @@ async def list_posts(
     - skip: Number of records to skip (for pagination)
     - limit: Maximum number of records to return
     - types: Filter by post types (can specify multiple)
+    - sizes: Filter by sizes (can specify multiple). Excludes posts with no size.
     - min_price: Minimum price filter
     - max_price: Maximum price filter
     - search: Search query for title/description
@@ -117,6 +136,7 @@ async def list_posts(
         skip=skip,
         limit=limit,
         types=model_types,
+        sizes=sizes,
         min_price=min_price,
         max_price=max_price,
         search=search,

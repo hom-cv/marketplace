@@ -2,8 +2,9 @@
 
 from decimal import Decimal
 from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.user import UserResponseSchema
 
@@ -17,6 +18,44 @@ class PostType(str, Enum):
     SHOES = "SHOES"
     ACCESSORIES = "ACCESSORIES"
     OTHER = "OTHER"
+
+
+class LetterSize(str, Enum):
+    """Letter-based clothing sizes for shirts, jackets, and tops."""
+
+    XS = "XS"
+    S = "S"
+    M = "M"
+    L = "L"
+    XL = "XL"
+    XXL = "XXL"
+    XXXL = "XXXL"
+    ONE_SIZE = "ONE_SIZE"
+
+
+# Measurement schemas for category-specific validation
+class TopMeasurements(BaseModel):
+    """Measurements for shirts, jackets, and tops (all in cm)."""
+
+    shoulder: float | None = Field(None, ge=0, le=200, description="Shoulder width")
+    length: float | None = Field(None, ge=0, le=200, description="Total length")
+    bust: float | None = Field(None, ge=0, le=200, description="Bust/chest width")
+    sleeve: float | None = Field(None, ge=0, le=200, description="Sleeve length")
+
+
+class PantsMeasurements(BaseModel):
+    """Measurements for pants (all in cm)."""
+
+    total_length: float | None = Field(None, ge=0, le=200, description="Total length")
+    inseam: float | None = Field(None, ge=0, le=200, description="Inseam length")
+    rise: float | None = Field(None, ge=0, le=100, description="Rise length")
+    hip: float | None = Field(None, ge=0, le=200, description="Hip width")
+
+
+class ShoesMeasurements(BaseModel):
+    """Measurements for shoes (in cm)."""
+
+    insole_length: float | None = Field(None, ge=0, le=50, description="Insole length")
 
 
 class PostCreateSchema(BaseModel):
@@ -52,6 +91,32 @@ class PostCreateSchema(BaseModel):
         decimal_places=2,
         description="Shipping cost set by seller",
     )
+    size: str = Field(
+        ...,
+        min_length=1,
+        max_length=20,
+        description="Size of the item (letter or numeric)",
+    )
+    measurements: dict[str, float] | None = Field(
+        default=None,
+        description="Optional measurements in cm",
+    )
+
+    @model_validator(mode="after")
+    def validate_measurements_for_type(self) -> "PostCreateSchema":
+        """Validate measurements structure based on post type."""
+        if self.measurements is None:
+            return self
+
+        if self.type in (PostType.SHIRT, PostType.JACKET, PostType.OTHER):
+            TopMeasurements(**self.measurements)
+        elif self.type == PostType.PANTS:
+            PantsMeasurements(**self.measurements)
+        elif self.type == PostType.SHOES:
+            ShoesMeasurements(**self.measurements)
+        # ACCESSORIES has no measurements
+
+        return self
 
 
 class PostUpdateSchema(BaseModel):
@@ -62,6 +127,8 @@ class PostUpdateSchema(BaseModel):
     type: PostType | None = None
     price: Decimal | None = Field(None, gt=0, le=1000000, decimal_places=2)
     shipping_cost: Decimal | None = Field(None, ge=0, le=10000, decimal_places=2)
+    size: str | None = Field(None, min_length=1, max_length=20)
+    measurements: dict[str, float] | None = None
 
 
 class PostResponseSchema(BaseModel):
@@ -75,6 +142,8 @@ class PostResponseSchema(BaseModel):
     shipping_cost: Decimal
     image_url: str | None
     image_urls: list[str] | None = None
+    size: str | None = None
+    measurements: dict[str, Any] | None = None
     user: UserResponseSchema
     is_sold: bool = False
     is_banned: bool = False
@@ -91,4 +160,3 @@ class PaginatedPostsResponse(BaseModel):
     total: int
     skip: int
     limit: int
-

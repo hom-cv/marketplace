@@ -74,6 +74,24 @@ class Post(Base):
         default=list,
     )
 
+    # Sizing information
+    # Size is a string to accommodate both letter sizes (S, M, L) and numeric sizes (28, 30, 42)
+    size: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True,
+        default=None,
+        index=True,
+    )
+    # Measurements stored as JSONB - structure varies by category
+    # Tops: { shoulder, length, bust, sleeve }
+    # Pants: { total_length, inseam, rise, hip }
+    # Shoes: { insole_length }
+    measurements: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        default=None,
+    )
+
     # Foreign keys - RESTRICT prevents deletion of referenced user
     user_id: Mapped[int] = mapped_column(
         BigInteger,

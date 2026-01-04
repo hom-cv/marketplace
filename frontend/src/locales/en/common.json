@@ -48,13 +48,16 @@
   },
   "postCard": {
     "reportListing": "Report Listing",
-    "reportUser": "Report User"
+    "reportUser": "Report User",
+    "size": "Size"
   },
   "filtersSidebar": {
     "filters": "Filters",
     "clear": "Clear",
     "category": "Category",
-    "priceRange": "Price Range"
+    "priceRange": "Price Range",
+    "size": "Size",
+    "oneSize": "One Size"
   },
   "report": {
     "title": "Report {{type}}",
