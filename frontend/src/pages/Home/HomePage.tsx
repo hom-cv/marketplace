@@ -21,6 +21,8 @@ import { PostCard } from "@/components/PostCard";
 import styles from "./HomePage.module.css";
 
 export function HomePage() {
+    const PREVIEW_POST_COUNT = 16;
+
     const navigate = useNavigate();
     const { token } = useAuthStore();
     const { t } = useTranslation("common");
@@ -28,7 +30,7 @@ export function HomePage() {
     // Fetch preview posts for the landing page
     const { data: postsData } = useQuery({
         queryKey: ["posts", "guest-landing-preview"],
-        queryFn: () => getPosts(0, 16), // Fetch 16 items for a nice 4x4 grid
+        queryFn: () => getPosts(0, PREVIEW_POST_COUNT),
     });
 
     const posts = useMemo(() => {
