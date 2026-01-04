@@ -16,6 +16,7 @@ import {
   Title,
   Button,
   Container,
+  ThemeIcon,
 } from "@mantine/core";
 import { IconAlertCircle, IconLock } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -45,21 +46,21 @@ export function GuestExplorePage() {
 
   if (isLoading) {
     return (
-      <Container size="xl" py="xl">
-        <Center h={300}>
-          <Loader size="lg" />
-        </Center>
-      </Container>
+      <div className={styles.loadingContainer}>
+        <Loader size="lg" type="dots" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Container size="xl" py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error instanceof Error ? error.message : t("errors.failedToLoad")}
-        </Alert>
-      </Container>
+      <div className={styles.errorContainer}>
+        <Container size="xl">
+          <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" variant="filled">
+            {error instanceof Error ? error.message : t("errors.failedToLoad")}
+          </Alert>
+        </Container>
+      </div>
     );
   }
 
@@ -71,16 +72,16 @@ export function GuestExplorePage() {
           <Stack gap="lg">
             {/* Header */}
             <Group justify="space-between" align="center" wrap="wrap">
-              <Title order={2}>{t("title")}</Title>
-              <Text size="sm" c="dimmed">
+              <Title order={2} fw={800} style={{ letterSpacing: '-0.02em' }}>{t("title")}</Title>
+              <Text c="dimmed" fw={500}>
                 {data?.total ?? 0} {(data?.total ?? 0) === 1 ? t("results.listing") : t("results.listings")}
               </Text>
             </Group>
 
             {/* Grid of cards */}
             {posts.length === 0 ? (
-              <Center h={200}>
-                <Text c="dimmed">{t("results.noListings")}</Text>
+              <Center h={300}>
+                <Text c="dimmed" size="lg">{t("results.noListings")}</Text>
               </Center>
             ) : (
               <div className={styles.grid}>
@@ -103,24 +104,38 @@ export function GuestExplorePage() {
       <div className={styles.fadeOverlay}>
         <div className={styles.ctaContainer}>
           <Stack align="center" gap="md">
-            <Group gap={8} align="center">
-              <IconLock size={24} style={{ opacity: 0.7 }} />
-              <Title order={3}>{tCommon("guestExplore.signUpToSeeMore")}</Title>
+            <Group gap={12} align="center" mb={4}>
+              <ThemeIcon size={42} radius="xl" variant="light" color="gray">
+                <IconLock size={20} />
+              </ThemeIcon>
+              <div>
+                <Title order={3} size="h3" fw={700} style={{ lineHeight: 1.2 }}>
+                  {tCommon("guestExplore.signUpToSeeMore")}
+                </Title>
+              </div>
             </Group>
-            <Text c="dimmed" size="sm" ta="center">
+
+            <Text c="dimmed" size="sm" ta="center" maw={400} lh={1.5}>
               {tCommon("guestExplore.subtitle")}
             </Text>
-            <Group gap="md">
+
+            <Group gap="md" mt="xs">
               <Button
                 size="md"
                 variant="default"
+                radius="xl"
+                fw={600}
                 onClick={() => navigate({ to: "/login" })}
               >
                 {tCommon("buttons.logIn")}
               </Button>
               <Button
                 size="md"
+                radius="xl"
+                fw={600}
                 onClick={() => navigate({ to: "/sign-up" })}
+                variant="filled"
+                color="blue"
               >
                 {tCommon("buttons.signUp")}
               </Button>
