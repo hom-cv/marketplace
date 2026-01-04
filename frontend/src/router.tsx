@@ -82,6 +82,8 @@ const privacyRoute = createRoute({
     component: PrivacyPage,
 });
 
+
+
 // Protected routes wrapper
 const protectedLayout = createRoute({
     getParentRoute: () => rootRoute,
@@ -213,6 +215,7 @@ const routeTree = rootRoute.addChildren([
     verifyEmailRoute,
     termsRoute,
     privacyRoute,
+
     protectedLayout.addChildren([
         dashboardLayout.addChildren([
             dashboardRoute,
