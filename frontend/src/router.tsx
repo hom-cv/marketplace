@@ -12,7 +12,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardPage } from "@/pages/Dashboard";
-import { ExplorePage, GuestExplorePage } from "@/pages/Explore";
+import { ExplorePage } from "@/pages/Explore";
 import { PurchaseHistoryPage } from "@/pages/PurchaseHistory";
 import { MyListingsPage } from "@/pages/MyListings";
 import { SoldListingsPage } from "@/pages/SoldListings";
@@ -82,11 +82,7 @@ const privacyRoute = createRoute({
     component: PrivacyPage,
 });
 
-const guestExploreRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/explore",
-    component: GuestExplorePage,
-});
+
 
 // Protected routes wrapper
 const protectedLayout = createRoute({
@@ -219,7 +215,7 @@ const routeTree = rootRoute.addChildren([
     verifyEmailRoute,
     termsRoute,
     privacyRoute,
-    guestExploreRoute,
+
     protectedLayout.addChildren([
         dashboardLayout.addChildren([
             dashboardRoute,

@@ -13,7 +13,8 @@
     "clearAll": "Clear all",
     "clear": "Clear",
     "logIn": "Log in",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "getStarted": "Get Started"
   },
   "guestExplore": {
     "signUpToSeeMore": "Sign up to see more",
@@ -252,10 +253,11 @@
   "landing": {
     "hero": {
       "title": "Discover Unique Fashion",
-      "subtitle": "Join the community-driven marketplace for unique fashion. Buy, sell, and discover items that tell a story.",
-      "cta": "Start Exploring"
+      "subtitle": "Join the community-driven marketplace for unique fashion. Buy, sell, and discover items that tell a story."
     },
     "features": {
+      "sectionLabel": "Our Promise",
+      "sectionTitle": "Why Choose Us",
       "secure": {
         "title": "Secure Payments",
         "description": "Every transaction is protected. We hold payments until you receive your item."
@@ -268,6 +270,10 @@
         "title": "Global Shipping",
         "description": "Find unique pieces from sellers nationwide with reliable shipping options."
       }
+    },
+    "explore": {
+      "sectionLabel": "Browse Items",
+      "sectionTitle": "Explore the Marketplace"
     }
   }
 }

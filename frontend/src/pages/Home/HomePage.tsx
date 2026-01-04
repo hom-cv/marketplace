@@ -1,10 +1,6 @@
-/**
- * Home Page
- * Redirects logged-in users to /app.
- */
-
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
     Container,
     Text,
@@ -20,8 +16,8 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
-
-// ... imports
+import { getPosts } from "@/api/posts";
+import { PostCard } from "@/components/PostCard";
 import styles from "./HomePage.module.css";
 
 export function HomePage() {
@@ -29,15 +25,29 @@ export function HomePage() {
     const { token } = useAuthStore();
     const { t } = useTranslation("common");
 
+    // Fetch preview posts for the landing page
+    const { data: postsData } = useQuery({
+        queryKey: ["posts", "guest-landing-preview"],
+        queryFn: () => getPosts(0, 16), // Fetch 16 items for a nice 4x4 grid
+    });
+
+    const posts = useMemo(() => {
+        return postsData?.items ?? [];
+    }, [postsData]);
+
     useEffect(() => {
         if (token) {
             navigate({ to: "/app" });
         }
     }, [token, navigate]);
 
+    const scrollToExplore = () => {
+        document.getElementById("explore-section")?.scrollIntoView({ behavior: "smooth" });
+    };
+
     return (
         <div className={styles.wrapper}>
-            <Container size="lg" className={styles.container}>
+            <Container size="xl" className={styles.container}>
                 {/* Hero Section */}
                 <div className={styles.heroSection}>
                     <h1 className={styles.heroTitle}>
@@ -49,31 +59,23 @@ export function HomePage() {
                     </p>
 
                     <div className={styles.heroActions}>
-                        <Group justify="center">
+                        <Group justify="center" gap="md">
                             <Button
-                                size="xl"
-                                radius="xl" // Fully rounded for modern feel
-                                h={56} // Taller button
-                                px={40} // Wider button
-                                fz="lg"
-                                fw={600}
-                                onClick={() => navigate({ to: "/explore" })}
-                                rightSection={<IconArrowRight size={20} className="mantine-rotate-rtl" />}
-                                variant="filled"
-                                color="blue"
-                                style={{
-                                    boxShadow: '0 10px 20px -5px rgba(34, 139, 230, 0.3)',
-                                    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-                                }}
+                                size="lg"
+                                radius="md"
+                                onClick={() => navigate({ to: "/sign-up" })}
+                                rightSection={<IconArrowRight size={18} />}
                             >
-                                {t("landing.hero.cta")}
+                                {t("buttons.getStarted")}
                             </Button>
+
                         </Group>
                     </div>
                 </div>
 
                 {/* Features Section */}
-                <div className={styles.featuresGrid}>
+                <div className={styles.featuresSection}>
+                    <h2 className={styles.sectionTitle}>{t("landing.features.sectionTitle")}</h2>
                     <SimpleGrid cols={{ base: 1, md: 3 }} spacing={30}>
                         {[
                             {
@@ -94,19 +96,51 @@ export function HomePage() {
                         ].map((feature, index) => (
                             <div key={feature.title} className={styles.featureCard}>
                                 <div className={styles.iconWrapper}>
-                                    <feature.icon size={28} stroke={1.5} />
+                                    <feature.icon size={24} stroke={1.5} />
                                 </div>
-                                <Text fz="xl" fw={700} mb="xs" style={{ letterSpacing: '-0.01em' }}>
+                                <Text fw={600} mb={4}>
                                     {feature.title}
                                 </Text>
-                                <Text c="dimmed" lh={1.6}>
+                                <Text c="dimmed" size="sm" lh={1.5}>
                                     {feature.description}
                                 </Text>
                             </div>
                         ))}
                     </SimpleGrid>
                 </div>
-            </Container>
-        </div>
+
+                {/* Explore Preview Section */}
+                <div id="explore-section" className={styles.exploreSection}>
+                    <h2 className={styles.sectionTitle}>{t("landing.explore.sectionTitle")}</h2>
+                    {posts.length > 0 && (
+                        <>
+                            <div className={styles.exploreGrid}>
+                                {posts.map((post) => (
+                                    <div
+                                        key={post.id}
+                                        className={styles.cardWrapper}
+                                        onClick={() => navigate({ to: "/login" })}
+                                    >
+                                        <PostCard post={post} />
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* CTA Overlay Area */}
+                            <div className={styles.ctaArea}>
+                                <Button
+                                    size="md"
+                                    radius="xl"
+                                    onClick={() => navigate({ to: "/sign-up" })}
+                                    rightSection={<IconArrowRight size={16} />}
+                                >
+                                    {t("guestExplore.signUpToSeeMore")}
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </Container >
+        </div >
     );
 }
