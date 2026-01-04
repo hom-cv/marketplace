@@ -41,10 +41,6 @@ export function HomePage() {
         }
     }, [token, navigate]);
 
-    const scrollToExplore = () => {
-        document.getElementById("explore-section")?.scrollIntoView({ behavior: "smooth" });
-    };
-
     return (
         <div className={styles.wrapper}>
             <Container size="xl" className={styles.container}>
