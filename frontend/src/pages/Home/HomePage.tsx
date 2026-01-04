@@ -92,7 +92,7 @@ export function HomePage() {
                                 description: t("landing.features.global.description"),
                             },
                         ].map((feature, index) => (
-                            <div key={index} className={styles.featureCard}>
+                            <div key={feature.title} className={styles.featureCard}>
                                 <div className={styles.iconWrapper}>
                                     <feature.icon size={28} stroke={1.5} />
                                 </div>
