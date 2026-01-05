@@ -5,6 +5,8 @@ allowing the real service layer to be tested while mocking database access.
 This provides maximum coverage of the service business logic.
 """
 
+from app.core.settings import Settings
+from app.services.email_service import EmailService
 from datetime import timedelta
 from decimal import Decimal
 from typing import AsyncGenerator

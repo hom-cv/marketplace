@@ -6,7 +6,6 @@ using mocked CRUDs (allowing real service logic to run).
 
 from unittest.mock import MagicMock
 
-import pytest
 from httpx import AsyncClient
 
 from app.core.password import get_password_hash
