@@ -123,8 +123,8 @@ def create_mock_payment_crud() -> MagicMock:
 
 def create_mock_email_service() -> MagicMock:
     """Create a mock EmailService."""
-    mock_service = MagicMock()
-    mock_service.send_verification_email = MagicMock(return_value=True)
+    mock_service = MagicMock(spec=EmailService)
+    mock_service.send_verification_email.return_value = True
     return mock_service
 
 
