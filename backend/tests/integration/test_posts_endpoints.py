@@ -92,7 +92,7 @@ class TestGetPostEndpoint:
     ):
         """Existing post should return post data."""
         # Create mock post with correct type
-        mock_post = MagicMock()
+        mock_post = MagicMock(spec=Post)
         mock_post.id = 1
         mock_post.title = "Test Post"
         mock_post.description = "A test post description"
@@ -102,7 +102,6 @@ class TestGetPostEndpoint:
         mock_post.image_url = None
         mock_post.image_urls = []
         mock_post.user = create_mock_user()
-        mock_post.is_sold = False
         
         # Configure CRUD to return (post, is_banned, is_user_banned)
         mock_post_crud.get_by_id_with_ban_status.return_value = (mock_post, False, False)
