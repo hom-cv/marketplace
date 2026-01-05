@@ -3,7 +3,7 @@
 Tests verify token creation, verification, and expiry handling.
 """
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import jwt
@@ -47,7 +47,6 @@ class TestCreateAccessToken:
     def test_default_expiry_is_15_minutes(self, mock_settings):
         """Token should expire in 15 minutes by default."""
         with freeze_time("2026-01-05 12:00:00"):
-            from datetime import datetime, UTC
             now = datetime.now(UTC)
             token = create_access_token(data={"user_id": TEST_USER_ID})
             decoded = jwt.decode(token, TEST_JWT_SECRET, algorithms=[ALGORITHM])
@@ -61,7 +60,6 @@ class TestCreateAccessToken:
         custom_delta = timedelta(hours=2)
 
         with freeze_time("2026-01-05 12:00:00"):
-            from datetime import datetime, UTC
             now = datetime.now(UTC)
             token = create_access_token(
                 data={"user_id": TEST_USER_ID},
@@ -94,7 +92,6 @@ class TestCreateEmailVerificationToken:
     def test_expires_in_24_hours(self, mock_settings):
         """Token should expire in 24 hours."""
         with freeze_time("2026-01-05 12:00:00"):
-            from datetime import datetime, UTC
             now = datetime.now(UTC)
             token = create_email_verification_token(user_id=TEST_USER_ID)
             decoded = jwt.decode(token, TEST_JWT_SECRET, algorithms=[ALGORITHM])

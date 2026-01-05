@@ -28,7 +28,8 @@ def mock_settings():
 def pricing_service(mock_settings):
     """Create PricingService instance with mock dependencies."""
     mock_db = AsyncMock()
-    return PricingService(db=mock_db, settings=mock_settings)
+    mock_post_crud = MagicMock()
+    return PricingService(db=mock_db, settings=mock_settings, post_crud_dep=mock_post_crud)
 
 
 class TestCalculateOrderTotal:
@@ -186,5 +187,7 @@ class TestCalculateOrderTotal:
         )
 
         # Platform fee base: 333.33 * 10% = 33.333 -> 33.34 (ROUND_UP)
-        # All fee components should be rounded up
-        assert result.platform_fee >= Decimal("35.67")  # 33.34 + VAT
+        # Platform VAT: 33.34 * 7% = 2.3338 -> 2.34 (ROUND_UP)
+        # Total platform fee: 33.34 + 2.34 = 35.68
+        expected_platform_fee = Decimal("35.68")
+        assert result.platform_fee == expected_platform_fee

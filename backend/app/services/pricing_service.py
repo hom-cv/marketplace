@@ -8,24 +8,34 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.core.exceptions import not_found_error
 from app.core.settings import AnnotatedSettings, Settings
-from app.crud.post import post_crud
+from app.crud.post import PostCRUD, post_crud
 from app.db.utils import get_async_db
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
+
+
+def get_post_crud_for_pricing() -> PostCRUD:
+    """Dependency to get PostCRUD instance."""
+    return post_crud
+
+
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud_for_pricing)]
 
 
 class PricingService:
     """Service for pricing calculations."""
 
-    def __init__(self, db: AsyncSession, settings: Settings):
+    def __init__(self, db: AsyncSession, settings: Settings, post_crud_dep: PostCRUD):
         """
         Initialize PricingService.
 
         Args:
             db (AsyncSession): The database session.
             settings (Settings): The application settings.
+            post_crud_dep (PostCRUD): Post CRUD operations.
         """
         self.db = db
         self.settings = settings
+        self._post_crud = post_crud_dep
 
     def calculate_order_total(
         self,
@@ -98,7 +108,7 @@ class PricingService:
         payment_method: PaymentMethodType = PaymentMethodType.CARD,
     ) -> PriceBreakdown:
         """Get price breakdown for a post."""
-        post = await post_crud.get_by_id(self.db, id=post_id)
+        post = await self._post_crud.get_by_id(self.db, id=post_id)
         if not post:
             raise not_found_error("Post not found")
 
@@ -109,10 +119,12 @@ class PricingService:
 
 def _get_pricing_service(
     settings: AnnotatedSettings,
+    post_crud_dep: AnnotatedPostCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> PricingService:
     """Factory function to create PricingService instance."""
-    return PricingService(db, settings)
+    return PricingService(db, settings, post_crud_dep)
 
 
 AnnotatedPricingService = Annotated[PricingService, Depends(_get_pricing_service)]
+

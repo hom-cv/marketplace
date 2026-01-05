@@ -1,7 +1,8 @@
-"""Integration test fixtures with mocked services.
+"""Integration test fixtures with mocked CRUDs.
 
-Uses FastAPI's dependency_overrides to inject mock services,
-avoiding the need for a real database connection.
+Uses FastAPI's dependency_overrides to inject mock CRUDs,
+allowing the real service layer to be tested while mocking database access.
+This provides maximum coverage of the service business logic.
 """
 
 from datetime import timedelta
@@ -12,20 +13,37 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.api.endpoints.v1.posts import get_post_crud
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user
+from app.core.settings import get_settings
+from app.crud.payment import PaymentCRUD
+from app.crud.post import PostCRUD
+from app.crud.user import UserCRUD
 from app.db.utils import get_async_db
 from app.main import create_app
 from app.models.user import User, UserStatus
-from app.schemas.payment import PriceBreakdown
-from app.services.auth import AuthService, _get_auth_service
-from app.services.listing_service import ListingService, _get_listing_service
-from app.services.pricing_service import PricingService, _get_pricing_service
+from app.schemas.payment import PaymentMethodType, PriceBreakdown
+from app.services.auth import get_user_crud
+from app.services.email_service import _get_email_service
+from app.services.listing_service import get_payment_crud, get_post_crud_for_listing
+from app.services.pricing_service import get_post_crud_for_pricing, PricingService
 
 
 # =============================================================================
 # Test Data Factory Functions
 # =============================================================================
+
+
+def _create_test_pricing_service() -> PricingService:
+    """Create a PricingService with realistic test settings."""
+    mock_settings = MagicMock()
+    mock_settings.PLATFORM_FEE_PERCENT = Decimal("10.0")
+    mock_settings.VAT_PERCENT = Decimal("7.0")
+    mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
+    mock_settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
+    mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
+    return PricingService(db=AsyncMock(), settings=mock_settings, post_crud_dep=MagicMock())
 
 
 def create_mock_user(
@@ -50,7 +68,7 @@ def create_mock_user(
     mock_user.is_admin = is_admin
     mock_user.email_verified = email_verified
     mock_user.status = UserStatus.ACTIVE if email_verified else UserStatus.PENDING
-    mock_user.hashed_password = "hashed_password_placeholder"
+    mock_user.hashed_password = "$2b$12$abcdefghij1234567890123456789012345678901234567890"  # bcrypt format
     mock_user.roles = []
     mock_user.seller_profile = None
     return mock_user
@@ -59,49 +77,69 @@ def create_mock_user(
 def create_mock_price_breakdown(
     item_price: Decimal = Decimal("1000.00"),
     shipping_cost: Decimal = Decimal("100.00"),
+    payment_method: PaymentMethodType = PaymentMethodType.CARD,
 ) -> PriceBreakdown:
-    """Factory function to create a PriceBreakdown for testing."""
-    return PriceBreakdown(
-        item_price=item_price,
-        shipping_cost=shipping_cost,
-        platform_fee=Decimal("117.70"),
-        processing_fee=Decimal("43.02"),
-        total_fees=Decimal("160.72"),
-        total_vat=Decimal("10.42"),
-        total=item_price + shipping_cost,
-        seller_payout=item_price + shipping_cost - Decimal("160.72"),
-    )
+    """Factory function to create a realistic PriceBreakdown using the actual service."""
+    pricing_service = _create_test_pricing_service()
+    return pricing_service.calculate_order_total(item_price, shipping_cost, payment_method)
 
 
 # =============================================================================
-# Mock Service Factories
+# Mock CRUD Factories
 # =============================================================================
 
 
-def create_mock_auth_service() -> MagicMock:
-    """Create a mock AuthService with async methods."""
-    mock_service = MagicMock(spec=AuthService)
-    mock_service.register_user = AsyncMock()
-    mock_service.login_user = AsyncMock()
-    mock_service.verify_email = AsyncMock()
-    mock_service.resend_verification_email = AsyncMock()
+def create_mock_user_crud() -> MagicMock:
+    """Create a mock UserCRUD with async methods."""
+    mock_crud = MagicMock(spec=UserCRUD)
+    mock_crud.get_by_email = AsyncMock(return_value=None)
+    mock_crud.get_by_username = AsyncMock(return_value=None)
+    mock_crud.get_by_id = AsyncMock(return_value=None)
+    mock_crud.get_by_id_with_relations = AsyncMock(return_value=None)
+    mock_crud.create_user = AsyncMock()
+    mock_crud.update_email_verified = AsyncMock()
+    return mock_crud
+
+
+def create_mock_post_crud() -> MagicMock:
+    """Create a mock PostCRUD with async methods."""
+    mock_crud = MagicMock(spec=PostCRUD)
+    mock_crud.get_posts_with_filters = AsyncMock(return_value=([], 0))
+    mock_crud.get_by_id = AsyncMock(return_value=None)
+    mock_crud.get_by_id_with_user = AsyncMock(return_value=None)
+    mock_crud.get_by_id_with_ban_status = AsyncMock(return_value=None)
+    mock_crud.get_by_user_id_with_ban_status = AsyncMock(return_value=[])
+    mock_crud.create_post = AsyncMock()
+    mock_crud.soft_delete = AsyncMock()
+    return mock_crud
+
+
+def create_mock_payment_crud() -> MagicMock:
+    """Create a mock PaymentCRUD with async methods."""
+    mock_crud = MagicMock(spec=PaymentCRUD)
+    mock_crud.get_payments_by_buyer = AsyncMock(return_value=[])
+    mock_crud.get_payments_by_seller = AsyncMock(return_value=[])
+    mock_crud.create_payment = AsyncMock()
+    mock_crud.update_status = AsyncMock()
+    return mock_crud
+
+
+def create_mock_email_service() -> MagicMock:
+    """Create a mock EmailService."""
+    mock_service = MagicMock()
+    mock_service.send_verification_email = MagicMock(return_value=True)
     return mock_service
 
 
-def create_mock_pricing_service() -> MagicMock:
-    """Create a mock PricingService."""
-    mock_service = MagicMock(spec=PricingService)
-    mock_service.calculate_order_total = MagicMock(return_value=create_mock_price_breakdown())
-    mock_service.get_price_breakdown_for_post = AsyncMock(return_value=create_mock_price_breakdown())
-    return mock_service
-
-
-def create_mock_listing_service() -> MagicMock:
-    """Create a mock ListingService."""
-    mock_service = MagicMock(spec=ListingService)
-    mock_service.get_listing = AsyncMock(return_value=None)
-    mock_service.get_my_listings = AsyncMock(return_value=[])
-    return mock_service
+def create_mock_settings() -> MagicMock:
+    """Create mock application settings."""
+    mock_settings = MagicMock()
+    mock_settings.PLATFORM_FEE_PERCENT = Decimal("10.0")
+    mock_settings.VAT_PERCENT = Decimal("7.0")
+    mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
+    mock_settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
+    mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
+    return mock_settings
 
 
 # =============================================================================
@@ -110,21 +148,33 @@ def create_mock_listing_service() -> MagicMock:
 
 
 @pytest.fixture
-def mock_auth_service() -> MagicMock:
-    """Fixture for mock AuthService."""
-    return create_mock_auth_service()
+def mock_user_crud() -> MagicMock:
+    """Fixture for mock UserCRUD."""
+    return create_mock_user_crud()
 
 
 @pytest.fixture
-def mock_pricing_service() -> MagicMock:
-    """Fixture for mock PricingService."""
-    return create_mock_pricing_service()
+def mock_post_crud() -> MagicMock:
+    """Fixture for mock PostCRUD."""
+    return create_mock_post_crud()
 
 
 @pytest.fixture
-def mock_listing_service() -> MagicMock:
-    """Fixture for mock ListingService."""
-    return create_mock_listing_service()
+def mock_payment_crud() -> MagicMock:
+    """Fixture for mock PaymentCRUD."""
+    return create_mock_payment_crud()
+
+
+@pytest.fixture
+def mock_email_service() -> MagicMock:
+    """Fixture for mock EmailService."""
+    return create_mock_email_service()
+
+
+@pytest.fixture
+def mock_settings() -> MagicMock:
+    """Fixture for mock Settings."""
+    return create_mock_settings()
 
 
 @pytest.fixture
@@ -162,20 +212,30 @@ def auth_headers(valid_auth_token: str) -> dict[str, str]:
 
 @pytest.fixture
 async def async_client(
-    mock_auth_service: MagicMock,
-    mock_pricing_service: MagicMock,
-    mock_listing_service: MagicMock,
+    mock_user_crud: MagicMock,
+    mock_post_crud: MagicMock,
+    mock_payment_crud: MagicMock,
+    mock_email_service: MagicMock,
+    mock_settings: MagicMock,
     mock_user: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
-    """Create an async test client with all services mocked."""
-    from unittest.mock import patch
-
+    """Create an async test client with all CRUDs mocked via dependency injection.
+    
+    This allows the real service layer code to run while mocking database access,
+    providing maximum test coverage of business logic.
+    """
     app = create_app()
 
-    # Override service dependencies with mocks
-    app.dependency_overrides[_get_auth_service] = lambda: mock_auth_service
-    app.dependency_overrides[_get_pricing_service] = lambda: mock_pricing_service
-    app.dependency_overrides[_get_listing_service] = lambda: mock_listing_service
+    # Override CRUD dependencies (allows service code to run)
+    app.dependency_overrides[get_user_crud] = lambda: mock_user_crud
+    app.dependency_overrides[get_post_crud] = lambda: mock_post_crud
+    app.dependency_overrides[get_post_crud_for_listing] = lambda: mock_post_crud
+    app.dependency_overrides[get_post_crud_for_pricing] = lambda: mock_post_crud
+    app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
+
+    # Override external services
+    app.dependency_overrides[_get_email_service] = lambda: mock_email_service
+    app.dependency_overrides[get_settings] = lambda: mock_settings
 
     # Override database dependency
     app.dependency_overrides[get_async_db] = lambda: AsyncMock()
@@ -186,14 +246,9 @@ async def async_client(
 
     app.dependency_overrides[get_current_user] = override_get_current_user
 
-    # Mock post_crud for direct CRUD calls in endpoints
-    mock_post_crud = MagicMock()
-    mock_post_crud.get_posts_with_filters = AsyncMock(return_value=([], 0))
-
-    with patch("app.api.endpoints.v1.posts.post_crud", mock_post_crud):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            yield client
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
 
     # Cleanup
     app.dependency_overrides.clear()
@@ -201,17 +256,26 @@ async def async_client(
 
 @pytest.fixture
 async def unauthenticated_client(
-    mock_auth_service: MagicMock,
-    mock_pricing_service: MagicMock,
-    mock_listing_service: MagicMock,
+    mock_user_crud: MagicMock,
+    mock_post_crud: MagicMock,
+    mock_payment_crud: MagicMock,
+    mock_email_service: MagicMock,
+    mock_settings: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client without auth override (for testing 401s)."""
     app = create_app()
 
-    # Override service dependencies
-    app.dependency_overrides[_get_auth_service] = lambda: mock_auth_service
-    app.dependency_overrides[_get_pricing_service] = lambda: mock_pricing_service
-    app.dependency_overrides[_get_listing_service] = lambda: mock_listing_service
+    # Override CRUD dependencies
+    app.dependency_overrides[get_user_crud] = lambda: mock_user_crud
+    app.dependency_overrides[get_post_crud] = lambda: mock_post_crud
+    app.dependency_overrides[get_post_crud_for_listing] = lambda: mock_post_crud
+    app.dependency_overrides[get_post_crud_for_pricing] = lambda: mock_post_crud
+    app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
+
+    # Override external services
+    app.dependency_overrides[_get_email_service] = lambda: mock_email_service
+    app.dependency_overrides[get_settings] = lambda: mock_settings
+
     app.dependency_overrides[get_async_db] = lambda: AsyncMock()
 
     transport = ASGITransport(app=app)

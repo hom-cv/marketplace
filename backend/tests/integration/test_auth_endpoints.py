@@ -1,16 +1,15 @@
 """Integration tests for authentication endpoints.
 
 Tests verify request/response handling, validation, and error cases
-using mocked services (no real database).
+using mocked CRUDs (allowing real service logic to run).
 """
 
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi import HTTPException
 from httpx import AsyncClient
 
-from app.core.exceptions import conflict_error, unauthorized_error
+from tests.integration.conftest import create_mock_user
 
 
 class TestRegisterEndpoint:
@@ -19,11 +18,18 @@ class TestRegisterEndpoint:
     async def test_register_success_returns_201(
         self,
         async_client: AsyncClient,
-        mock_auth_service: MagicMock,
-        mock_user: MagicMock,
+        mock_user_crud: MagicMock,
     ):
         """Successful registration should return 201 with user data."""
-        mock_auth_service.register_user.return_value = mock_user
+        # Configure mock to return None (no existing user found)
+        mock_user_crud.get_by_email.return_value = None
+        mock_user_crud.get_by_username.return_value = None
+        
+        # Configure mock to return created user
+        created_user = create_mock_user(
+            user_id=1, username="newuser", email="new@example.com"
+        )
+        mock_user_crud.create_user.return_value = created_user
 
         registration_data = {
             "username": "newuser",
@@ -40,18 +46,19 @@ class TestRegisterEndpoint:
 
         assert response.status_code == 201
         body = response.json()
-        assert body["id"] == mock_user.id
-        assert body["username"] == mock_user.username
+        assert body["username"] == "newuser"
+        # Verify CRUD was called (service layer ran)
+        mock_user_crud.create_user.assert_called_once()
 
     async def test_register_duplicate_email_returns_409(
         self,
         async_client: AsyncClient,
-        mock_auth_service: MagicMock,
+        mock_user_crud: MagicMock,
     ):
         """Duplicate email should return 409 Conflict."""
-        mock_auth_service.register_user.side_effect = conflict_error(
-            "A user with this email address already exists"
-        )
+        # Configure mock to return existing user
+        existing_user = create_mock_user(email="existing@example.com")
+        mock_user_crud.get_by_email.return_value = existing_user
 
         registration_data = {
             "username": "newuser",
@@ -71,12 +78,13 @@ class TestRegisterEndpoint:
     async def test_register_duplicate_username_returns_409(
         self,
         async_client: AsyncClient,
-        mock_auth_service: MagicMock,
+        mock_user_crud: MagicMock,
     ):
         """Duplicate username should return 409 Conflict."""
-        mock_auth_service.register_user.side_effect = conflict_error(
-            "A user with this username already exists"
-        )
+        # Email doesn't exist, but username does
+        mock_user_crud.get_by_email.return_value = None
+        existing_user = create_mock_user(username="existinguser")
+        mock_user_crud.get_by_username.return_value = existing_user
 
         registration_data = {
             "username": "existinguser",
@@ -160,11 +168,14 @@ class TestLoginEndpoint:
     async def test_login_success_returns_token(
         self,
         async_client: AsyncClient,
-        mock_auth_service: MagicMock,
-        mock_user: MagicMock,
+        mock_user_crud: MagicMock,
     ):
         """Successful login should return access token."""
-        mock_auth_service.login_user.return_value = mock_user
+        # Create user with hashed password
+        from app.core.password import get_password_hash
+        mock_user_with_password = create_mock_user()
+        mock_user_with_password.hashed_password = get_password_hash("correctpassword")
+        mock_user_crud.get_by_email.return_value = mock_user_with_password
 
         response = await async_client.post(
             "/api/v1/auth/login",
@@ -182,12 +193,14 @@ class TestLoginEndpoint:
     async def test_login_invalid_credentials_returns_401(
         self,
         async_client: AsyncClient,
-        mock_auth_service: MagicMock,
+        mock_user_crud: MagicMock,
     ):
         """Invalid credentials should return 401 Unauthorized."""
-        mock_auth_service.login_user.side_effect = unauthorized_error(
-            "Invalid email or password"
-        )
+        # User exists but password is wrong
+        from app.core.password import get_password_hash
+        mock_user_with_password = create_mock_user()
+        mock_user_with_password.hashed_password = get_password_hash("correctpassword")
+        mock_user_crud.get_by_email.return_value = mock_user_with_password
 
         response = await async_client.post(
             "/api/v1/auth/login",
@@ -202,12 +215,10 @@ class TestLoginEndpoint:
     async def test_login_nonexistent_user_returns_401(
         self,
         async_client: AsyncClient,
-        mock_auth_service: MagicMock,
+        mock_user_crud: MagicMock,
     ):
         """Login with non-existent user should return 401."""
-        mock_auth_service.login_user.side_effect = unauthorized_error(
-            "Invalid email or password"
-        )
+        mock_user_crud.get_by_email.return_value = None
 
         response = await async_client.post(
             "/api/v1/auth/login",
