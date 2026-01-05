@@ -14,7 +14,7 @@ from app.core.exceptions import (
 )
 from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
-from app.crud.user import user_crud
+from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
@@ -23,19 +23,26 @@ from app.services.email_service import AnnotatedEmailService, EmailService
 logger = logging.getLogger(__name__)
 
 
+AnnotatedUserCRUD = Annotated[UserCRUD, Depends(get_user_crud)]
+
+
 class AuthService:
     """Service class for authentication-related operations."""
 
-    def __init__(self, db: AsyncSession, email_service: EmailService):
+    def __init__(
+        self, db: AsyncSession, email_service: EmailService, user_crud_dep: UserCRUD
+    ):
         """
         Initialize the AuthService with a database session.
 
         Args:
             db (AsyncSession): The asynchronous database session.
             email_service (EmailService): Email service for sending emails.
+            user_crud_dep (UserCRUD): User CRUD operations.
         """
         self.db = db
         self._email_service = email_service
+        self._user_crud = user_crud_dep
 
     async def register_user(self, obj_in: AuthRegisterSchema) -> User:
         """
@@ -51,14 +58,14 @@ class AuthService:
             HTTPException: If email or username already exists (409 Conflict).
         """
         # Check if email already exists
-        existing_email = await user_crud.get_by_email(
+        existing_email = await self._user_crud.get_by_email(
             db=self.db, email=obj_in.email_address
         )
         if existing_email:
             raise conflict_error("A user with this email address already exists")
 
         # Check if username already exists
-        existing_username = await user_crud.get_by_username(
+        existing_username = await self._user_crud.get_by_username(
             db=self.db, username=obj_in.username
         )
         if existing_username:
@@ -74,7 +81,7 @@ class AuthService:
         )
 
         # Persist to database via CRUD layer
-        user = await user_crud.create_user(db=self.db, user=user)
+        user = await self._user_crud.create_user(db=self.db, user=user)
 
         # Send verification email
         email_sent = self._email_service.send_verification_email(
@@ -104,7 +111,7 @@ class AuthService:
         Raises:
             HTTPException: If credentials are invalid (401 Unauthorized).
         """
-        user = await user_crud.get_by_email(db=self.db, email=obj_in.email_address)
+        user = await self._user_crud.get_by_email(db=self.db, email=obj_in.email_address)
 
         if not user:
             raise unauthorized_error("Invalid email or password")
@@ -131,7 +138,7 @@ class AuthService:
         if user_id is None:
             raise bad_request_error("Invalid or expired verification token")
 
-        user = await user_crud.get_by_id(db=self.db, id=user_id)
+        user = await self._user_crud.get_by_id(db=self.db, id=user_id)
         if not user:
             raise not_found_error("User not found")
 
@@ -139,7 +146,7 @@ class AuthService:
             raise bad_request_error("Email already verified")
 
         # Update via CRUD layer
-        user = await user_crud.update_email_verified(db=self.db, user=user)
+        user = await self._user_crud.update_email_verified(db=self.db, user=user)
 
         return user
 
@@ -174,10 +181,11 @@ class AuthService:
 
 def _get_auth_service(
     email_service: AnnotatedEmailService,
+    user_crud_dep: AnnotatedUserCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> AuthService:
     """Factory function to create AuthService instance."""
-    return AuthService(db, email_service)
+    return AuthService(db, email_service, user_crud_dep)
 
 
 AnnotatedAuthService = Annotated[AuthService, Depends(_get_auth_service)]

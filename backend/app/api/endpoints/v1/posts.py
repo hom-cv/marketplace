@@ -3,23 +3,27 @@
 from decimal import Decimal
 from typing import Annotated, Literal
 
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
 )
 from app.core.security import get_current_user
-from app.crud.post import post_crud
+from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import PaginatedPostsResponse, PostResponseSchema
 from app.schemas.post import PostType as PostTypeSchema
+from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
-from app.services.listing_service import AnnotatedListingService
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from sqlalchemy.ext.asyncio import AsyncSession
+
+
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -31,6 +35,7 @@ router = APIRouter(prefix="/posts", tags=["posts"])
 )
 async def create_post(
     db: Annotated[AsyncSession, Depends(get_async_db)],
+    post_crud_dep: AnnotatedPostCRUD,
     current_user: Annotated[User, Depends(get_current_user)],
     storage_service: AnnotatedStorageService,
     title: Annotated[str, Form(min_length=1, max_length=200)],
@@ -71,7 +76,7 @@ async def create_post(
         user_id=current_user.id,
     )
 
-    created_post = await post_crud.create_post(db, post=post)
+    created_post = await post_crud_dep.create_post(db, post=post)
     return PostResponseSchema.model_validate(created_post)
 
 
@@ -82,6 +87,7 @@ async def create_post(
 )
 async def list_posts(
     db: Annotated[AsyncSession, Depends(get_async_db)],
+    post_crud_dep: AnnotatedPostCRUD,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     types: Annotated[list[PostTypeSchema] | None, Query()] = None,
@@ -106,7 +112,7 @@ async def list_posts(
     # Convert schema types to model types for CRUD
     model_types = [PostType[t.value] for t in types] if types else None
 
-    posts_with_sold, total = await post_crud.get_posts_with_filters(
+    posts_with_sold, total = await post_crud_dep.get_posts_with_filters(
         db,
         skip=skip,
         limit=limit,
@@ -204,6 +210,7 @@ async def get_price_breakdown(
 )
 async def delete_post(
     db: Annotated[AsyncSession, Depends(get_async_db)],
+    post_crud_dep: AnnotatedPostCRUD,
     current_user: Annotated[User, Depends(get_current_user)],
     post_id: int,
 ) -> None:
@@ -213,7 +220,7 @@ async def delete_post(
     Only the owner can delete their post. The post is soft-deleted
     to preserve payment records for accounting purposes.
     """
-    post = await post_crud.get_by_id_with_user(db, id=post_id)
+    post = await post_crud_dep.get_by_id_with_user(db, id=post_id)
 
     if not post:
         raise not_found_error("Post not found")
@@ -221,7 +228,7 @@ async def delete_post(
     if post.user_id != current_user.id:
         raise bad_request_error("You can only delete your own posts")
 
-    await post_crud.soft_delete(db, post=post)
+    await post_crud_dep.soft_delete(db, post=post)
 
 
 @router.get(

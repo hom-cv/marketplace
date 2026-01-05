@@ -5,13 +5,17 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.payment import payment_crud
-from app.crud.post import post_crud
+from app.crud.payment import PaymentCRUD, get_payment_crud
+from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
 from app.models.post import Post
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
 from app.schemas.post import PostResponseSchema
+
+
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
+AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
 
 
 def _payment_to_list_item(
@@ -79,17 +83,26 @@ def _post_with_ban_to_response(
 class ListingService:
     """Service for purchase and sales listing operations."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(
+        self,
+        db: AsyncSession,
+        post_crud_dep: PostCRUD,
+        payment_crud_dep: PaymentCRUD,
+    ) -> None:
         self.db = db
+        self._post_crud = post_crud_dep
+        self._payment_crud = payment_crud_dep
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
-        payments = await payment_crud.get_payments_by_buyer(self.db, buyer_id=buyer_id)
+        payments = await self._payment_crud.get_payments_by_buyer(
+            self.db, buyer_id=buyer_id
+        )
         return [_payment_to_list_item(p) for p in payments]
 
     async def get_sales(self, seller_id: int) -> list[PurchaseListItem]:
         """Get all sales made by a seller (includes shipping address)."""
-        payments = await payment_crud.get_payments_by_seller(
+        payments = await self._payment_crud.get_payments_by_seller(
             self.db, seller_id=seller_id
         )
         return [
@@ -115,7 +128,7 @@ class ListingService:
         Returns:
             List of PostResponseSchema with is_banned and is_user_banned populated.
         """
-        posts_with_ban_status = await post_crud.get_by_user_id_with_ban_status(
+        posts_with_ban_status = await self._post_crud.get_by_user_id_with_ban_status(
             self.db, user_id=user_id, skip=skip, limit=limit
         )
 
@@ -136,7 +149,7 @@ class ListingService:
         Returns:
             PostResponseSchema with is_banned and is_user_banned, or None if not found.
         """
-        result = await post_crud.get_by_id_with_ban_status(self.db, id=post_id)
+        result = await self._post_crud.get_by_id_with_ban_status(self.db, id=post_id)
 
         if result is None:
             return None
@@ -145,10 +158,12 @@ class ListingService:
 
 
 def _get_listing_service(
+    post_crud_dep: AnnotatedPostCRUD,
+    payment_crud_dep: AnnotatedPaymentCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
-    return ListingService(db)
+    return ListingService(db, post_crud_dep, payment_crud_dep)
 
 
 AnnotatedListingService = Annotated[ListingService, Depends(_get_listing_service)]

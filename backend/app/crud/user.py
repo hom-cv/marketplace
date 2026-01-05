@@ -110,3 +110,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
 
 user_crud = UserCRUD(User)
 
+
+def get_user_crud() -> UserCRUD:
+    """Dependency provider for UserCRUD instance."""
+    return user_crud
