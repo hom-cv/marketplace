@@ -130,7 +130,7 @@ def create_mock_email_service() -> MagicMock:
 
 def create_mock_settings() -> MagicMock:
     """Create mock application settings."""
-    mock_settings = MagicMock()
+    mock_settings = MagicMock(spec=Settings)
     mock_settings.PLATFORM_FEE_PERCENT = Decimal("10.0")
     mock_settings.VAT_PERCENT = Decimal("7.0")
     mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
