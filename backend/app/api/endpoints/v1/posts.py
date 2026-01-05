@@ -11,7 +11,7 @@ from app.core.exceptions import (
     not_found_error,
 )
 from app.core.security import get_current_user
-from app.crud.post import PostCRUD, post_crud
+from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
@@ -21,11 +21,6 @@ from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
-
-
-def get_post_crud() -> PostCRUD:
-    """Dependency to get PostCRUD instance."""
-    return post_crud
 
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]

@@ -306,3 +306,8 @@ class PaymentCRUD(
 
 
 payment_crud = PaymentCRUD(Payment)
+
+
+def get_payment_crud() -> PaymentCRUD:
+    """Dependency provider for PaymentCRUD instance."""
+    return payment_crud

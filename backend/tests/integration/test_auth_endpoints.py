@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 import pytest
 from httpx import AsyncClient
 
+from app.core.password import get_password_hash
 from tests.integration.conftest import create_mock_user
 
 
@@ -172,7 +173,6 @@ class TestLoginEndpoint:
     ):
         """Successful login should return access token."""
         # Create user with hashed password
-        from app.core.password import get_password_hash
         mock_user_with_password = create_mock_user()
         mock_user_with_password.hashed_password = get_password_hash("correctpassword")
         mock_user_crud.get_by_email.return_value = mock_user_with_password
@@ -197,7 +197,6 @@ class TestLoginEndpoint:
     ):
         """Invalid credentials should return 401 Unauthorized."""
         # User exists but password is wrong
-        from app.core.password import get_password_hash
         mock_user_with_password = create_mock_user()
         mock_user_with_password.hashed_password = get_password_hash("correctpassword")
         mock_user_crud.get_by_email.return_value = mock_user_with_password

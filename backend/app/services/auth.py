@@ -14,18 +14,13 @@ from app.core.exceptions import (
 )
 from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
-from app.crud.user import UserCRUD, user_crud
+from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.models.user import User
 from app.schemas.auth import AuthLoginSchema, AuthRegisterSchema
 from app.services.email_service import AnnotatedEmailService, EmailService
 
 logger = logging.getLogger(__name__)
-
-
-def get_user_crud() -> UserCRUD:
-    """Dependency to get UserCRUD instance."""
-    return user_crud
 
 
 AnnotatedUserCRUD = Annotated[UserCRUD, Depends(get_user_crud)]
@@ -194,4 +189,3 @@ def _get_auth_service(
 
 
 AnnotatedAuthService = Annotated[AuthService, Depends(_get_auth_service)]
-

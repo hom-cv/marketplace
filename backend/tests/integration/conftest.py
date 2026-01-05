@@ -13,21 +13,18 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.api.endpoints.v1.posts import get_post_crud
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user
 from app.core.settings import get_settings
-from app.crud.payment import PaymentCRUD
-from app.crud.post import PostCRUD
-from app.crud.user import UserCRUD
+from app.crud.payment import PaymentCRUD, get_payment_crud
+from app.crud.post import PostCRUD, get_post_crud
+from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.main import create_app
 from app.models.user import User, UserStatus
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
-from app.services.auth import get_user_crud
 from app.services.email_service import _get_email_service
-from app.services.listing_service import get_payment_crud, get_post_crud_for_listing
-from app.services.pricing_service import get_post_crud_for_pricing, PricingService
+from app.services.pricing_service import PricingService
 
 
 # =============================================================================
@@ -226,11 +223,9 @@ async def async_client(
     """
     app = create_app()
 
-    # Override CRUD dependencies (allows service code to run)
+    # Override CRUD dependencies (centralized providers from CRUD modules)
     app.dependency_overrides[get_user_crud] = lambda: mock_user_crud
     app.dependency_overrides[get_post_crud] = lambda: mock_post_crud
-    app.dependency_overrides[get_post_crud_for_listing] = lambda: mock_post_crud
-    app.dependency_overrides[get_post_crud_for_pricing] = lambda: mock_post_crud
     app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
 
     # Override external services
@@ -265,11 +260,9 @@ async def unauthenticated_client(
     """Create an async test client without auth override (for testing 401s)."""
     app = create_app()
 
-    # Override CRUD dependencies
+    # Override CRUD dependencies (centralized providers)
     app.dependency_overrides[get_user_crud] = lambda: mock_user_crud
     app.dependency_overrides[get_post_crud] = lambda: mock_post_crud
-    app.dependency_overrides[get_post_crud_for_listing] = lambda: mock_post_crud
-    app.dependency_overrides[get_post_crud_for_pricing] = lambda: mock_post_crud
     app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
 
     # Override external services

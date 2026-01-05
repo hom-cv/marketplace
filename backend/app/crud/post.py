@@ -371,3 +371,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         return post
 
 post_crud = PostCRUD(Post)
+
+
+def get_post_crud() -> PostCRUD:
+    """Dependency provider for PostCRUD instance."""
+    return post_crud

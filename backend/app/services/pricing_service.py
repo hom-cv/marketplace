@@ -8,17 +8,12 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from app.core.exceptions import not_found_error
 from app.core.settings import AnnotatedSettings, Settings
-from app.crud.post import PostCRUD, post_crud
+from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
 
 
-def get_post_crud_for_pricing() -> PostCRUD:
-    """Dependency to get PostCRUD instance."""
-    return post_crud
-
-
-AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud_for_pricing)]
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 
 
 class PricingService:
@@ -127,4 +122,3 @@ def _get_pricing_service(
 
 
 AnnotatedPricingService = Annotated[PricingService, Depends(_get_pricing_service)]
-

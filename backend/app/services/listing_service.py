@@ -5,8 +5,8 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.payment import PaymentCRUD, payment_crud
-from app.crud.post import PostCRUD, post_crud
+from app.crud.payment import PaymentCRUD, get_payment_crud
+from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
 from app.models.post import Post
@@ -14,17 +14,7 @@ from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
 from app.schemas.post import PostResponseSchema
 
 
-def get_post_crud_for_listing() -> PostCRUD:
-    """Dependency to get PostCRUD instance."""
-    return post_crud
-
-
-def get_payment_crud() -> PaymentCRUD:
-    """Dependency to get PaymentCRUD instance."""
-    return payment_crud
-
-
-AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud_for_listing)]
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
 
 
@@ -177,4 +167,3 @@ def _get_listing_service(
 
 
 AnnotatedListingService = Annotated[ListingService, Depends(_get_listing_service)]
-
