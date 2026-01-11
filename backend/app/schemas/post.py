@@ -105,7 +105,7 @@ class PostCreateSchema(BaseModel):
         max_length=20,
         description="Size of the item (letter or numeric)",
     )
-    measurements: dict[str, float] | None = Field(
+    measurements: dict[str, Any] | None = Field(
         default=None,
         description="Optional measurements in cm",
     )
