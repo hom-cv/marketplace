@@ -1,32 +1,36 @@
 """Posts API endpoints for the marketplace."""
 
+import json
 from decimal import Decimal
 from typing import Annotated, Literal
-
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from pydantic import ValidationError
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
 )
-from app.services.listing_service import AnnotatedListingService
-from app.services.pricing_service import AnnotatedPricingService
 from app.core.security import get_current_user
 from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
-from app.schemas.post import PaginatedPostsResponse, PostResponseSchema, PostCreateSchema
+from app.schemas.post import (
+    PaginatedPostsResponse,
+    PostCreateSchema,
+    PostResponseSchema,
+)
 from app.schemas.post import PostType as PostTypeSchema
+from app.services.listing_service import AnnotatedListingService
+from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
-import json
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from pydantic import ValidationError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
+
 
 @router.post(
     "",
