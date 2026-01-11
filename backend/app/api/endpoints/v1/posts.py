@@ -96,7 +96,7 @@ async def create_post(
         )
     except ValidationError as e:
         # Return all validation errors, not just the first one.
-        error_details = [f"{error['loc'][0]}: {error['msg']}" for error in e.errors()]
+        error_details = [f"{'.'.join(map(str, error['loc']))}: {error['msg']}" if error['loc'] else error['msg'] for error in e.errors()]
         raise bad_request_error(f"Validation failed: {'; '.join(error_details)}")
 
     image_urls = await storage_service.upload_images(images, folder="posts")
