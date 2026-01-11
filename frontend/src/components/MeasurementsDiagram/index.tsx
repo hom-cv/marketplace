@@ -150,7 +150,7 @@ export function MeasurementsDiagram({ type, measurements }: MeasurementsDiagramP
       <line x1="50" y1="40" x2="75" y2="40" stroke="#ced4da" strokeWidth="1" strokeDasharray="2" />
       <line x1="50" y1="120" x2="140" y2="120" stroke="#ced4da" strokeWidth="1" strokeDasharray="2" />
       <text x="45" y="80" textAnchor="end" className={styles.labelGreen} style={{ fontSize: "11px", fontWeight: 600 }}>
-        {t("measurements.rise")}
+        {t("measurements.rise")} {getMeasurementValue("rise") && `(${getMeasurementValue("rise")})`}
       </text>
 
       {/* INSEAM - Orange */}
