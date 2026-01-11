@@ -138,7 +138,7 @@ class PostUpdateSchema(BaseModel):
     price: Decimal | None = Field(None, gt=0, le=1000000, decimal_places=2)
     shipping_cost: Decimal | None = Field(None, ge=0, le=10000, decimal_places=2)
     size: str | None = Field(None, min_length=1, max_length=20)
-    measurements: dict[str, float] | None = None
+    measurements: dict[str, Any] | None = None
 
 
 class PostResponseSchema(BaseModel):
