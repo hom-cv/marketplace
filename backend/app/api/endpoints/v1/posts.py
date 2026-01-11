@@ -95,10 +95,9 @@ async def create_post(
             measurements=measurements_dict,
         )
     except ValidationError as e:
-        # Extract the first error message
-        error_msg = e.errors()[0]["msg"]
-        field = e.errors()[0]["loc"][0]
-        raise bad_request_error(f"Validation error in {field}: {error_msg}")
+        # Return all validation errors, not just the first one.
+        error_details = [f"{error['loc'][0]}: {error['msg']}" for error in e.errors()]
+        raise bad_request_error(f"Validation failed: {'; '.join(error_details)}")
 
     image_urls = await storage_service.upload_images(images, folder="posts")
 
