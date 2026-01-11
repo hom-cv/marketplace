@@ -41,9 +41,6 @@ class TopMeasurements(BaseModel):
     bust: float | None = Field(None, ge=0, le=200, description="Bust/chest width")
     sleeve: float | None = Field(None, ge=0, le=200, description="Sleeve length")
 
-    class Config:
-        extra = "forbid"
-
 
 class PantsMeasurements(BaseModel):
     """Measurements for pants (all in cm)."""
@@ -53,17 +50,11 @@ class PantsMeasurements(BaseModel):
     rise: float | None = Field(None, ge=0, le=100, description="Rise length")
     hip: float | None = Field(None, ge=0, le=200, description="Hip width")
 
-    class Config:
-        extra = "forbid"
-
 
 class ShoesMeasurements(BaseModel):
     """Measurements for shoes (in cm)."""
 
     insole_length: float | None = Field(None, ge=0, le=50, description="Insole length")
-
-    class Config:
-        extra = "forbid"
 
 
 class PostCreateSchema(BaseModel):
