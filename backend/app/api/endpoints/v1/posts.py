@@ -4,6 +4,7 @@ from decimal import Decimal
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -18,7 +19,7 @@ from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
-from app.schemas.post import PaginatedPostsResponse, PostResponseSchema
+from app.schemas.post import PaginatedPostsResponse, PostResponseSchema, PostCreateSchema
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.storage_service import AnnotatedStorageService
 import json
@@ -77,6 +78,23 @@ async def create_post(
             measurements_dict = json.loads(measurements)
         except json.JSONDecodeError:
             raise bad_request_error("Invalid measurements JSON format")
+
+    # Validate input using PostCreateSchema
+    try:
+        PostCreateSchema(
+            title=title,
+            description=description,
+            type=type,
+            price=price,
+            shipping_cost=shipping_cost,
+            size=size,
+            measurements=measurements_dict,
+        )
+    except ValidationError as e:
+        # Extract the first error message
+        error_msg = e.errors()[0]["msg"]
+        field = e.errors()[0]["loc"][0]
+        raise bad_request_error(f"Validation error in {field}: {error_msg}")
 
     image_urls = await storage_service.upload_images(images, folder="posts")
 
