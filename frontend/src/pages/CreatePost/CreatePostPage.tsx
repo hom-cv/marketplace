@@ -45,7 +45,7 @@ import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
-import { MeasurementsDiagram } from "@/components/MeasurementsDiagram";
+
 import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
@@ -434,8 +434,7 @@ export function CreatePostPage() {
                         {t("create.form.measurementsDescription")}
                       </Text>
 
-                      {/* SVG Diagram */}
-                      {type && <MeasurementsDiagram type={type} measurements={measurements} />}
+
 
                       {/* Standard Measurements */}
                       <SimpleGrid cols={{ base: 2, sm: 4 }}>
