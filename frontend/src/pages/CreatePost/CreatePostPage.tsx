@@ -194,7 +194,10 @@ export function CreatePostPage() {
     const allMeasurements = { ...cleanMeasurements } as Record<string, number | undefined>;
     extraMeasurements.forEach((extra) => {
       if (extra.label && extra.value) {
-        allMeasurements[extra.label.toLowerCase().replace(/\s+/g, "_")] = parseFloat(extra.value);
+        const key = extra.label.toLowerCase().replace(/\s+/g, "_");
+        if (allMeasurements[key] === undefined) {
+          allMeasurements[key] = parseFloat(extra.value);
+        }
       }
     });
 
