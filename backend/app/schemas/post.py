@@ -92,9 +92,9 @@ def validate_measurements_for_post_type(
     if post_type in (PostType.SHIRT, PostType.JACKET, PostType.OTHER):
         _validate_nested_measurements(measurements, TopMeasurements, post_type.value)
     elif post_type == PostType.PANTS:
-        _validate_nested_measurements(measurements, PantsMeasurements, "PANTS")
+        _validate_nested_measurements(measurements, PantsMeasurements, post_type.value)
     elif post_type == PostType.SHOES:
-        _validate_nested_measurements(measurements, ShoesMeasurements, "SHOES")
+        _validate_nested_measurements(measurements, ShoesMeasurements, post_type.value)
     elif post_type == PostType.ACCESSORIES and measurements:
         raise ValueError("Measurements are not supported for ACCESSORIES type.")
 
