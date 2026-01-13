@@ -40,6 +40,7 @@ import { getPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { ReportModal } from "@/components/ReportModal";
+import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import styles from "./PostViewPage.module.css";
@@ -240,6 +241,11 @@ export function PostViewPage() {
                   {post.description}
                 </Text>
               </div>
+
+              {/* Measurements Section */}
+              {post.measurements && (
+                <MeasurementsDisplay measurements={post.measurements} />
+              )}
 
               <Divider />
 

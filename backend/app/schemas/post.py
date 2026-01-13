@@ -57,7 +57,7 @@ class ShoesMeasurements(BaseModel):
     insole_length: float | None = Field(None, ge=0, le=50, description="Insole length")
 
 
-def _validate_measurements(
+def _validate_nested_measurements(
     measurements: dict[str, Any], model_cls: type[BaseModel], type_name: str
 ) -> None:
     """Validate measurements against a specific model, converting ValidationError to ValueError."""
@@ -72,6 +72,31 @@ def _validate_measurements(
         raise ValueError(
             f"Invalid measurements for {type_name}: {'; '.join(error_messages)}"
         )
+
+
+def validate_measurements_for_post_type(
+    post_type: "PostType", measurements: dict[str, Any] | None
+) -> None:
+    """
+    Validate measurements structure based on post type.
+    
+    This function can be called directly from endpoints without
+    needing to instantiate the full PostCreateSchema.
+    
+    Raises:
+        ValueError: If measurements are invalid for the given post type.
+    """
+    if measurements is None:
+        return
+
+    if post_type in (PostType.SHIRT, PostType.JACKET, PostType.OTHER):
+        _validate_nested_measurements(measurements, TopMeasurements, post_type.value)
+    elif post_type == PostType.PANTS:
+        _validate_nested_measurements(measurements, PantsMeasurements, "PANTS")
+    elif post_type == PostType.SHOES:
+        _validate_nested_measurements(measurements, ShoesMeasurements, "SHOES")
+    elif post_type == PostType.ACCESSORIES and measurements:
+        raise ValueError("Measurements are not supported for ACCESSORIES type.")
 
 
 class PostCreateSchema(BaseModel):
@@ -121,19 +146,7 @@ class PostCreateSchema(BaseModel):
     @model_validator(mode="after")
     def validate_measurements_for_type(self) -> "PostCreateSchema":
         """Validate measurements structure based on post type."""
-        if self.measurements is None:
-            return self
-
-        if self.type in (PostType.SHIRT, PostType.JACKET, PostType.OTHER):
-            _validate_measurements(self.measurements, TopMeasurements, self.type.value)
-        elif self.type == PostType.PANTS:
-            _validate_measurements(self.measurements, PantsMeasurements, "PANTS")
-        elif self.type == PostType.SHOES:
-            _validate_measurements(self.measurements, ShoesMeasurements, "SHOES")
-        # ACCESSORIES has no measurements
-        elif self.type == PostType.ACCESSORIES and self.measurements:
-            raise ValueError("Measurements are not supported for ACCESSORIES type.")
-
+        validate_measurements_for_post_type(self.type, self.measurements)
         return self
 
 

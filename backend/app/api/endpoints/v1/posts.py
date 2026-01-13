@@ -16,15 +16,14 @@ from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
-    PostCreateSchema,
     PostResponseSchema,
+    validate_measurements_for_post_type,
 )
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -83,21 +82,12 @@ async def create_post(
         except json.JSONDecodeError:
             raise bad_request_error("Invalid measurements JSON format")
 
-    # Validate input using PostCreateSchema
+    # Validate measurements for the post type
+    # (Other field validations are handled by FastAPI Form() constraints)
     try:
-        PostCreateSchema(
-            title=title,
-            description=description,
-            type=type,
-            price=price,
-            shipping_cost=shipping_cost,
-            size=size,
-            measurements=measurements_dict,
-        )
-    except ValidationError as e:
-        # Return all validation errors, not just the first one.
-        error_details = [f"{'.'.join(map(str, error['loc']))}: {error['msg']}" if error['loc'] else error['msg'] for error in e.errors()]
-        raise bad_request_error(f"Validation failed: {'; '.join(error_details)}")
+        validate_measurements_for_post_type(type, measurements_dict)
+    except ValueError as e:
+        raise bad_request_error(str(e))
 
     image_urls = await storage_service.upload_images(images, folder="posts")
 
