@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Any
 
 from app.schemas.user import UserResponseSchema
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 
 class PostType(str, Enum):
@@ -55,6 +55,23 @@ class ShoesMeasurements(BaseModel):
     """Measurements for shoes (in cm)."""
 
     insole_length: float | None = Field(None, ge=0, le=50, description="Insole length")
+
+
+def _validate_measurements(
+    measurements: dict[str, Any], model_cls: type[BaseModel], type_name: str
+) -> None:
+    """Validate measurements against a specific model, converting ValidationError to ValueError."""
+    try:
+        model_cls(**measurements)
+    except ValidationError as e:
+        errors = e.errors()
+        error_messages = [
+            f"{'.'.join(str(loc) for loc in err['loc'])}: {err['msg']}"
+            for err in errors
+        ]
+        raise ValueError(
+            f"Invalid measurements for {type_name}: {'; '.join(error_messages)}"
+        )
 
 
 class PostCreateSchema(BaseModel):
@@ -108,11 +125,11 @@ class PostCreateSchema(BaseModel):
             return self
 
         if self.type in (PostType.SHIRT, PostType.JACKET, PostType.OTHER):
-            TopMeasurements(**self.measurements)
+            _validate_measurements(self.measurements, TopMeasurements, self.type.value)
         elif self.type == PostType.PANTS:
-            PantsMeasurements(**self.measurements)
+            _validate_measurements(self.measurements, PantsMeasurements, "PANTS")
         elif self.type == PostType.SHOES:
-            ShoesMeasurements(**self.measurements)
+            _validate_measurements(self.measurements, ShoesMeasurements, "SHOES")
         # ACCESSORIES has no measurements
         elif self.type == PostType.ACCESSORIES and self.measurements:
             raise ValueError("Measurements are not supported for ACCESSORIES type.")

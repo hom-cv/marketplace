@@ -195,9 +195,12 @@ export function CreatePostPage() {
     extraMeasurements.forEach((extra) => {
       if (extra.label && extra.value) {
         const key = extra.label.trim().toLowerCase().replace(/\s+/g, "_");
-        if (key && allMeasurements[key] === undefined) {
-          allMeasurements[key] = parseFloat(extra.value);
+        const numValue = parseFloat(extra.value);
+        // Only add valid numeric values (filter out NaN for consistency with standard measurements)
+        if (key && allMeasurements[key] === undefined && !isNaN(numValue)) {
+          allMeasurements[key] = numValue;
         }
+      }
     });
 
     const finalMeasurements = Object.keys(allMeasurements).length > 0 ? allMeasurements as Measurements : undefined;
