@@ -185,7 +185,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
                     <Group gap="xs">
                       {availableSizes.pants.map((size) => (
                         <Checkbox
-                          key={size}
+                          key={`pants-${size}`}
                           label={size}
                           size="xs"
                           checked={filters.sizes.includes(size)}
