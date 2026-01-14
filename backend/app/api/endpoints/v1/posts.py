@@ -58,12 +58,17 @@ async def create_post(
     Maximum 5 images allowed. Supported formats: jpg, jpeg, png, gif, webp.
 
     Size is required. Valid sizes depend on category:
-    - Shirts/Jackets/Tops: XS, S, M, L, XL, XXL, XXXL
+    - Shirts/Jackets/Other: XS, S, M, L, XL, XXL, XXXL
     - Pants: 26, 28, 30, 32, 34, 36, 38, 40, 42, 44
     - Shoes: 35-48 (Italian/EU sizing)
     - Accessories: ONE_SIZE
 
     Measurements is an optional JSON string with cm values.
+    - Shirts/Jackets: shoulder, length, bust, sleeve
+    - Pants: total_length, inseam, rise, hip
+    - Shoes: insole_length
+    - Other: custom measurements only (no predefined fields)
+    - Accessories: not supported
 
     Requires the user to be a verified seller.
     """
