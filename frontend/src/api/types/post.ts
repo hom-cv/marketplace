@@ -23,6 +23,7 @@ export interface TopMeasurements {
   length?: number;
   bust?: number;
   sleeve?: number;
+  [key: string]: number | undefined;
 }
 
 export interface PantsMeasurements {
@@ -30,10 +31,12 @@ export interface PantsMeasurements {
   inseam?: number;
   rise?: number;
   hip?: number;
+  [key: string]: number | undefined;
 }
 
 export interface ShoesMeasurements {
   insole_length?: number;
+  [key: string]: number | undefined;
 }
 
 export type Measurements = TopMeasurements | PantsMeasurements | ShoesMeasurements;
