@@ -165,7 +165,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
                     <Group gap="xs">
                       {availableSizes.letter.map((size) => (
                         <Checkbox
-                          key={size}
+                          key={`letter-${size}`}
                           label={size}
                           size="xs"
                           checked={filters.sizes.includes(size)}
