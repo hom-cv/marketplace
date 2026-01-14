@@ -18,6 +18,12 @@ export async function createPost(data: CreatePostRequest): Promise<Post> {
   formData.append("type", data.type);
   formData.append("price", data.price.toString());
   formData.append("shipping_cost", (data.shipping_cost ?? 0).toString());
+  formData.append("size", data.size);
+
+  // Append measurements as JSON if provided
+  if (data.measurements && Object.keys(data.measurements).length > 0) {
+    formData.append("measurements", JSON.stringify(data.measurements));
+  }
 
   // Append multiple images
   if (data.images && data.images.length > 0) {
@@ -54,6 +60,9 @@ export async function getPosts(
 
   if (filters?.types && filters.types.length > 0) {
     filters.types.forEach((type) => params.append("types", type));
+  }
+  if (filters?.sizes && filters.sizes.length > 0) {
+    filters.sizes.forEach((size) => params.append("sizes", size));
   }
   if (filters?.minPrice !== undefined) {
     params.append("min_price", String(filters.minPrice));

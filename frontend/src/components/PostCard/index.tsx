@@ -161,6 +161,13 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
             {post.title}
           </Text>
 
+          {/* Size display */}
+          {post.size && (
+            <Text size="sm" c="dimmed">
+              {t("postCard.size")}: {post.size}
+            </Text>
+          )}
+
           <Group justify="space-between" align="center">
             <Text size="xl" fw={700} c="dark">
               ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

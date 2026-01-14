@@ -1,6 +1,6 @@
 /**
  * Filters Sidebar for the main feed
- * Contains filters for post type, price range, etc.
+ * Contains filters for post type, price range, and sizes.
  */
 
 import { useMemo } from "react";
@@ -17,9 +17,11 @@ import {
 import { IconFilter, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { PostType } from "@/api/types/post";
+import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 
 interface FiltersState {
   types: PostType[];
+  sizes: string[];
   priceRange: [number, number];
 }
 
@@ -42,11 +44,37 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
     { value: "OTHER", label: tListings("categories.other") },
   ], [tListings]);
 
+  // Determine which size categories to show based on selected post types
+  // Uses SIZE_CATEGORY_CONFIG as single source of truth
+  const visibleSizeCategories = useMemo(() => {
+    const selectedTypes = filters.types;
+
+    return SIZE_CATEGORY_CONFIG.map((config) => {
+      // If no types selected, show all size categories
+      // Otherwise, only show if any selected type uses this size category
+      const isVisible = selectedTypes.length === 0 ||
+        config.postTypes.some((pt) => selectedTypes.includes(pt));
+
+      return {
+        ...config,
+        isVisible,
+      };
+    }).filter((c) => c.isVisible);
+  }, [filters.types]);
+
   const handleTypeToggle = (type: PostType) => {
     const newTypes = filters.types.includes(type)
       ? filters.types.filter((t) => t !== type)
       : [...filters.types, type];
-    onFiltersChange({ ...filters, types: newTypes });
+    // Clear sizes when category changes to avoid confusion
+    onFiltersChange({ ...filters, types: newTypes, sizes: [] });
+  };
+
+  const handleSizeToggle = (size: string) => {
+    const newSizes = filters.sizes.includes(size)
+      ? filters.sizes.filter((s) => s !== size)
+      : [...filters.sizes, size];
+    onFiltersChange({ ...filters, sizes: newSizes });
   };
 
   const handlePriceChange = (value: [number, number]) => {
@@ -54,10 +82,12 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
   };
 
   const handleClearFilters = () => {
-    onFiltersChange({ types: [], priceRange: [0, 1000] });
+    onFiltersChange({ types: [], sizes: [], priceRange: [0, 1000] });
   };
 
-  const hasActiveFilters = filters.types.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 1000;
+  const hasActiveFilters = filters.types.length > 0 || filters.sizes.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 1000;
+
+  const hasSizeOptions = visibleSizeCategories.length > 0;
 
   return (
     <Box
@@ -104,6 +134,42 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
         </Box>
 
         <Divider mx="calc(var(--mantine-spacing-md) * -1)" />
+
+        {/* Size Filter */}
+        {hasSizeOptions && (
+          <>
+            <Box>
+              <Text size="sm" fw={500} mb="sm">
+                {t("filtersSidebar.size")}
+              </Text>
+              <Stack gap="md">
+                {/* Data-driven size category rendering from SIZE_CATEGORY_CONFIG */}
+                {visibleSizeCategories.map((category) => (
+                  <Box key={category.category}>
+                    {filters.types.length > 0 && (
+                      <Text size="xs" c="dimmed" mb="xs">
+                        {tListings(category.labelKey)}
+                      </Text>
+                    )}
+                    <Group gap="xs">
+                      {category.sizes.map((size) => (
+                        <Checkbox
+                          key={`${category.category}-${size}`}
+                          label={category.formatLabel ? category.formatLabel(size) : size}
+                          size="xs"
+                          checked={filters.sizes.includes(size)}
+                          onChange={() => handleSizeToggle(size)}
+                        />
+                      ))}
+                    </Group>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+
+            <Divider mx="calc(var(--mantine-spacing-md) * -1)" />
+          </>
+        )}
 
         {/* Price Range Filter */}
         <Box>

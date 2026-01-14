@@ -9,13 +9,32 @@
       "descriptionPlaceholder": "อธิบายสินค้าของคุณ - สภาพ, ขนาด, แบรนด์, ฯลฯ",
       "category": "หมวดหมู่",
       "categoryPlaceholder": "เลือกประเภท",
+      "size": "ไซส์",
+      "sizePlaceholder": "เลือกไซส์",
       "price": "ราคา (฿)",
       "shippingCost": "ค่าจัดส่ง (฿)",
       "shippingDescription": "ตั้งค่าเป็น 0 สำหรับจัดส่งฟรี",
+      "addMeasurements": "เพิ่มขนาด (ไม่บังคับ)",
+      "measurementsDescription": "เพิ่มขนาดที่แน่นอนเพื่อช่วยให้ผู้ซื้อหาไซส์ที่เหมาะสม",
+      "extraMeasurements": "ขนาดเพิ่มเติม",
+      "measurementLabel": "ชื่อการวัด",
+      "addExtraMeasurement": "เพิ่มขนาดอื่น",
+      "duplicateMeasurement": "ซ้ำกัน: \"{{label}}\" มีอยู่แล้ว",
       "submit": "สร้างรายการ"
     },
     "success": "สร้างรายการเรียบร้อยแล้ว!",
     "error": "ไม่สามารถสร้างรายการได้"
+  },
+  "measurements": {
+    "shoulder": "ไหล่",
+    "length": "ความยาว",
+    "bust": "อก",
+    "sleeve": "แขน",
+    "totalLength": "ความยาวรวม",
+    "inseam": "ตะเข็บใน",
+    "rise": "เป้า",
+    "hip": "สะโพก",
+    "insoleLength": "ความยาวพื้นรองเท้า"
   },
   "categories": {
     "shirt": "เสื้อ",
@@ -24,6 +43,11 @@
     "shoes": "รองเท้า",
     "accessories": "เครื่องประดับ",
     "other": "อื่นๆ"
+  },
+  "sizeCategories": {
+    "tops": "เสื้อผ้าส่วนบน (เสื้อ/แจ็คเก็ต)",
+    "pants": "กางเกง (เอว)",
+    "shoes": "รองเท้า (EU)"
   },
   "images": {
     "noImages": "ยังไม่ได้อัปโหลดรูปภาพ",
@@ -40,6 +64,7 @@
     "backToExplore": "กลับไปสำรวจ",
     "yourListing": "รายการของคุณ",
     "description": "รายละเอียด",
+    "measurements": "ขนาด",
     "buyNow": "ซื้อเลย",
     "yourEarnings": "รายได้ของคุณ (หากขายได้)",
     "reportListing": "รายงานรายการ",

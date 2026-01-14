@@ -85,6 +85,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         skip: int = 0,
         limit: int = 50,
         types: list[PostType] | None = None,
+        sizes: list[str] | None = None,
         min_price: Decimal | None = None,
         max_price: Decimal | None = None,
         search: str | None = None,
@@ -141,6 +142,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         # Apply filters
         if types:
             base_query = base_query.where(self.model.type.in_(types))
+
+        if sizes:
+            # Filter by size - this automatically excludes posts with no size (NULL)
+            base_query = base_query.where(self.model.size.in_(sizes))
 
         if min_price is not None:
             base_query = base_query.where(self.model.price >= min_price)

@@ -9,13 +9,32 @@
       "descriptionPlaceholder": "Describe your item - condition, size, brand, etc.",
       "category": "Category",
       "categoryPlaceholder": "Select type",
+      "size": "Size",
+      "sizePlaceholder": "Select size",
       "price": "Price (฿)",
       "shippingCost": "Shipping Cost (฿)",
       "shippingDescription": "Set to 0 for free shipping",
+      "addMeasurements": "Add Measurements (Optional)",
+      "measurementsDescription": "Add exact measurements to help buyers find the right fit",
+      "extraMeasurements": "Extra Measurements",
+      "measurementLabel": "Measurement name",
+      "addExtraMeasurement": "Add another measurement",
+      "duplicateMeasurement": "Duplicate measurement: \"{{label}}\" already exists",
       "submit": "Create Listing"
     },
     "success": "Listing created successfully!",
     "error": "Failed to create listing"
+  },
+  "measurements": {
+    "shoulder": "Shoulder",
+    "length": "Length",
+    "bust": "Bust",
+    "sleeve": "Sleeve",
+    "totalLength": "Total Length",
+    "inseam": "Inseam",
+    "rise": "Rise",
+    "hip": "Hip",
+    "insoleLength": "Insole Length"
   },
   "categories": {
     "shirt": "Shirt",
@@ -24,6 +43,11 @@
     "shoes": "Shoes",
     "accessories": "Accessories",
     "other": "Other"
+  },
+  "sizeCategories": {
+    "tops": "Tops (Shirt/Jacket)",
+    "pants": "Pants (Waist)",
+    "shoes": "Shoes (EU)"
   },
   "images": {
     "noImages": "No images uploaded",
@@ -40,6 +64,7 @@
     "backToExplore": "Back to Explore",
     "yourListing": "Your Listing",
     "description": "Description",
+    "measurements": "Measurements",
     "buyNow": "Buy Now",
     "yourEarnings": "Your Earnings (if sold)",
     "reportListing": "Report Listing",
