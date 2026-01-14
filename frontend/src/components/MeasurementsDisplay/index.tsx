@@ -20,8 +20,7 @@ const MEASUREMENT_KEY_MAP: Record<string, string> = {
 };
 
 interface MeasurementsDisplayProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  measurements: Record<string, any>;
+  measurements: Record<string, number | null | undefined>;
   showDivider?: boolean;
 }
 
