@@ -190,12 +190,10 @@ export function CreatePostPage() {
 
     if (!title || !description || !type || !price || !size) return;
 
-    // Filter out undefined measurements
     const cleanMeasurements = Object.fromEntries(
       Object.entries(measurements).filter(([, v]) => v !== undefined && v !== null)
     ) as Measurements;
 
-    // Add extra measurements to the object, checking for duplicates
     const allMeasurements = { ...cleanMeasurements } as Record<string, number | undefined>;
     const seenKeys = new Set(Object.keys(cleanMeasurements));
 
