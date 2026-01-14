@@ -5,19 +5,7 @@
 import { Text, Paper, Group, Divider } from "@mantine/core";
 import { IconRuler } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-
-// Map snake_case measurement keys to translation keys
-const MEASUREMENT_KEY_MAP: Record<string, string> = {
-  shoulder: "shoulder",
-  length: "length",
-  bust: "bust",
-  sleeve: "sleeve",
-  total_length: "totalLength",
-  inseam: "inseam",
-  rise: "rise",
-  hip: "hip",
-  insole_length: "insoleLength",
-};
+import { MEASUREMENT_KEY_TO_TRANSLATION } from "@/api/types/post";
 
 interface MeasurementsDisplayProps {
   measurements: Record<string, number | null | undefined>;
@@ -40,7 +28,7 @@ export function MeasurementsDisplay({
   }
 
   const formatLabel = (key: string): string => {
-    const translationKey = MEASUREMENT_KEY_MAP[key];
+    const translationKey = MEASUREMENT_KEY_TO_TRANSLATION[key];
     if (translationKey) {
       return t(`measurements.${translationKey}`);
     }

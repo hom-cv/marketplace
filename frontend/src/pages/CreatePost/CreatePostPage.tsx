@@ -47,7 +47,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
 
 import type { PostType, Measurements } from "@/api/types/post";
-import { getSizesForType } from "@/api/types/post";
+import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
 
 export function CreatePostPage() {
@@ -98,34 +98,13 @@ export function CreatePostPage() {
     setExtraMeasurements([]);
   }, [type]);
 
-  // Get measurement fields based on category
+  // Get measurement fields based on category (from centralized config)
   const measurementFields = useMemo(() => {
     if (!type) return [];
-
-    switch (type) {
-      case "SHIRT":
-      case "JACKET":
-      case "OTHER":
-        return [
-          { key: "shoulder", label: t("measurements.shoulder") },
-          { key: "length", label: t("measurements.length") },
-          { key: "bust", label: t("measurements.bust") },
-          { key: "sleeve", label: t("measurements.sleeve") },
-        ];
-      case "PANTS":
-        return [
-          { key: "total_length", label: t("measurements.totalLength") },
-          { key: "inseam", label: t("measurements.inseam") },
-          { key: "rise", label: t("measurements.rise") },
-          { key: "hip", label: t("measurements.hip") },
-        ];
-      case "SHOES":
-        return [
-          { key: "insole_length", label: t("measurements.insoleLength") },
-        ];
-      default:
-        return [];
-    }
+    return MEASUREMENT_FIELDS[type].map((field) => ({
+      key: field.key,
+      label: t(`measurements.${field.translationKey}`),
+    }));
   }, [type, t]);
 
   const imagePreviews = useMemo(() => {

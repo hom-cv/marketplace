@@ -42,6 +42,58 @@ export interface ShoesMeasurements {
 
 export type Measurements = TopMeasurements | PantsMeasurements | ShoesMeasurements;
 
+/**
+ * Measurement field configuration per category.
+ * Maps field keys (snake_case) to i18n translation keys (camelCase).
+ * Used for both form input and display.
+ */
+export interface MeasurementFieldConfig {
+  key: string;
+  translationKey: string;
+}
+
+export const MEASUREMENT_FIELDS: Record<PostType, readonly MeasurementFieldConfig[]> = {
+  SHIRT: [
+    { key: "shoulder", translationKey: "shoulder" },
+    { key: "length", translationKey: "length" },
+    { key: "bust", translationKey: "bust" },
+    { key: "sleeve", translationKey: "sleeve" },
+  ],
+  JACKET: [
+    { key: "shoulder", translationKey: "shoulder" },
+    { key: "length", translationKey: "length" },
+    { key: "bust", translationKey: "bust" },
+    { key: "sleeve", translationKey: "sleeve" },
+  ],
+  OTHER: [
+    { key: "shoulder", translationKey: "shoulder" },
+    { key: "length", translationKey: "length" },
+    { key: "bust", translationKey: "bust" },
+    { key: "sleeve", translationKey: "sleeve" },
+  ],
+  PANTS: [
+    { key: "total_length", translationKey: "totalLength" },
+    { key: "inseam", translationKey: "inseam" },
+    { key: "rise", translationKey: "rise" },
+    { key: "hip", translationKey: "hip" },
+  ],
+  SHOES: [
+    { key: "insole_length", translationKey: "insoleLength" },
+  ],
+  ACCESSORIES: [],
+};
+
+/**
+ * Map from snake_case measurement keys to i18n translation keys.
+ * Used for displaying measurement values with translated labels.
+ */
+export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> = Object.values(
+  MEASUREMENT_FIELDS
+).flat().reduce((acc, field) => {
+  acc[field.key] = field.translationKey;
+  return acc;
+}, {} as Record<string, string>);
+
 // Helper to get valid sizes for a category
 export function getSizesForType(type: PostType): readonly string[] {
   switch (type) {
