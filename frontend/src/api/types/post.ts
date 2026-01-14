@@ -95,7 +95,87 @@ export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> = Object.val
   return acc;
 }, {} as Record<string, string>);
 
-// Helper to get valid sizes for a category
+/**
+ * Size category identifiers used for filtering and display.
+ */
+export type SizeCategory = "letter" | "pants" | "shoes" | "one_size";
+
+/**
+ * Configuration for each size category.
+ * Single source of truth for mapping between post types and size groups.
+ */
+export interface SizeCategoryConfig {
+  /** Size category identifier */
+  category: SizeCategory;
+  /** Available sizes in this category */
+  sizes: readonly string[];
+  /** Post types that use this size category */
+  postTypes: readonly PostType[];
+  /** i18n key for the category label (e.g., "sizeCategories.tops") */
+  labelKey: string;
+  /** Optional label formatter (e.g., adding "EU" prefix for shoes) */
+  formatLabel?: (size: string) => string;
+}
+
+/**
+ * Unified size category configuration.
+ * This is the single source of truth for:
+ * - Which sizes belong to which category
+ * - Which post types use which size category
+ * - How to display size labels
+ */
+export const SIZE_CATEGORY_CONFIG: readonly SizeCategoryConfig[] = [
+  {
+    category: "letter",
+    sizes: LETTER_SIZES,
+    postTypes: ["SHIRT", "JACKET", "OTHER"],
+    labelKey: "sizeCategories.tops",
+  },
+  {
+    category: "pants",
+    sizes: PANTS_SIZES,
+    postTypes: ["PANTS"],
+    labelKey: "sizeCategories.pants",
+  },
+  {
+    category: "shoes",
+    sizes: SHOE_SIZES,
+    postTypes: ["SHOES"],
+    labelKey: "sizeCategories.shoes",
+    formatLabel: (size) => `EU ${size}`,
+  },
+  {
+    category: "one_size",
+    sizes: ["ONE_SIZE"],
+    postTypes: ["ACCESSORIES"],
+    labelKey: "sizeCategories.accessories",
+  },
+];
+
+/**
+ * Map from PostType to its size category for quick lookup.
+ * Derived from SIZE_CATEGORY_CONFIG.
+ */
+export const POST_TYPE_TO_SIZE_CATEGORY: Record<PostType, SizeCategory> =
+  SIZE_CATEGORY_CONFIG.reduce((acc, config) => {
+    for (const postType of config.postTypes) {
+      acc[postType] = config.category;
+    }
+    return acc;
+  }, {} as Record<PostType, SizeCategory>);
+
+/**
+ * Helper to ensure exhaustive type checking at compile time.
+ * If a new PostType is added but not handled, TypeScript will error.
+ */
+function assertNever(value: never): never {
+  throw new Error(`Unhandled post type: ${value}`);
+}
+
+/**
+ * Get valid sizes for a post type category.
+ * Uses SIZE_CATEGORY_CONFIG as the single source of truth.
+ */
 export function getSizesForType(type: PostType): readonly string[] {
   switch (type) {
     case "SHIRT":
@@ -109,7 +189,8 @@ export function getSizesForType(type: PostType): readonly string[] {
     case "ACCESSORIES":
       return ["ONE_SIZE"];
     default:
-      return [];
+      // Compile-time exhaustive check - will error if a PostType case is missing
+      return assertNever(type);
   }
 }
 

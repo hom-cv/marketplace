@@ -17,7 +17,7 @@ import {
 import { IconFilter, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { PostType } from "@/api/types/post";
-import { LETTER_SIZES, PANTS_SIZES, SHOE_SIZES } from "@/api/types/post";
+import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 
 interface FiltersState {
   types: PostType[];
@@ -29,19 +29,6 @@ interface FiltersSidebarProps {
   filters: FiltersState;
   onFiltersChange: (filters: FiltersState) => void;
 }
-
-/** Configuration for size filter categories */
-interface SizeCategoryConfig {
-  key: string;
-  labelKey: string;
-  formatLabel?: (size: string) => string;
-}
-
-const SIZE_CATEGORIES: SizeCategoryConfig[] = [
-  { key: "letter", labelKey: "sizeCategories.tops" },
-  { key: "pants", labelKey: "sizeCategories.pants" },
-  { key: "shoes", labelKey: "sizeCategories.shoes", formatLabel: (size) => `EU ${size}` },
-];
 
 export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps) {
   const { t } = useTranslation("common");
@@ -57,32 +44,22 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
     { value: "OTHER", label: tListings("categories.other") },
   ], [tListings]);
 
-  // Determine which size options to show based on selected categories
-  const availableSizes = useMemo(() => {
+  // Determine which size categories to show based on selected post types
+  // Uses SIZE_CATEGORY_CONFIG as single source of truth
+  const visibleSizeCategories = useMemo(() => {
     const selectedTypes = filters.types;
 
-    // If no types selected, show all sizes
-    if (selectedTypes.length === 0) {
+    return SIZE_CATEGORY_CONFIG.map((config) => {
+      // If no types selected, show all size categories
+      // Otherwise, only show if any selected type uses this size category
+      const isVisible = selectedTypes.length === 0 ||
+        config.postTypes.some((pt) => selectedTypes.includes(pt));
+
       return {
-        letter: [...LETTER_SIZES],
-        pants: [...PANTS_SIZES],
-        shoes: [...SHOE_SIZES],
-        hasAccessories: true,
+        ...config,
+        isVisible,
       };
-    }
-
-    // Only show relevant sizes based on selected categories
-    const hasTopTypes = selectedTypes.some(t => ["SHIRT", "JACKET", "OTHER"].includes(t));
-    const hasPants = selectedTypes.includes("PANTS");
-    const hasShoes = selectedTypes.includes("SHOES");
-    const hasAccessories = selectedTypes.includes("ACCESSORIES");
-
-    return {
-      letter: hasTopTypes ? [...LETTER_SIZES] : [],
-      pants: hasPants ? [...PANTS_SIZES] : [],
-      shoes: hasShoes ? [...SHOE_SIZES] : [],
-      hasAccessories,
-    };
+    }).filter((c) => c.isVisible);
   }, [filters.types]);
 
   const handleTypeToggle = (type: PostType) => {
@@ -110,7 +87,7 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
 
   const hasActiveFilters = filters.types.length > 0 || filters.sizes.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 1000;
 
-  const hasSizeOptions = availableSizes.letter.length > 0 || availableSizes.pants.length > 0 || availableSizes.shoes.length > 0 || availableSizes.hasAccessories;
+  const hasSizeOptions = visibleSizeCategories.length > 0;
 
   return (
     <Box
@@ -166,44 +143,27 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
                 {t("filtersSidebar.size")}
               </Text>
               <Stack gap="md">
-                {/* Data-driven size category rendering */}
-                {SIZE_CATEGORIES.map((category) => {
-                  const sizes = availableSizes[category.key as keyof typeof availableSizes];
-                  if (!Array.isArray(sizes) || sizes.length === 0) return null;
-
-                  return (
-                    <Box key={category.key}>
-                      {filters.types.length > 0 && (
-                        <Text size="xs" c="dimmed" mb="xs">
-                          {tListings(category.labelKey)}
-                        </Text>
-                      )}
-                      <Group gap="xs">
-                        {sizes.map((size) => (
-                          <Checkbox
-                            key={`${category.key}-${size}`}
-                            label={category.formatLabel ? category.formatLabel(size) : size}
-                            size="xs"
-                            checked={filters.sizes.includes(size)}
-                            onChange={() => handleSizeToggle(size)}
-                          />
-                        ))}
-                      </Group>
-                    </Box>
-                  );
-                })}
-
-                {/* ONE_SIZE for accessories */}
-                {availableSizes.hasAccessories && (
-                  <Box>
-                    <Checkbox
-                      label={t("filtersSidebar.oneSize")}
-                      size="xs"
-                      checked={filters.sizes.includes("ONE_SIZE")}
-                      onChange={() => handleSizeToggle("ONE_SIZE")}
-                    />
+                {/* Data-driven size category rendering from SIZE_CATEGORY_CONFIG */}
+                {visibleSizeCategories.map((category) => (
+                  <Box key={category.category}>
+                    {filters.types.length > 0 && (
+                      <Text size="xs" c="dimmed" mb="xs">
+                        {tListings(category.labelKey)}
+                      </Text>
+                    )}
+                    <Group gap="xs">
+                      {category.sizes.map((size) => (
+                        <Checkbox
+                          key={`${category.category}-${size}`}
+                          label={category.formatLabel ? category.formatLabel(size) : size}
+                          size="xs"
+                          checked={filters.sizes.includes(size)}
+                          onChange={() => handleSizeToggle(size)}
+                        />
+                      ))}
+                    </Group>
                   </Box>
-                )}
+                ))}
               </Stack>
             </Box>
 
