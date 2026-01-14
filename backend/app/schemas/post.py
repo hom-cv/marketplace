@@ -36,25 +36,25 @@ class LetterSize(str, Enum):
 class TopMeasurements(BaseModel):
     """Measurements for shirts, jackets, and tops (all in cm)."""
 
-    shoulder: float | None = Field(None, ge=0, le=200, description="Shoulder width")
-    length: float | None = Field(None, ge=0, le=200, description="Total length")
-    bust: float | None = Field(None, ge=0, le=200, description="Bust/chest width")
-    sleeve: float | None = Field(None, ge=0, le=200, description="Sleeve length")
+    shoulder: float | None = Field(None, ge=0, description="Shoulder width")
+    length: float | None = Field(None, ge=0, description="Total length")
+    bust: float | None = Field(None, ge=0, description="Bust/chest width")
+    sleeve: float | None = Field(None, ge=0, description="Sleeve length")
 
 
 class PantsMeasurements(BaseModel):
     """Measurements for pants (all in cm)."""
 
-    total_length: float | None = Field(None, ge=0, le=200, description="Total length")
-    inseam: float | None = Field(None, ge=0, le=200, description="Inseam length")
-    rise: float | None = Field(None, ge=0, le=100, description="Rise length")
-    hip: float | None = Field(None, ge=0, le=200, description="Hip width")
+    total_length: float | None = Field(None, ge=0, description="Total length")
+    inseam: float | None = Field(None, ge=0, description="Inseam length")
+    rise: float | None = Field(None, ge=0, description="Rise length")
+    hip: float | None = Field(None, ge=0, description="Hip width")
 
 
 class ShoesMeasurements(BaseModel):
     """Measurements for shoes (in cm)."""
 
-    insole_length: float | None = Field(None, ge=0, le=50, description="Insole length")
+    insole_length: float | None = Field(None, ge=0, description="Insole length")
 
 
 def _validate_nested_measurements(

@@ -446,7 +446,6 @@ export function CreatePostPage() {
                             placeholder="cm"
                             size="sm"
                             min={0}
-                            max={200}
                             decimalScale={1}
                             value={(measurements as Record<string, number | undefined>)[field.key] ?? ""}
                             onChange={(value) => handleMeasurementChange(field.key, value)}
@@ -473,7 +472,6 @@ export function CreatePostPage() {
                                   size="sm"
                                   style={{ width: 100 }}
                                   min={0}
-                                  max={200}
                                   decimalScale={1}
                                   value={extra.value}
                                   onChange={(v) => handleExtraMeasurementChange(index, "value", String(v))}
