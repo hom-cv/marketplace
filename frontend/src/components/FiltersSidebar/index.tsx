@@ -17,7 +17,7 @@ import {
 import { IconFilter, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { PostType } from "@/api/types/post";
-import { PANTS_SIZES, SHOE_SIZES } from "@/api/types/post";
+import { LETTER_SIZES, PANTS_SIZES, SHOE_SIZES } from "@/api/types/post";
 
 interface FiltersState {
   types: PostType[];
@@ -29,9 +29,6 @@ interface FiltersSidebarProps {
   filters: FiltersState;
   onFiltersChange: (filters: FiltersState) => void;
 }
-
-// Letter sizes for shirts, jackets, tops
-const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 
 export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps) {
   const { t } = useTranslation("common");

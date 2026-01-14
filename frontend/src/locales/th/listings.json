@@ -19,6 +19,7 @@
       "extraMeasurements": "ขนาดเพิ่มเติม",
       "measurementLabel": "ชื่อการวัด",
       "addExtraMeasurement": "เพิ่มขนาดอื่น",
+      "duplicateMeasurement": "ซ้ำกัน: \"{{label}}\" มีอยู่แล้ว",
       "submit": "สร้างรายการ"
     },
     "success": "สร้างรายการเรียบร้อยแล้ว!",

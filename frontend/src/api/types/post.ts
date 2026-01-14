@@ -7,7 +7,8 @@ import type { User } from "./user";
 export type PostType = "SHIRT" | "PANTS" | "JACKET" | "SHOES" | "ACCESSORIES" | "OTHER";
 
 // Letter-based sizes for shirts, jackets, tops
-export type LetterSize = "XS" | "S" | "M" | "L" | "XL" | "XXL" | "XXXL" | "ONE_SIZE";
+export const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
+export type LetterSize = (typeof LETTER_SIZES)[number] | "ONE_SIZE";
 
 // Pants waist sizes (even numbers 26-44)
 export const PANTS_SIZES = ["26", "28", "30", "32", "34", "36", "38", "40", "42", "44"] as const;
@@ -47,7 +48,7 @@ export function getSizesForType(type: PostType): readonly string[] {
     case "SHIRT":
     case "JACKET":
     case "OTHER":
-      return ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+      return LETTER_SIZES;
     case "PANTS":
       return PANTS_SIZES;
     case "SHOES":

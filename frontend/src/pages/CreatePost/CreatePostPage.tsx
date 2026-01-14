@@ -181,8 +181,13 @@ export function CreatePostPage() {
     setExtraMeasurements((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Validation for duplicate measurement labels
+  const [measurementError, setMeasurementError] = useState<string | null>(null);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setMeasurementError(null);
+
     if (!title || !description || !type || !price || !size) return;
 
     // Filter out undefined measurements
@@ -190,18 +195,29 @@ export function CreatePostPage() {
       Object.entries(measurements).filter(([, v]) => v !== undefined && v !== null)
     ) as Measurements;
 
-    // Add extra measurements to the object
+    // Add extra measurements to the object, checking for duplicates
     const allMeasurements = { ...cleanMeasurements } as Record<string, number | undefined>;
-    extraMeasurements.forEach((extra) => {
+    const seenKeys = new Set(Object.keys(cleanMeasurements));
+
+    for (const extra of extraMeasurements) {
       if (extra.label && extra.value) {
         const key = extra.label.trim().toLowerCase().replace(/\s+/g, "_");
         const numValue = parseFloat(extra.value);
-        // Only add valid numeric values (filter out NaN for consistency with standard measurements)
-        if (key && allMeasurements[key] === undefined && !isNaN(numValue)) {
-          allMeasurements[key] = numValue;
+
+        if (!key || isNaN(numValue)) continue;
+
+        // Check for duplicate keys
+        if (seenKeys.has(key)) {
+          setMeasurementError(
+            t("create.form.duplicateMeasurement", { label: extra.label.trim() })
+          );
+          return;
         }
+
+        seenKeys.add(key);
+        allMeasurements[key] = numValue;
       }
-    });
+    }
 
     const finalMeasurements = Object.keys(allMeasurements).length > 0 ? allMeasurements as Measurements : undefined;
 
@@ -332,6 +348,12 @@ export function CreatePostPage() {
       {mutation.error && (
         <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="lg">
           {mutation.error instanceof Error ? mutation.error.message : t("create.error")}
+        </Alert>
+      )}
+
+      {measurementError && (
+        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="lg">
+          {measurementError}
         </Alert>
       )}
 
