@@ -52,25 +52,26 @@ export interface MeasurementFieldConfig {
   translationKey: string;
 }
 
+/** Standard measurements for tops (shirts, jackets) */
+const TOP_MEASUREMENT_FIELDS: readonly MeasurementFieldConfig[] = [
+  { key: "shoulder", translationKey: "shoulder" },
+  { key: "length", translationKey: "length" },
+  { key: "bust", translationKey: "bust" },
+  { key: "sleeve", translationKey: "sleeve" },
+];
+
+/**
+ * Measurement fields per category.
+ * - SHIRT, JACKET: Standard top measurements
+ * - PANTS: Waist, inseam, etc.
+ * - SHOES: Insole length
+ * - OTHER: No default fields - users add custom measurements only
+ * - ACCESSORIES: No measurements supported
+ */
 export const MEASUREMENT_FIELDS: Record<PostType, readonly MeasurementFieldConfig[]> = {
-  SHIRT: [
-    { key: "shoulder", translationKey: "shoulder" },
-    { key: "length", translationKey: "length" },
-    { key: "bust", translationKey: "bust" },
-    { key: "sleeve", translationKey: "sleeve" },
-  ],
-  JACKET: [
-    { key: "shoulder", translationKey: "shoulder" },
-    { key: "length", translationKey: "length" },
-    { key: "bust", translationKey: "bust" },
-    { key: "sleeve", translationKey: "sleeve" },
-  ],
-  OTHER: [
-    { key: "shoulder", translationKey: "shoulder" },
-    { key: "length", translationKey: "length" },
-    { key: "bust", translationKey: "bust" },
-    { key: "sleeve", translationKey: "sleeve" },
-  ],
+  SHIRT: TOP_MEASUREMENT_FIELDS,
+  JACKET: TOP_MEASUREMENT_FIELDS,
+  OTHER: [], // No default measurements - users add custom measurements as needed
   PANTS: [
     { key: "total_length", translationKey: "totalLength" },
     { key: "inseam", translationKey: "inseam" },

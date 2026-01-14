@@ -83,18 +83,26 @@ def validate_measurements_for_post_type(
     This function can be called directly from endpoints without
     needing to instantiate the full PostCreateSchema.
     
+    Validation rules:
+    - SHIRT, JACKET: Validates against TopMeasurements schema
+    - PANTS: Validates against PantsMeasurements schema
+    - SHOES: Validates against ShoesMeasurements schema
+    - OTHER: No schema validation - allows any custom measurements
+    - ACCESSORIES: Measurements not supported
+    
     Raises:
         ValueError: If measurements are invalid for the given post type.
     """
     if measurements is None:
         return
 
-    if post_type in (PostType.SHIRT, PostType.JACKET, PostType.OTHER):
+    if post_type in (PostType.SHIRT, PostType.JACKET):
         _validate_nested_measurements(measurements, TopMeasurements, post_type.value)
     elif post_type == PostType.PANTS:
         _validate_nested_measurements(measurements, PantsMeasurements, post_type.value)
     elif post_type == PostType.SHOES:
         _validate_nested_measurements(measurements, ShoesMeasurements, post_type.value)
+    # OTHER: No schema validation - users add custom measurements as needed
     elif post_type == PostType.ACCESSORIES and measurements:
         raise ValueError("Measurements are not supported for ACCESSORIES type.")
 

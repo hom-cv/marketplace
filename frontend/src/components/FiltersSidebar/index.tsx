@@ -30,6 +30,19 @@ interface FiltersSidebarProps {
   onFiltersChange: (filters: FiltersState) => void;
 }
 
+/** Configuration for size filter categories */
+interface SizeCategoryConfig {
+  key: string;
+  labelKey: string;
+  formatLabel?: (size: string) => string;
+}
+
+const SIZE_CATEGORIES: SizeCategoryConfig[] = [
+  { key: "letter", labelKey: "sizeCategories.tops" },
+  { key: "pants", labelKey: "sizeCategories.pants" },
+  { key: "shoes", labelKey: "sizeCategories.shoes", formatLabel: (size) => `EU ${size}` },
+];
+
 export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps) {
   const { t } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
@@ -153,65 +166,32 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
                 {t("filtersSidebar.size")}
               </Text>
               <Stack gap="md">
-                {/* Letter sizes (tops) */}
-                {availableSizes.letter.length > 0 && (
-                  <Box>
-                    {filters.types.length > 0 && (
-                      <Text size="xs" c="dimmed" mb="xs">{tListings("sizeCategories.tops")}</Text>
-                    )}
-                    <Group gap="xs">
-                      {availableSizes.letter.map((size) => (
-                        <Checkbox
-                          key={`letter-${size}`}
-                          label={size}
-                          size="xs"
-                          checked={filters.sizes.includes(size)}
-                          onChange={() => handleSizeToggle(size)}
-                        />
-                      ))}
-                    </Group>
-                  </Box>
-                )}
+                {/* Data-driven size category rendering */}
+                {SIZE_CATEGORIES.map((category) => {
+                  const sizes = availableSizes[category.key as keyof typeof availableSizes];
+                  if (!Array.isArray(sizes) || sizes.length === 0) return null;
 
-                {/* Pants sizes */}
-                {availableSizes.pants.length > 0 && (
-                  <Box>
-                    {filters.types.length > 0 && (
-                      <Text size="xs" c="dimmed" mb="xs">{tListings("sizeCategories.pants")}</Text>
-                    )}
-                    <Group gap="xs">
-                      {availableSizes.pants.map((size) => (
-                        <Checkbox
-                          key={`pants-${size}`}
-                          label={size}
-                          size="xs"
-                          checked={filters.sizes.includes(size)}
-                          onChange={() => handleSizeToggle(size)}
-                        />
-                      ))}
-                    </Group>
-                  </Box>
-                )}
-
-                {/* Shoe sizes (EU) */}
-                {availableSizes.shoes.length > 0 && (
-                  <Box>
-                    {filters.types.length > 0 && (
-                      <Text size="xs" c="dimmed" mb="xs">{tListings("sizeCategories.shoes")}</Text>
-                    )}
-                    <Group gap="xs">
-                      {availableSizes.shoes.map((size) => (
-                        <Checkbox
-                          key={`shoe-${size}`}
-                          label={`EU ${size}`}
-                          size="xs"
-                          checked={filters.sizes.includes(size)}
-                          onChange={() => handleSizeToggle(size)}
-                        />
-                      ))}
-                    </Group>
-                  </Box>
-                )}
+                  return (
+                    <Box key={category.key}>
+                      {filters.types.length > 0 && (
+                        <Text size="xs" c="dimmed" mb="xs">
+                          {tListings(category.labelKey)}
+                        </Text>
+                      )}
+                      <Group gap="xs">
+                        {sizes.map((size) => (
+                          <Checkbox
+                            key={`${category.key}-${size}`}
+                            label={category.formatLabel ? category.formatLabel(size) : size}
+                            size="xs"
+                            checked={filters.sizes.includes(size)}
+                            onChange={() => handleSizeToggle(size)}
+                          />
+                        ))}
+                      </Group>
+                    </Box>
+                  );
+                })}
 
                 {/* ONE_SIZE for accessories */}
                 {availableSizes.hasAccessories && (
