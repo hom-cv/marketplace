@@ -3,6 +3,7 @@
 from typing import Sequence
 
 from sqlalchemy import delete, exists, func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -20,6 +21,9 @@ class LikeCRUD:
         """
         Create a like for a post. Returns None if already liked.
 
+        Uses INSERT ... ON CONFLICT DO NOTHING to handle race conditions
+        atomically and avoid the need for a separate existence check.
+
         Args:
             db: The async database session.
             user_id: The user's ID.
@@ -28,14 +32,18 @@ class LikeCRUD:
         Returns:
             The created Like, or None if already liked.
         """
-        # Check if already liked
-        if await self.check_if_liked(db, user_id=user_id, post_id=post_id):
-            return None
-
-        like = Like(user_id=user_id, post_id=post_id)
-        db.add(like)
+        stmt = (
+            pg_insert(Like)
+            .values(user_id=user_id, post_id=post_id)
+            .on_conflict_do_nothing(constraint="uq_user_post_like")
+            .returning(Like)
+        )
+        result = await db.execute(stmt)
         await db.commit()
-        await db.refresh(like)
+
+        # If conflict occurred, returning() returns nothing
+        like = result.scalar_one_or_none()
+
         return like
 
     async def unlike_post(

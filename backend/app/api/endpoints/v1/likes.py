@@ -45,10 +45,16 @@ async def like_post(
 
     await like_crud_dep.like_post(db, user_id=current_user.id, post_id=post_id)
 
-    # Get updated count
-    count = await like_crud_dep.get_like_count(db, post_id=post_id)
+    # Get accurate like status and count from database
+    like_data = await like_crud_dep.get_likes_for_posts(
+        db, post_ids=[post_id], user_id=current_user.id
+    )
+    post_like_info = like_data.get(post_id, {"count": 0, "is_liked": True})
 
-    return LikeStatusResponse(liked=True, like_count=count)
+    return LikeStatusResponse(
+        liked=post_like_info["is_liked"],
+        like_count=post_like_info["count"],
+    )
 
 
 @router.delete(
@@ -76,10 +82,16 @@ async def unlike_post(
 
     await like_crud_dep.unlike_post(db, user_id=current_user.id, post_id=post_id)
 
-    # Get updated count
-    count = await like_crud_dep.get_like_count(db, post_id=post_id)
+    # Get accurate like status and count from database
+    like_data = await like_crud_dep.get_likes_for_posts(
+        db, post_ids=[post_id], user_id=current_user.id
+    )
+    post_like_info = like_data.get(post_id, {"count": 0, "is_liked": False})
 
-    return LikeStatusResponse(liked=False, like_count=count)
+    return LikeStatusResponse(
+        liked=post_like_info["is_liked"],
+        like_count=post_like_info["count"],
+    )
 
 
 @router.get(
