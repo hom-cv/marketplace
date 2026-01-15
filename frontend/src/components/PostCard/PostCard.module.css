@@ -23,10 +23,13 @@
   transform: scale(1.05);
 }
 
-.typeBadge {
+.topBadges {
   position: absolute;
   top: 12px;
   left: 12px;
+}
+
+.topBadges :global(.mantine-Badge-root) {
   text-transform: uppercase;
   font-size: 10px;
   letter-spacing: 0.5px;

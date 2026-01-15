@@ -109,6 +109,10 @@ class Post(Base):
         back_populates="post",
         # Don't cascade delete - preserve payment records
     )
+    likes: Mapped[list["Like"]] = relationship(  # type: ignore # noqa
+        back_populates="post",
+        cascade="all, delete-orphan",
+    )
 
     # Soft delete
     deleted_at: Mapped[datetime | None] = mapped_column(

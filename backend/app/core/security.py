@@ -13,6 +13,7 @@ from app.models.user import User
 from app.schemas.access_token import AccessTokenSchema
 
 reusable_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+optional_oauth2 = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 settings: Settings = get_settings()
 
@@ -76,6 +77,47 @@ async def get_current_user(
 
 # Type alias for current user dependency
 AnnotatedCurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_current_user_optional(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    token: Optional[str] = Depends(optional_oauth2),
+) -> Optional[User]:
+    """
+    Retrieve the currently authenticated user if a valid token is provided.
+
+    Unlike get_current_user, this function does not raise exceptions if
+    no token is provided or if the token is invalid. It simply returns None.
+
+    Args:
+        db (AsyncSession): The asynchronous database session dependency.
+        token (Optional[str]): The JWT token provided for authentication.
+
+    Returns:
+        Optional[User]: The authenticated user object, or None if not authenticated.
+    """
+    if not token:
+        return None
+
+    try:
+        payload = decode_access_token(token)
+
+        if payload is None:
+            return None
+
+        token_data = AccessTokenSchema(**payload)
+
+        if token_data.user_id:
+            user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
+            return user
+    except jwt.PyJWTError:
+        return None
+
+    return None
+
+
+# Type alias for optional current user dependency
+AnnotatedCurrentUserOptional = Annotated[Optional[User], Depends(get_current_user_optional)]
 
 
 async def require_admin_user(

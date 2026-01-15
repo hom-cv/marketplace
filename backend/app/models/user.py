@@ -97,6 +97,10 @@ class User(Base):
         foreign_keys="Payment.seller_id",
         # No cascade - preserve payment records for accounting
     )
+    likes: Mapped[List["Like"]] = relationship(  # type: ignore # noqa
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
     # Indexes
     __table_args__ = (

@@ -14,6 +14,7 @@ import { DashboardLayout } from "@/components/DashboardLayout";
 import { DashboardPage } from "@/pages/Dashboard";
 import { ExplorePage } from "@/pages/Explore";
 import { PurchaseHistoryPage } from "@/pages/PurchaseHistory";
+import { LikedListingsPage } from "@/pages/LikedListings";
 import { MyListingsPage } from "@/pages/MyListings";
 import { SoldListingsPage } from "@/pages/SoldListings";
 import { PaymentReturnPage } from "@/pages/PaymentReturn";
@@ -115,6 +116,12 @@ const purchasesRoute = createRoute({
     getParentRoute: () => dashboardLayout,
     path: "/purchases",
     component: PurchaseHistoryPage,
+});
+
+const likedListingsRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/liked",
+    component: LikedListingsPage,
 });
 
 const myListingsRoute = createRoute({
@@ -221,6 +228,7 @@ const routeTree = rootRoute.addChildren([
             dashboardRoute,
             exploreRoute,
             purchasesRoute,
+            likedListingsRoute,
             myListingsRoute,
             salesRoute,
             createPostRoute,

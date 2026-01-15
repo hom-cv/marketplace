@@ -209,6 +209,8 @@ export interface Post {
   is_sold: boolean;
   is_banned?: boolean;
   is_user_banned?: boolean;
+  like_count: number;
+  is_liked: boolean;
 }
 
 export interface CreatePostRequest {
