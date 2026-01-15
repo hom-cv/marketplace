@@ -9,8 +9,8 @@ from app.core.exceptions import (
     not_found_error,
 )
 from app.core.security import get_current_user, get_current_user_optional
-from app.crud.like import LikeCRUD, get_like_crud
-from app.crud.post import PostCRUD, get_post_crud
+from app.crud.like import LikeCRUD, get_like_crud, AnnotatedLikeCRUD
+from app.crud.post import PostCRUD, get_post_crud, AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
@@ -28,9 +28,6 @@ from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
-
-AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
-AnnotatedLikeCRUD = Annotated[LikeCRUD, Depends(get_like_crud)]
 
 
 @router.post(

@@ -11,4 +11,3 @@ api_router.include_router(payments.router)
 api_router.include_router(invites.router)
 api_router.include_router(reports.router)
 api_router.include_router(admin.router)
-

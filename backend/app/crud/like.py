@@ -1,6 +1,7 @@
 """Like CRUD operations."""
 
-from typing import Sequence
+from typing import Sequence, Annotated
+from fastapi import Depends
 
 from sqlalchemy import delete, exists, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -201,3 +202,6 @@ like_crud = LikeCRUD()
 def get_like_crud() -> LikeCRUD:
     """Dependency provider for LikeCRUD instance."""
     return like_crud
+
+
+AnnotatedLikeCRUD = Annotated[LikeCRUD, Depends(get_like_crud)]
