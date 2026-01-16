@@ -56,20 +56,15 @@ class TestLikePostEndpoint:
         mock_post_crud: MagicMock,
         mock_like_crud: MagicMock,
     ):
-        """Successfully liking a post returns 200 with status."""
+        """Successfully liking a post returns 204 No Content."""
         mock_post = create_mock_post()
         mock_post_crud.get_by_id.return_value = mock_post
         mock_like_crud.like_post.return_value = create_mock_like()
-        mock_like_crud.get_likes_for_posts.return_value = {
-            1: {"count": 5, "is_liked": True}
-        }
 
         response = await async_client.post("/api/v1/likes/1")
 
-        assert response.status_code == 200
-        body = response.json()
-        assert body["liked"] is True
-        assert body["like_count"] == 5
+        assert response.status_code == 204
+        assert response.content == b""  # No response body
         mock_like_crud.like_post.assert_called_once()
 
     async def test_like_post_already_liked_idempotent(
@@ -78,21 +73,16 @@ class TestLikePostEndpoint:
         mock_post_crud: MagicMock,
         mock_like_crud: MagicMock,
     ):
-        """Liking an already-liked post returns current status (idempotent)."""
+        """Liking an already-liked post returns 204 No Content (idempotent)."""
         mock_post = create_mock_post()
         mock_post_crud.get_by_id.return_value = mock_post
         # Returns None when already liked (ON CONFLICT DO NOTHING)
         mock_like_crud.like_post.return_value = None
-        mock_like_crud.get_likes_for_posts.return_value = {
-            1: {"count": 10, "is_liked": True}
-        }
 
         response = await async_client.post("/api/v1/likes/1")
 
-        assert response.status_code == 200
-        body = response.json()
-        assert body["liked"] is True
-        assert body["like_count"] == 10
+        assert response.status_code == 204
+        assert response.content == b""
 
     async def test_like_post_not_found_returns_404(
         self,
@@ -138,20 +128,15 @@ class TestUnlikePostEndpoint:
         mock_post_crud: MagicMock,
         mock_like_crud: MagicMock,
     ):
-        """Successfully unliking a post returns 200 with status."""
+        """Successfully unliking a post returns 204 No Content."""
         mock_post = create_mock_post()
         mock_post_crud.get_by_id.return_value = mock_post
         mock_like_crud.unlike_post.return_value = True
-        mock_like_crud.get_likes_for_posts.return_value = {
-            1: {"count": 4, "is_liked": False}
-        }
 
         response = await async_client.delete("/api/v1/likes/1")
 
-        assert response.status_code == 200
-        body = response.json()
-        assert body["liked"] is False
-        assert body["like_count"] == 4
+        assert response.status_code == 204
+        assert response.content == b""  # No response body
         mock_like_crud.unlike_post.assert_called_once()
 
     async def test_unlike_post_not_liked_idempotent(
@@ -160,21 +145,16 @@ class TestUnlikePostEndpoint:
         mock_post_crud: MagicMock,
         mock_like_crud: MagicMock,
     ):
-        """Unliking an already-unliked post returns current status (idempotent)."""
+        """Unliking an already-unliked post returns 204 No Content (idempotent)."""
         mock_post = create_mock_post()
         mock_post_crud.get_by_id.return_value = mock_post
         # Returns False when not found to delete
         mock_like_crud.unlike_post.return_value = False
-        mock_like_crud.get_likes_for_posts.return_value = {
-            1: {"count": 0, "is_liked": False}
-        }
 
         response = await async_client.delete("/api/v1/likes/1")
 
-        assert response.status_code == 200
-        body = response.json()
-        assert body["liked"] is False
-        assert body["like_count"] == 0
+        assert response.status_code == 204
+        assert response.content == b""
 
     async def test_unlike_post_not_found_returns_404(
         self,
