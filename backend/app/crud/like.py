@@ -3,7 +3,7 @@
 from typing import Sequence, Annotated
 from fastapi import Depends
 
-from sqlalchemy import delete, exists, func, select
+from sqlalchemy import delete, exists, func, select, literal
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -142,7 +142,7 @@ class LikeCRUD:
             .where(Like.post_id.in_(post_ids))
             .group_by(Like.post_id)
         )
-        
+
         query_result = await db.execute(query)
         rows = query_result.all()
 
