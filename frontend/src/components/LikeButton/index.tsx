@@ -43,7 +43,7 @@ export function LikeButton({
     onError: () => {
       // Revert on error
       setIsLiked(false);
-      setLikeCount((prev) => prev - 1);
+      setLikeCount((prev) => Math.max(0, prev - 1));
     },
     onSuccess: () => {
       // Invalidate queries to refetch fresh data (single source of truth)
