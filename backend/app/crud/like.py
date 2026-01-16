@@ -109,7 +109,7 @@ class LikeCRUD:
         self, db: AsyncSession, *, post_ids: list[int], user_id: int | None = None
     ) -> dict[int, dict]:
         """
-        Get like counts and user's like status for multiple posts.
+        Get like counts and user's like status for multiple posts in a single query.
 
         This is the key method for avoiding N+1 queries when displaying
         lists of posts with like information.
@@ -125,32 +125,35 @@ class LikeCRUD:
         if not post_ids:
             return {}
 
-        # Get counts for all posts
-        count_query = (
-            select(Like.post_id, func.count().label("count"))
+        # Build a single query that gets both count and is_liked status
+        # Use bool_or aggregate to check if user has liked each post
+        if user_id:
+            is_liked_expr = func.bool_or(Like.user_id == user_id).label("is_liked")
+        else:
+            is_liked_expr = func.cast(False, type_=func.bool).label("is_liked")
+
+        # Single query: group by post_id, count likes, check if user liked
+        query = (
+            select(
+                Like.post_id,
+                func.count().label("count"),
+                is_liked_expr,
+            )
             .where(Like.post_id.in_(post_ids))
             .group_by(Like.post_id)
         )
-        count_result = await db.execute(count_query)
-        counts = {row.post_id: row.count for row in count_result.all()}
+        
+        query_result = await db.execute(query)
+        rows = query_result.all()
 
-        # Get user's liked posts (if authenticated)
-        user_liked: set[int] = set()
-        if user_id:
-            liked_query = select(Like.post_id).where(
-                Like.user_id == user_id,
-                Like.post_id.in_(post_ids),
-            )
-            liked_result = await db.scalars(liked_query)
-            user_liked = set(liked_result.all())
+        # Build result dict from query results
+        result = {row.post_id: {"count": row.count, "is_liked": bool(row.is_liked)} for row in rows}
 
-        # Build result dict
-        result = {}
+        # Fill in missing post_ids with defaults (posts with 0 likes)
         for post_id in post_ids:
-            result[post_id] = {
-                "count": counts.get(post_id, 0),
-                "is_liked": post_id in user_liked,
-            }
+            if post_id not in result:
+                result[post_id] = {"count": 0, "is_liked": False}
+
         return result
 
     async def get_user_liked_posts(
