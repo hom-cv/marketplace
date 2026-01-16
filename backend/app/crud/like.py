@@ -130,7 +130,7 @@ class LikeCRUD:
         if user_id:
             is_liked_expr = func.bool_or(Like.user_id == user_id).label("is_liked")
         else:
-            is_liked_expr = func.cast(False, type_=func.bool).label("is_liked")
+            is_liked_expr = literal(False).label("is_liked")
 
         # Single query: group by post_id, count likes, check if user liked
         query = (
