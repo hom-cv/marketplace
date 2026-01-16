@@ -89,7 +89,7 @@ async def get_my_liked_posts(
         )
         for item in items:
             item.is_liked = True
-            item.like_count = like_data.get(item.id, {}).get("count", 0)
+            item.like_count = like_data[item.id]["count"]
 
     return LikedPostsResponse(
         items=items,
