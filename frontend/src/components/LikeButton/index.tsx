@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ActionIcon, Group, Text, Tooltip } from "@mantine/core";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { likePost, unlikePost } from "@/api/likes";
 import { useIsAuthenticated } from "@/stores/authStore";
 import styles from "./LikeButton.module.css";
@@ -26,6 +27,7 @@ export function LikeButton({
   size = "md",
   onAuthRequired,
 }: LikeButtonProps) {
+  const { t } = useTranslation("common");
   const queryClient = useQueryClient();
   const isAuthenticated = useIsAuthenticated();
 
@@ -90,7 +92,7 @@ export function LikeButton({
 
   return (
     <Group gap={4} className={styles.likeButton} onClick={handleClick}>
-      <Tooltip label={isLiked ? "Unlike" : "Like"}>
+      <Tooltip label={isLiked ? t("likes.unlike") : t("likes.like")}>
         <ActionIcon
           variant="subtle"
           color={isLiked ? "red" : "gray"}

@@ -88,7 +88,7 @@ export function LikedListingsPage() {
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+      <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
         {error instanceof Error ? error.message : t("errors.failedToLoad")}
       </Alert>
     );
@@ -101,7 +101,7 @@ export function LikedListingsPage() {
 
       {/* Results Count */}
       <Text size="sm" c="dimmed">
-        {totalCount} {totalCount === 1 ? "listing" : "listings"}
+        {totalCount} {totalCount === 1 ? t("likes.oneItem") : t("likes.multipleItems")}
       </Text>
 
       {/* Desktop Grid */}

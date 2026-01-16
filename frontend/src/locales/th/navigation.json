@@ -20,6 +20,7 @@
   "links": {
     "home": "หน้าหลัก",
     "purchaseHistory": "ประวัติการซื้อ",
-    "soldListings": "สินค้าที่ขายแล้ว"
+    "soldListings": "สินค้าที่ขายแล้ว",
+    "likedListings": "รายการที่ถูกใจ"
   }
 }
