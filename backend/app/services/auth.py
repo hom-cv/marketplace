@@ -57,9 +57,12 @@ class AuthService:
         Raises:
             HTTPException: If email or username already exists (409 Conflict).
         """
+        # Normalize email to lowercase for consistent storage
+        normalized_email = obj_in.email_address.lower()
+
         # Check if email already exists
         existing_email = await self._user_crud.get_by_email(
-            db=self.db, email=obj_in.email_address
+            db=self.db, email=normalized_email
         )
         if existing_email:
             raise conflict_error("A user with this email address already exists")
@@ -76,7 +79,7 @@ class AuthService:
             username=obj_in.username,
             first_name=obj_in.first_name,
             last_name=obj_in.last_name,
-            email_address=obj_in.email_address,
+            email_address=normalized_email,
             hashed_password=get_password_hash(obj_in.password),
         )
 
