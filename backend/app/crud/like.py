@@ -176,22 +176,33 @@ class LikeCRUD:
         Returns:
             Tuple of (posts, total_count).
         """
-        # Base query for liked posts
-        base_query = (
-            select(Post)
-            .join(Like, Like.post_id == Post.id)
-            .where(Like.user_id == user_id)
-            .where(Post.deleted_at.is_(None))
-            .options(selectinload(Post.user).selectinload(User.seller_profile))
-        )
+        # Define common where clauses to be reused
+        common_where = [
+            Like.user_id == user_id,
+            Post.deleted_at.is_(None),
+        ]
 
-        # Count total
-        count_query = select(func.count()).select_from(base_query.subquery())
+        # Count total using a dedicated, simpler query
+        count_query = (
+            select(func.count())
+            .select_from(Post)
+            .join(Like, Like.post_id == Post.id)
+            .where(*common_where)
+        )
         total = await db.scalar(count_query) or 0
 
-        # Fetch paginated results (ordered by when liked, newest first)
+        if total == 0:
+            return [], 0
+
+        # Fetch paginated results with necessary eager loading
         data_query = (
-            base_query.order_by(Like.created_date.desc()).offset(skip).limit(limit)
+            select(Post)
+            .join(Like, Like.post_id == Post.id)
+            .where(*common_where)
+            .options(selectinload(Post.user).selectinload(User.seller_profile))
+            .order_by(Like.created_date.desc())
+            .offset(skip)
+            .limit(limit)
         )
         result = await db.scalars(data_query)
         posts = result.all()

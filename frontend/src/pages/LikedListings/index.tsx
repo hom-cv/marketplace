@@ -1,5 +1,6 @@
 /**
  * Liked Listings Page - View all posts the user has liked
+ * Styled to match ExplorePage layout
  */
 
 import { useMemo, useRef, useCallback, useEffect } from "react";
@@ -12,13 +13,14 @@ import {
   Stack,
   Box,
   Title,
-  Container,
 } from "@mantine/core";
 import { IconAlertCircle, IconHeart } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getLikedPosts } from "@/api/likes";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
+import { ReportModal } from "@/components/ReportModal";
+import { useReportModal } from "@/hooks/useReportModal";
 import styles from "./LikedListings.module.css";
 
 const ITEMS_PER_PAGE = 20;
@@ -26,6 +28,7 @@ const ITEMS_PER_PAGE = 20;
 export function LikedListingsPage() {
   const { t } = useTranslation("common");
   const loadMoreRef = useRef<HTMLDivElement>(null);
+  const reportModal = useReportModal();
 
   const {
     data,
@@ -85,75 +88,86 @@ export function LikedListingsPage() {
 
   if (error) {
     return (
-      <Container>
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error instanceof Error ? error.message : t("errors.failedToLoad")}
-        </Alert>
-      </Container>
+      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+        {error instanceof Error ? error.message : t("errors.failedToLoad")}
+      </Alert>
     );
   }
 
   return (
-    <Container size="xl">
-      <Stack gap="lg">
-        <Title order={2}>
-          <IconHeart size={24} style={{ marginRight: 8, verticalAlign: "middle" }} />
-          {t("likes.title")}
-        </Title>
+    <Stack gap="lg">
+      {/* Header */}
+      <Title order={2}>{t("likes.title")}</Title>
 
-        <Text size="sm" c="dimmed">
-          {totalCount} {totalCount === 1 ? "listing" : "listings"}
-        </Text>
+      {/* Results Count */}
+      <Text size="sm" c="dimmed">
+        {totalCount} {totalCount === 1 ? "listing" : "listings"}
+      </Text>
 
-        {/* Desktop Grid */}
-        <Box visibleFrom="sm">
-          {posts.length === 0 ? (
-            <Center h={200}>
-              <Stack align="center" gap="xs">
-                <IconHeart size={48} color="gray" />
-                <Text c="dimmed">{t("likes.noLikes")}</Text>
-                <Text size="sm" c="dimmed">{t("likes.noLikesHint")}</Text>
-              </Stack>
-            </Center>
-          ) : (
-            <div className={styles.grid}>
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
-          )}
-        </Box>
-
-        {/* Mobile Feed */}
-        <Box hiddenFrom="sm">
-          {posts.length === 0 ? (
-            <Center h={200}>
-              <Stack align="center" gap="xs">
-                <IconHeart size={48} color="gray" />
-                <Text c="dimmed">{t("likes.noLikes")}</Text>
-              </Stack>
-            </Center>
-          ) : (
-            <Stack gap={0}>
-              {posts.map((post) => (
-                <PostFeedItem key={post.id} post={post} />
-              ))}
+      {/* Desktop Grid */}
+      <Box visibleFrom="sm">
+        {posts.length === 0 ? (
+          <Center h={200}>
+            <Stack align="center" gap="xs">
+              <IconHeart size={48} color="gray" />
+              <Text c="dimmed">{t("likes.noLikes")}</Text>
+              <Text size="sm" c="dimmed">{t("likes.noLikesHint")}</Text>
             </Stack>
-          )}
-        </Box>
-
-        {/* Infinite scroll sentinel */}
-        {posts.length > 0 && (
-          <>
-            <div ref={loadMoreRef} style={{ height: 1 }} />
-            {isFetchingNextPage && (
-              <Center py="xl">
-                <Loader size="sm" />
-              </Center>
-            )}
-          </>
+          </Center>
+        ) : (
+          <div className={styles.grid}>
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
+            ))}
+          </div>
         )}
-      </Stack>
-    </Container>
+      </Box>
+
+      {/* Mobile Feed */}
+      <Box hiddenFrom="sm">
+        {posts.length === 0 ? (
+          <Center h={200}>
+            <Stack align="center" gap="xs">
+              <IconHeart size={48} color="gray" />
+              <Text c="dimmed">{t("likes.noLikes")}</Text>
+            </Stack>
+          </Center>
+        ) : (
+          <Stack gap={0}>
+            {posts.map((post) => (
+              <PostFeedItem key={post.id} post={post} />
+            ))}
+          </Stack>
+        )}
+      </Box>
+
+      {/* Infinite scroll sentinel and loading indicator */}
+      {posts.length > 0 && (
+        <>
+          <div ref={loadMoreRef} style={{ height: 1 }} />
+          {isFetchingNextPage && (
+            <Center py="xl">
+              <Loader size="sm" />
+            </Center>
+          )}
+          {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
+            <Text ta="center" c="dimmed" size="sm" py="md">
+              {t("likes.noMore")}
+            </Text>
+          )}
+        </>
+      )}
+
+      {/* Single shared ReportModal for all cards */}
+      {reportModal.target && (
+        <ReportModal
+          opened={reportModal.opened}
+          onClose={reportModal.close}
+          reportType={reportModal.target.reportType}
+          entityId={reportModal.target.entityId}
+          entityName={reportModal.target.entityName}
+        />
+      )}
+    </Stack>
   );
 }
