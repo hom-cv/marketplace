@@ -6,12 +6,11 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AnnotatedValidPost
-from app.core.exceptions import not_found_error
 from app.core.security import get_current_user
 from app.crud.like import LikeCRUD, get_like_crud, AnnotatedLikeCRUD
 from app.db.utils import get_async_db
 from app.models import User
-from app.schemas.like import LikeStatusResponse, LikedPostsResponse
+from app.schemas.like import LikedPostsResponse
 from app.schemas.post import PostResponseSchema
 
 router = APIRouter(prefix="/likes", tags=["likes"])
@@ -19,64 +18,42 @@ router = APIRouter(prefix="/likes", tags=["likes"])
 
 @router.post(
     "/{post_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=LikeStatusResponse,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 async def like_post(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     like_crud_dep: AnnotatedLikeCRUD,
     current_user: Annotated[User, Depends(get_current_user)],
     post: AnnotatedValidPost,
-) -> LikeStatusResponse:
+) -> None:
     """
     Like a post.
 
-    If the post is already liked, returns current status without error.
+    If the post is already liked, does nothing.
+    Returns 204 No Content. Frontend should refetch post data for updated like info.
     Requires authentication.
     """
     await like_crud_dep.like_post(db, user_id=current_user.id, post_id=post.id)
 
-    # Get accurate like status and count from database
-    like_data = await like_crud_dep.get_likes_for_posts(
-        db, post_ids=[post.id], user_id=current_user.id
-    )
-    post_like_info = like_data.get(post.id, {"count": 0, "is_liked": True})
-
-    return LikeStatusResponse(
-        liked=post_like_info["is_liked"],
-        like_count=post_like_info["count"],
-    )
-
 
 @router.delete(
     "/{post_id}",
-    status_code=status.HTTP_200_OK,
-    response_model=LikeStatusResponse,
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 async def unlike_post(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     like_crud_dep: AnnotatedLikeCRUD,
     current_user: Annotated[User, Depends(get_current_user)],
     post: AnnotatedValidPost,
-) -> LikeStatusResponse:
+) -> None:
     """
     Unlike a post.
 
-    If the post is not liked, returns current status without error.
+    If the post is not liked, does nothing.
+    Returns 204 No Content. Frontend should refetch post data for updated like info.
     Requires authentication.
     """
     await like_crud_dep.unlike_post(db, user_id=current_user.id, post_id=post.id)
-
-    # Get accurate like status and count from database
-    like_data = await like_crud_dep.get_likes_for_posts(
-        db, post_ids=[post.id], user_id=current_user.id
-    )
-    post_like_info = like_data.get(post.id, {"count": 0, "is_liked": False})
-
-    return LikeStatusResponse(
-        liked=post_like_info["is_liked"],
-        like_count=post_like_info["count"],
-    )
 
 
 @router.get(

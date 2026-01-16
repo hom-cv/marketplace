@@ -45,11 +45,8 @@ export function LikeButton({
       setIsLiked(false);
       setLikeCount((prev) => prev - 1);
     },
-    onSuccess: (data) => {
-      // Sync with server response
-      setIsLiked(data.liked);
-      setLikeCount(data.like_count);
-      // Invalidate queries to refresh data
+    onSuccess: () => {
+      // Invalidate queries to refetch fresh data (single source of truth)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
@@ -65,9 +62,8 @@ export function LikeButton({
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
     },
-    onSuccess: (data) => {
-      setIsLiked(data.liked);
-      setLikeCount(data.like_count);
+    onSuccess: () => {
+      // Invalidate queries to refetch fresh data (single source of truth)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["likedPosts"] });

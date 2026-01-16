@@ -5,11 +5,6 @@
 import { apiRequest } from "@/api/api";
 import type { Post } from "@/api/types/post";
 
-export interface LikeStatusResponse {
-  liked: boolean;
-  like_count: number;
-}
-
 export interface LikedPostsResponse {
   items: Post[];
   total: number;
@@ -18,19 +13,21 @@ export interface LikedPostsResponse {
 }
 
 /**
- * Like a post
+ * Like a post (returns 204 No Content)
+ * Frontend should refetch post data for updated like info.
  */
-export async function likePost(postId: number): Promise<LikeStatusResponse> {
-  return apiRequest<LikeStatusResponse>(`/likes/${postId}`, {
+export async function likePost(postId: number): Promise<void> {
+  await apiRequest(`/likes/${postId}`, {
     method: "POST",
   });
 }
 
 /**
- * Unlike a post
+ * Unlike a post (returns 204 No Content)
+ * Frontend should refetch post data for updated like info.
  */
-export async function unlikePost(postId: number): Promise<LikeStatusResponse> {
-  return apiRequest<LikeStatusResponse>(`/likes/${postId}`, {
+export async function unlikePost(postId: number): Promise<void> {
+  await apiRequest(`/likes/${postId}`, {
     method: "DELETE",
   });
 }
