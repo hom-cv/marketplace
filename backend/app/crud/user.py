@@ -1,6 +1,6 @@
 """User CRUD operations."""
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -50,7 +50,9 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         Returns:
             User | None: The user if found, or None if not found.
         """
-        query = select(self.model).where(self.model.email_address == email)
+        query = select(self.model).where(
+            func.lower(self.model.email_address) == email.lower()
+        )
         result = await db.execute(query)
 
         return result.scalar_one_or_none()
