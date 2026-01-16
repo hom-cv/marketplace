@@ -1,0 +1,17 @@
+/* LikeButton styles with hover effects */
+
+.likeButton {
+  cursor: pointer;
+}
+
+.heartIcon {
+  transition: transform 0.2s ease;
+}
+
+.heartIcon:hover {
+  transform: scale(1.1);
+}
+
+.heartIcon:active {
+  transform: scale(0.95);
+}

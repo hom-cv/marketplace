@@ -4,6 +4,7 @@ import {
   IconHome,
   IconSearch,
   IconShoppingBag,
+  IconHeart,
   IconPackage,
   IconReceipt,
   IconPlus,
@@ -37,6 +38,13 @@ function SidebarContent() {
           to="/app/explore"
           icon={<IconSearch size={20} />}
           label={t("menu.explore")}
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/app/liked"
+          icon={<IconHeart size={20} />}
+          label={t("links.likedListings")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />

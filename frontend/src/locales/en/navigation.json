@@ -20,6 +20,7 @@
   "links": {
     "home": "Home",
     "purchaseHistory": "Purchase History",
-    "soldListings": "Sold Listings"
+    "soldListings": "Sold Listings",
+    "likedListings": "Liked Listings"
   }
 }

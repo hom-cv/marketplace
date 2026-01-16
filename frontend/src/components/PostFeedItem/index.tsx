@@ -5,10 +5,13 @@
 
 import { useMemo } from "react";
 import { Box, Group, Text, Badge, Stack, Image } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
 import { useAuthStore } from "@/stores/authStore";
+import { LikeButton } from "@/components/LikeButton";
+import { LoginPromptModal } from "@/components/LoginPromptModal";
 
 interface PostFeedItemProps {
   post: Post;
@@ -30,16 +33,21 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
+  const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
+    useDisclosure(false);
 
   // Type labels with translations
-  const typeLabels: Record<PostType, string> = useMemo(() => ({
-    SHIRT: tListings("categories.shirt"),
-    PANTS: tListings("categories.pants"),
-    JACKET: tListings("categories.jacket"),
-    SHOES: tListings("categories.shoes"),
-    ACCESSORIES: tListings("categories.accessories"),
-    OTHER: tListings("categories.other"),
-  }), [tListings]);
+  const typeLabels: Record<PostType, string> = useMemo(
+    () => ({
+      SHIRT: tListings("categories.shirt"),
+      PANTS: tListings("categories.pants"),
+      JACKET: tListings("categories.jacket"),
+      SHOES: tListings("categories.shoes"),
+      ACCESSORIES: tListings("categories.accessories"),
+      OTHER: tListings("categories.other"),
+    }),
+    [tListings],
+  );
 
   const handleClick = () => {
     navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
@@ -59,23 +67,36 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
       {/* Content below image */}
       <Stack gap="xs" px="md" py="sm">
         <Group justify="space-between">
-          <Text fw={700} size="lg">
-            ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </Text>
+          <Group gap="md">
+            <Text fw={700} size="lg">
+              ฿
+              {price.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </Text>
+            <LikeButton
+              postId={post.id}
+              initialLiked={post.is_liked}
+              initialCount={post.like_count}
+              size="sm"
+              onAuthRequired={openLoginModal}
+            />
+          </Group>
           <Group gap="xs">
             {post.is_sold && (
               <Badge color="red" variant="filled">
                 {t("badges.sold")}
               </Badge>
             )}
+            <Badge color={typeColors[post.type]} variant="light">
+              {typeLabels[post.type]}
+            </Badge>
             {isOwner && (
               <Badge variant="light" color="gray">
                 {t("badges.yourListing")}
               </Badge>
             )}
-            <Badge color={typeColors[post.type]} variant="light">
-              {typeLabels[post.type]}
-            </Badge>
           </Group>
         </Group>
 
@@ -91,6 +112,12 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
           @{post.user.username}
         </Text>
       </Stack>
+
+      <LoginPromptModal
+        opened={loginModalOpened}
+        onClose={closeLoginModal}
+        action={t("likes.likeAction")}
+      />
     </Box>
   );
 }

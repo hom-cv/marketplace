@@ -51,6 +51,22 @@
     "reportUser": "Report User",
     "size": "Size"
   },
+  "loginPrompt": {
+    "title": "Login Required",
+    "message": "Please log in to continue.",
+    "messageWithAction": "Please log in to {{action}}."
+  },
+  "likes": {
+    "like": "Like",
+    "unlike": "Unlike",
+    "likeAction": "like listings",
+    "title": "Liked Listings",
+    "noLikes": "No liked listings yet",
+    "noLikesHint": "Browse the marketplace and like items you're interested in",
+    "noMore": "You've seen all your liked listings",
+    "oneItem": "listing",
+    "multipleItems": "listings"
+  },
   "filtersSidebar": {
     "filters": "Filters",
     "clear": "Clear",

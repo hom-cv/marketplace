@@ -41,6 +41,7 @@ export function AppPage() {
   const [filtersOpened, { open: openFilters, close: closeFilters }] = useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
+    sizes: [],
     priceRange: [0, 1000],
   });
 

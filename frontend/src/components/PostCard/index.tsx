@@ -4,13 +4,30 @@
  */
 
 import { useMemo } from "react";
-import { Card, Image, Text, Badge, Group, Stack, Box, Menu, ActionIcon } from "@mantine/core";
+import {
+  Card,
+  Image,
+  Text,
+  Badge,
+  Group,
+  Stack,
+  Box,
+  Menu,
+  ActionIcon,
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
-import { IconDotsVertical, IconFlag, IconUserExclamation } from "@tabler/icons-react";
+import {
+  IconDotsVertical,
+  IconFlag,
+  IconUserExclamation,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
+import { LikeButton } from "@/components/LikeButton";
+import { LoginPromptModal } from "@/components/LoginPromptModal";
 import styles from "./PostCard.module.css";
 
 export interface ReportTarget {
@@ -40,16 +57,21 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
+  const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
+    useDisclosure(false);
 
   // Type labels with translations
-  const typeLabels: Record<PostType, string> = useMemo(() => ({
-    SHIRT: tListings("categories.shirt"),
-    PANTS: tListings("categories.pants"),
-    JACKET: tListings("categories.jacket"),
-    SHOES: tListings("categories.shoes"),
-    ACCESSORIES: tListings("categories.accessories"),
-    OTHER: tListings("categories.other"),
-  }), [tListings]);
+  const typeLabels: Record<PostType, string> = useMemo(
+    () => ({
+      SHIRT: tListings("categories.shirt"),
+      PANTS: tListings("categories.pants"),
+      JACKET: tListings("categories.jacket"),
+      SHOES: tListings("categories.shoes"),
+      ACCESSORIES: tListings("categories.accessories"),
+      OTHER: tListings("categories.other"),
+    }),
+    [tListings],
+  );
 
   const handleClick = () => {
     navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
@@ -90,14 +112,17 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
           fallbackSrc="https://placehold.co/400x400?text=No+Image"
           className={post.is_sold ? styles.imageSold : styles.image}
         />
-        <Badge
-          className={styles.typeBadge}
-          color={typeColors[post.type]}
-          variant="filled"
-          size="sm"
-        >
-          {typeLabels[post.type]}
-        </Badge>
+        {/* Top-left badges: Category + Owner indicator */}
+        <Group gap={4} className={styles.topBadges}>
+          <Badge color={typeColors[post.type]} variant="filled" size="sm">
+            {typeLabels[post.type]}
+          </Badge>
+          {isOwner && (
+            <Badge variant="filled" color="gray" size="sm">
+              {t("badges.yourListing")}
+            </Badge>
+          )}
+        </Group>
         {post.is_sold && (
           <Badge
             className={styles.soldBadge}
@@ -170,13 +195,19 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
 
           <Group justify="space-between" align="center">
             <Text size="xl" fw={700} c="dark">
-              ฿{price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ฿
+              {price.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </Text>
-            {isOwner && (
-              <Badge variant="light" color="gray" size="sm">
-                {t("badges.yourListing")}
-              </Badge>
-            )}
+            <LikeButton
+              postId={post.id}
+              initialLiked={post.is_liked}
+              initialCount={post.like_count}
+              size="sm"
+              onAuthRequired={openLoginModal}
+            />
           </Group>
 
           <Text size="sm" c="dimmed" lineClamp={2}>
@@ -190,7 +221,12 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
           </Group>
         </Stack>
       </Box>
+
+      <LoginPromptModal
+        opened={loginModalOpened}
+        onClose={closeLoginModal}
+        action={t("likes.likeAction")}
+      />
     </Card>
   );
 }
-

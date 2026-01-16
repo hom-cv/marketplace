@@ -100,8 +100,10 @@ class TestGetPostEndpoint:
         mock_post.shipping_cost = Decimal("50.00")
         mock_post.image_url = None
         mock_post.image_urls = []
+        mock_post.size = "M"
+        mock_post.measurements = None
         mock_post.user = create_mock_user()
-        
+
         # Configure CRUD to return (post, is_banned, is_user_banned)
         mock_post_crud.get_by_id_with_ban_status.return_value = (mock_post, False, False)
 

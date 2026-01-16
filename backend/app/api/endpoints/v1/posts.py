@@ -2,14 +2,15 @@
 
 import json
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
 )
-from app.core.security import get_current_user
-from app.crud.post import PostCRUD, get_post_crud
+from app.core.security import get_current_user, get_current_user_optional
+from app.crud.like import LikeCRUD, get_like_crud, AnnotatedLikeCRUD
+from app.crud.post import PostCRUD, get_post_crud, AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
@@ -27,8 +28,6 @@ from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
-
-AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 
 
 @router.post(
@@ -123,6 +122,8 @@ async def create_post(
 async def list_posts(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     post_crud_dep: AnnotatedPostCRUD,
+    like_crud_dep: AnnotatedLikeCRUD,
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     types: Annotated[list[PostTypeSchema] | None, Query()] = None,
@@ -145,6 +146,9 @@ async def list_posts(
     - min_price: Minimum price filter
     - max_price: Maximum price filter
     - search: Search query for title/description
+
+    Response includes like_count and is_liked for each post.
+    is_liked is only populated if the user is authenticated.
     """
     # Convert schema types to model types for CRUD
     model_types = [PostType[t.value] for t in types] if types else None
@@ -160,11 +164,24 @@ async def list_posts(
         search=search,
     )
 
-    # Convert to response schema with is_sold
+    # Get like data in batch to avoid N+1
+    post_ids = [post.id for post, _ in posts_with_sold]
+    like_data = {}
+    if post_ids:
+        like_data = await like_crud_dep.get_likes_for_posts(
+            db,
+            post_ids=post_ids,
+            user_id=current_user.id if current_user else None,
+        )
+
+    # Convert to response schema with is_sold and like info
     items = []
     for post, is_sold in posts_with_sold:
         response_item = PostResponseSchema.model_validate(post)
         response_item.is_sold = is_sold
+        post_like_info = like_data.get(post.id, {})
+        response_item.like_count = post_like_info.get("count", 0)
+        response_item.is_liked = post_like_info.get("is_liked", False)
         items.append(response_item)
 
     return PaginatedPostsResponse(
@@ -202,18 +219,32 @@ async def get_my_posts(
     response_model=PostResponseSchema,
 )
 async def get_post(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
     listing_service: AnnotatedListingService,
+    like_crud_dep: AnnotatedLikeCRUD,
     post_id: int,
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PostResponseSchema:
     """
     Get a specific post by ID.
 
     Includes ban status for the post and user (optimized single query).
+    Also includes like_count and is_liked status.
     """
     post = await listing_service.get_listing(post_id)
 
     if not post:
         raise not_found_error("Post not found")
+
+    # Get like data
+    like_data = await like_crud_dep.get_likes_for_posts(
+        db,
+        post_ids=[post_id],
+        user_id=current_user.id if current_user else None,
+    )
+    post_like_info = like_data.get(post_id, {})
+    post.like_count = post_like_info.get("count", 0)
+    post.is_liked = post_like_info.get("is_liked", False)
 
     return post
 

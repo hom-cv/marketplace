@@ -26,6 +26,7 @@ import {
   Menu,
   ActionIcon,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import {
   IconAlertCircle,
   IconShoppingCart,
@@ -41,6 +42,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { ReportModal } from "@/components/ReportModal";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
+import { LikeButton } from "@/components/LikeButton";
+import { LoginPromptModal } from "@/components/LoginPromptModal";
 import type { PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import styles from "./PostViewPage.module.css";
@@ -56,24 +59,32 @@ const typeColors: Record<PostType, string> = {
 
 export function PostViewPage() {
   const navigate = useNavigate();
-  const { postId: postIdString } = useParams({ from: "/protected/app/posts/$postId" });
+  const { postId: postIdString } = useParams({
+    from: "/protected/app/posts/$postId",
+  });
   const postId = postIdString ? parseInt(postIdString, 10) : null;
   const currentUser = useAuthStore((state) => state.user);
   const { t } = useTranslation("listings");
 
   // Type labels with translations
-  const typeLabels: Record<PostType, string> = useMemo(() => ({
-    SHIRT: t("categories.shirt"),
-    PANTS: t("categories.pants"),
-    JACKET: t("categories.jacket"),
-    SHOES: t("categories.shoes"),
-    ACCESSORIES: t("categories.accessories"),
-    OTHER: t("categories.other"),
-  }), [t]);
+  const typeLabels: Record<PostType, string> = useMemo(
+    () => ({
+      SHIRT: t("categories.shirt"),
+      PANTS: t("categories.pants"),
+      JACKET: t("categories.jacket"),
+      SHOES: t("categories.shoes"),
+      ACCESSORIES: t("categories.accessories"),
+      OTHER: t("categories.other"),
+    }),
+    [t],
+  );
 
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportModalOpened, setReportModalOpened] = useState(false);
   const [reportType, setReportType] = useState<ReportType>("post");
+  const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
+    useDisclosure(false);
+  const { t: tCommon } = useTranslation("common");
 
   const {
     data: post,
@@ -86,11 +97,12 @@ export function PostViewPage() {
   });
 
   // Get all image URLs (use image_urls array or fall back to single image_url)
-  const imageUrls = post?.image_urls && post.image_urls.length > 0
-    ? post.image_urls
-    : post?.image_url
-      ? [post.image_url]
-      : [];
+  const imageUrls =
+    post?.image_urls && post.image_urls.length > 0
+      ? post.image_urls
+      : post?.image_url
+        ? [post.image_url]
+        : [];
 
   const isOwner = currentUser?.id === post?.user.id;
   const isBanned = post?.is_banned || post?.is_user_banned;
@@ -177,7 +189,11 @@ export function PostViewPage() {
                   />
                 ) : (
                   <Box className={styles.imagePlaceholder}>
-                    <IconPhoto size={64} stroke={1} color="var(--mantine-color-gray-4)" />
+                    <IconPhoto
+                      size={64}
+                      stroke={1}
+                      color="var(--mantine-color-gray-4)"
+                    />
                     <Text c="dimmed" size="sm" mt="md">
                       {t("images.noImagesAvailable")}
                     </Text>
@@ -187,7 +203,12 @@ export function PostViewPage() {
 
               {/* Thumbnail Carousel */}
               {imageUrls.length > 1 && (
-                <Group gap="xs" mt="md" wrap="nowrap" className={styles.thumbnailRow}>
+                <Group
+                  gap="xs"
+                  mt="md"
+                  wrap="nowrap"
+                  className={styles.thumbnailRow}
+                >
                   {imageUrls.map((url, index) => (
                     <Box
                       key={index}
@@ -225,10 +246,21 @@ export function PostViewPage() {
               {/* Title */}
               <Title order={1}>{post.title}</Title>
 
-              {/* Price */}
-              <Text size="2rem" fw={700} c="dark">
-                ฿{price.toLocaleString()}
-              </Text>
+              {/* Price and Like */}
+              <Group justify="space-between" align="center">
+                <Text size="2rem" fw={700} c="dark">
+                  ฿{price.toLocaleString()}
+                </Text>
+                {
+                  <LikeButton
+                    postId={post.id}
+                    initialLiked={post.is_liked}
+                    initialCount={post.like_count}
+                    size="lg"
+                    onAuthRequired={openLoginModal}
+                  />
+                }
+              </Group>
 
               <Divider />
 
@@ -266,7 +298,11 @@ export function PostViewPage() {
 
               {/* Ban Warning */}
               {isBanned && (
-                <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
+                <Alert
+                  icon={<IconAlertCircle size={16} />}
+                  color="red"
+                  variant="light"
+                >
                   {post.is_banned
                     ? t("view.listingRemoved")
                     : t("view.sellerSuspended")}
@@ -301,7 +337,14 @@ export function PostViewPage() {
         onClose={() => setReportModalOpened(false)}
         reportType={reportType}
         entityId={reportType === "post" ? post.id : post.user.id}
-        entityName={reportType === "post" ? post.title : `@${post.user.username}`}
+        entityName={
+          reportType === "post" ? post.title : `@${post.user.username}`
+        }
+      />
+      <LoginPromptModal
+        opened={loginModalOpened}
+        onClose={closeLoginModal}
+        action={tCommon("likes.likeAction")}
       />
     </>
   );

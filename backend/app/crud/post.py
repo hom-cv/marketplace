@@ -1,7 +1,8 @@
 """Post CRUD operations."""
 
 from datetime import datetime, timezone
-from typing import Sequence
+from typing import Sequence, Annotated
+from fastapi import Depends
 
 from decimal import Decimal
 
@@ -381,3 +382,6 @@ post_crud = PostCRUD(Post)
 def get_post_crud() -> PostCRUD:
     """Dependency provider for PostCRUD instance."""
     return post_crud
+
+
+AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]

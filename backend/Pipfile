@@ -9,7 +9,7 @@ asyncpg = "0.31.*"
 bcrypt = "5.0.*"
 boto3 = "1.42.*"
 email-validator = "2.3.*"
-fastapi = {extras = ["standard"], version = "0.128.*"}
+fastapi = {extras = ["standard"], version = "==0.128.*"}
 greenlet = "3.3.*"
 inflect = "7.5.*"
 jinja2 = "3.1.*"
