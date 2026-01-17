@@ -88,14 +88,12 @@ async def get_user_posts(
         like_data = await like_crud.get_likes_for_posts(db, post_ids=post_ids)
 
     # Build response
-    result = []
-    for post in posts:
-        response = PostResponseSchema.model_validate(post)
-        post_like_info = like_data.get(post.id, {})
-        response.like_count = post_like_info.get("count", 0)
-        result.append(response)
+    responses = [PostResponseSchema.model_validate(p) for p in posts]
+    for r in responses:
+        post_like_info = like_data.get(r.id, {})
+        r.like_count = post_like_info.get("count", 0)
 
-    return result
+    return responses
 
 
 @router.patch(
