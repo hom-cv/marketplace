@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import not_found_error
+from app.api.dependencies.user import AnnotatedValidUserByUsername
 from app.core.security import get_current_user
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
@@ -30,8 +30,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_user_profile(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     like_crud: AnnotatedLikeCRUD,
-    user_crud: AnnotatedUserCRUD,
-    username: str,
+    user: AnnotatedValidUserByUsername,
 ) -> PublicUserProfileSchema:
     """
     Get a user's public profile by username.
@@ -43,11 +42,6 @@ async def get_user_profile(
     - Total likes across all their posts
     - Seller status
     """
-    user = await user_crud.get_by_username_with_relations(db, username=username)
-
-    if not user:
-        raise not_found_error("User not found")
-
     # Get total likes for this user's posts
     total_likes = await like_crud.get_total_likes_for_user(db, user_id=user.id)
 
@@ -64,8 +58,7 @@ async def get_user_posts(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     post_crud: AnnotatedPostCRUD,
     like_crud: AnnotatedLikeCRUD,
-    user_crud: AnnotatedUserCRUD,
-    username: str,
+    user: AnnotatedValidUserByUsername,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> list[PostResponseSchema]:
@@ -74,11 +67,6 @@ async def get_user_posts(
 
     Returns non-deleted posts with like counts.
     """
-    user = await user_crud.get_by_username_with_relations(db, username=username)
-
-    if not user:
-        raise not_found_error("User not found")
-
     posts = await post_crud.get_by_user_id(db, user_id=user.id, skip=skip, limit=limit)
 
     # Get like data for posts
