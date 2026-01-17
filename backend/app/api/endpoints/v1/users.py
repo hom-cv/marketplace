@@ -109,11 +109,11 @@ async def update_my_profile(
     - bio: User's bio text (max 500 chars)
     - show_full_name: Whether to show full name on public profile
     """
+    update_kwargs = profile_data.model_dump(exclude_unset=True)
     updated_user = await user_crud.update_profile(
         db,
         user=current_user,
-        bio=profile_data.bio,
-        show_full_name=profile_data.show_full_name,
+        **update_kwargs,
     )
 
     return UserResponseSchema.from_user(updated_user)
