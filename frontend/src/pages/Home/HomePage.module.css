@@ -1,7 +1,6 @@
-/* HomePage.module.css - Aligned with App Design Language */
+/* HomePage - Japanese Minimalist Design */
 
 .wrapper {
-  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -9,157 +8,174 @@
 }
 
 .container {
-  position: relative;
-  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding-top: 60px;
-  padding-bottom: 60px;
+  padding-top: 80px;
+  padding-bottom: 80px;
 }
 
-/* Hero Section */
+/* Hero Section - Zen-like simplicity */
 .heroSection {
   text-align: center;
-  margin-bottom: 80px;
-  max-width: 700px;
+  margin-bottom: 120px;
+  max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-  padding-top: 40px;
+  padding-top: 80px;
 }
 
 .heroTitle {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-  margin-bottom: 24px;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-bottom: 20px;
   color: var(--mantine-color-text);
 }
 
 .heroSubtitle {
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--mantine-color-dimmed);
-  margin-bottom: 32px;
-  max-width: 500px;
+  margin-bottom: 40px;
+  max-width: 400px;
   margin-left: auto;
   margin-right: auto;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-weight: 400;
+}
+
+.heroActions {
+  display: flex;
+  justify-content: center;
 }
 
 /* Section Titles */
 .sectionTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
   text-align: center;
-  margin-bottom: 32px;
-  color: var(--mantine-color-text);
+  margin-bottom: 48px;
+  color: var(--mantine-color-dimmed);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-/* Features Section */
+/* Features Section - Understated */
 .featuresSection {
-  margin-bottom: 80px;
+  margin-bottom: 120px;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .featureCard {
-  padding: 24px;
-  border-radius: var(--mantine-radius-md);
-  background: var(--mantine-color-body);
-  border: 1px solid var(--mantine-color-default-border);
-  transition: box-shadow 0.2s ease;
+  padding: 32px 24px;
+  text-align: center;
+  transition: opacity 0.2s ease;
 }
 
 .featureCard:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-[data-mantine-color-scheme="dark"] .featureCard:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  opacity: 0.7;
 }
 
 .iconWrapper {
   display: inline-flex;
-  padding: 12px;
-  border-radius: var(--mantine-radius-md);
-  background: var(--mantine-color-blue-light);
-  color: var(--mantine-color-blue-filled);
-  margin-bottom: 16px;
+  padding: 0;
+  margin-bottom: 20px;
+  color: var(--mantine-color-dimmed);
+}
+
+.featureTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--mantine-color-text);
+  letter-spacing: 0.02em;
+}
+
+.featureDescription {
+  font-size: 0.8125rem;
+  color: var(--mantine-color-dimmed);
+  line-height: 1.6;
 }
 
 /* Explore Preview Section */
 .exploreSection {
   position: relative;
-  max-height: 520px;
+  max-height: 600px;
   overflow: hidden;
   margin-bottom: 0;
 }
 
 .exploreGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--mantine-color-default-border);
 }
 
 .cardWrapper {
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--mantine-color-body);
+  transition: opacity 0.2s ease;
 }
 
 .cardWrapper:hover {
-  transform: translateY(-4px);
+  opacity: 0.85;
 }
 
-.cardWrapper>* {
+.cardWrapper > * {
   pointer-events: none;
 }
 
-/* CTA Overlay */
+/* CTA Overlay - Softer gradient */
 .ctaArea {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
   height: 100%;
-  background: linear-gradient(to bottom,
-      transparent 0%,
-      transparent 30%,
-      rgba(255, 255, 255, 0.8) 60%,
-      var(--mantine-color-body) 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 40%,
+    color-mix(in srgb, var(--mantine-color-body) 70%, transparent) 70%,
+    var(--mantine-color-body) 100%
+  );
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 32px;
+  padding-bottom: 48px;
   pointer-events: none;
   z-index: 10;
 }
 
-.ctaArea>* {
+.ctaArea > * {
   pointer-events: auto;
 }
 
-[data-mantine-color-scheme="dark"] .ctaArea {
-  background: linear-gradient(to bottom,
-      transparent 0%,
-      transparent 30%,
-      rgba(26, 27, 30, 0.8) 60%,
-      var(--mantine-color-body) 100%);
+/* Mobile */
+@media (max-width: 992px) {
+  .exploreGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
   .heroSection {
-    margin-bottom: 60px;
-    padding: 24px 16px 0;
+    margin-bottom: 80px;
+    padding: 40px 20px 0;
   }
 
   .heroTitle {
-    font-size: 2rem;
+    font-size: 1.75rem;
     margin-bottom: 16px;
   }
 
   .heroSubtitle {
-    font-size: 1rem;
-    margin-bottom: 24px;
+    font-size: 0.9375rem;
+    margin-bottom: 32px;
   }
 
   .container {
@@ -168,19 +184,33 @@
   }
 
   .featuresSection {
-    margin-bottom: 60px;
+    margin-bottom: 80px;
   }
 
   .sectionTitle {
-    margin-bottom: 24px;
-    font-size: 1.25rem;
+    margin-bottom: 32px;
+    font-size: 0.6875rem;
   }
 
   .featureCard {
-    padding: 20px;
+    padding: 24px 16px;
   }
 
   .exploreSection {
-    max-height: 450px;
+    max-height: 500px;
+  }
+
+  .exploreGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ctaArea {
+    padding-bottom: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .exploreGrid {
+    grid-template-columns: 1fr;
   }
 }

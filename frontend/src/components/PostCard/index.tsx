@@ -1,6 +1,6 @@
 /**
  * PostCard component for displaying post in a card format
- * Premium, modern design with subtle animations
+ * Supports both full and minimal variants
  */
 
 import { useMemo } from "react";
@@ -39,6 +39,7 @@ export interface ReportTarget {
 interface PostCardProps {
   post: Post;
   onReportClick?: (target: ReportTarget) => void;
+  variant?: "default" | "minimal";
 }
 
 const typeColors: Record<PostType, string> = {
@@ -50,7 +51,7 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-export function PostCard({ post, onReportClick }: PostCardProps) {
+export function PostCard({ post, onReportClick, variant = "default" }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
@@ -60,7 +61,6 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
 
-  // Type labels with translations
   const typeLabels: Record<PostType, string> = useMemo(
     () => ({
       SHIRT: tListings("categories.shirt"),
@@ -95,6 +95,36 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
     });
   };
 
+  // Minimal variant for landing page grid
+  if (variant === "minimal") {
+    return (
+      <div className={styles.minimalCard}>
+        <div className={styles.minimalImageWrapper}>
+          <Image
+            src={post.image_url || "https://placehold.co/400x400?text=No+Image"}
+            alt={post.title}
+            fallbackSrc="https://placehold.co/400x400?text=No+Image"
+            className={styles.minimalImage}
+          />
+          {post.is_sold && (
+            <div className={styles.minimalSoldOverlay}>
+              <span>{t("badges.sold")}</span>
+            </div>
+          )}
+        </div>
+        <div className={styles.minimalInfo}>
+          <Text size="sm" fw={500} lineClamp={1}>
+            {post.title}
+          </Text>
+          <Text size="sm" c="dimmed">
+            ฿{price.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+          </Text>
+        </div>
+      </div>
+    );
+  }
+
+  // Default full variant
   return (
     <Card
       className={styles.card}
@@ -112,7 +142,6 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
           fallbackSrc="https://placehold.co/400x400?text=No+Image"
           className={post.is_sold ? styles.imageSold : styles.image}
         />
-        {/* Top-left badges: Category + Owner indicator */}
         <Group gap={4} className={styles.topBadges}>
           <Badge color={typeColors[post.type]} variant="filled" size="sm">
             {typeLabels[post.type]}
@@ -144,7 +173,6 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
           </Badge>
         )}
 
-        {/* Report Menu - only show for non-owners when handler is provided */}
         {!isOwner && onReportClick && (
           <div className={styles.menuWrapper}>
             <Menu shadow="md" width={180} position="bottom-end">
@@ -186,7 +214,6 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
             {post.title}
           </Text>
 
-          {/* Size display */}
           {post.size && (
             <Text size="sm" c="dimmed">
               {t("postCard.size")}: {post.size}

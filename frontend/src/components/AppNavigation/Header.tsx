@@ -1,8 +1,9 @@
 /**
- * Header bar component
+ * Ultra-slim minimal header
  */
 
-import { Container, Group, Title, Button, Burger } from "@mantine/core";
+import { useEffect, useState } from "react";
+import { Container, Group, Burger } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
@@ -20,31 +21,46 @@ interface HeaderProps {
 
 export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, onLogout }: HeaderProps) {
   const { t } = useTranslation("navigation");
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <header className={styles.header}>
-      <Container size="md" className={styles.headerContent}>
-        <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <Title>marketplace</Title>
+    <header className={styles.header} data-scrolled={scrolled}>
+      <Container size="xl" className={styles.headerContent}>
+        <Link to="/" className={styles.logo}>
+          marketplace
         </Link>
 
-        <Group visibleFrom="xs">
+        <Group gap="lg" visibleFrom="xs">
           <LanguageSwitcher />
           {isAuthenticated ? (
             <UserMenu user={user} onLogout={onLogout} />
           ) : (
-            <>
-              <Button component={Link} to="/login">
+            <nav className={styles.navLinks}>
+              <Link to="/login" className={styles.navLink}>
                 {t("header.login")}
-              </Button>
-              <Button component={Link} to="/sign-up">
+              </Link>
+              <Link to="/sign-up" className={styles.navLink}>
                 {t("header.signUp")}
-              </Button>
-            </>
+              </Link>
+            </nav>
           )}
         </Group>
 
-        <Burger opened={drawerOpened} onClick={onToggleDrawer} hiddenFrom="xs" size="sm" />
+        <Burger
+          opened={drawerOpened}
+          onClick={onToggleDrawer}
+          hiddenFrom="xs"
+          size="sm"
+          className={styles.burger}
+        />
       </Container>
     </header>
   );
