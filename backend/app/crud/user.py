@@ -93,7 +93,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         """
         query = (
             select(self.model)
-            .where(self.model.username == username)
+            .where(func.lower(self.model.username) == username.lower())
             .where(self.model.deleted_at.is_(None))
             .options(
                 selectinload(User.roles),
