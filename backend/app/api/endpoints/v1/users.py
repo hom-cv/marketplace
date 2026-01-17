@@ -1,12 +1,12 @@
 """User profile API endpoints."""
 
-from typing import Annotated
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.user import AnnotatedValidUserByUsername
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_user_optional
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.crud.user import AnnotatedUserCRUD
@@ -59,6 +59,7 @@ async def get_user_posts(
     post_crud: AnnotatedPostCRUD,
     like_crud: AnnotatedLikeCRUD,
     user: AnnotatedValidUserByUsername,
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
 ) -> list[PostResponseSchema]:
@@ -66,21 +67,25 @@ async def get_user_posts(
     Get a user's public posts by username.
 
     Returns non-deleted posts with like counts.
+    If authenticated, also includes is_liked status for each post.
     """
     posts = await post_crud.get_by_user_id(db, user_id=user.id, skip=skip, limit=limit)
 
-    # Get like data for posts
     post_ids = [p.id for p in posts]
     like_data: dict[int, dict] = {}
     if post_ids:
-        like_data = await like_crud.get_likes_for_posts(db, post_ids=post_ids)
+        like_data = await like_crud.get_likes_for_posts(
+            db,
+            post_ids=post_ids,
+            user_id=current_user.id if current_user else None,
+        )
 
-    # Build response
     responses = []
     for p in posts:
         response = PostResponseSchema.model_validate(p)
         post_like_info = like_data.get(p.id, {})
         response.like_count = post_like_info.get("count", 0)
+        response.is_liked = post_like_info.get("is_liked", False)
         responses.append(response)
 
     return responses
