@@ -47,7 +47,8 @@ export function ProfilePage() {
     error: postsError,
   } = useQuery({
     queryKey: ["userPosts", username],
-    queryFn: () => getUserPosts(username),
+    queryFn: () => getUserPosts(username!),
+    enabled: !!username,
   });
 
   if (profileLoading) {
