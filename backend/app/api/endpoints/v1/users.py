@@ -83,7 +83,7 @@ async def get_user_posts(
 
     # Get like data for posts
     post_ids = [p.id for p in posts]
-    like_data: dict = {}
+    like_data: dict[int, dict] = {}
     if post_ids:
         like_data = await like_crud.get_likes_for_posts(db, post_ids=post_ids)
 
