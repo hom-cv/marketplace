@@ -103,14 +103,14 @@ class PublicUserProfileSchema(BaseModel):
 
     @classmethod
     def from_user(
-        cls, user: Any, total_likes: int, include_name: bool
+        cls, user: Any, total_likes: int
     ) -> "PublicUserProfileSchema":
         """Create public profile from User model."""
         return cls(
             id=user.id,
             username=user.username,
-            first_name=user.first_name if include_name else None,
-            last_name=user.last_name if include_name else None,
+            first_name=user.first_name if user.show_full_name else None,
+            last_name=user.last_name if user.show_full_name else None,
             bio=user.bio,
             is_seller=user.is_seller,
             total_likes=total_likes,
