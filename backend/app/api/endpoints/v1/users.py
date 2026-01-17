@@ -52,9 +52,7 @@ async def get_user_profile(
     total_likes = await like_crud.get_total_likes_for_user(db, user_id=user.id)
 
     # Determine if name should be shown based on user's privacy setting
-    include_name = user.show_full_name
-
-    return PublicUserProfileSchema.from_user(user, total_likes, include_name)
+    return PublicUserProfileSchema.from_user(user, total_likes)
 
 
 @router.get(
