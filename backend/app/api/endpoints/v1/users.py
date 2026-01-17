@@ -80,15 +80,14 @@ async def get_user_posts(
             user_id=current_user.id if current_user else None,
         )
 
-    responses = []
-    for p in posts:
-        response = PostResponseSchema.model_validate(p)
-        post_like_info = like_data.get(p.id, {})
+    def _build_post_response(post: Post, all_like_data: dict) -> PostResponseSchema:
+        response = PostResponseSchema.model_validate(post)
+        post_like_info = all_like_data.get(post.id, {})
         response.like_count = post_like_info.get("count", 0)
         response.is_liked = post_like_info.get("is_liked", False)
-        responses.append(response)
+        return response
 
-    return responses
+    return [_build_post_response(p, like_data) for p in posts]
 
 
 @router.patch(
