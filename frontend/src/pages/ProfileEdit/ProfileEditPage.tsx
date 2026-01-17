@@ -102,7 +102,7 @@ export function ProfileEditPage() {
             mt="md"
             loading={updateMutation.isPending}
           >
-            {tCommon("actions.save")}
+            {tCommon("buttons.save")}
           </Button>
         </Stack>
       </form>

@@ -16,13 +16,6 @@
     "signUp": "Sign up",
     "getStarted": "Get Started"
   },
-  "actions": {
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "submit": "Submit"
-  },
   "guestExplore": {
     "signUpToSeeMore": "Sign up to see more",
     "subtitle": "Join thousands of fashion enthusiasts and discover unique pieces"
