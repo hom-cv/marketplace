@@ -101,10 +101,7 @@ export function ProfileEditPage() {
           <Switch
             label={t("edit.showNameLabel")}
             description={t("edit.showNameDescription")}
-            checked={form.values.show_full_name}
-            onChange={(event) =>
-              form.setFieldValue("show_full_name", event.currentTarget.checked)
-            }
+            {...form.getInputProps("show_full_name", { type: "checkbox" })}
           />
 
           <Button
