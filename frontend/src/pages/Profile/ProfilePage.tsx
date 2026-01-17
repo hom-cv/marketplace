@@ -37,7 +37,8 @@ export function ProfilePage() {
     error: profileError,
   } = useQuery({
     queryKey: ["userProfile", username],
-    queryFn: () => getUserProfile(username),
+    queryFn: () => getUserProfile(username!),
+    enabled: !!username,
   });
 
   const {
