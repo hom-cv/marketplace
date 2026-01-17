@@ -2,7 +2,6 @@
  * Profile edit page for updating bio and privacy settings
  */
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Container,
@@ -25,8 +24,6 @@ export function ProfileEditPage() {
   const queryClient = useQueryClient();
   const { t } = useTranslation("profile");
   const { t: tCommon } = useTranslation("common");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
@@ -45,8 +42,6 @@ export function ProfileEditPage() {
   const updateMutation = useMutation({
     mutationFn: updateMyProfile,
     onSuccess: (updatedUser) => {
-      setError(null);
-      setSuccess(t("messages.profileUpdated"));
       setUser(updatedUser);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       if (user?.username) {
@@ -54,10 +49,6 @@ export function ProfileEditPage() {
           queryKey: ["userProfile", user.username],
         });
       }
-    },
-    onError: (err: Error) => {
-      setError(err.message);
-      setSuccess(null);
     },
   });
 
@@ -74,15 +65,15 @@ export function ProfileEditPage() {
         {t("edit.subtitle")}
       </Text>
 
-      {error && (
+      {updateMutation.isError && (
         <Alert icon={<IconAlertCircle size={16} />} title={tCommon("status.error")} color="red" mb="lg">
-          {error}
+          {updateMutation.error instanceof Error ? updateMutation.error.message : tCommon("errors.generic")}
         </Alert>
       )}
 
-      {success && (
+      {updateMutation.isSuccess && (
         <Alert icon={<IconCheck size={16} />} title={tCommon("status.success")} color="green" mb="lg">
-          {success}
+          {t("messages.profileUpdated")}
         </Alert>
       )}
 
@@ -118,4 +109,3 @@ export function ProfileEditPage() {
     </Container>
   );
 }
-
