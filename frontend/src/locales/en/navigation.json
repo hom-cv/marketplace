@@ -10,12 +10,15 @@
     "becomeSeller": "Become a Seller",
     "createListing": "Create Listing",
     "logout": "Logout",
-    "adminDashboard": "Admin Dashboard"
+    "adminDashboard": "Admin Dashboard",
+    "profile": "Profile",
+    "editProfile": "Edit Profile"
   },
   "sections": {
     "dashboard": "Dashboard",
     "buying": "Buying",
-    "selling": "Selling"
+    "selling": "Selling",
+    "account": "Account"
   },
   "links": {
     "home": "Home",

@@ -12,6 +12,8 @@ import {
   IconHome,
   IconSearch,
   IconPackage,
+  IconUser,
+  IconSettings,
 } from "@tabler/icons-react";
 import { getInitials, type UserInfo } from "./types";
 import styles from "./AppNavigation.module.css";
@@ -38,6 +40,15 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         <Menu.Label>
           {user?.first_name} {user?.last_name}
         </Menu.Label>
+
+        <Menu.Item leftSection={<IconUser size={14} />} component={Link} to={`/app/profile/${user?.username}`}>
+          {t("menu.profile")}
+        </Menu.Item>
+        <Menu.Item leftSection={<IconSettings size={14} />} component={Link} to="/app/settings/profile">
+          {t("menu.editProfile")}
+        </Menu.Item>
+
+        <Menu.Divider />
 
         <Menu.Item leftSection={<IconHome size={14} />} component={Link} to="/app">
           {t("menu.dashboard")}

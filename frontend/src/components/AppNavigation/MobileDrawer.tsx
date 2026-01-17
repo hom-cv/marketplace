@@ -14,6 +14,9 @@ import {
   IconShoppingBag,
   IconPackage,
   IconReceipt,
+  IconHeart,
+  IconUser,
+  IconSettings,
 } from "@tabler/icons-react";
 import { getInitials, type UserInfo } from "./types";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -79,6 +82,14 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
             />
             <NavLink
               component={Link}
+              to="/app/liked"
+              label={t("links.likedListings")}
+              leftSection={<IconHeart size={18} />}
+              active={location.pathname === "/app/liked"}
+              onClick={onClose}
+            />
+            <NavLink
+              component={Link}
               to="/app/purchases"
               label={t("links.purchaseHistory")}
               leftSection={<IconShoppingBag size={18} />}
@@ -102,6 +113,25 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
               label={t("links.soldListings")}
               leftSection={<IconReceipt size={18} />}
               active={location.pathname === "/app/sales"}
+              onClick={onClose}
+            />
+            <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mt="md" mb="xs">
+              {t("sections.account")}
+            </Text>
+            <NavLink
+              component={Link}
+              to={`/app/profile/${user?.username}`}
+              label={t("menu.profile")}
+              leftSection={<IconUser size={18} />}
+              active={location.pathname === `/app/profile/${user?.username}`}
+              onClick={onClose}
+            />
+            <NavLink
+              component={Link}
+              to="/app/settings/profile"
+              label={t("menu.editProfile")}
+              leftSection={<IconSettings size={18} />}
+              active={location.pathname === "/app/settings/profile"}
               onClick={onClose}
             />
             <Divider my="sm" />

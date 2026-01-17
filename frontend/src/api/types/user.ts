@@ -12,6 +12,23 @@ export interface User {
   is_seller: boolean;
   seller_status: string | null;
   is_admin: boolean;
+  bio: string | null;
+  show_full_name: boolean;
+}
+
+export interface PublicUserProfile {
+  id: number;
+  username: string;
+  first_name: string | null;
+  last_name: string | null;
+  bio: string | null;
+  is_seller: boolean;
+  total_likes: number;
+}
+
+export interface UpdateProfileRequest {
+  bio?: string | null;
+  show_full_name?: boolean;
 }
 
 export interface RegisterRequest {

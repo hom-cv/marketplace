@@ -10,12 +10,15 @@
     "becomeSeller": "เป็นผู้ขาย",
     "createListing": "สร้างรายการ",
     "logout": "ออกจากระบบ",
-    "adminDashboard": "แดชบอร์ดผู้ดูแล"
+    "adminDashboard": "แดชบอร์ดผู้ดูแล",
+    "profile": "โปรไฟล์",
+    "editProfile": "แก้ไขโปรไฟล์"
   },
   "sections": {
     "dashboard": "แดชบอร์ด",
     "buying": "การซื้อ",
-    "selling": "การขาย"
+    "selling": "การขาย",
+    "account": "บัญชี"
   },
   "links": {
     "home": "หน้าหลัก",

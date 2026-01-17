@@ -1,5 +1,8 @@
 """User CRUD operations."""
 
+from typing import Annotated
+
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -73,6 +76,33 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
 
         return result.scalar_one_or_none()
 
+    async def get_by_username_with_relations(
+        self, db: AsyncSession, *, username: str
+    ) -> User | None:
+        """
+        Retrieve a user by username with roles and seller_profile loaded.
+
+        Used for public profile viewing.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            username (str): The username to search for.
+
+        Returns:
+            User | None: The user if found, or None if not found.
+        """
+        query = (
+            select(self.model)
+            .where(self.model.username == username)
+            .where(self.model.deleted_at.is_(None))
+            .options(
+                selectinload(User.roles),
+                selectinload(User.seller_profile),
+            )
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
     async def create_user(self, db: AsyncSession, *, user: User) -> User:
         """
         Create a new user in the database.
@@ -109,6 +139,36 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
 
         return user
 
+    async def update_profile(
+        self,
+        db: AsyncSession,
+        *,
+        user: User,
+        bio: str | None = None,
+        show_full_name: bool | None = None,
+    ) -> User:
+        """
+        Update user profile fields.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            user (User): The user to update.
+            bio (str | None): New bio value, or None to skip update.
+            show_full_name (bool | None): New visibility setting, or None to skip.
+
+        Returns:
+            User: The updated user.
+        """
+        if bio is not None:
+            user.bio = bio
+        if show_full_name is not None:
+            user.show_full_name = show_full_name
+
+        await db.commit()
+        await db.refresh(user)
+
+        return user
+
 
 user_crud = UserCRUD(User)
 
@@ -116,3 +176,6 @@ user_crud = UserCRUD(User)
 def get_user_crud() -> UserCRUD:
     """Dependency provider for UserCRUD instance."""
     return user_crud
+
+
+AnnotatedUserCRUD = Annotated[UserCRUD, Depends(get_user_crud)]

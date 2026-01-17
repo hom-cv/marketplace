@@ -52,6 +52,8 @@ class UserResponseSchema(BaseModel):
     is_seller: bool = False
     seller_status: str | None = None
     is_admin: bool = False
+    bio: str | None = None
+    show_full_name: bool = True
 
     model_config = {"from_attributes": True}
 
@@ -72,4 +74,44 @@ class UserResponseSchema(BaseModel):
             is_seller=user.is_seller,
             seller_status=seller_status,
             is_admin=user.is_admin,
+            bio=user.bio,
+            show_full_name=user.show_full_name,
+        )
+
+
+class UserProfileUpdateSchema(BaseModel):
+    """Schema for updating user profile (bio and privacy settings)."""
+
+    bio: str | None = Field(None, max_length=500, description="User bio")
+    show_full_name: bool | None = Field(
+        None, description="Whether to show full name on profile"
+    )
+
+
+class PublicUserProfileSchema(BaseModel):
+    """Schema for public user profile response."""
+
+    id: int
+    username: str
+    first_name: str | None = None
+    last_name: str | None = None
+    bio: str | None = None
+    is_seller: bool = False
+    total_likes: int = 0
+
+    model_config = {"from_attributes": True}
+
+    @classmethod
+    def from_user(
+        cls, user: Any, total_likes: int, include_name: bool
+    ) -> "PublicUserProfileSchema":
+        """Create public profile from User model."""
+        return cls(
+            id=user.id,
+            username=user.username,
+            first_name=user.first_name if include_name else None,
+            last_name=user.last_name if include_name else None,
+            bio=user.bio,
+            is_seller=user.is_seller,
+            total_likes=total_likes,
         )

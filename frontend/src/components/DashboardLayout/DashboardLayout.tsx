@@ -9,6 +9,8 @@ import {
   IconReceipt,
   IconPlus,
   IconShield,
+  IconUser,
+  IconSettings,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
@@ -70,6 +72,24 @@ function SidebarContent() {
           to="/app/sales"
           icon={<IconReceipt size={20} />}
           label={t("links.soldListings")}
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+      </div>
+
+      <div className={styles.navSection}>
+        <div className={styles.navHeader}>{t("sections.account")}</div>
+        <SidebarNavLink
+          to={`/app/profile/${user?.username}`}
+          icon={<IconUser size={20} />}
+          label={t("menu.profile")}
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/app/settings/profile"
+          icon={<IconSettings size={20} />}
+          label={t("menu.editProfile")}
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
