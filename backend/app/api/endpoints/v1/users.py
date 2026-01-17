@@ -74,7 +74,7 @@ async def get_user_posts(
 
     Returns non-deleted posts with like counts.
     """
-    user = await user_crud.get_by_username(db, username=username)
+    user = await user_crud.get_by_username_with_relations(db, username=username)
 
     if not user:
         raise not_found_error("User not found")
