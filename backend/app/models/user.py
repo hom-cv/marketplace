@@ -4,7 +4,7 @@ from enum import auto
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import BigInteger, Enum, Index, String
+from sqlalchemy import BigInteger, Enum, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
@@ -70,6 +70,10 @@ class User(Base):
         default=UserStatus.PENDING,
         nullable=False,
     )
+
+    # Profile fields
+    bio: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
+    show_full_name: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     # Relationships
     roles: Mapped[List[UserRole]] = relationship(

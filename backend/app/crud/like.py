@@ -156,6 +156,29 @@ class LikeCRUD:
 
         return result
 
+    async def get_total_likes_for_user(self, db: AsyncSession, *, user_id: int) -> int:
+        """
+        Get total likes across all posts by a user.
+
+        Counts all likes on non-deleted posts owned by the user in a single query.
+
+        Args:
+            db: The async database session.
+            user_id: The user's ID.
+
+        Returns:
+            Total like count across all user's posts.
+        """
+        query = (
+            select(func.count())
+            .select_from(Like)
+            .join(Post, Post.id == Like.post_id)
+            .where(Post.user_id == user_id)
+            .where(Post.deleted_at.is_(None))
+        )
+        result = await db.scalar(query)
+        return result or 0
+
     async def get_user_liked_posts(
         self,
         db: AsyncSession,

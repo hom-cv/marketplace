@@ -1,0 +1,118 @@
+"""User profile API endpoints."""
+
+from typing import Annotated, Optional
+
+from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.dependencies.user import AnnotatedValidUserByUsername
+from app.core.security import get_current_user, get_current_user_optional
+from app.crud.like import AnnotatedLikeCRUD
+from app.crud.post import AnnotatedPostCRUD
+from app.crud.user import AnnotatedUserCRUD
+from app.db.utils import get_async_db
+from app.models import User
+from app.schemas.post import PostResponseSchema
+from app.schemas.user import (
+    PublicUserProfileSchema,
+    UserProfileUpdateSchema,
+    UserResponseSchema,
+)
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.get(
+    "/{username}",
+    status_code=status.HTTP_200_OK,
+    response_model=PublicUserProfileSchema,
+)
+async def get_user_profile(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    like_crud: AnnotatedLikeCRUD,
+    user: AnnotatedValidUserByUsername,
+) -> PublicUserProfileSchema:
+    """
+    Get a user's public profile by username.
+
+    Returns the user's profile including:
+    - Username (always shown)
+    - First/last name (only if user has show_full_name enabled)
+    - Bio
+    - Total likes across all their posts
+    - Seller status
+    """
+    # Get total likes for this user's posts
+    total_likes = await like_crud.get_total_likes_for_user(db, user_id=user.id)
+
+    # Determine if name should be shown based on user's privacy setting
+    return PublicUserProfileSchema.from_user(user, total_likes)
+
+
+@router.get(
+    "/{username}/posts",
+    status_code=status.HTTP_200_OK,
+    response_model=list[PostResponseSchema],
+)
+async def get_user_posts(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    post_crud: AnnotatedPostCRUD,
+    like_crud: AnnotatedLikeCRUD,
+    user: AnnotatedValidUserByUsername,
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> list[PostResponseSchema]:
+    """
+    Get a user's public posts by username.
+
+    Returns non-deleted posts with like counts.
+    If authenticated, also includes is_liked status for each post.
+    """
+    posts = await post_crud.get_by_user_id(db, user_id=user.id, skip=skip, limit=limit)
+
+    post_ids = [p.id for p in posts]
+    like_data: dict[int, dict] = {}
+    if post_ids:
+        like_data = await like_crud.get_likes_for_posts(
+            db,
+            post_ids=post_ids,
+            user_id=current_user.id if current_user else None,
+        )
+
+    def _build_post_response(post: Post, all_like_data: dict) -> PostResponseSchema:
+        response = PostResponseSchema.model_validate(post)
+        post_like_info = all_like_data.get(post.id, {})
+        response.like_count = post_like_info.get("count", 0)
+        response.is_liked = post_like_info.get("is_liked", False)
+        return response
+
+    return [_build_post_response(p, like_data) for p in posts]
+
+
+@router.patch(
+    "/me/profile",
+    status_code=status.HTTP_200_OK,
+    response_model=UserResponseSchema,
+)
+async def update_my_profile(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    user_crud: AnnotatedUserCRUD,
+    profile_data: UserProfileUpdateSchema,
+) -> UserResponseSchema:
+    """
+    Update the current user's profile.
+
+    Allows updating:
+    - bio: User's bio text (max 500 chars)
+    - show_full_name: Whether to show full name on public profile
+    """
+    update_kwargs = profile_data.model_dump(exclude_unset=True)
+    updated_user = await user_crud.update_profile(
+        db,
+        user=current_user,
+        **update_kwargs,
+    )
+
+    return UserResponseSchema.from_user(updated_user)

@@ -55,6 +55,8 @@ def create_mock_user(
     is_seller: bool = False,
     is_admin: bool = False,
     email_verified: bool = True,
+    bio: str | None = None,
+    show_full_name: bool = True,
 ) -> MagicMock:
     """Factory function to create a mock User object with configurable attributes."""
     mock_user = MagicMock(spec=User)
@@ -71,6 +73,8 @@ def create_mock_user(
     mock_user.hashed_password = "$2b$12$abcdefghij1234567890123456789012345678901234567890"  # bcrypt format
     mock_user.roles = []
     mock_user.seller_profile = None
+    mock_user.bio = bio
+    mock_user.show_full_name = show_full_name
     return mock_user
 
 

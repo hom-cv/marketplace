@@ -22,6 +22,8 @@ import { PostViewPage } from "@/pages/PostView";
 import { CheckoutPage } from "@/pages/Checkout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { TermsPage, PrivacyPage } from "@/pages/Policies";
+import { ProfilePage } from "@/pages/Profile";
+import { ProfileEditPage } from "@/pages/ProfileEdit";
 import {
     AdminDashboardPage,
     InviteCodesPage,
@@ -83,7 +85,12 @@ const privacyRoute = createRoute({
     component: PrivacyPage,
 });
 
-
+// Public profile route
+const profileRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/profile/$username",
+    component: ProfilePage,
+});
 
 // Protected routes wrapper
 const protectedLayout = createRoute({
@@ -170,6 +177,19 @@ const checkoutRoute = createRoute({
     component: CheckoutPage,
 });
 
+const profileEditRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/settings/profile",
+    component: ProfileEditPage,
+});
+
+// Protected profile route (with sidebar for logged-in users)
+const appProfileRoute = createRoute({
+    getParentRoute: () => dashboardLayout,
+    path: "/profile/$username",
+    component: ProfilePage,
+});
+
 // Admin protected route wrapper - ensures user is admin
 const adminProtectedLayout = createRoute({
     getParentRoute: () => protectedLayout,
@@ -222,6 +242,7 @@ const routeTree = rootRoute.addChildren([
     verifyEmailRoute,
     termsRoute,
     privacyRoute,
+    profileRoute,
 
     protectedLayout.addChildren([
         dashboardLayout.addChildren([
@@ -236,6 +257,8 @@ const routeTree = rootRoute.addChildren([
             becomeSellerRoute,
             paymentReturnRoute,
             checkoutRoute,
+            profileEditRoute,
+            appProfileRoute,
         ]),
         adminProtectedLayout.addChildren([
             adminLayout.addChildren([

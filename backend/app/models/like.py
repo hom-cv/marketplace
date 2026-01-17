@@ -17,7 +17,7 @@ class Like(Base):
     __tablename__ = "likes"
 
     # Primary key
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     # Foreign keys
     user_id: Mapped[int] = mapped_column(

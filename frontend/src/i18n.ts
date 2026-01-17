@@ -15,6 +15,7 @@ import enExplore from "@/locales/en/explore.json";
 import enListings from "@/locales/en/listings.json";
 import enDashboard from "@/locales/en/dashboard.json";
 import enPolicies from "@/locales/en/policies.json";
+import enProfile from "@/locales/en/profile.json";
 
 // Import Thai translations
 import thCommon from "@/locales/th/common.json";
@@ -24,6 +25,7 @@ import thExplore from "@/locales/th/explore.json";
 import thListings from "@/locales/th/listings.json";
 import thDashboard from "@/locales/th/dashboard.json";
 import thPolicies from "@/locales/th/policies.json";
+import thProfile from "@/locales/th/profile.json";
 
 const resources = {
   en: {
@@ -34,6 +36,7 @@ const resources = {
     listings: enListings,
     dashboard: enDashboard,
     policies: enPolicies,
+    profile: enProfile,
   },
   th: {
     common: thCommon,
@@ -43,6 +46,7 @@ const resources = {
     listings: thListings,
     dashboard: thDashboard,
     policies: thPolicies,
+    profile: thProfile,
   },
 };
 
@@ -53,7 +57,7 @@ i18n
     resources,
     fallbackLng: "en",
     defaultNS: "common",
-    ns: ["common", "auth", "navigation", "explore", "listings", "dashboard", "policies"],
+    ns: ["common", "auth", "navigation", "explore", "listings", "dashboard", "policies", "profile"],
     interpolation: {
       escapeValue: false, // React already escapes values
     },
