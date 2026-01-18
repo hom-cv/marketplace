@@ -40,7 +40,7 @@ export function HomePage() {
     }, [token, navigate]);
 
     const handleSearchClick = () => {
-        navigate({ to: "/sign-up" });
+        navigate({ to: "/explore" });
     };
 
     const { t: tNav } = useTranslation("navigation");
@@ -70,7 +70,7 @@ export function HomePage() {
             <section className={styles.preview}>
                 <Container size="lg">
                     <div className={styles.previewHeader}>
-                        <Text size="sm" c="dimmed" tt="uppercase" fw={500} ls={0.5}>
+                        <Text size="sm" c="dimmed" tt="uppercase" fw={500} style={{ letterSpacing: 0.5 }}>
                             {t("landing.explore.sectionLabel")}
                         </Text>
                     </div>
@@ -88,7 +88,7 @@ export function HomePage() {
                                 <div
                                     key={post.id}
                                     className={styles.card}
-                                    onClick={() => navigate({ to: "/login" })}
+                                    onClick={() => navigate({ to: "/posts/$postId", params: { postId: String(post.id) } })}
                                 >
                                     <PostCard post={post} />
                                 </div>
@@ -100,10 +100,10 @@ export function HomePage() {
                             <Button
                                 size="md"
                                 radius="md"
-                                onClick={() => navigate({ to: "/sign-up" })}
+                                onClick={() => navigate({ to: "/explore" })}
                                 rightSection={<IconArrowRight size={16} />}
                             >
-                                {t("guestExplore.signUpToSeeMore")}
+                                {t("guestExplore.exploreAll")}
                             </Button>
                         </div>
                     )}

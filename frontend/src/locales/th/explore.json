@@ -1,5 +1,6 @@
 {
   "title": "สำรวจ",
+  "subtitle": "ค้นพบแฟชั่นที่ไม่เหมือนใครจากชุมชนของเรา",
   "search": {
     "placeholder": "ค้นหาสินค้า..."
   },
@@ -7,7 +8,8 @@
     "title": "ตัวกรอง",
     "category": "หมวดหมู่",
     "priceRange": "ช่วงราคา",
-    "clearFilters": "ล้างตัวกรอง"
+    "clearFilters": "ล้างตัวกรอง",
+    "showResults": "แสดง {{count}} รายการ"
   },
   "categories": {
     "shirts": "เสื้อ",
@@ -16,6 +18,11 @@
     "shoes": "รองเท้า",
     "accessories": "เครื่องประดับ",
     "other": "อื่นๆ"
+  },
+  "sizes": {
+    "clothing": "เสื้อผ้า",
+    "pants": "กางเกง",
+    "shoes": "รองเท้า (EU)"
   },
   "results": {
     "listing": "รายการ",
@@ -27,5 +34,9 @@
   },
   "errors": {
     "failedToLoad": "ไม่สามารถโหลดโพสต์ได้"
+  },
+  "cta": {
+    "signUp": "สมัครเพื่อซื้อและขาย",
+    "login": "มีบัญชีอยู่แล้ว?"
   }
 }

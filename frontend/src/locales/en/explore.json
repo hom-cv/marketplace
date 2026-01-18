@@ -1,5 +1,6 @@
 {
   "title": "Explore",
+  "subtitle": "Discover unique fashion pieces from our community",
   "search": {
     "placeholder": "Search listings..."
   },
@@ -7,7 +8,8 @@
     "title": "Filters",
     "category": "Category",
     "priceRange": "Price Range",
-    "clearFilters": "Clear filters"
+    "clearFilters": "Clear filters",
+    "showResults": "Show {{count}} results"
   },
   "categories": {
     "shirts": "Shirts",
@@ -16,6 +18,11 @@
     "shoes": "Shoes",
     "accessories": "Accessories",
     "other": "Other"
+  },
+  "sizes": {
+    "clothing": "Clothing",
+    "pants": "Pants",
+    "shoes": "Shoes (EU)"
   },
   "results": {
     "listing": "listing",
@@ -27,5 +34,9 @@
   },
   "errors": {
     "failedToLoad": "Failed to load posts"
+  },
+  "cta": {
+    "signUp": "Sign up to buy and sell",
+    "login": "Already have an account?"
   }
 }

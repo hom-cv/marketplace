@@ -2,7 +2,7 @@
  * Reusable auth form page wrapper
  */
 
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Container, Box, Text, Stack } from "@mantine/core";
 import styles from "./AuthFormPage.module.css";
 

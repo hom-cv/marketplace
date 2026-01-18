@@ -5,16 +5,17 @@
 
 import { useMemo } from "react";
 import { Box, Group, Text, Badge, Stack, Image } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { IconHeart } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
-import { LoginPromptModal } from "@/components/LoginPromptModal";
 
 interface PostFeedItemProps {
   post: Post;
+  showLikeButton?: boolean;
+  linkTo?: "public" | "app";
 }
 
 const typeColors: Record<PostType, string> = {
@@ -26,15 +27,13 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-export function PostFeedItem({ post }: PostFeedItemProps) {
+export function PostFeedItem({ post, showLikeButton = true, linkTo = "app" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
-  const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
-    useDisclosure(false);
 
   // Type labels with translations
   const typeLabels: Record<PostType, string> = useMemo(
@@ -50,7 +49,11 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
   );
 
   const handleClick = () => {
-    navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+    if (linkTo === "public") {
+      navigate({ to: "/posts/$postId", params: { postId: String(post.id) } });
+    } else {
+      navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+    }
   };
 
   return (
@@ -75,13 +78,19 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
                 maximumFractionDigits: 2,
               })}
             </Text>
-            <LikeButton
-              postId={post.id}
-              initialLiked={post.is_liked}
-              initialCount={post.like_count}
-              size="sm"
-              onAuthRequired={openLoginModal}
-            />
+            {showLikeButton ? (
+              <LikeButton
+                postId={post.id}
+                initialLiked={post.is_liked}
+                initialCount={post.like_count}
+                size="sm"
+              />
+            ) : (
+              <Group gap={4}>
+                <IconHeart size={16} color="var(--mantine-color-gray-5)" />
+                <Text size="xs" c="dimmed">{post.like_count}</Text>
+              </Group>
+            )}
           </Group>
           <Group gap="xs">
             {post.is_sold && (
@@ -112,12 +121,6 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
           @{post.user.username}
         </Text>
       </Stack>
-
-      <LoginPromptModal
-        opened={loginModalOpened}
-        onClose={closeLoginModal}
-        action={t("likes.likeAction")}
-      />
     </Box>
   );
 }

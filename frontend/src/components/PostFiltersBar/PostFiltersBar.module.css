@@ -1,0 +1,42 @@
+/* PostFiltersBar - Minimal styling matching site design */
+
+.container {
+  width: 100%;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px;
+  align-self: flex-start;
+}
+
+.drawer {
+  width: 100%;
+}
+
+/* Sections */
+.section {
+  /* No extra styling needed */
+}
+
+.sectionToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 0;
+  margin-bottom: 8px;
+}
+
+.sectionContent {
+  padding-bottom: 8px;
+}
+
+/* Hide sidebar on mobile */
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+}

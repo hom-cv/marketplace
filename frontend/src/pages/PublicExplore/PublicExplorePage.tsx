@@ -1,11 +1,12 @@
 /**
- * ExplorePage - Browse listings (authenticated users)
+ * PublicExplorePage - Browse listings without authentication
  * Clean, minimalist design matching the site's aesthetic
  */
 
 import { useMemo, useEffect, useRef, useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
+  Container,
   Center,
   Alert,
   Text,
@@ -22,10 +23,8 @@ import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { PostFiltersBar } from "@/components/PostFiltersBar";
-import { ReportModal } from "@/components/ReportModal";
-import { useReportModal } from "@/hooks/useReportModal";
 import { usePostFilters } from "@/hooks/usePostFilters";
-import styles from "./ExplorePage.module.css";
+import styles from "./PublicExplorePage.module.css";
 
 const ITEMS_PER_PAGE = 12;
 const SKELETON_COUNT = 12;
@@ -46,7 +45,7 @@ function PostCardSkeleton() {
   );
 }
 
-export function ExplorePage() {
+export function PublicExplorePage() {
   const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
@@ -62,7 +61,6 @@ export function ExplorePage() {
     handleSearchChange,
   } = usePostFilters();
 
-  const reportModal = useReportModal();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -73,7 +71,7 @@ export function ExplorePage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["posts", queryFilters],
+    queryKey: ["posts", "public", queryFilters],
     queryFn: ({ pageParam = 0 }) => getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
     getNextPageParam: (lastPage) => {
       const nextSkip = lastPage.skip + lastPage.limit;
@@ -109,93 +107,101 @@ export function ExplorePage() {
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : t("errors.failedToLoad")}
-      </Alert>
+      <div className={styles.page}>
+        <Container size="xl">
+          <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+            {error instanceof Error ? error.message : t("errors.failedToLoad")}
+          </Alert>
+        </Container>
+      </div>
     );
   }
 
   return (
     <div className={styles.page}>
-      {/* Header */}
-      <header className={styles.header}>
-        <h1 className={styles.title}>{t("title")}</h1>
-        {!isLoading && totalCount > 0 && (
-          <Text size="sm" c="dimmed">
-            {totalCount} {totalCount === 1 ? t("results.listing") : t("results.listings")}
-          </Text>
-        )}
-      </header>
-
-      {/* Layout */}
-      <div className={styles.layout}>
-        {/* Main */}
-        <main className={styles.main}>
-          {isLoading && (
-            <div className={styles.grid}>
-              {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                <PostCardSkeleton key={i} />
-              ))}
-            </div>
+      <Container size="xl">
+        {/* Header */}
+        <header className={styles.header}>
+          <h1 className={styles.title}>{t("title")}</h1>
+          <p className={styles.subtitle}>{t("subtitle")}</p>
+          {!isLoading && totalCount > 0 && (
+            <Text size="sm" c="dimmed" mt="xs">
+              {totalCount} {totalCount === 1 ? t("results.listing") : t("results.listings")}
+            </Text>
           )}
+        </header>
 
-          {!isLoading && posts.length === 0 && (
-            <Center h={300}>
-              <Stack align="center" gap="md">
-                <Text c="dimmed">{hasActiveFilters ? t("results.noMatch") : t("results.noListings")}</Text>
-                {hasActiveFilters && (
-                  <Button variant="light" size="sm" onClick={handleClearFilters}>
-                    {t("filters.clearFilters")}
-                  </Button>
-                )}
-              </Stack>
-            </Center>
-          )}
+        {/* Layout */}
+        <div className={styles.layout}>
+          {/* Sidebar */}
+          <PostFiltersBar
+            filters={filters}
+            onTypeToggle={handleTypeToggle}
+            onSizeToggle={handleSizeToggle}
+            onSearchChange={handleSearchChange}
+            onClearFilters={handleClearFilters}
+            hasActiveFilters={hasActiveFilters}
+            variant="sidebar"
+          />
 
-          {!isLoading && posts.length > 0 && (
-            <>
+          {/* Main */}
+          <main className={styles.main}>
+            {isLoading && (
               <div className={styles.grid}>
-                {posts.map((post) => (
-                  <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
+                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                  <PostCardSkeleton key={i} />
                 ))}
               </div>
-              <div className={styles.mobileFeed}>
-                {posts.map((post) => (
-                  <PostFeedItem key={post.id} post={post} />
-                ))}
-              </div>
-            </>
-          )}
+            )}
 
-          {posts.length > 0 && (
-            <>
-              <div ref={loadMoreRef} style={{ height: 1 }} />
-              {isFetchingNextPage && (
-                <div className={styles.loadingMore}>
-                  {Array.from({ length: 4 }).map((_, i) => (
-                    <PostCardSkeleton key={`loading-${i}`} />
+            {!isLoading && posts.length === 0 && (
+              <Center h={300}>
+                <Stack align="center" gap="md">
+                  <Text c="dimmed">{hasActiveFilters ? t("results.noMatch") : t("results.noListings")}</Text>
+                  {hasActiveFilters && (
+                    <Button variant="light" size="sm" onClick={handleClearFilters}>
+                      {t("filters.clearFilters")}
+                    </Button>
+                  )}
+                </Stack>
+              </Center>
+            )}
+
+            {!isLoading && posts.length > 0 && (
+              <>
+                <div className={styles.grid}>
+                  {posts.map((post) => (
+                    <PostCard key={post.id} post={post} showLikeButton={false} linkTo="public" />
                   ))}
                 </div>
-              )}
-              {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
-                <Text ta="center" c="dimmed" size="sm" py="xl">
-                  {t("results.noMore")}
-                </Text>
-              )}
-            </>
-          )}
-        </main>
-        <PostFiltersBar
-          filters={filters}
-          onTypeToggle={handleTypeToggle}
-          onSizeToggle={handleSizeToggle}
-          onSearchChange={handleSearchChange}
-          onClearFilters={handleClearFilters}
-          hasActiveFilters={hasActiveFilters}
-          variant="sidebar"
-        />
+                <div className={styles.mobileFeed}>
+                  {posts.map((post) => (
+                    <PostFeedItem key={post.id} post={post} showLikeButton={false} linkTo="public" />
+                  ))}
+                </div>
+              </>
+            )}
 
-      </div>
+            {posts.length > 0 && (
+              <>
+                <div ref={loadMoreRef} style={{ height: 1 }} />
+                {isFetchingNextPage && (
+                  <div className={styles.loadingMore}>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <PostCardSkeleton key={`loading-${i}`} />
+                    ))}
+                  </div>
+                )}
+                {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
+                  <Text ta="center" c="dimmed" size="sm" py="xl">
+                    {t("results.noMore")}
+                  </Text>
+                )}
+              </>
+            )}
+          </main>
+        </div>
+      </Container>
 
       {/* Mobile Filter Button */}
       <button className={styles.filterBtn} onClick={openDrawer}>
@@ -241,16 +247,6 @@ export function ExplorePage() {
           </Button>
         </div>
       </Drawer>
-
-      {reportModal.target && (
-        <ReportModal
-          opened={reportModal.opened}
-          onClose={reportModal.close}
-          reportType={reportModal.target.reportType}
-          entityId={reportModal.target.entityId}
-          entityName={reportModal.target.entityName}
-        />
-      )}
     </div>
   );
 }

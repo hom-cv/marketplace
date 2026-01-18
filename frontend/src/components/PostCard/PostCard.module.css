@@ -67,6 +67,20 @@
   right: 8px;
 }
 
+.likeCount {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  color: var(--mantine-color-gray-6);
+}
+
+[data-mantine-color-scheme="dark"] .likeCount {
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--mantine-color-gray-4);
+}
+
 /* Menu */
 .menuWrapper {
   position: absolute;

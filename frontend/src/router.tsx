@@ -19,6 +19,8 @@ import { MyListingsPage } from "@/pages/MyListings";
 import { SoldListingsPage } from "@/pages/SoldListings";
 import { PaymentReturnPage } from "@/pages/PaymentReturn";
 import { PostViewPage } from "@/pages/PostView";
+import { PublicExplorePage } from "@/pages/PublicExplore";
+import { PublicPostViewPage } from "@/pages/PublicPostView";
 import { CheckoutPage } from "@/pages/Checkout";
 import { AdminLayout } from "@/components/AdminLayout";
 import { TermsPage, PrivacyPage } from "@/pages/Policies";
@@ -90,6 +92,20 @@ const profileRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/profile/$username",
     component: ProfilePage,
+});
+
+// Public explore route (accessible without login)
+const publicExploreRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/explore",
+    component: PublicExplorePage,
+});
+
+// Public post view route (accessible without login)
+const publicPostViewRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/posts/$postId",
+    component: PublicPostViewPage,
 });
 
 // Protected routes wrapper
@@ -243,6 +259,8 @@ const routeTree = rootRoute.addChildren([
     termsRoute,
     privacyRoute,
     profileRoute,
+    publicExploreRoute,
+    publicPostViewRoute,
 
     protectedLayout.addChildren([
         dashboardLayout.addChildren([

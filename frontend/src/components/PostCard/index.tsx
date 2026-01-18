@@ -13,19 +13,18 @@ import {
   Menu,
   ActionIcon,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import {
   IconDotsVertical,
   IconFlag,
   IconUserExclamation,
+  IconHeart,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
-import { LoginPromptModal } from "@/components/LoginPromptModal";
 import styles from "./PostCard.module.css";
 
 export interface ReportTarget {
@@ -37,26 +36,17 @@ export interface ReportTarget {
 interface PostCardProps {
   post: Post;
   onReportClick?: (target: ReportTarget) => void;
+  showLikeButton?: boolean;
+  linkTo?: "public" | "app";
 }
 
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
-
-export function PostCard({ post, onReportClick }: PostCardProps) {
+export function PostCard({ post, onReportClick, showLikeButton = true, linkTo = "app" }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
-  const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
-    useDisclosure(false);
 
   const typeLabels: Record<PostType, string> = useMemo(
     () => ({
@@ -71,7 +61,11 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
   );
 
   const handleClick = () => {
-    navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+    if (linkTo === "public") {
+      navigate({ to: "/posts/$postId", params: { postId: String(post.id) } });
+    } else {
+      navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+    }
   };
 
   const handleReportListing = (e: React.MouseEvent) => {
@@ -124,15 +118,21 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
           </Badge>
         )}
 
-        {/* Like button overlay */}
+        {/* Like button/count overlay */}
         <div className={styles.likeWrapper}>
-          <LikeButton
-            postId={post.id}
-            initialLiked={post.is_liked}
-            initialCount={post.like_count}
-            size="sm"
-            onAuthRequired={openLoginModal}
-          />
+          {showLikeButton ? (
+            <LikeButton
+              postId={post.id}
+              initialLiked={post.is_liked}
+              initialCount={post.like_count}
+              size="sm"
+            />
+          ) : (
+            <Group gap={4} className={styles.likeCount}>
+              <IconHeart size={16} />
+              <Text size="xs" c="dimmed">{post.like_count}</Text>
+            </Group>
+          )}
         </div>
 
         {/* Report Menu */}
@@ -190,12 +190,6 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
           <Text size="xs" c="dimmed">@{post.user.username}</Text>
         </Group>
       </Box>
-
-      <LoginPromptModal
-        opened={loginModalOpened}
-        onClose={closeLoginModal}
-        action={t("likes.likeAction")}
-      />
     </Card>
   );
 }
