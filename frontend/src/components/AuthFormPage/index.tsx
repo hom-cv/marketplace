@@ -3,7 +3,7 @@
  */
 
 import { ReactNode } from "react";
-import { Container, Box, Text } from "@mantine/core";
+import { Container, Box, Text, Stack } from "@mantine/core";
 import styles from "./AuthFormPage.module.css";
 
 interface AuthFormPageProps {
@@ -18,8 +18,10 @@ export function AuthFormPage({ title, children, footer, maxWidth = 380 }: AuthFo
     <div className={styles.page}>
       <Container size={maxWidth}>
         <Box className={styles.card}>
-          <Text className={styles.title}>{title}</Text>
-          {children}
+          <Stack gap="md">
+            <Text className={styles.title}>{title}</Text>
+            {children}
+          </Stack>
           {footer && <div className={styles.footer}>{footer}</div>}
         </Box>
       </Container>
