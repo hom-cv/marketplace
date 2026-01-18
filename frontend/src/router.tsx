@@ -24,6 +24,8 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { TermsPage, PrivacyPage } from "@/pages/Policies";
 import { ProfilePage } from "@/pages/Profile";
 import { ProfileEditPage } from "@/pages/ProfileEdit";
+import { PublicExplorePage } from "@/pages/PublicExplore";
+import { PublicPostViewPage } from "@/pages/PublicPostView";
 import {
     AdminDashboardPage,
     InviteCodesPage,
@@ -90,6 +92,19 @@ const profileRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/profile/$username",
     component: ProfilePage,
+});
+
+// Public explore routes (no authentication required)
+const publicExploreRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/explore",
+    component: PublicExplorePage,
+});
+
+const publicPostViewRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/explore/$postId",
+    component: PublicPostViewPage,
 });
 
 // Protected routes wrapper
@@ -243,6 +258,8 @@ const routeTree = rootRoute.addChildren([
     termsRoute,
     privacyRoute,
     profileRoute,
+    publicExploreRoute,
+    publicPostViewRoute,
 
     protectedLayout.addChildren([
         dashboardLayout.addChildren([

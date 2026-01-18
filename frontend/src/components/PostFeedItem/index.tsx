@@ -15,6 +15,8 @@ import { LoginPromptModal } from "@/components/LoginPromptModal";
 
 interface PostFeedItemProps {
   post: Post;
+  /** Base path for navigation (default: "/app/posts") */
+  linkPrefix?: string;
 }
 
 const typeColors: Record<PostType, string> = {
@@ -26,7 +28,7 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-export function PostFeedItem({ post }: PostFeedItemProps) {
+export function PostFeedItem({ post, linkPrefix = "/app/posts" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
@@ -50,7 +52,7 @@ export function PostFeedItem({ post }: PostFeedItemProps) {
   );
 
   const handleClick = () => {
-    navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+    navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
   };
 
   return (

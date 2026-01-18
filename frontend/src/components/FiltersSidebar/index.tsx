@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import { IconFilter, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import type { PostType } from "@/api/types/post";
+import type { PostType, SizeCategory } from "@/api/types/post";
 import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 
 interface FiltersState {
@@ -62,6 +62,9 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
     }).filter((c) => c.isVisible);
   }, [filters.types]);
 
+  // Helper to create prefixed size key (e.g., "shoes:40")
+  const createSizeKey = (category: SizeCategory, size: string) => `${category}:${size}`;
+
   const handleTypeToggle = (type: PostType) => {
     const newTypes = filters.types.includes(type)
       ? filters.types.filter((t) => t !== type)
@@ -70,10 +73,11 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
     onFiltersChange({ ...filters, types: newTypes, sizes: [] });
   };
 
-  const handleSizeToggle = (size: string) => {
-    const newSizes = filters.sizes.includes(size)
-      ? filters.sizes.filter((s) => s !== size)
-      : [...filters.sizes, size];
+  const handleSizeToggle = (category: SizeCategory, size: string) => {
+    const sizeKey = createSizeKey(category, size);
+    const newSizes = filters.sizes.includes(sizeKey)
+      ? filters.sizes.filter((s) => s !== sizeKey)
+      : [...filters.sizes, sizeKey];
     onFiltersChange({ ...filters, sizes: newSizes });
   };
 
@@ -144,23 +148,26 @@ export function FiltersSidebar({ filters, onFiltersChange }: FiltersSidebarProps
               </Text>
               <Stack gap="md">
                 {/* Data-driven size category rendering from SIZE_CATEGORY_CONFIG */}
-                {visibleSizeCategories.map((category) => (
-                  <Box key={category.category}>
+                {visibleSizeCategories.map((categoryConfig) => (
+                  <Box key={categoryConfig.category}>
                     {filters.types.length > 0 && (
                       <Text size="xs" c="dimmed" mb="xs">
-                        {tListings(category.labelKey)}
+                        {tListings(categoryConfig.labelKey)}
                       </Text>
                     )}
                     <Group gap="xs">
-                      {category.sizes.map((size) => (
-                        <Checkbox
-                          key={`${category.category}-${size}`}
-                          label={category.formatLabel ? category.formatLabel(size) : size}
-                          size="xs"
-                          checked={filters.sizes.includes(size)}
-                          onChange={() => handleSizeToggle(size)}
-                        />
-                      ))}
+                      {categoryConfig.sizes.map((size) => {
+                        const sizeKey = createSizeKey(categoryConfig.category, size);
+                        return (
+                          <Checkbox
+                            key={sizeKey}
+                            label={categoryConfig.formatLabel ? categoryConfig.formatLabel(size) : size}
+                            size="xs"
+                            checked={filters.sizes.includes(sizeKey)}
+                            onChange={() => handleSizeToggle(categoryConfig.category, size)}
+                          />
+                        );
+                      })}
                     </Group>
                   </Box>
                 ))}

@@ -129,10 +129,10 @@ export function HomePage() {
                                 <Button
                                     size="md"
                                     radius="xl"
-                                    onClick={() => navigate({ to: "/sign-up" })}
+                                    onClick={() => navigate({ to: "/explore" })}
                                     rightSection={<IconArrowRight size={16} />}
                                 >
-                                    {t("guestExplore.signUpToSeeMore")}
+                                    {t("guestExplore.exploreListings")}
                                 </Button>
                             </div>
                         </>

@@ -1,0 +1,44 @@
+.section {
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  padding-bottom: var(--mantine-spacing-md);
+}
+
+.section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--mantine-spacing-sm) 0;
+  cursor: pointer;
+  transition: color 150ms ease;
+  color: var(--mantine-color-text);
+}
+
+.header:hover {
+  color: var(--mantine-primary-color-filled);
+}
+
+.chevron {
+  transition: transform 200ms ease;
+  color: var(--mantine-color-dimmed);
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.content {
+  padding-top: var(--mantine-spacing-sm);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .section {
+    border-color: var(--mantine-color-dark-4);
+  }
+}

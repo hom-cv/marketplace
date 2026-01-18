@@ -1,7 +1,8 @@
 {
   "title": "Explore",
   "search": {
-    "placeholder": "Search listings..."
+    "placeholder": "Search listings...",
+    "label": "Search"
   },
   "filters": {
     "title": "Filters",
