@@ -1,9 +1,9 @@
 /**
- * Footer component with policy links
+ * Footer component - Minimal
  */
 
 import { Link } from "@tanstack/react-router";
-import { Container, Group, Text, Anchor, Divider, Stack } from "@mantine/core";
+import { Container, Group, Text, Anchor } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import styles from "./Footer.module.css";
 
@@ -13,21 +13,20 @@ export function Footer() {
 
   return (
     <footer className={styles.footer}>
-      <Divider />
-      <Container size="xl" pt="lg">
-        <Stack gap="sm">
-          <Group justify="center" gap="lg" wrap="wrap">
-            <Anchor component={Link} to="/terms" size="sm" c="dimmed">
+      <Container size="lg">
+        <Group justify="space-between" align="center" wrap="wrap" gap="sm">
+          <Text size="xs" c="dimmed">
+            © {currentYear} marketplace
+          </Text>
+          <Group gap="md">
+            <Anchor component={Link} to="/terms" size="xs" c="dimmed">
               {t("footer.terms")}
             </Anchor>
-            <Anchor component={Link} to="/privacy" size="sm" c="dimmed">
+            <Anchor component={Link} to="/privacy" size="xs" c="dimmed">
               {t("footer.privacy")}
             </Anchor>
           </Group>
-          <Text ta="center" size="xs" c="dimmed">
-            © {currentYear} {t("footer.copyright")}
-          </Text>
-        </Stack>
+        </Group>
       </Container>
     </footer>
   );

@@ -1,8 +1,8 @@
 /**
- * Header bar component
+ * Header bar component - Modern SaaS style
  */
 
-import { Container, Group, Title, Button, Burger } from "@mantine/core";
+import { Container, Group, Text, Button, Burger } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
@@ -23,21 +23,23 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
 
   return (
     <header className={styles.header}>
-      <Container size="md" className={styles.headerContent}>
-        <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <Title>marketplace</Title>
+      <Container size="lg" className={styles.headerContent}>
+        <Link to="/" className={styles.logoLink}>
+          <Text component="span" className={styles.logo}>
+            marketplace
+          </Text>
         </Link>
 
-        <Group visibleFrom="xs">
+        <Group gap="sm" visibleFrom="xs">
           <LanguageSwitcher />
           {isAuthenticated ? (
             <UserMenu user={user} onLogout={onLogout} />
           ) : (
             <>
-              <Button component={Link} to="/login">
+              <Button component={Link} to="/login" variant="subtle" color="gray" size="sm">
                 {t("header.login")}
               </Button>
-              <Button component={Link} to="/sign-up">
+              <Button component={Link} to="/sign-up" size="sm">
                 {t("header.signUp")}
               </Button>
             </>

@@ -1,6 +1,14 @@
 .header {
-  height: 60px;
-  border-bottom: 1px solid var(--mantine-color-gray-3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 56px;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .header {
+  border-bottom-color: var(--mantine-color-dark-4);
 }
 
 .headerContent {
@@ -8,6 +16,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.logoLink {
+  text-decoration: none;
+  color: inherit;
+}
+
+.logo {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  color: var(--mantine-color-text);
 }
 
 .avatar {

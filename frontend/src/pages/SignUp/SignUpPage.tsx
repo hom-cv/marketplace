@@ -4,18 +4,17 @@ import {
   TextInput,
   PasswordInput,
   Button,
-  Paper,
-  Title,
   Text,
-  Container,
   Stack,
-  Alert,
   Anchor,
+  SimpleGrid,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { Trans, useTranslation } from "react-i18next";
 import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import { AuthFormPage } from "@/components/AuthFormPage";
+import { FormError } from "@/components/FormError";
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -66,7 +65,6 @@ export function SignUpPage() {
       },
       {
         onSuccess: (user) => {
-          // Auto-login after successful registration
           loginMutation.mutate(
             { email: values.email, password: values.password },
             {
@@ -76,7 +74,6 @@ export function SignUpPage() {
                 navigate({ to: "/verify-email", search: { token: undefined } });
               },
               onError: () => {
-                // If auto-login fails, redirect to login page
                 navigate({ to: "/login" });
               },
             },
@@ -87,98 +84,105 @@ export function SignUpPage() {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Title ta="center">{t("signup.title")}</Title>
-      <Text c="dimmed" size="sm" ta="center" mt={5}>
-        {t("signup.hasAccount")}{" "}
-        <Link to="/login" style={{ color: "var(--mantine-color-blue-6)" }}>
-          {t("signup.signInLink")}
-        </Link>
-      </Text>
-
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack>
-            {registerMutation.isError && (
-              <Alert color="red" title={t("signup.failed")}>
-                {registerMutation.error?.message || t("signup.couldNotCreate")}
-              </Alert>
-            )}
-            <TextInput
-              label={t("signup.username")}
-              placeholder={t("signup.usernamePlaceholder")}
-              required
-              {...form.getInputProps("username")}
+    <AuthFormPage
+      title={t("signup.title")}
+      maxWidth={420}
+      footer={
+        <Text size="sm" c="dimmed">
+          {t("signup.hasAccount")}{" "}
+          <Anchor component={Link} to="/login" fw={500}>
+            {t("signup.signInLink")}
+          </Anchor>
+        </Text>
+      }
+    >
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="md">
+          {registerMutation.isError && (
+            <FormError
+              message={registerMutation.error?.message || t("signup.couldNotCreate")}
             />
+          )}
+
+          <TextInput
+            label={t("signup.username")}
+            placeholder={t("signup.usernamePlaceholder")}
+            size="md"
+            {...form.getInputProps("username")}
+          />
+
+          <SimpleGrid cols={2} spacing="md">
             <TextInput
               label={t("signup.firstName")}
               placeholder={t("signup.firstNamePlaceholder")}
-              required
+              size="md"
               {...form.getInputProps("firstName")}
             />
             <TextInput
               label={t("signup.lastName")}
               placeholder={t("signup.lastNamePlaceholder")}
-              required
+              size="md"
               {...form.getInputProps("lastName")}
             />
-            <TextInput
-              label={t("signup.email")}
-              placeholder={t("signup.emailPlaceholder")}
-              required
-              {...form.getInputProps("email")}
-            />
-            <PasswordInput
-              label={t("signup.password")}
-              placeholder={t("signup.passwordPlaceholder")}
-              required
-              {...form.getInputProps("password")}
-            />
-            <PasswordInput
-              label={t("signup.confirmPassword")}
-              placeholder={t("signup.confirmPasswordPlaceholder")}
-              required
-              {...form.getInputProps("confirmPassword")}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              mt="md"
-              loading={registerMutation.isPending}
-            >
-              {t("signup.submit")}
-            </Button>
+          </SimpleGrid>
 
-            {/* Policy acceptance text - at bottom of form */}
-            <Text size="xs" c="dimmed" ta="center">
-              <Trans
-                i18nKey="signup.policyAcceptance"
-                ns="policies"
-                components={{
-                  termsLink: (
-                    <Anchor
-                      component={Link}
-                      to="/terms"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="xs"
-                    />
-                  ),
-                  privacyLink: (
-                    <Anchor
-                      component={Link}
-                      to="/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="xs"
-                    />
-                  ),
-                }}
-              />
-            </Text>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+          <TextInput
+            label={t("signup.email")}
+            placeholder={t("signup.emailPlaceholder")}
+            size="md"
+            {...form.getInputProps("email")}
+          />
+
+          <PasswordInput
+            label={t("signup.password")}
+            placeholder={t("signup.passwordPlaceholder")}
+            size="md"
+            {...form.getInputProps("password")}
+          />
+
+          <PasswordInput
+            label={t("signup.confirmPassword")}
+            placeholder={t("signup.confirmPasswordPlaceholder")}
+            size="md"
+            {...form.getInputProps("confirmPassword")}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            size="md"
+            mt="xs"
+            loading={registerMutation.isPending}
+          >
+            {t("signup.submit")}
+          </Button>
+
+          <Text size="xs" c="dimmed" ta="center">
+            <Trans
+              i18nKey="signup.policyAcceptance"
+              ns="policies"
+              components={{
+                termsLink: (
+                  <Anchor
+                    component={Link}
+                    to="/terms"
+                    target="_blank"
+                    size="xs"
+                  />
+                ),
+                privacyLink: (
+                  <Anchor
+                    component={Link}
+                    to="/privacy"
+                    target="_blank"
+                    size="xs"
+                  />
+                ),
+              }}
+            />
+          </Text>
+        </Stack>
+      </form>
+    </AuthFormPage>
   );
 }

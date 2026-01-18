@@ -5,15 +5,10 @@ import {
     Container,
     Text,
     Button,
-    Group,
-    SimpleGrid,
+    TextInput,
+    Box,
 } from "@mantine/core";
-import {
-    IconArrowRight,
-    IconShieldCheck,
-    IconUsers,
-    IconWorld,
-} from "@tabler/icons-react";
+import { IconSearch, IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { getPosts } from "@/api/posts";
@@ -21,13 +16,12 @@ import { PostCard } from "@/components/PostCard";
 import styles from "./HomePage.module.css";
 
 export function HomePage() {
-    const PREVIEW_POST_COUNT = 16;
+    const PREVIEW_POST_COUNT = 8;
 
     const navigate = useNavigate();
     const { token } = useAuthStore();
     const { t } = useTranslation("common");
 
-    // Fetch preview posts for the landing page
     const { data: postsData } = useQuery({
         queryKey: ["posts", "guest-landing-preview"],
         queryFn: () => getPosts(0, PREVIEW_POST_COUNT),
@@ -43,102 +37,66 @@ export function HomePage() {
         }
     }, [token, navigate]);
 
+    const handleSearchClick = () => {
+        navigate({ to: "/sign-up" });
+    };
+
     return (
-        <div className={styles.wrapper}>
-            <Container size="xl" className={styles.container}>
-                {/* Hero Section */}
-                <div className={styles.heroSection}>
-                    <h1 className={styles.heroTitle}>
-                        {t("landing.hero.title")}
-                    </h1>
+        <div className={styles.page}>
+            {/* Hero */}
+            <section className={styles.hero}>
+                <Container size="sm">
+                    <h1 className={styles.title}>{t("landing.hero.title")}</h1>
+                    <p className={styles.subtitle}>{t("landing.hero.subtitle")}</p>
 
-                    <p className={styles.heroSubtitle}>
-                        {t("landing.hero.subtitle")}
-                    </p>
+                    <Box className={styles.searchBox} onClick={handleSearchClick}>
+                        <TextInput
+                            placeholder={t("landing.hero.searchPlaceholder")}
+                            leftSection={<IconSearch size={18} stroke={1.5} />}
+                            size="md"
+                            radius="md"
+                            readOnly
+                            classNames={{ input: styles.searchInput }}
+                        />
+                    </Box>
+                </Container>
+            </section>
 
-                    <div className={styles.heroActions}>
-                        <Group justify="center" gap="md">
+            {/* Preview */}
+            {posts.length > 0 && (
+                <section className={styles.preview}>
+                    <Container size="lg">
+                        <div className={styles.previewHeader}>
+                            <Text size="sm" c="dimmed" tt="uppercase" fw={500} ls={0.5}>
+                                {t("landing.explore.sectionLabel")}
+                            </Text>
+                        </div>
+
+                        <div className={styles.grid}>
+                            {posts.map((post) => (
+                                <div
+                                    key={post.id}
+                                    className={styles.card}
+                                    onClick={() => navigate({ to: "/login" })}
+                                >
+                                    <PostCard post={post} />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className={styles.fade}>
                             <Button
-                                size="lg"
+                                size="md"
                                 radius="md"
                                 onClick={() => navigate({ to: "/sign-up" })}
-                                rightSection={<IconArrowRight size={18} />}
+                                rightSection={<IconArrowRight size={16} />}
                             >
-                                {t("buttons.getStarted")}
+                                {t("guestExplore.signUpToSeeMore")}
                             </Button>
-
-                        </Group>
-                    </div>
-                </div>
-
-                {/* Features Section */}
-                <div className={styles.featuresSection}>
-                    <h2 className={styles.sectionTitle}>{t("landing.features.sectionTitle")}</h2>
-                    <SimpleGrid cols={{ base: 1, md: 3 }} spacing={30}>
-                        {[
-                            {
-                                icon: IconShieldCheck,
-                                title: t("landing.features.secure.title"),
-                                description: t("landing.features.secure.description"),
-                            },
-                            {
-                                icon: IconUsers,
-                                title: t("landing.features.community.title"),
-                                description: t("landing.features.community.description"),
-                            },
-                            {
-                                icon: IconWorld,
-                                title: t("landing.features.global.title"),
-                                description: t("landing.features.global.description"),
-                            },
-                        ].map((feature, index) => (
-                            <div key={index} className={styles.featureCard}>
-                                <div className={styles.iconWrapper}>
-                                    <feature.icon size={24} stroke={1.5} />
-                                </div>
-                                <Text fw={600} mb={4}>
-                                    {feature.title}
-                                </Text>
-                                <Text c="dimmed" size="sm" lh={1.5}>
-                                    {feature.description}
-                                </Text>
-                            </div>
-                        ))}
-                    </SimpleGrid>
-                </div>
-
-                {/* Explore Preview Section */}
-                <div id="explore-section" className={styles.exploreSection}>
-                    <h2 className={styles.sectionTitle}>{t("landing.explore.sectionTitle")}</h2>
-                    {posts.length > 0 && (
-                        <>
-                            <div className={styles.exploreGrid}>
-                                {posts.map((post) => (
-                                    <div
-                                        key={post.id}
-                                        className={styles.cardWrapper}
-                                        onClick={() => navigate({ to: "/login" })}
-                                    >
-                                        <PostCard post={post} />
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* CTA Overlay Area */}
-                            <div className={styles.ctaArea}>
-                                <Button
-                                    size="md"
-                                    radius="xl"
-                                    onClick={() => navigate({ to: "/sign-up" })}
-                                    rightSection={<IconArrowRight size={16} />}
-                                >
-                                    {t("guestExplore.signUpToSeeMore")}
-                                </Button>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </Container >
-        </div >
+                        </div>
+                    </Container>
+                </section>
+            )}
+        </div>
     );
 }

@@ -1,0 +1,26 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--mantine-radius-sm);
+  color: var(--mantine-color-dimmed);
+  transition: color 0.15s, background 0.15s;
+}
+
+.trigger:hover {
+  color: var(--mantine-color-text);
+  background: var(--mantine-color-gray-1);
+}
+
+[data-mantine-color-scheme="dark"] .trigger:hover {
+  background: var(--mantine-color-dark-5);
+}
+
+.active {
+  background: var(--mantine-color-gray-1);
+}
+
+[data-mantine-color-scheme="dark"] .active {
+  background: var(--mantine-color-dark-5);
+}

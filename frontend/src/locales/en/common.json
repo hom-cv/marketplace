@@ -272,7 +272,8 @@
   "landing": {
     "hero": {
       "title": "Discover Unique Fashion",
-      "subtitle": "Join the community-driven marketplace for unique fashion. Buy, sell, and discover items that tell a story."
+      "subtitle": "Buy, sell, and discover items that tell a story.",
+      "searchPlaceholder": "Search for items..."
     },
     "features": {
       "sectionLabel": "Our Promise",

@@ -1,0 +1,18 @@
+.error {
+  padding: 10px 12px;
+  border-radius: var(--mantine-radius-sm);
+  border: 1px solid var(--mantine-color-red-4);
+  background: var(--mantine-color-red-0);
+  color: var(--mantine-color-red-7);
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+[data-mantine-color-scheme="dark"] .error {
+  border-color: var(--mantine-color-red-7);
+  background: rgba(250, 82, 82, 0.1);
+  color: var(--mantine-color-red-4);
+}
