@@ -85,13 +85,7 @@ export function HomePage() {
                                 </div>
                             ))
                             : posts.map((post) => (
-                                <div
-                                    key={post.id}
-                                    className={styles.card}
-                                    onClick={() => navigate({ to: "/posts/$postId", params: { postId: String(post.id) } })}
-                                >
-                                    <PostCard post={post} />
-                                </div>
+                                <PostCard key={post.id} post={post} linkTo="public" showLikeButton={false} />
                             ))}
                     </div>
 

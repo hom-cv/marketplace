@@ -182,7 +182,6 @@ export function PaymentMethodForm({
                   <Anchor
                     component={Link}
                     to="/terms#refund-policy"
-                    target="_blank"
                     rel="noopener noreferrer"
                     size="sm"
                   />
