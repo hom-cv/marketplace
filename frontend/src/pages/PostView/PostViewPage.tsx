@@ -14,8 +14,6 @@ import {
   Stack,
   Alert,
   Grid,
-  Box,
-  Image,
   Group,
   Badge,
   Paper,
@@ -43,19 +41,9 @@ import { ReportModal } from "@/components/ReportModal";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
-import type { PostType } from "@/api/types/post";
+import { PostImageGallery } from "@/components/PostImageGallery";
+import { POST_TYPE_COLORS, getPostTypeLabels } from "@/constants/postTypes";
 import type { ReportType } from "@/api/types/admin";
-import styles from "./PostViewPage.module.css";
-
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
 
 export function PostViewPage() {
   const navigate = useNavigate();
@@ -66,20 +54,9 @@ export function PostViewPage() {
   const currentUser = useAuthStore((state) => state.user);
   const { t } = useTranslation("listings");
 
-  // Type labels with translations
-  const typeLabels: Record<PostType, string> = useMemo(
-    () => ({
-      SHIRT: t("categories.shirt"),
-      PANTS: t("categories.pants"),
-      JACKET: t("categories.jacket"),
-      SHOES: t("categories.shoes"),
-      ACCESSORIES: t("categories.accessories"),
-      OTHER: t("categories.other"),
-    }),
-    [t],
-  );
+  // Type labels with translations (from shared constants)
+  const typeLabels = useMemo(() => getPostTypeLabels(t), [t]);
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [reportModalOpened, setReportModalOpened] = useState(false);
   const [reportType, setReportType] = useState<ReportType>("post");
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
@@ -176,47 +153,7 @@ export function PostViewPage() {
         <Grid gutter="xl">
           {/* Left: Image Gallery */}
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Box className={styles.imageSection}>
-              {/* Main Image Display */}
-              <Box className={styles.mainImageWrapper}>
-                {imageUrls.length > 0 ? (
-                  <Image
-                    src={imageUrls[selectedImageIndex]}
-                    alt={post.title}
-                    className={styles.mainImage}
-                    fit="contain"
-                    radius="md"
-                  />
-                ) : (
-                  <ImagePlaceholder />
-                )}
-              </Box>
-
-              {/* Thumbnail Carousel */}
-              {imageUrls.length > 1 && (
-                <Group
-                  gap="xs"
-                  mt="md"
-                  wrap="nowrap"
-                  className={styles.thumbnailRow}
-                >
-                  {imageUrls.map((url, index) => (
-                    <Box
-                      key={index}
-                      className={`${styles.thumbnail} ${index === selectedImageIndex ? styles.thumbnailActive : ""}`}
-                      onClick={() => setSelectedImageIndex(index)}
-                    >
-                      <Image
-                        src={url}
-                        alt={`Image ${index + 1}`}
-                        fit="cover"
-                        radius="sm"
-                      />
-                    </Box>
-                  ))}
-                </Group>
-              )}
-            </Box>
+            <PostImageGallery imageUrls={imageUrls} alt={post.title} />
           </Grid.Col>
 
           {/* Right: Details */}
@@ -224,7 +161,7 @@ export function PostViewPage() {
             <Stack gap="md">
               {/* Category badge */}
               <Group>
-                <Badge color={typeColors[post.type]} size="lg" variant="light">
+                <Badge color={POST_TYPE_COLORS[post.type]} size="lg" variant="light">
                   {typeLabels[post.type]}
                 </Badge>
                 {isOwner && (

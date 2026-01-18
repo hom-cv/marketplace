@@ -1,4 +1,4 @@
-/* PublicPostViewPage styles - Same as PostViewPage */
+/* Shared PostView styles - Used by both PostViewPage and PublicPostViewPage */
 
 .imageSection {
   position: sticky;

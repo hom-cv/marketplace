@@ -14,8 +14,6 @@ import {
   Stack,
   Alert,
   Grid,
-  Box,
-  Image,
   Group,
   Badge,
   Paper,
@@ -35,18 +33,8 @@ import { getPost } from "@/api/posts";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
-import type { PostType } from "@/api/types/post";
-import styles from "./PublicPostViewPage.module.css";
-
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
+import { PostImageGallery } from "@/components/PostImageGallery";
+import { POST_TYPE_COLORS, getPostTypeLabels } from "@/constants/postTypes";
 
 export function PublicPostViewPage() {
   const navigate = useNavigate();
@@ -56,20 +44,8 @@ export function PublicPostViewPage() {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
 
-  // Type labels with translations
-  const typeLabels: Record<PostType, string> = useMemo(
-    () => ({
-      SHIRT: t("categories.shirt"),
-      PANTS: t("categories.pants"),
-      JACKET: t("categories.jacket"),
-      SHOES: t("categories.shoes"),
-      ACCESSORIES: t("categories.accessories"),
-      OTHER: t("categories.other"),
-    }),
-    [t]
-  );
-
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  // Type labels with translations (from shared constants)
+  const typeLabels = useMemo(() => getPostTypeLabels(t), [t]);
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
   const [loginAction, setLoginAction] = useState<string>("");
@@ -141,47 +117,7 @@ export function PublicPostViewPage() {
         <Grid gutter="xl">
           {/* Left: Image Gallery */}
           <Grid.Col span={{ base: 12, md: 6 }}>
-            <Box className={styles.imageSection}>
-              {/* Main Image Display */}
-              <Box className={styles.mainImageWrapper}>
-                {imageUrls.length > 0 ? (
-                  <Image
-                    src={imageUrls[selectedImageIndex]}
-                    alt={post.title}
-                    className={styles.mainImage}
-                    fit="contain"
-                    radius="md"
-                  />
-                ) : (
-                  <ImagePlaceholder />
-                )}
-              </Box>
-
-              {/* Thumbnail Carousel */}
-              {imageUrls.length > 1 && (
-                <Group
-                  gap="xs"
-                  mt="md"
-                  wrap="nowrap"
-                  className={styles.thumbnailRow}
-                >
-                  {imageUrls.map((url, index) => (
-                    <Box
-                      key={index}
-                      className={`${styles.thumbnail} ${index === selectedImageIndex ? styles.thumbnailActive : ""}`}
-                      onClick={() => setSelectedImageIndex(index)}
-                    >
-                      <Image
-                        src={url}
-                        alt={`Image ${index + 1}`}
-                        fit="cover"
-                        radius="sm"
-                      />
-                    </Box>
-                  ))}
-                </Group>
-              )}
-            </Box>
+            <PostImageGallery imageUrls={imageUrls} alt={post.title} />
           </Grid.Col>
 
           {/* Right: Details */}
@@ -189,7 +125,7 @@ export function PublicPostViewPage() {
             <Stack gap="md">
               {/* Category badge */}
               <Group>
-                <Badge color={typeColors[post.type]} size="lg" variant="light">
+                <Badge color={POST_TYPE_COLORS[post.type]} size="lg" variant="light">
                   {typeLabels[post.type]}
                 </Badge>
                 {post.is_sold && (

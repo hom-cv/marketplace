@@ -3,7 +3,7 @@
  * Features a persistent filter sidebar on desktop with collapsible sections
  */
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -45,6 +45,7 @@ import {
   createSizeKey,
   parseSizeKey,
 } from "@/utils/filterHelpers";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import styles from "./PublicExplorePage.module.css";
 
 export function PublicExplorePage() {
@@ -82,9 +83,6 @@ export function PublicExplorePage() {
       return { ...config, isVisible };
     }).filter((c) => c.isVisible);
   }, [filters.types]);
-
-  // Ref for intersection observer sentinel element
-  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Debounce search to avoid too many API calls
   const [debouncedSearch] = useDebouncedValue(filters.search, 300);
@@ -152,30 +150,12 @@ export function PublicExplorePage() {
 
   const totalCount = data?.pages[0]?.total ?? 0;
 
-  // Intersection Observer for infinite scroll
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries;
-      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
-  );
-
-  useEffect(() => {
-    const element = loadMoreRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [handleObserver]);
+  // Use shared infinite scroll hook
+  const loadMoreRef = useInfiniteScroll({
+    hasNextPage: !!hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   const hasActiveFilters =
     filters.types.length > 0 ||
