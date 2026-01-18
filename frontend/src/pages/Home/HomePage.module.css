@@ -76,8 +76,12 @@
   transform: translateY(-2px);
 }
 
-.card > * {
+.card>* {
   pointer-events: none;
+}
+
+.skeletonCard {
+  padding: 8px;
 }
 
 .fade {
@@ -86,11 +90,9 @@
   justify-content: center;
   padding-top: 40px;
   margin-top: -60px;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    var(--mantine-color-body) 60%
-  );
+  background: linear-gradient(to bottom,
+      transparent,
+      var(--mantine-color-body) 60%);
 }
 
 /* Responsive */

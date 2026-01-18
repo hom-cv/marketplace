@@ -1,6 +1,5 @@
 /**
- * PostCard component for displaying post in a card format
- * Premium, modern design with subtle animations
+ * PostCard component - Clean, minimal design
  */
 
 import { useMemo } from "react";
@@ -10,7 +9,6 @@ import {
   Text,
   Badge,
   Group,
-  Stack,
   Box,
   Menu,
   ActionIcon,
@@ -60,7 +58,6 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
 
-  // Type labels with translations
   const typeLabels: Record<PostType, string> = useMemo(
     () => ({
       SHIRT: tListings("categories.shirt"),
@@ -95,80 +92,71 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
     });
   };
 
+  const formattedPrice = price.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
   return (
     <Card
       className={styles.card}
-      shadow="sm"
       padding={0}
-      radius="lg"
-      withBorder
+      radius="md"
       onClick={handleClick}
     >
       <Card.Section className={styles.imageSection}>
         <Image
           src={post.image_url || "https://placehold.co/400x400?text=No+Image"}
-          height={220}
           alt={post.title}
           fallbackSrc="https://placehold.co/400x400?text=No+Image"
           className={post.is_sold ? styles.imageSold : styles.image}
         />
-        {/* Top-left badges: Category + Owner indicator */}
-        <Group gap={4} className={styles.topBadges}>
-          <Badge color={typeColors[post.type]} variant="filled" size="sm">
-            {typeLabels[post.type]}
-          </Badge>
-          {isOwner && (
-            <Badge variant="filled" color="gray" size="sm">
-              {t("badges.yourListing")}
-            </Badge>
-          )}
-        </Group>
+
+        {/* Status badges */}
         {post.is_sold && (
-          <Badge
-            className={styles.soldBadge}
-            color="red"
-            variant="filled"
-            size="lg"
-          >
+          <Badge className={styles.statusBadge} color="dark" size="sm">
             {t("badges.sold")}
           </Badge>
         )}
         {post.is_banned && (
-          <Badge
-            className={styles.soldBadge}
-            color="dark"
-            variant="filled"
-            size="lg"
-          >
+          <Badge className={styles.statusBadge} color="red" size="sm">
             {t("badges.removed")}
           </Badge>
         )}
 
-        {/* Report Menu - only show for non-owners when handler is provided */}
+        {/* Like button overlay */}
+        <div className={styles.likeWrapper}>
+          <LikeButton
+            postId={post.id}
+            initialLiked={post.is_liked}
+            initialCount={post.like_count}
+            size="sm"
+            onAuthRequired={openLoginModal}
+          />
+        </div>
+
+        {/* Report Menu */}
         {!isOwner && onReportClick && (
           <div className={styles.menuWrapper}>
-            <Menu shadow="md" width={180} position="bottom-end">
+            <Menu shadow="sm" width={160} position="bottom-end">
               <Menu.Target>
                 <ActionIcon
                   className={styles.menuButton}
                   variant="white"
-                  color="gray"
                   size="sm"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <IconDotsVertical size={16} />
+                  <IconDotsVertical size={14} />
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
                 <Menu.Item
-                  color="red"
                   leftSection={<IconFlag size={14} />}
                   onClick={handleReportListing}
                 >
                   {t("postCard.reportListing")}
                 </Menu.Item>
                 <Menu.Item
-                  color="red"
                   leftSection={<IconUserExclamation size={14} />}
                   onClick={handleReportUser}
                 >
@@ -180,46 +168,27 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
         )}
       </Card.Section>
 
-      <Box p="md">
-        <Stack gap={6}>
-          <Text fw={600} size="md" lineClamp={1}>
-            {post.title}
+      <Box className={styles.content}>
+        <div className={styles.meta}>
+          <Text size="xs" c="dimmed" tt="uppercase" fw={500}>
+            {typeLabels[post.type]}
+            {post.size && post.type !== "ACCESSORIES" && ` · ${post.size}`}
           </Text>
-
-          {/* Size display */}
-          {post.size && (
-            <Text size="sm" c="dimmed">
-              {t("postCard.size")}: {post.size}
-            </Text>
+          {isOwner && (
+            <Badge variant="light" color="gray" size="xs">
+              {t("badges.yourListing")}
+            </Badge>
           )}
+        </div>
 
-          <Group justify="space-between" align="center">
-            <Text size="xl" fw={700} c="dark">
-              ฿
-              {price.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
-            <LikeButton
-              postId={post.id}
-              initialLiked={post.is_liked}
-              initialCount={post.like_count}
-              size="sm"
-              onAuthRequired={openLoginModal}
-            />
-          </Group>
+        <Text className={styles.title} lineClamp={1}>
+          {post.title}
+        </Text>
 
-          <Text size="sm" c="dimmed" lineClamp={2}>
-            {post.description}
-          </Text>
-
-          <Group gap={4} mt={4}>
-            <Text size="xs" c="dimmed">
-              @{post.user.username}
-            </Text>
-          </Group>
-        </Stack>
+        <Group justify="space-between" align="center" mt={4}>
+          <Text className={styles.price}>฿{formattedPrice}</Text>
+          <Text size="xs" c="dimmed">@{post.user.username}</Text>
+        </Group>
       </Box>
 
       <LoginPromptModal

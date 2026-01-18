@@ -7,6 +7,7 @@ import {
     Button,
     TextInput,
     Box,
+    Skeleton,
 } from "@mantine/core";
 import { IconSearch, IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -22,7 +23,7 @@ export function HomePage() {
     const { token } = useAuthStore();
     const { t } = useTranslation("common");
 
-    const { data: postsData } = useQuery({
+    const { data: postsData, isLoading } = useQuery({
         queryKey: ["posts", "guest-landing-preview"],
         queryFn: () => getPosts(0, PREVIEW_POST_COUNT),
     });
@@ -63,17 +64,24 @@ export function HomePage() {
             </section>
 
             {/* Preview */}
-            {posts.length > 0 && (
-                <section className={styles.preview}>
-                    <Container size="lg">
-                        <div className={styles.previewHeader}>
-                            <Text size="sm" c="dimmed" tt="uppercase" fw={500} ls={0.5}>
-                                {t("landing.explore.sectionLabel")}
-                            </Text>
-                        </div>
+            <section className={styles.preview}>
+                <Container size="lg">
+                    <div className={styles.previewHeader}>
+                        <Text size="sm" c="dimmed" tt="uppercase" fw={500} ls={0.5}>
+                            {t("landing.explore.sectionLabel")}
+                        </Text>
+                    </div>
 
-                        <div className={styles.grid}>
-                            {posts.map((post) => (
+                    <div className={styles.grid}>
+                        {isLoading
+                            ? Array.from({ length: PREVIEW_POST_COUNT }).map((_, i) => (
+                                <div key={i} className={styles.skeletonCard}>
+                                    <Skeleton height={200} radius="md" />
+                                    <Skeleton height={16} mt={12} width="70%" radius="sm" />
+                                    <Skeleton height={14} mt={8} width="40%" radius="sm" />
+                                </div>
+                            ))
+                            : posts.map((post) => (
                                 <div
                                     key={post.id}
                                     className={styles.card}
@@ -82,8 +90,9 @@ export function HomePage() {
                                     <PostCard post={post} />
                                 </div>
                             ))}
-                        </div>
+                    </div>
 
+                    {!isLoading && posts.length > 0 && (
                         <div className={styles.fade}>
                             <Button
                                 size="md"
@@ -94,9 +103,9 @@ export function HomePage() {
                                 {t("guestExplore.signUpToSeeMore")}
                             </Button>
                         </div>
-                    </Container>
-                </section>
-            )}
+                    )}
+                </Container>
+            </section>
         </div>
     );
 }
