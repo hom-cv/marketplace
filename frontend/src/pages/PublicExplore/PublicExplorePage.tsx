@@ -60,7 +60,6 @@ export function PublicExplorePage() {
     search: "",
   });
 
-  // Category options with translations
   const typeOptions: { value: PostType; label: string }[] = useMemo(
     () => [
       { value: "SHIRT", label: tListings("categories.shirt") },
@@ -73,7 +72,16 @@ export function PublicExplorePage() {
     [tListings]
   );
 
-  // Determine which size categories to show based on selected post types
+  const typeLabelsMap = useMemo(
+    () => new Map(typeOptions.map((o) => [o.value, o.label])),
+    [typeOptions]
+  );
+
+  const sizeCategoryMap = useMemo(
+    () => new Map(SIZE_CATEGORY_CONFIG.map((c) => [c.category, c])),
+    []
+  );
+
   const visibleSizeCategories = useMemo(() => {
     const selectedTypes = filters.types;
     return SIZE_CATEGORY_CONFIG.map((config) => {
@@ -84,17 +92,13 @@ export function PublicExplorePage() {
     }).filter((c) => c.isVisible);
   }, [filters.types]);
 
-  // Debounce search to avoid too many API calls
   const [debouncedSearch] = useDebouncedValue(filters.search, 300);
 
-  // Build query filters for API
   const queryFilters = useMemo<PostFilters>(() => {
     const apiFilters: PostFilters = {};
 
-    // Start with manually selected types
     const typesSet = new Set<PostType>(filters.types);
 
-    // Process prefixed sizes: extract raw sizes and auto-add corresponding types
     if (filters.sizes.length > 0) {
       const rawSizes: string[] = [];
 
@@ -102,8 +106,7 @@ export function PublicExplorePage() {
         const { category, size } = parseSizeKey(sizeKey);
         rawSizes.push(size);
 
-        // Find the size category config and add its post types
-        const categoryConfig = SIZE_CATEGORY_CONFIG.find((c) => c.category === category);
+        const categoryConfig = sizeCategoryMap.get(category);
         if (categoryConfig) {
           for (const postType of categoryConfig.postTypes) {
             typesSet.add(postType);
@@ -125,7 +128,7 @@ export function PublicExplorePage() {
     }
 
     return apiFilters;
-  }, [filters.types, filters.sizes, debouncedSearch]);
+  }, [filters.types, filters.sizes, debouncedSearch, sizeCategoryMap]);
 
   const {
     data,
@@ -337,12 +340,12 @@ export function PublicExplorePage() {
                     }
                     style={{ cursor: "pointer" }}
                   >
-                    {typeOptions.find((o) => o.value === type)?.label}
+                    {typeLabelsMap.get(type)}
                   </Badge>
                 ))}
                 {filters.sizes.map((sizeKey) => {
                   const { category, size } = parseSizeKey(sizeKey);
-                  const categoryConfig = SIZE_CATEGORY_CONFIG.find((c) => c.category === category);
+                  const categoryConfig = sizeCategoryMap.get(category);
                   const displayLabel = categoryConfig?.formatLabel
                     ? categoryConfig.formatLabel(size)
                     : size;
