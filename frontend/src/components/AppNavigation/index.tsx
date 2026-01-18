@@ -3,7 +3,6 @@
  * This is the main export used in the app layout
  */
 
-import { Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore, useIsAuthenticated } from "@/stores/authStore";
@@ -28,7 +27,7 @@ export function AppNavigation() {
   };
 
   return (
-    <Box>
+    <>
       <Header
         user={user}
         isAuthenticated={isAuthenticated}
@@ -43,7 +42,7 @@ export function AppNavigation() {
         isAuthenticated={isAuthenticated}
         onLogout={handleLogout}
       />
-    </Box>
+    </>
   );
 }
 
