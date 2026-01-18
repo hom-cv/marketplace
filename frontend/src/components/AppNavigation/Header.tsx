@@ -2,18 +2,8 @@
  * Header bar component
  */
 
-import {
-  Container,
-  Group,
-  Title,
-  Button,
-  Burger,
-  ActionIcon,
-  useMantineColorScheme,
-  useComputedColorScheme,
-} from "@mantine/core";
+import { Container, Group, Title, Button, Burger } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
-import { IconSun, IconMoon } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -30,28 +20,6 @@ interface HeaderProps {
 
 export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, onLogout }: HeaderProps) {
   const { t } = useTranslation("navigation");
-  const { setColorScheme } = useMantineColorScheme();
-  const computedColorScheme = useComputedColorScheme("light", { getInitialValueInEffect: true });
-
-  const toggleColorScheme = () => {
-    setColorScheme(computedColorScheme === "light" ? "dark" : "light");
-  };
-
-  // Reusable color scheme toggle button
-  const colorSchemeToggle = (
-    <ActionIcon
-      onClick={toggleColorScheme}
-      variant="subtle"
-      size="lg"
-      aria-label="Toggle color scheme"
-    >
-      {computedColorScheme === "light" ? (
-        <IconMoon size={20} />
-      ) : (
-        <IconSun size={20} />
-      )}
-    </ActionIcon>
-  );
 
   return (
     <header className={styles.header}>
@@ -61,7 +29,6 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
         </Link>
 
         <Group visibleFrom="xs">
-          {colorSchemeToggle}
           <LanguageSwitcher />
           {isAuthenticated ? (
             <UserMenu user={user} onLogout={onLogout} />
@@ -78,7 +45,6 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
         </Group>
 
         <Group hiddenFrom="xs" gap="xs">
-          {colorSchemeToggle}
           <Burger opened={drawerOpened} onClick={onToggleDrawer} size="sm" />
         </Group>
       </Container>
