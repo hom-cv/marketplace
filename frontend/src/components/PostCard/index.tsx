@@ -28,6 +28,7 @@ import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import styles from "./PostCard.module.css";
 
 export interface ReportTarget {
@@ -39,6 +40,8 @@ export interface ReportTarget {
 interface PostCardProps {
   post: Post;
   onReportClick?: (target: ReportTarget) => void;
+  /** Base path for navigation (default: "/app/posts") */
+  linkPrefix?: string;
 }
 
 const typeColors: Record<PostType, string> = {
@@ -50,7 +53,7 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-export function PostCard({ post, onReportClick }: PostCardProps) {
+export function PostCard({ post, onReportClick, linkPrefix = "/app/posts" }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
@@ -74,7 +77,7 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
   );
 
   const handleClick = () => {
-    navigate({ to: "/app/posts/$postId", params: { postId: String(post.id) } });
+    navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
   };
 
   const handleReportListing = (e: React.MouseEvent) => {
@@ -105,13 +108,18 @@ export function PostCard({ post, onReportClick }: PostCardProps) {
       onClick={handleClick}
     >
       <Card.Section className={styles.imageSection}>
-        <Image
-          src={post.image_url || "https://placehold.co/400x400?text=No+Image"}
-          height={220}
-          alt={post.title}
-          fallbackSrc="https://placehold.co/400x400?text=No+Image"
-          className={post.is_sold ? styles.imageSold : styles.image}
-        />
+        {post.image_url ? (
+          <Image
+            src={post.image_url}
+            height={220}
+            alt={post.title}
+            className={post.is_sold ? styles.imageSold : styles.image}
+          />
+        ) : (
+          <Box h={220} className={styles.imagePlaceholder}>
+            <ImagePlaceholder iconSize={48} showText={false} />
+          </Box>
+        )}
         {/* Top-left badges: Category + Owner indicator */}
         <Group gap={4} className={styles.topBadges}>
           <Badge color={typeColors[post.type]} variant="filled" size="sm">

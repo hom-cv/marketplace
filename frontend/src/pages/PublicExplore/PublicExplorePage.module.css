@@ -1,0 +1,75 @@
+.layout {
+  display: flex;
+  gap: 2rem;
+  min-height: calc(100vh - 200px);
+}
+
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.sidebarCard {
+  position: sticky;
+  top: 80px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Mobile Filter Button - sticky above footer */
+.filterButtonWrapper {
+  position: fixed;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--mantine-spacing-xs) 0;
+  z-index: 101;
+}
+
+.filterButton {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile Sticky Bottom Bar */
+.mobileBottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--mantine-color-body);
+  border-top: 1px solid var(--mantine-color-default-border);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  z-index: 100;
+}
+
+.mobileBottomBarContent {
+  display: flex;
+  justify-content: center;
+  gap: var(--mantine-spacing-sm);
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .content {
+    padding: 0;
+    /* Add padding at bottom for the sticky filter button + bottom bar */
+    padding-bottom: 120px;
+  }
+}

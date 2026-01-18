@@ -1,4 +1,4 @@
-/* PostViewPage styles - Similar to CreatePostPage */
+/* Shared PostView styles - Used by both PostViewPage and PublicPostViewPage */
 
 .imageSection {
   position: sticky;
@@ -18,14 +18,6 @@
 .mainImage {
   width: 100%;
   height: 100%;
-}
-
-.imagePlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
 }
 
 .thumbnailRow {

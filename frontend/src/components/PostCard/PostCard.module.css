@@ -70,3 +70,10 @@
 .menuButton:hover {
   transform: scale(1.1);
 }
+
+.imagePlaceholder {
+  background-color: var(--mantine-color-gray-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

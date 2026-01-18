@@ -44,7 +44,9 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
           )}
         </Group>
 
-        <Burger opened={drawerOpened} onClick={onToggleDrawer} hiddenFrom="xs" size="sm" />
+        <Group hiddenFrom="xs" gap="xs">
+          <Burger opened={drawerOpened} onClick={onToggleDrawer} size="sm" />
+        </Group>
       </Container>
     </header>
   );

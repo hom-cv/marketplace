@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   Loader,
@@ -26,6 +26,7 @@ import { PostFeedItem } from "@/components/PostFeedItem";
 import { ReportModal } from "@/components/ReportModal";
 import { useReportModal } from "@/hooks/useReportModal";
 import type { PostType, PostFilters } from "@/api/types/post";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import styles from "./ExplorePage.module.css";
 
 interface FiltersState {
@@ -58,9 +59,6 @@ export function ExplorePage() {
 
   // Report modal state (lifted from PostCard)
   const reportModal = useReportModal();
-
-  // Ref for intersection observer sentinel element
-  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // Debounce search and price range to avoid too many API calls
   const [debouncedSearch] = useDebouncedValue(filters.search, 300);
@@ -109,30 +107,12 @@ export function ExplorePage() {
 
   const totalCount = data?.pages[0]?.total ?? 0;
 
-  // Intersection Observer for infinite scroll
-  const handleObserver = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries;
-      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
-        fetchNextPage();
-      }
-    },
-    [fetchNextPage, hasNextPage, isFetchingNextPage]
-  );
-
-  useEffect(() => {
-    const element = loadMoreRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(handleObserver, {
-      root: null,
-      rootMargin: "100px",
-      threshold: 0,
-    });
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [handleObserver]);
+  // Use shared infinite scroll hook
+  const loadMoreRef = useInfiniteScroll({
+    hasNextPage: !!hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  });
 
   const hasActiveFilters =
     filters.types.length > 0 ||

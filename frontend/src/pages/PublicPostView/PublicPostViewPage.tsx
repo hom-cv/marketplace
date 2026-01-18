@@ -1,6 +1,6 @@
 /**
- * Post View Page - View a single post with image carousel and buy button
- * Similar layout to CreatePost page but for viewing/purchasing
+ * Public Post View Page - View a single post without authentication
+ * Shows login prompt for actions like Buy and Like
  */
 
 import { useState, useMemo } from "react";
@@ -21,47 +21,34 @@ import {
   Center,
   Divider,
   Avatar,
-  Menu,
-  ActionIcon,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
-  IconDotsVertical,
-  IconFlag,
-  IconUserExclamation,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
-import { useAuthStore } from "@/stores/authStore";
-import { EarningsPreview } from "@/components/EarningsPreview";
-import { ReportModal } from "@/components/ReportModal";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { PostImageGallery } from "@/components/PostImageGallery";
 import { POST_TYPE_COLORS, getPostTypeLabels } from "@/constants/postTypes";
-import type { ReportType } from "@/api/types/admin";
 
-export function PostViewPage() {
+export function PublicPostViewPage() {
   const navigate = useNavigate();
-  const { postId: postIdString } = useParams({
-    from: "/protected/app/posts/$postId",
-  });
+  const params = useParams({ strict: false });
+  const postIdString = params.postId;
   const postId = postIdString ? parseInt(postIdString, 10) : null;
-  const currentUser = useAuthStore((state) => state.user);
   const { t } = useTranslation("listings");
+  const { t: tCommon } = useTranslation("common");
 
   // Type labels with translations (from shared constants)
   const typeLabels = useMemo(() => getPostTypeLabels(t), [t]);
-
-  const [reportModalOpened, setReportModalOpened] = useState(false);
-  const [reportType, setReportType] = useState<ReportType>("post");
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
-  const { t: tCommon } = useTranslation("common");
+  const [loginAction, setLoginAction] = useState<string>("");
 
   const {
     data: post,
@@ -81,8 +68,17 @@ export function PostViewPage() {
         ? [post.image_url]
         : [];
 
-  const isOwner = currentUser?.id === post?.user.id;
   const isBanned = post?.is_banned || post?.is_user_banned;
+
+  const handleBuyClick = () => {
+    setLoginAction(t("view.purchaseAction"));
+    openLoginModal();
+  };
+
+  const handleLikeAuthRequired = () => {
+    setLoginAction(tCommon("likes.likeAction"));
+    openLoginModal();
+  };
 
   if (isLoading) {
     return (
@@ -106,48 +102,16 @@ export function PostViewPage() {
 
   return (
     <>
-      <Container size="lg">
-        {/* Header with Back button and Menu */}
+      <Container size="lg" py="lg">
+        {/* Header with Back button */}
         <Group justify="space-between" mb="lg">
           <Button
             variant="subtle"
             leftSection={<IconArrowLeft size={16} />}
-            onClick={() => navigate({ to: "/app/explore" })}
+            onClick={() => navigate({ to: "/explore" })}
           >
             {t("view.backToExplore")}
           </Button>
-
-          {!isOwner && (
-            <Menu shadow="md" width={200} position="bottom-end">
-              <Menu.Target>
-                <ActionIcon variant="subtle" color="gray" size="lg">
-                  <IconDotsVertical size={20} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item
-                  color="red"
-                  leftSection={<IconFlag size={14} />}
-                  onClick={() => {
-                    setReportType("post");
-                    setReportModalOpened(true);
-                  }}
-                >
-                  {t("view.reportListing")}
-                </Menu.Item>
-                <Menu.Item
-                  color="red"
-                  leftSection={<IconUserExclamation size={14} />}
-                  onClick={() => {
-                    setReportType("user");
-                    setReportModalOpened(true);
-                  }}
-                >
-                  {t("view.reportUser")}
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          )}
         </Group>
 
         <Grid gutter="xl">
@@ -164,9 +128,9 @@ export function PostViewPage() {
                 <Badge color={POST_TYPE_COLORS[post.type]} size="lg" variant="light">
                   {typeLabels[post.type]}
                 </Badge>
-                {isOwner && (
-                  <Badge color="gray" size="lg" variant="light">
-                    {t("view.yourListing")}
+                {post.is_sold && (
+                  <Badge color="red" size="lg" variant="filled">
+                    {tCommon("badges.sold")}
                   </Badge>
                 )}
               </Group>
@@ -179,18 +143,28 @@ export function PostViewPage() {
                 <Text size="2rem" fw={700} c="dark">
                   ฿{price.toLocaleString()}
                 </Text>
-                {
-                  <LikeButton
-                    postId={post.id}
-                    initialLiked={post.is_liked}
-                    initialCount={post.like_count}
-                    size="lg"
-                    onAuthRequired={openLoginModal}
-                  />
-                }
+                <LikeButton
+                  postId={post.id}
+                  initialLiked={post.is_liked}
+                  initialCount={post.like_count}
+                  size="lg"
+                  onAuthRequired={handleLikeAuthRequired}
+                />
               </Group>
 
               <Divider />
+
+              {/* Size */}
+              {post.size && (
+                <div>
+                  <Text size="sm" fw={500} c="dimmed" mb="xs">
+                    {tCommon("postCard.size")}
+                  </Text>
+                  <Badge size="lg" variant="light" color="gray">
+                    {post.size}
+                  </Badge>
+                </div>
+              )}
 
               {/* Description */}
               <div>
@@ -210,7 +184,15 @@ export function PostViewPage() {
               <Divider />
 
               {/* Seller Info */}
-              <Paper p="md" radius="md" withBorder>
+              <Paper
+                p="md"
+                radius="md"
+                withBorder
+                style={{ cursor: "pointer" }}
+                onClick={() =>
+                  navigate({ to: `/profile/${post.user.username}` })
+                }
+              >
                 <Group>
                   <Avatar size="lg" radius="xl" color="blue">
                     {post.user.username.charAt(0).toUpperCase()}
@@ -237,42 +219,31 @@ export function PostViewPage() {
                 </Alert>
               )}
 
-              {/* Buy Button */}
-              {!isOwner && (
-                <Button
-                  size="xl"
-                  leftSection={<IconShoppingCart size={20} />}
-                  onClick={() => navigate({ to: `/app/checkout/${postId}` })}
-                  mt="md"
-                  disabled={isBanned}
-                >
-                  {t("view.buyNow")} - ฿{price.toLocaleString()}
-                </Button>
-              )}
+              {/* Buy Button - prompts login */}
+              <Button
+                size="xl"
+                leftSection={<IconShoppingCart size={20} />}
+                onClick={handleBuyClick}
+                mt="md"
+                disabled={isBanned || post.is_sold}
+              >
+                {t("view.buyNow")} - ฿{price.toLocaleString()}
+              </Button>
 
-              {isOwner && (
-                <EarningsPreview
-                  postId={postId ?? undefined}
-                  title={t("view.yourEarnings")}
-                />
+              {post.is_sold && (
+                <Text ta="center" c="dimmed" size="sm">
+                  {t("view.itemSold")}
+                </Text>
               )}
             </Stack>
           </Grid.Col>
         </Grid>
       </Container>
-      <ReportModal
-        opened={reportModalOpened}
-        onClose={() => setReportModalOpened(false)}
-        reportType={reportType}
-        entityId={reportType === "post" ? post.id : post.user.id}
-        entityName={
-          reportType === "post" ? post.title : `@${post.user.username}`
-        }
-      />
+
       <LoginPromptModal
         opened={loginModalOpened}
         onClose={closeLoginModal}
-        action={tCommon("likes.likeAction")}
+        action={loginAction}
       />
     </>
   );

@@ -1,7 +1,8 @@
 {
   "title": "สำรวจ",
   "search": {
-    "placeholder": "ค้นหาสินค้า..."
+    "placeholder": "ค้นหาสินค้า...",
+    "label": "ค้นหา"
   },
   "filters": {
     "title": "ตัวกรอง",

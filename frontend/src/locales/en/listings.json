@@ -71,7 +71,9 @@
     "reportUser": "Report User",
     "listingRemoved": "This listing has been removed due to a policy violation.",
     "sellerSuspended": "This seller's account has been suspended.",
-    "failedToLoad": "Failed to load post"
+    "failedToLoad": "Failed to load post",
+    "purchaseAction": "purchase this item",
+    "itemSold": "This item has been sold"
   },
   "myListings": {
     "title": "My Listings",
