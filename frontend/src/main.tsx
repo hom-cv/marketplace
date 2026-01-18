@@ -6,6 +6,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { router } from "@/router";
 import "@/i18n"; // Initialize i18n
+import "@/styles/global.css"; // Global CSS variables
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 

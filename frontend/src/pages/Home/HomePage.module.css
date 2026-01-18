@@ -139,7 +139,7 @@
   padding-bottom: max(12px, env(safe-area-inset-bottom));
   background: var(--mantine-color-body);
   border-top: 1px solid var(--mantine-color-gray-2);
-  z-index: 100;
+  z-index: var(--z-index-fixed);
 }
 
 [data-mantine-color-scheme="dark"] .mobileCta {

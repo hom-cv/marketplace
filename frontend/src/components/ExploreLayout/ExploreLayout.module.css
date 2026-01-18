@@ -110,7 +110,7 @@
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
+  z-index: var(--z-index-fixed);
   padding: 10px 20px;
   background: var(--mantine-color-body);
   border: 1px solid var(--mantine-color-gray-3);

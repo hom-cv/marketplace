@@ -1,0 +1,25 @@
+/**
+ * Global CSS Variables
+ * Centralized design tokens for consistent styling across the application
+ */
+
+:root {
+  /* Z-Index Scale
+   * Use these variables for consistent stacking context management
+   * Lower values appear behind higher values
+   */
+  --z-index-dropdown: 10;
+  /* Dropdowns, tooltips, popovers */
+  --z-index-sticky: 100;
+  /* Sticky headers, navigation */
+  --z-index-fixed: 100;
+  /* Fixed position elements */
+  --z-index-overlay: 200;
+  /* Modal overlays, drawers */
+  --z-index-modal: 300;
+  /* Modal dialogs */
+  --z-index-popover: 400;
+  /* Popovers that need to appear above modals */
+  --z-index-toast: 500;
+  /* Toast notifications */
+}
