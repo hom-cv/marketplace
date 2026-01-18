@@ -127,3 +127,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Mobile CTA Bar - shows when header buttons are hidden (below xs: 576px) */
+.mobileCta {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: var(--mantine-color-body);
+  border-top: 1px solid var(--mantine-color-gray-2);
+  z-index: 100;
+}
+
+[data-mantine-color-scheme="dark"] .mobileCta {
+  border-top-color: var(--mantine-color-dark-4);
+}
+
+@media (max-width: 576px) {
+  .page {
+    padding-bottom: 72px;
+  }
+
+  .mobileCta {
+    display: block;
+  }
+
+  /* Hide the fade CTA on mobile since we have bottom bar */
+  .fade {
+    display: none;
+  }
+}

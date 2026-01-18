@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
     Container,
@@ -8,6 +8,7 @@ import {
     TextInput,
     Box,
     Skeleton,
+    Group,
 } from "@mantine/core";
 import { IconSearch, IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -41,6 +42,8 @@ export function HomePage() {
     const handleSearchClick = () => {
         navigate({ to: "/sign-up" });
     };
+
+    const { t: tNav } = useTranslation("navigation");
 
     return (
         <div className={styles.page}>
@@ -106,6 +109,28 @@ export function HomePage() {
                     )}
                 </Container>
             </section>
+
+            {/* Mobile CTA Bar */}
+            <div className={styles.mobileCta}>
+                <Group gap="sm" grow>
+                    <Button
+                        component={Link}
+                        to="/login"
+                        variant="default"
+                        size="md"
+                    >
+                        {tNav("header.login")}
+                    </Button>
+                    <Button
+                        component={Link}
+                        to="/sign-up"
+                        size="md"
+                        rightSection={<IconArrowRight size={16} />}
+                    >
+                        {tNav("header.signUp")}
+                    </Button>
+                </Group>
+            </div>
         </div>
     );
 }
