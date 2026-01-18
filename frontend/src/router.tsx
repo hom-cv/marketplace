@@ -272,7 +272,11 @@ const routeTree = rootRoute.addChildren([
     ]),
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({
+    routeTree,
+    defaultPreloadStaleTime: 0,
+    scrollRestoration: true,
+});
 
 declare module "@tanstack/react-router" {
     interface Register {
