@@ -12,6 +12,7 @@ import type { Post, PostType } from "@/api/types/post";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 
 interface PostFeedItemProps {
   post: Post;
@@ -58,13 +59,18 @@ export function PostFeedItem({ post, linkPrefix = "/app/posts" }: PostFeedItemPr
   return (
     <Box mb="lg" onClick={handleClick} style={{ cursor: "pointer" }}>
       {/* Full-width Image */}
-      <Image
-        src={post.image_url || "https://placehold.co/600x600?text=No+Image"}
-        alt={post.title}
-        fallbackSrc="https://placehold.co/600x600?text=No+Image"
-        h={400}
-        fit="cover"
-      />
+      {post.image_url ? (
+        <Image
+          src={post.image_url}
+          alt={post.title}
+          h={400}
+          fit="cover"
+        />
+      ) : (
+        <Box h={400} bg="gray.1" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ImagePlaceholder iconSize={64} />
+        </Box>
+      )}
 
       {/* Content below image */}
       <Stack gap="xs" px="md" py="sm">

@@ -34,7 +34,6 @@ import {
   IconCheck,
   IconPlus,
   IconX,
-  IconPhoto,
   IconBuildingStore,
   IconRuler,
   IconChevronDown,
@@ -45,6 +44,7 @@ import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 
 import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
@@ -254,12 +254,7 @@ export function CreatePostPage() {
             radius="md"
           />
         ) : (
-          <Box className={styles.imagePlaceholder}>
-            <IconPhoto size={64} stroke={1} color="var(--mantine-color-gray-4)" />
-            <Text c="dimmed" size="sm" mt="md">
-              {t("images.noImages")}
-            </Text>
-          </Box>
+          <ImagePlaceholder text={t("images.noImages")} />
         )}
       </Box>
 

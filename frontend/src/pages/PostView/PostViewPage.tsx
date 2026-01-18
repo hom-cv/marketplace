@@ -31,7 +31,6 @@ import {
   IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
-  IconPhoto,
   IconDotsVertical,
   IconFlag,
   IconUserExclamation,
@@ -44,6 +43,7 @@ import { ReportModal } from "@/components/ReportModal";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import type { PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import styles from "./PostViewPage.module.css";
@@ -188,16 +188,7 @@ export function PostViewPage() {
                     radius="md"
                   />
                 ) : (
-                  <Box className={styles.imagePlaceholder}>
-                    <IconPhoto
-                      size={64}
-                      stroke={1}
-                      color="var(--mantine-color-gray-4)"
-                    />
-                    <Text c="dimmed" size="sm" mt="md">
-                      {t("images.noImagesAvailable")}
-                    </Text>
-                  </Box>
+                  <ImagePlaceholder />
                 )}
               </Box>
 

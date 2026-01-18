@@ -20,14 +20,6 @@
   height: 100%;
 }
 
-.imagePlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-}
-
 .thumbnailRow {
   overflow-x: auto;
   padding-bottom: 4px;
@@ -58,11 +50,4 @@
 
 .thumbnailActive {
   border-color: var(--mantine-color-blue-6);
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .mainImageWrapper {
-    background-color: var(--mantine-color-dark-6);
-  }
 }

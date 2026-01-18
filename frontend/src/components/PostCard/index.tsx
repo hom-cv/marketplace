@@ -28,6 +28,7 @@ import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import styles from "./PostCard.module.css";
 
 export interface ReportTarget {
@@ -107,13 +108,18 @@ export function PostCard({ post, onReportClick, linkPrefix = "/app/posts" }: Pos
       onClick={handleClick}
     >
       <Card.Section className={styles.imageSection}>
-        <Image
-          src={post.image_url || "https://placehold.co/400x400?text=No+Image"}
-          height={220}
-          alt={post.title}
-          fallbackSrc="https://placehold.co/400x400?text=No+Image"
-          className={post.is_sold ? styles.imageSold : styles.image}
-        />
+        {post.image_url ? (
+          <Image
+            src={post.image_url}
+            height={220}
+            alt={post.title}
+            className={post.is_sold ? styles.imageSold : styles.image}
+          />
+        ) : (
+          <Box h={220} className={styles.imagePlaceholder}>
+            <ImagePlaceholder iconSize={48} showText={false} />
+          </Box>
+        )}
         {/* Top-left badges: Category + Owner indicator */}
         <Group gap={4} className={styles.topBadges}>
           <Badge color={typeColors[post.type]} variant="filled" size="sm">

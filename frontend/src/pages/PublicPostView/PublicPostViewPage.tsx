@@ -29,13 +29,13 @@ import {
   IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
-  IconPhoto,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import type { PostType } from "@/api/types/post";
 import styles from "./PublicPostViewPage.module.css";
 
@@ -153,16 +153,7 @@ export function PublicPostViewPage() {
                     radius="md"
                   />
                 ) : (
-                  <Box className={styles.imagePlaceholder}>
-                    <IconPhoto
-                      size={64}
-                      stroke={1}
-                      color="var(--mantine-color-gray-4)"
-                    />
-                    <Text c="dimmed" size="sm" mt="md">
-                      {t("images.noImagesAvailable")}
-                    </Text>
-                  </Box>
+                  <ImagePlaceholder />
                 )}
               </Box>
 
