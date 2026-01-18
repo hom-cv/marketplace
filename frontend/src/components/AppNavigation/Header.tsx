@@ -37,6 +37,22 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
     setColorScheme(computedColorScheme === "light" ? "dark" : "light");
   };
 
+  // Reusable color scheme toggle button
+  const colorSchemeToggle = (
+    <ActionIcon
+      onClick={toggleColorScheme}
+      variant="subtle"
+      size="lg"
+      aria-label="Toggle color scheme"
+    >
+      {computedColorScheme === "light" ? (
+        <IconMoon size={20} />
+      ) : (
+        <IconSun size={20} />
+      )}
+    </ActionIcon>
+  );
+
   return (
     <header className={styles.header}>
       <Container size="md" className={styles.headerContent}>
@@ -45,18 +61,7 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
         </Link>
 
         <Group visibleFrom="xs">
-          <ActionIcon
-            onClick={toggleColorScheme}
-            variant="subtle"
-            size="lg"
-            aria-label="Toggle color scheme"
-          >
-            {computedColorScheme === "light" ? (
-              <IconMoon size={20} />
-            ) : (
-              <IconSun size={20} />
-            )}
-          </ActionIcon>
+          {colorSchemeToggle}
           <LanguageSwitcher />
           {isAuthenticated ? (
             <UserMenu user={user} onLogout={onLogout} />
@@ -73,18 +78,7 @@ export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, on
         </Group>
 
         <Group hiddenFrom="xs" gap="xs">
-          <ActionIcon
-            onClick={toggleColorScheme}
-            variant="subtle"
-            size="lg"
-            aria-label="Toggle color scheme"
-          >
-            {computedColorScheme === "light" ? (
-              <IconMoon size={20} />
-            ) : (
-              <IconSun size={20} />
-            )}
-          </ActionIcon>
+          {colorSchemeToggle}
           <Burger opened={drawerOpened} onClick={onToggleDrawer} size="sm" />
         </Group>
       </Container>
