@@ -17,9 +17,6 @@
 }
 
 /* Sections */
-.section {
-  /* No extra styling needed */
-}
 
 .sectionToggle {
   display: flex;
@@ -28,6 +25,19 @@
   width: 100%;
   padding: 4px 0;
   margin-bottom: 8px;
+}
+
+.sectionLabel {
+  letter-spacing: 0.5px;
+}
+
+.sectionChevron {
+  color: var(--mantine-color-dimmed);
+  transition: transform 200ms ease;
+}
+
+.sectionChevronOpen {
+  transform: rotate(180deg);
 }
 
 .sectionContent {

@@ -32,19 +32,15 @@ function FilterSection({ label, defaultOpen = true, children }: FilterSectionPro
   const [opened, setOpened] = useState(defaultOpen);
 
   return (
-    <div className={styles.section}>
+    <div>
       <UnstyledButton className={styles.sectionToggle} onClick={() => setOpened((o) => !o)}>
-        <Text size="sm" c="dimmed" fw={500} tt="uppercase" style={{ letterSpacing: 0.5 }}>
+        <Text size="sm" c="dimmed" fw={500} tt="uppercase" className={styles.sectionLabel}>
           {label}
         </Text>
         <IconChevronDown
           size={16}
           stroke={1.5}
-          style={{
-            transform: opened ? "rotate(180deg)" : "rotate(0deg)",
-            transition: "transform 200ms ease",
-            color: "var(--mantine-color-dimmed)",
-          }}
+          className={`${styles.sectionChevron} ${opened ? styles.sectionChevronOpen : ""}`}
         />
       </UnstyledButton>
       <Collapse in={opened}>
