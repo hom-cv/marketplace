@@ -67,7 +67,7 @@ export function PostFeedItem({ post, linkPrefix = "/app/posts" }: PostFeedItemPr
           fit="cover"
         />
       ) : (
-        <Box h={400} bg="gray.1" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box h={400} bg="gray.1">
           <ImagePlaceholder iconSize={64} />
         </Box>
       )}
