@@ -206,6 +206,23 @@ export function PublicExplorePage() {
   // Reusable filter content for both sidebar and drawer
   const filterContent = (
     <Stack gap="lg">
+      {/* Search Input */}
+      <TextInput
+        placeholder={t("search.placeholder")}
+        leftSection={<IconSearch size={16} />}
+        value={filters.search}
+        onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+        rightSection={
+          filters.search && (
+            <IconX
+              size={14}
+              style={{ cursor: "pointer" }}
+              onClick={() => setFilters({ ...filters, search: "" })}
+            />
+          )
+        }
+      />
+
       {/* Category Filter */}
       <CollapsibleFilterSection
         title={tCommon("filtersSidebar.category")}
@@ -304,28 +321,8 @@ export function PublicExplorePage() {
 
           {/* Main Content */}
           <Box className={styles.content}>
-            {/* Header with Search and Mobile Filter Toggle */}
-            <Group justify="space-between" align="center" wrap="wrap" mb="lg">
-              <Title order={2}>{t("title")}</Title>
-              <Group gap="xs">
-                <TextInput
-                  placeholder={t("search.placeholder")}
-                  leftSection={<IconSearch size={16} />}
-                  value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
-                  style={{ minWidth: 200 }}
-                  rightSection={
-                    filters.search && (
-                      <IconX
-                        size={14}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setFilters({ ...filters, search: "" })}
-                      />
-                    )
-                  }
-                />
-              </Group>
-            </Group>
+            {/* Header */}
+            <Title order={2} mb="lg">{t("title")}</Title>
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
