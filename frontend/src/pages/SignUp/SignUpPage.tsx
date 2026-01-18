@@ -108,6 +108,7 @@ export function SignUpPage() {
             label={t("signup.username")}
             placeholder={t("signup.usernamePlaceholder")}
             size="md"
+            required
             {...form.getInputProps("username")}
           />
 
@@ -116,12 +117,14 @@ export function SignUpPage() {
               label={t("signup.firstName")}
               placeholder={t("signup.firstNamePlaceholder")}
               size="md"
+              required
               {...form.getInputProps("firstName")}
             />
             <TextInput
               label={t("signup.lastName")}
               placeholder={t("signup.lastNamePlaceholder")}
               size="md"
+              required
               {...form.getInputProps("lastName")}
             />
           </SimpleGrid>
@@ -130,6 +133,7 @@ export function SignUpPage() {
             label={t("signup.email")}
             placeholder={t("signup.emailPlaceholder")}
             size="md"
+            required
             {...form.getInputProps("email")}
           />
 
@@ -137,6 +141,7 @@ export function SignUpPage() {
             label={t("signup.password")}
             placeholder={t("signup.passwordPlaceholder")}
             size="md"
+            required
             {...form.getInputProps("password")}
           />
 
@@ -144,6 +149,7 @@ export function SignUpPage() {
             label={t("signup.confirmPassword")}
             placeholder={t("signup.confirmPasswordPlaceholder")}
             size="md"
+            required
             {...form.getInputProps("confirmPassword")}
           />
 

@@ -73,12 +73,14 @@ export function LoginPage() {
             label={t("login.email")}
             placeholder={t("login.emailPlaceholder")}
             size="md"
+            required
             {...form.getInputProps("email")}
           />
           <PasswordInput
             label={t("login.password")}
             placeholder={t("login.passwordPlaceholder")}
             size="md"
+            required
             {...form.getInputProps("password")}
           />
           <Button

@@ -35,16 +35,8 @@ import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { PostType } from "@/api/types/post";
+import { POST_TYPE_COLORS } from "@/constants/posts";
 import styles from "./PublicPostViewPage.module.css";
-
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
 
 export function PublicPostViewPage() {
   const navigate = useNavigate();
@@ -181,7 +173,7 @@ export function PublicPostViewPage() {
           <Stack gap="md">
             {/* Category badge */}
             <Group>
-              <Badge color={typeColors[post.type]} size="lg" variant="light">
+              <Badge color={POST_TYPE_COLORS[post.type]} size="lg" variant="light">
                 {typeLabels[post.type]}
               </Badge>
               {post.size && (

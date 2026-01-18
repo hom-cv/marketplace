@@ -46,16 +46,8 @@ import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import type { PostType } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
+import { POST_TYPE_COLORS } from "@/constants/posts";
 import styles from "./PostViewPage.module.css";
-
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
 
 export function PostViewPage() {
   const navigate = useNavigate();
@@ -233,7 +225,7 @@ export function PostViewPage() {
             <Stack gap="md">
               {/* Category badge */}
               <Group>
-                <Badge color={typeColors[post.type]} size="lg" variant="light">
+                <Badge color={POST_TYPE_COLORS[post.type]} size="lg" variant="light">
                   {typeLabels[post.type]}
                 </Badge>
                 {isOwner && (

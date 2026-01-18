@@ -130,7 +130,23 @@ export function ExploreLayout({
     return () => observer.disconnect();
   }, [handleObserver]);
 
-  const renderContent = () => (
+  if (error) {
+    const errorContent = (
+      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+        {error instanceof Error ? error.message : t("errors.failedToLoad")}
+      </Alert>
+    );
+
+    return isPublic ? (
+      <div className={`${styles.page} ${styles.withPadding}`}>
+        <Container size="xl">{errorContent}</Container>
+      </div>
+    ) : (
+      errorContent
+    );
+  }
+
+  const mainContent = (
     <>
       {/* Header */}
       <header className={`${styles.header} ${isPublic ? styles.large : ""}`}>
@@ -244,25 +260,9 @@ export function ExploreLayout({
     </>
   );
 
-  if (error) {
-    const errorContent = (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : t("errors.failedToLoad")}
-      </Alert>
-    );
-
-    return isPublic ? (
-      <div className={`${styles.page} ${styles.withPadding}`}>
-        <Container size="xl">{errorContent}</Container>
-      </div>
-    ) : (
-      errorContent
-    );
-  }
-
   return (
     <div className={`${styles.page} ${isPublic ? styles.withPadding : ""}`}>
-      {isPublic ? <Container size="xl">{renderContent()}</Container> : renderContent()}
+      {isPublic ? <Container size="xl">{mainContent}</Container> : mainContent}
 
       {/* Mobile Filter Button */}
       <button className={styles.filterBtn} onClick={openDrawer}>

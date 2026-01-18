@@ -9,6 +9,7 @@ import { IconHeart } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
+import { POST_TYPE_COLORS } from "@/constants/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 
@@ -17,15 +18,6 @@ interface PostFeedItemProps {
   showLikeButton?: boolean;
   linkTo?: "public" | "app";
 }
-
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
 
 export function PostFeedItem({ post, showLikeButton = true, linkTo = "app" }: PostFeedItemProps) {
   const navigate = useNavigate();
@@ -98,7 +90,7 @@ export function PostFeedItem({ post, showLikeButton = true, linkTo = "app" }: Po
                 {t("badges.sold")}
               </Badge>
             )}
-            <Badge color={typeColors[post.type]} variant="light">
+            <Badge color={POST_TYPE_COLORS[post.type]} variant="light">
               {typeLabels[post.type]}
             </Badge>
             {isOwner && (
