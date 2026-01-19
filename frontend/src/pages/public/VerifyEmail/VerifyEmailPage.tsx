@@ -57,6 +57,14 @@ export function VerifyEmailPage() {
         navigate({ to: "/app" });
       }
     },
+    onError: () => {
+      notifications.show({
+        title: t("status.error"),
+        message: t("errors.failedToLoad"),
+        color: "red",
+        icon: <IconAlertCircle size={16} />,
+      });
+    },
   });
 
   // Redirect verified users to /app
