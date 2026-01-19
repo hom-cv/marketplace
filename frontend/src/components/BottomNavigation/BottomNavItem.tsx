@@ -28,9 +28,7 @@ export function BottomNavItem({
   const currentPath = router.location.pathname;
 
   // Check if this nav item is active
-  const isActive = currentPath === to ||
-    (to !== "/" && currentPath.startsWith(to)) ||
-    (to === "/" && currentPath === "/");
+  const isActive = currentPath === to || (to !== "/" && currentPath.startsWith(to));
 
   if (onClick) {
     return (
