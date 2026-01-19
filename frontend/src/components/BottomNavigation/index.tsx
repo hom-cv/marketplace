@@ -31,7 +31,7 @@ export function BottomNavigation() {
   // Handle sell button click - requires auth
   const handleSellClick = () => {
     if (isAuthenticated) {
-      window.location.href = "/app/posts/new";
+      navigate({ to: "/app/posts/new" });
     } else {
       openLoginModal();
     }
