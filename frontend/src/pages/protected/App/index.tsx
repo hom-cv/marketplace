@@ -38,7 +38,8 @@ export function AppPage() {
   const navigate = useNavigate();
   const { t } = useTranslation("common");
   const { t: tNav } = useTranslation("navigation");
-  const [filtersOpened, { open: openFilters, close: closeFilters }] = useDisclosure(false);
+  const [filtersOpened, { open: openFilters, close: closeFilters }] =
+    useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
     sizes: [],
@@ -73,7 +74,10 @@ export function AppPage() {
     });
   }, [posts, filters]);
 
-  const hasActiveFilters = filters.types.length > 0 || filters.priceRange[0] > 0 || filters.priceRange[1] < 1000;
+  const hasActiveFilters =
+    filters.types.length > 0 ||
+    filters.priceRange[0] > 0 ||
+    filters.priceRange[1] < 1000;
 
   if (isLoading) {
     return (
@@ -86,7 +90,11 @@ export function AppPage() {
   if (error) {
     return (
       <Container size="lg" py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title={t("status.error")}
+          color="red"
+        >
           {error instanceof Error ? error.message : t("errors.failedToLoad")}
         </Alert>
       </Container>
@@ -148,7 +156,11 @@ export function AppPage() {
           ) : (
             <div className={styles.dynamicGrid}>
               {filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onReportClick={reportModal.openReport}
+                />
               ))}
             </div>
           )}
@@ -185,7 +197,11 @@ export function AppPage() {
             <Container py="md" className={styles.landscapeOnly}>
               <SimpleGrid cols={2} spacing="md">
                 {filteredPosts.map((post) => (
-                  <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onReportClick={reportModal.openReport}
+                  />
                 ))}
               </SimpleGrid>
             </Container>
