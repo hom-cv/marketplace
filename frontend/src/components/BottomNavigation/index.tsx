@@ -6,6 +6,7 @@
 
 import { Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { useNavigate } from "@tanstack/react-router";
 import { IconHome2, IconSearch, IconPlus, IconHeart, IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
@@ -15,6 +16,7 @@ import styles from "./BottomNavigation.module.css";
 
 export function BottomNavigation() {
   const { t } = useTranslation("navigation");
+  const navigate = useNavigate();
   const { user, token } = useAuthStore();
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);

@@ -5,6 +5,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
 import {
   Title,
   Text,
@@ -21,7 +22,6 @@ import { useAuthStore } from "@/stores/authStore";
 import styles from "./VerifyEmailPage.module.css";
 
 type PageMode = "loading" | "verify" | "resend" | "success" | "error";
-type ResendStatus = "idle" | "loading" | "success" | "error";
 
 const REDIRECT_DELAY_SECONDS = 5;
 
@@ -33,11 +33,31 @@ export function VerifyEmailPage() {
   const { t } = useTranslation("common");
 
   const [mode, setMode] = useState<PageMode>("loading");
-  const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(REDIRECT_DELAY_SECONDS);
-  const [resendStatus, setResendStatus] = useState<ResendStatus>("idle");
-  const [resendMessage, setResendMessage] = useState("");
   const hasAttempted = useRef(false);
+
+  // Verify email mutation
+  const verifyMutation = useMutation({
+    mutationFn: (verifyToken: string) => verifyEmail(verifyToken),
+    onSuccess: () => setMode("success"),
+    onError: () => setMode("error"),
+  });
+
+  // Resend verification email mutation
+  const resendMutation = useMutation({
+    mutationFn: resendVerificationEmail,
+  });
+
+  // Check user status mutation
+  const checkStatusMutation = useMutation({
+    mutationFn: getCurrentUser,
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      if (updatedUser.email_verified) {
+        navigate({ to: "/app" });
+      }
+    },
+  });
 
   // Redirect verified users to /app
   useEffect(() => {
@@ -52,25 +72,12 @@ export function VerifyEmailPage() {
     hasAttempted.current = true;
 
     if (token) {
-      // Token present - attempt verification
       setMode("verify");
-      verifyEmail(token)
-        .then((response) => {
-          setMode("success");
-          setMessage(response.message);
-        })
-        .catch((error) => {
-          setMode("error");
-          setMessage(error.detail || t("verifyEmail.failedError"));
-        });
+      verifyMutation.mutate(token);
     } else if (authToken && user && !user.email_verified) {
-      // Logged in but not verified - show resend UI
       setMode("resend");
     } else if (!authToken) {
-      // Not logged in and no token - redirect to login
       navigate({ to: "/login" });
-    } else {
-      setMode("loading");
     }
   }, [token, authToken, user, navigate]);
 
@@ -92,32 +99,13 @@ export function VerifyEmailPage() {
     return () => clearInterval(timer);
   }, [mode, navigate]);
 
-  const handleResend = async () => {
-    setResendStatus("loading");
-    setResendMessage("");
-
-    try {
-      const response = await resendVerificationEmail();
-      setResendStatus("success");
-      setResendMessage(response.message);
-    } catch (error: unknown) {
-      setResendStatus("error");
-      const apiError = error as { detail?: string };
-      setResendMessage(apiError.detail || t("verifyEmail.resendError"));
-    }
-  };
-
-  const handleCheckStatus = async () => {
-    try {
-      const updatedUser = await getCurrentUser();
-      setUser(updatedUser);
-      if (updatedUser.email_verified) {
-        navigate({ to: "/app" });
-      }
-    } catch {
-      // Ignore errors, user can try again
-    }
-  };
+  // Derived error messages
+  const verifyErrorMessage = verifyMutation.error
+    ? (verifyMutation.error as { detail?: string }).detail || t("verifyEmail.failedError")
+    : "";
+  const resendErrorMessage = resendMutation.error
+    ? (resendMutation.error as { detail?: string }).detail || t("verifyEmail.resendError")
+    : "";
 
   return (
     <div className={styles.wrapper}>
@@ -159,7 +147,7 @@ export function VerifyEmailPage() {
               {t("verifyEmail.verified")}
             </Title>
             <Text c="dimmed" ta="center" size="sm" className={styles.subtitle}>
-              {message}
+              {verifyMutation.data?.message}
             </Text>
             <div className={styles.countdown}>
               <Text c="dimmed" size="sm">
@@ -187,7 +175,7 @@ export function VerifyEmailPage() {
               {t("verifyEmail.failed")}
             </Title>
             <Text c="dimmed" ta="center" size="sm" className={styles.subtitle}>
-              {message}
+              {verifyErrorMessage}
             </Text>
             <Button
               size="sm"
@@ -224,7 +212,7 @@ export function VerifyEmailPage() {
               {t("verifyEmail.checkInbox")}
             </Text>
 
-            {resendStatus === "success" && (
+            {resendMutation.isSuccess && (
               <Alert
                 icon={<IconCheck size={16} />}
                 color="green"
@@ -232,11 +220,11 @@ export function VerifyEmailPage() {
                 w="100%"
                 className={styles.alert}
               >
-                {resendMessage}
+                {resendMutation.data?.message}
               </Alert>
             )}
 
-            {resendStatus === "error" && (
+            {resendMutation.isError && (
               <Alert
                 icon={<IconAlertCircle size={16} />}
                 color="red"
@@ -244,27 +232,28 @@ export function VerifyEmailPage() {
                 w="100%"
                 className={styles.alert}
               >
-                {resendMessage}
+                {resendErrorMessage}
               </Alert>
             )}
 
             <Stack w="100%" gap="sm">
               <Button
                 size="sm"
-                onClick={handleResend}
-                loading={resendStatus === "loading"}
-                disabled={resendStatus === "success"}
+                onClick={() => resendMutation.mutate()}
+                loading={resendMutation.isPending}
+                disabled={resendMutation.isSuccess}
                 leftSection={<IconMail size={16} />}
                 className={styles.primaryButton}
                 fullWidth
               >
-                {resendStatus === "success" ? t("verifyEmail.emailSent") : t("verifyEmail.resendEmail")}
+                {resendMutation.isSuccess ? t("verifyEmail.emailSent") : t("verifyEmail.resendEmail")}
               </Button>
 
               <Button
                 size="sm"
                 variant="subtle"
-                onClick={handleCheckStatus}
+                onClick={() => checkStatusMutation.mutate()}
+                loading={checkStatusMutation.isPending}
                 className={styles.secondaryButton}
               >
                 {t("verifyEmail.alreadyVerified")}

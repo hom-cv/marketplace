@@ -86,6 +86,7 @@
     "description": "Description",
     "descriptionPlaceholder": "Please provide details about the issue (minimum 10 characters)",
     "descriptionMinError": "Description must be at least 10 characters",
+    "reasonRequired": "Please select a reason",
     "submitReport": "Submit Report",
     "submitted": "Report Submitted",
     "submittedMessage": "Thank you for your report. We will review it shortly.",

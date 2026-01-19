@@ -3,7 +3,7 @@
  * Premium design with form validation
  */
 
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
   Modal,
@@ -15,6 +15,7 @@ import {
   Alert,
   Group,
 } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { notifications } from "@mantine/notifications";
 import { IconAlertTriangle, IconCheck, IconFlag } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -29,9 +30,14 @@ interface ReportModalProps {
   entityName: string;
 }
 
+interface ReportFormValues {
+  reason: ReportReason | "";
+  description: string;
+}
+
 const reasonValues: ReportReason[] = ["counterfeit", "prohibited_item", "scam", "abuse_of_system"];
 
-function isValidReportReason(value: string | null): value is ReportReason {
+function isValidReportReason(value: string): value is ReportReason {
   return reasonValues.includes(value as ReportReason);
 }
 
@@ -42,9 +48,19 @@ export function ReportModal({
   entityId,
   entityName,
 }: ReportModalProps) {
-  const [reason, setReason] = useState<ReportReason | null>(null);
-  const [description, setDescription] = useState("");
   const { t } = useTranslation("common");
+
+  const form = useForm<ReportFormValues>({
+    initialValues: {
+      reason: "",
+      description: "",
+    },
+    validate: {
+      reason: (value) => (!value ? t("report.reasonRequired") : null),
+      description: (value) =>
+        value.trim().length < 10 ? t("report.descriptionMinError") : null,
+    },
+  });
 
   // Reason options with translations
   const reasonOptions = useMemo(() => [
@@ -76,18 +92,17 @@ export function ReportModal({
   });
 
   const handleClose = () => {
-    setReason(null);
-    setDescription("");
+    form.reset();
     onClose();
   };
 
-  const handleSubmit = () => {
-    if (!reason || description.trim().length < 10) return;
+  const handleSubmit = (values: ReportFormValues) => {
+    if (!isValidReportReason(values.reason)) return;
 
     const request: ReportCreateRequest = {
       report_type: reportType,
-      reason,
-      description,
+      reason: values.reason,
+      description: values.description,
       ...(reportType === "user"
         ? { reported_user_id: entityId }
         : { reported_post_id: entityId }),
@@ -95,8 +110,6 @@ export function ReportModal({
 
     reportMutation.mutate(request);
   };
-
-  const isValid = reason !== null && description.trim().length >= 10;
   const entityLabel = reportType === "user" ? t("report.user") : t("report.listing");
 
   return (
@@ -112,60 +125,49 @@ export function ReportModal({
       size="md"
       centered
     >
-      <Stack gap="md">
-        <Alert color="gray" variant="light">
-          <Text size="sm">
-            {t("report.youAreReporting")} <strong>{entityName}</strong>
-          </Text>
-        </Alert>
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="md">
+          <Alert color="gray" variant="light">
+            <Text size="sm">
+              {t("report.youAreReporting")} <strong>{entityName}</strong>
+            </Text>
+          </Alert>
 
-        <Select
-          label={t("report.reason")}
-          placeholder={t("report.selectReason")}
-          data={reasonOptions}
-          value={reason}
-          onChange={(value) => {
-            if (isValidReportReason(value)) {
-              setReason(value);
-            } else {
-              setReason(null);
-            }
-          }}
-          required
-          withAsterisk
-        />
+          <Select
+            label={t("report.reason")}
+            placeholder={t("report.selectReason")}
+            data={reasonOptions}
+            required
+            withAsterisk
+            {...form.getInputProps("reason")}
+          />
 
-        <Textarea
-          label={t("report.description")}
-          placeholder={t("report.descriptionPlaceholder")}
-          value={description}
-          onChange={(e) => setDescription(e.currentTarget.value)}
-          minRows={4}
-          maxLength={1000}
-          required
-          withAsterisk
-          error={
-            description.length > 0 && description.length < 10
-              ? t("report.descriptionMinError")
-              : undefined
-          }
-        />
+          <Textarea
+            label={t("report.description")}
+            placeholder={t("report.descriptionPlaceholder")}
+            minRows={4}
+            maxLength={1000}
+            required
+            withAsterisk
+            {...form.getInputProps("description")}
+          />
 
-        <Group justify="flex-end" mt="md">
-          <Button variant="subtle" onClick={handleClose}>
-            {t("buttons.cancel")}
-          </Button>
-          <Button
-            color="red"
-            onClick={handleSubmit}
-            loading={reportMutation.isPending}
-            disabled={!isValid}
-            leftSection={<IconFlag size={16} />}
-          >
-            {t("report.submitReport")}
-          </Button>
-        </Group>
-      </Stack>
+          <Group justify="flex-end" mt="md">
+            <Button variant="subtle" onClick={handleClose}>
+              {t("buttons.cancel")}
+            </Button>
+            <Button
+              type="submit"
+              color="red"
+              loading={reportMutation.isPending}
+              disabled={!form.isValid()}
+              leftSection={<IconFlag size={16} />}
+            >
+              {t("report.submitReport")}
+            </Button>
+          </Group>
+        </Stack>
+      </form>
     </Modal>
   );
 }

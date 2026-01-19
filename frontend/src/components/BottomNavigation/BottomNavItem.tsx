@@ -20,48 +20,49 @@ interface BottomNavItemProps {
 export function BottomNavItem({
   to,
   label,
-  icon: Icon,
+  icon: IconComponent,
   elevated = false,
   onClick,
 }: BottomNavItemProps) {
   const router = useRouterState();
   const currentPath = router.location.pathname;
 
-  // Check if this nav item is active
-  const isActive = currentPath === to || (to !== "/" && currentPath.startsWith(to));
+  // Check if this nav item is active (only for Link-based items)
+  const isActive = !onClick && (currentPath === to || (to !== "/" && currentPath.startsWith(to)));
 
-  if (onClick) {
-    return (
-      <UnstyledButton
-        className={`${styles.navItem} ${elevated ? styles.navItemElevated : ""}`}
-        onClick={onClick}
-      >
-        <Box className={elevated ? styles.elevatedIconWrapper : styles.iconWrapper}>
-          <Icon size={elevated ? 24 : 22} stroke={1.5} />
-        </Box>
-        {!elevated && (
-          <Text size="xs" className={styles.label}>
-            {label}
-          </Text>
-        )}
-      </UnstyledButton>
-    );
-  }
+  // Build class names
+  const className = [
+    styles.navItem,
+    isActive && styles.navItemActive,
+    elevated && styles.navItemElevated,
+  ].filter(Boolean).join(" ");
 
-  return (
-    <UnstyledButton
-      component={Link}
-      to={to}
-      className={`${styles.navItem} ${isActive ? styles.navItemActive : ""} ${elevated ? styles.navItemElevated : ""}`}
-    >
+  // Common content for both variants
+  const content = (
+    <>
       <Box className={elevated ? styles.elevatedIconWrapper : styles.iconWrapper}>
-        <Icon size={elevated ? 24 : 22} stroke={isActive ? 2 : 1.5} />
+        <IconComponent size={elevated ? 24 : 22} stroke={isActive ? 2 : 1.5} />
       </Box>
       {!elevated && (
         <Text size="xs" className={styles.label}>
           {label}
         </Text>
       )}
+    </>
+  );
+
+  // Use onClick handler or Link component
+  if (onClick) {
+    return (
+      <UnstyledButton className={className} onClick={onClick}>
+        {content}
+      </UnstyledButton>
+    );
+  }
+
+  return (
+    <UnstyledButton component={Link} to={to} className={className}>
+      {content}
     </UnstyledButton>
   );
 }
