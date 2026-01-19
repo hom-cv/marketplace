@@ -79,7 +79,7 @@ export function VerifyEmailPage() {
     } else if (!authToken) {
       navigate({ to: "/login" });
     }
-  }, [token, authToken, user, navigate]);
+  }, [token, authToken, user, navigate, verifyMutation]);
 
   // Auto-redirect countdown after successful verification
   useEffect(() => {
