@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { verifyEmail, resendVerificationEmail, getCurrentUser } from "@/api/auth";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./VerifyEmailPage.module.css";
+import { notifications } from "@mantine/notifications";
 
 type PageMode = "loading" | "verify" | "resend" | "success" | "error";
 
