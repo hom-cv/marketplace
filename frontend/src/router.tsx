@@ -2,37 +2,49 @@ import { createRouter, createRootRoute, createRoute } from "@tanstack/react-rout
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
 import { Outlet } from "@tanstack/react-router";
-import { LoginPage } from "@/pages/Login";
-import { SignUpPage } from "@/pages/SignUp";
-import { HomePage } from "@/pages/Home";
-import { VerifyEmailPage } from "@/pages/VerifyEmail";
-import { CreatePostPage } from "@/pages/CreatePost";
-import { BecomeSellerPage } from "@/pages/BecomeSeller";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
-import { DashboardPage } from "@/pages/Dashboard";
-import { ExplorePage } from "@/pages/Explore";
-import { PurchaseHistoryPage } from "@/pages/PurchaseHistory";
-import { LikedListingsPage } from "@/pages/LikedListings";
-import { MyListingsPage } from "@/pages/MyListings";
-import { SoldListingsPage } from "@/pages/SoldListings";
-import { PaymentReturnPage } from "@/pages/PaymentReturn";
-import { PostViewPage } from "@/pages/PostView";
-import { CheckoutPage } from "@/pages/Checkout";
 import { AdminLayout } from "@/components/AdminLayout";
-import { TermsPage, PrivacyPage } from "@/pages/Policies";
-import { ProfilePage } from "@/pages/Profile";
-import { ProfileEditPage } from "@/pages/ProfileEdit";
-import { PublicExplorePage } from "@/pages/PublicExplore";
-import { PublicPostViewPage } from "@/pages/PublicPostView";
+
+// Public pages
+import {
+    HomePage,
+    LoginPage,
+    SignUpPage,
+    VerifyEmailPage,
+    TermsPage,
+    PrivacyPage,
+    ProfilePage,
+    PublicExplorePage,
+    PublicPostViewPage,
+} from "@/pages/public";
+
+// Protected pages
+import {
+    DashboardPage,
+    ExplorePage,
+    PurchaseHistoryPage,
+    LikedListingsPage,
+    MyListingsPage,
+    SoldListingsPage,
+    CreatePostPage,
+    PostViewPage,
+    BecomeSellerPage,
+    PaymentReturnPage,
+    CheckoutPage,
+    ProfileEditPage,
+} from "@/pages/protected";
+
+// Admin pages
 import {
     AdminDashboardPage,
     InviteCodesPage,
     ReportsPage,
     UserBansPage,
     PostBansPage,
-} from "@/pages/Admin";
+} from "@/pages/admin";
+
 import styles from "./router.module.css";
 
 const rootRoute = createRootRoute({
