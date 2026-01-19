@@ -71,15 +71,15 @@ export function Footer() {
               <Link to="/explore" className={styles.link}>
                 {t("footer.browseAll", "Browse All")}
               </Link>
-              <a href="/explore?category=electronics" className={styles.link}>
-                {t("footer.electronics", "Electronics")}
-              </a>
-              <a href="/explore?category=fashion" className={styles.link}>
+              <Link to="/explore" search={{ category: "SHIRT" }} className={styles.link}>
                 {t("footer.fashion", "Fashion")}
-              </a>
-              <a href="/explore?category=home" className={styles.link}>
-                {t("footer.homeGarden", "Home & Garden")}
-              </a>
+              </Link>
+              <Link to="/explore" search={{ category: "SHOES" }} className={styles.link}>
+                {t("footer.shoes", "Shoes")}
+              </Link>
+              <Link to="/explore" search={{ category: "ACCESSORIES" }} className={styles.link}>
+                {t("footer.accessories", "Accessories")}
+              </Link>
             </div>
 
             {/* Company Column */}
@@ -105,9 +105,9 @@ export function Footer() {
               <Link to="/privacy" className={styles.link}>
                 {t("footer.privacy")}
               </Link>
-              <a href="/terms#refund-policy" className={styles.link}>
+              <Link to="/terms" hash="refund-policy" className={styles.link}>
                 {t("footer.refund", "Refund Policy")}
-              </a>
+              </Link>
             </div>
           </div>
 

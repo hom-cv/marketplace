@@ -166,6 +166,18 @@ export const POST_TYPE_TO_SIZE_CATEGORY: Record<PostType, SizeCategory> =
   }, {} as Record<PostType, SizeCategory>);
 
 /**
+ * Map from PostType to its SizeCategoryConfig for quick lookup.
+ * Derived from SIZE_CATEGORY_CONFIG.
+ */
+const POST_TYPE_TO_CONFIG: Record<PostType, SizeCategoryConfig> =
+  SIZE_CATEGORY_CONFIG.reduce((acc, config) => {
+    for (const postType of config.postTypes) {
+      acc[postType] = config;
+    }
+    return acc;
+  }, {} as Record<PostType, SizeCategoryConfig>);
+
+/**
  * Helper to ensure exhaustive type checking at compile time.
  * If a new PostType is added but not handled, TypeScript will error.
  */
@@ -197,11 +209,16 @@ export function getSizesForType(type: PostType): readonly string[] {
 
 /**
  * Format size for display. Converts internal values to user-friendly labels.
- * e.g., "ONE_SIZE" → "OS", shoe sizes could add "EU" prefix
+ * Uses SIZE_CATEGORY_CONFIG as the single source of truth.
+ * e.g., "ONE_SIZE" → "OS", shoe sizes add "EU" prefix
  */
 export function formatSizeDisplay(size: string, type?: PostType): string {
-  if (size === "ONE_SIZE") return "OS";
-  if (type === "SHOES") return `EU ${size}`;
+  if (type) {
+    const config = POST_TYPE_TO_CONFIG[type];
+    if (config?.formatLabel) {
+      return config.formatLabel(size);
+    }
+  }
   return size;
 }
 
