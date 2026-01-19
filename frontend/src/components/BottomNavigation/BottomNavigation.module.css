@@ -125,8 +125,3 @@
 .navItemElevated:active .elevatedIconWrapper {
   transform: scale(0.95);
 }
-
-/* Hide label for elevated button */
-.elevatedLabel {
-  display: none;
-}
