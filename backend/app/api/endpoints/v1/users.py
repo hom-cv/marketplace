@@ -11,7 +11,7 @@ from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.crud.user import AnnotatedUserCRUD
 from app.db.utils import get_async_db
-from app.models import User
+from app.models import User, Post
 from app.schemas.post import PostResponseSchema
 from app.schemas.user import (
     PublicUserProfileSchema,

@@ -1,0 +1,13 @@
+// Protected pages - requires authentication
+export { DashboardPage } from "./Dashboard";
+export { ExplorePage } from "./Explore";
+export { PurchaseHistoryPage } from "./PurchaseHistory";
+export { LikedListingsPage } from "./LikedListings";
+export { MyListingsPage } from "./MyListings";
+export { SoldListingsPage } from "./SoldListings";
+export { CreatePostPage } from "./CreatePost";
+export { PostViewPage } from "./PostView";
+export { BecomeSellerPage } from "./BecomeSeller";
+export { PaymentReturnPage } from "./PaymentReturn";
+export { CheckoutPage } from "./Checkout";
+export { ProfileEditPage } from "./ProfileEdit";
