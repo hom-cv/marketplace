@@ -1,11 +1,11 @@
 /**
- * PublicExplorePage - Public-facing explore page for unauthenticated users
- * Features a persistent filter sidebar on desktop with collapsible sections
+ * PublicExplorePage - Public-facing explore page with Soft & Airy design
+ * Features: Horizontal filter chips on mobile, collapsible sidebar on desktop
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
   Loader,
   Center,
@@ -15,13 +15,14 @@ import {
   Box,
   Group,
   Title,
-  Checkbox,
   Button,
   TextInput,
   Badge,
   Drawer,
   Card,
   Container,
+  Skeleton,
+  ActionIcon,
 } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import {
@@ -35,7 +36,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
-import { PostFeedItem } from "@/components/PostFeedItem";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
 import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
@@ -50,15 +50,39 @@ import styles from "./PublicExplorePage.module.css";
 
 export function PublicExplorePage() {
   const navigate = useNavigate();
+  const searchParams = useSearch({ from: "/explore" });
   const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
-  const [filters, setFilters] = useState<FiltersState>({
-    types: [],
-    sizes: [],
-    search: "",
+  const [filters, setFilters] = useState<FiltersState>(() => {
+    // Initialize filters from URL params
+    const initialTypes: PostType[] = [];
+    const category = searchParams?.category;
+    if (category && ["SHIRT", "PANTS", "JACKET", "SHOES", "ACCESSORIES", "OTHER"].includes(category.toUpperCase())) {
+      initialTypes.push(category.toUpperCase() as PostType);
+    }
+    return {
+      types: initialTypes,
+      sizes: [],
+      search: searchParams?.q || "",
+    };
   });
+
+  // Sync URL changes to filters (e.g., when navigating from home page)
+  useEffect(() => {
+    const category = searchParams?.category;
+    const q = searchParams?.q;
+    const newTypes: PostType[] = [];
+    if (category && ["SHIRT", "PANTS", "JACKET", "SHOES", "ACCESSORIES", "OTHER"].includes(category.toUpperCase())) {
+      newTypes.push(category.toUpperCase() as PostType);
+    }
+    setFilters(prev => ({
+      ...prev,
+      types: newTypes.length > 0 ? newTypes : prev.types,
+      search: q || prev.search,
+    }));
+  }, [searchParams?.category, searchParams?.q]);
 
   const typeOptions: { value: PostType; label: string }[] = useMemo(
     () => [
@@ -114,11 +138,9 @@ export function PublicExplorePage() {
         }
       }
 
-      // Remove duplicates from raw sizes
       apiFilters.sizes = [...new Set(rawSizes)];
     }
 
-    // Only include types filter if we have types to filter by
     if (typesSet.size > 0) {
       apiFilters.types = [...typesSet];
     }
@@ -153,7 +175,6 @@ export function PublicExplorePage() {
 
   const totalCount = data?.pages[0]?.total ?? 0;
 
-  // Use shared infinite scroll hook
   const loadMoreRef = useInfiniteScroll({
     hasNextPage: !!hasNextPage,
     isFetchingNextPage,
@@ -166,12 +187,17 @@ export function PublicExplorePage() {
     filters.search.trim() !== "";
   const activeFilterCount = filters.types.length + filters.sizes.length;
 
+  // Scroll to top smoothly
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleTypeToggle = (type: PostType) => {
     const newTypes = filters.types.includes(type)
       ? filters.types.filter((t) => t !== type)
       : [...filters.types, type];
-    // Clear sizes when category changes to avoid confusion
     setFilters({ ...filters, types: newTypes, sizes: [] });
+    scrollToTop();
   };
 
   const handleSizeToggle = (category: SizeCategory, size: string) => {
@@ -180,54 +206,98 @@ export function PublicExplorePage() {
       ? filters.sizes.filter((s) => s !== sizeKey)
       : [...filters.sizes, sizeKey];
     setFilters({ ...filters, sizes: newSizes });
+    scrollToTop();
   };
 
   const handleClearFilters = () => {
     setFilters({ types: [], sizes: [], search: "" });
+    scrollToTop();
   };
+
+  // Loading skeleton for cards - matches PostCard aspect-ratio 4:5
+  const LoadingSkeleton = () => (
+    <div className={styles.grid}>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Card key={i} padding={0} radius="lg" withBorder className={styles.skeletonCard}>
+          <Box className={styles.skeletonImage}>
+            <Skeleton height="100%" radius={0} />
+          </Box>
+          <Box p="sm">
+            <Skeleton height={14} width="40%" mb={6} />
+            <Skeleton height={12} width="70%" />
+          </Box>
+        </Card>
+      ))}
+    </div>
+  );
+
+  // Loading skeleton for mobile - matches PostCard aspect-ratio 4:5
+  const MobileLoadingSkeleton = () => (
+    <div className={styles.mobileGrid}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Card key={i} padding={0} radius={0} className={styles.skeletonCard}>
+          <Box className={styles.skeletonImage}>
+            <Skeleton height="100%" radius={0} />
+          </Box>
+          <Box p="sm">
+            <Skeleton height={14} width="40%" mb={6} />
+            <Skeleton height={12} width="70%" />
+          </Box>
+        </Card>
+      ))}
+    </div>
+  );
 
   // Reusable filter content for both sidebar and drawer
   const filterContent = (
-    <Stack gap="lg">
+    <Stack gap="md">
       {/* Search Input */}
-      <TextInput
-        placeholder={t("search.placeholder")}
-        leftSection={<IconSearch size={16} />}
-        value={filters.search}
-        onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
-        rightSection={
-          filters.search && (
-            <IconX
-              size={14}
-              style={{ cursor: "pointer" }}
-              onClick={() => setFilters({ ...filters, search: "" })}
-            />
-          )
-        }
-      />
+      <div className={styles.searchSection}>
+        <TextInput
+          placeholder={t("search.placeholder")}
+          leftSection={<IconSearch size={16} />}
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+          radius="lg"
+          size="sm"
+          classNames={{ input: styles.searchInput }}
+          rightSection={
+            filters.search && (
+              <IconX
+                size={12}
+                style={{ cursor: "pointer" }}
+                onClick={() => setFilters({ ...filters, search: "" })}
+              />
+            )
+          }
+        />
+      </div>
 
-      {/* Category Filter */}
+      {/* Category Filter - Collapsible with Pill Style */}
       <CollapsibleFilterSection
         title={tCommon("filtersSidebar.category")}
-        icon={<IconCategory size={18} />}
+        icon={<IconCategory size={16} />}
         badge={filters.types.length}
         defaultOpen={true}
       >
-        <Stack gap="xs">
+        <Group gap={6} wrap="wrap" className={styles.filterPillGroup}>
           {typeOptions.map((option) => (
-            <Checkbox
+            <Badge
               key={option.value}
-              label={option.label}
-              checked={filters.types.includes(option.value)}
-              onChange={() => handleTypeToggle(option.value)}
-            />
+              size="sm"
+              variant={filters.types.includes(option.value) ? "filled" : "light"}
+              color={filters.types.includes(option.value) ? "blue" : "gray"}
+              className={styles.filterPill}
+              onClick={() => handleTypeToggle(option.value)}
+            >
+              {option.label}
+            </Badge>
           ))}
-        </Stack>
+        </Group>
       </CollapsibleFilterSection>
 
-      {/* Size Filters - Separate dropdown per category */}
+      {/* Size Filters - Collapsible with Pill Style */}
       {visibleSizeCategories.map((categoryConfig) => {
-        // Count active sizes in this category using prefixed keys
         const activeSizesInCategory = filters.sizes.filter((sizeKey) => {
           const { category } = parseSizeKey(sizeKey);
           return category === categoryConfig.category;
@@ -237,21 +307,25 @@ export function PublicExplorePage() {
           <CollapsibleFilterSection
             key={categoryConfig.category}
             title={tListings(categoryConfig.labelKey)}
-            icon={<IconRuler size={18} />}
+            icon={<IconRuler size={16} />}
             badge={activeSizesInCategory}
-            defaultOpen={false}
+            defaultOpen={filters.types.length > 0}
           >
-            <Group gap="xs" wrap="wrap">
+            <Group gap={6} wrap="wrap" className={styles.filterPillGroup}>
               {categoryConfig.sizes.map((size) => {
                 const sizeKey = createSizeKey(categoryConfig.category, size);
+                const isSelected = filters.sizes.includes(sizeKey);
                 return (
-                  <Checkbox
+                  <Badge
                     key={sizeKey}
-                    label={categoryConfig.formatLabel ? categoryConfig.formatLabel(size) : size}
-                    size="xs"
-                    checked={filters.sizes.includes(sizeKey)}
-                    onChange={() => handleSizeToggle(categoryConfig.category, size)}
-                  />
+                    size="sm"
+                    variant={isSelected ? "filled" : "light"}
+                    color={isSelected ? "blue" : "gray"}
+                    className={styles.filterPill}
+                    onClick={() => handleSizeToggle(categoryConfig.category, size)}
+                  >
+                    {categoryConfig.formatLabel ? categoryConfig.formatLabel(size) : size}
+                  </Badge>
                 );
               })}
             </Group>
@@ -262,12 +336,14 @@ export function PublicExplorePage() {
       {/* Clear Filters Button */}
       {hasActiveFilters && (
         <Button
-          variant="subtle"
+          variant="light"
           color="gray"
           size="sm"
           leftSection={<IconX size={14} />}
           onClick={handleClearFilters}
           fullWidth
+          radius="md"
+          className={styles.clearButton}
         >
           {tCommon("buttons.clearAll")}
         </Button>
@@ -278,7 +354,7 @@ export function PublicExplorePage() {
   if (error) {
     return (
       <Container size="xl" py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+        <Alert icon={<IconAlertCircle size={16} />} title={tCommon("status.error")} color="red" radius="lg">
           {error instanceof Error ? error.message : t("errors.failedToLoad")}
         </Alert>
       </Container>
@@ -287,96 +363,151 @@ export function PublicExplorePage() {
 
   return (
     <>
-      <Container size="xl" py="lg">
+      <Container size="xl" py="md" className={styles.container}>
+        {/* Mobile Search Bar */}
+        <Box hiddenFrom="md" mb="sm">
+          <TextInput
+            placeholder={t("search.placeholder")}
+            leftSection={<IconSearch size={16} />}
+            value={filters.search}
+            onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+            radius="lg"
+            size="sm"
+            classNames={{ input: styles.mobileSearchInput }}
+            rightSection={
+              filters.search && (
+                <IconX
+                  size={12}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => setFilters({ ...filters, search: "" })}
+                />
+              )
+            }
+          />
+        </Box>
+
+        {/* Mobile Floating Filter Button */}
+        <Box hiddenFrom="md" className={styles.floatingFilterButton}>
+          <ActionIcon
+            size="xl"
+            radius="xl"
+            variant="filled"
+            color="blue"
+            onClick={openDrawer}
+            className={styles.filterFab}
+          >
+            <IconAdjustments size={22} />
+            {activeFilterCount > 0 && (
+              <Badge
+                size="xs"
+                circle
+                color="red"
+                className={styles.filterBadge}
+              >
+                {activeFilterCount}
+              </Badge>
+            )}
+          </ActionIcon>
+        </Box>
+
         <div className={styles.layout}>
-          {/* Desktop Filter Sidebar - Always visible */}
+          {/* Desktop Filter Sidebar */}
           <Box visibleFrom="md" className={styles.sidebar}>
-            <Card radius="lg" withBorder p="md" className={styles.sidebarCard}>
-              <Group justify="space-between" mb="md">
+            <Card radius="lg" withBorder p={0} className={styles.sidebarCard}>
+              <div className={styles.sidebarHeader}>
                 <Group gap="xs">
-                  <IconAdjustments size={20} />
-                  <Text fw={600}>{t("filters.title")}</Text>
+                  <IconAdjustments size={16} />
+                  <Text size="sm" fw={500}>{t("filters.title")}</Text>
                 </Group>
-              </Group>
-              {filterContent}
+              </div>
+              <div className={styles.sidebarContent}>
+                {filterContent}
+              </div>
             </Card>
           </Box>
 
           {/* Main Content */}
           <Box className={styles.content}>
             {/* Header */}
-            <Title order={2} mb="lg">{t("title")}</Title>
+            <Group justify="space-between" align="center" mb="md" visibleFrom="md">
+              <Title order={3}>{t("title")}</Title>
+            </Group>
 
-            {/* Active Filters Display */}
+            {/* Active Filters Display - Desktop */}
             {hasActiveFilters && (
-              <Group gap="xs" mb="md">
-                {filters.search.trim() && (
-                  <Badge
-                    variant="light"
-                    size="lg"
-                    rightSection={
-                      <IconX
-                        size={12}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setFilters({ ...filters, search: "" })}
-                      />
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    {t("search.label")}: "{filters.search}"
-                  </Badge>
-                )}
-                {filters.types.map((type) => (
-                  <Badge
-                    key={type}
-                    variant="light"
-                    size="lg"
-                    rightSection={
-                      <IconX
-                        size={12}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleTypeToggle(type)}
-                      />
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    {typeLabelsMap.get(type)}
-                  </Badge>
-                ))}
-                {filters.sizes.map((sizeKey) => {
-                  const { category, size } = parseSizeKey(sizeKey);
-                  const categoryConfig = sizeCategoryMap.get(category);
-                  const displayLabel = categoryConfig?.formatLabel
-                    ? categoryConfig.formatLabel(size)
-                    : size;
-                  return (
+              <Box visibleFrom="md" mb="md">
+                <Group gap="xs">
+                  {filters.search.trim() && (
                     <Badge
-                      key={sizeKey}
                       variant="light"
-                      size="lg"
+                      size="md"
+                      radius="md"
                       rightSection={
                         <IconX
                           size={12}
                           style={{ cursor: "pointer" }}
-                          onClick={() => handleSizeToggle(category, size)}
+                          onClick={() => setFilters({ ...filters, search: "" })}
                         />
                       }
-                      style={{ cursor: "pointer" }}
+                      className={styles.activeBadge}
                     >
-                      {displayLabel}
+                      {t("search.label")}: "{filters.search}"
                     </Badge>
-                  );
-                })}
-                <Button
-                  variant="subtle"
-                  color="gray"
-                  size="xs"
-                  leftSection={<IconX size={14} />}
-                  onClick={handleClearFilters}
-                >
-                  {tCommon("buttons.clearAll")}
-                </Button>
-              </Group>
+                  )}
+                  {filters.types.map((type) => (
+                    <Badge
+                      key={type}
+                      variant="light"
+                      size="md"
+                      radius="md"
+                      rightSection={
+                        <IconX
+                          size={12}
+                          style={{ cursor: "pointer" }}
+                          onClick={() => handleTypeToggle(type)}
+                        />
+                      }
+                      className={styles.activeBadge}
+                    >
+                      {typeLabelsMap.get(type)}
+                    </Badge>
+                  ))}
+                  {filters.sizes.map((sizeKey) => {
+                    const { category, size } = parseSizeKey(sizeKey);
+                    const categoryConfig = sizeCategoryMap.get(category);
+                    const displayLabel = categoryConfig?.formatLabel
+                      ? categoryConfig.formatLabel(size)
+                      : size;
+                    return (
+                      <Badge
+                        key={sizeKey}
+                        variant="light"
+                        size="md"
+                        radius="md"
+                        rightSection={
+                          <IconX
+                            size={12}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => handleSizeToggle(category, size)}
+                          />
+                        }
+                        className={styles.activeBadge}
+                      >
+                        {displayLabel}
+                      </Badge>
+                    );
+                  })}
+                  <Button
+                    variant="subtle"
+                    color="gray"
+                    size="xs"
+                    leftSection={<IconX size={14} />}
+                    onClick={handleClearFilters}
+                  >
+                    {tCommon("buttons.clearAll")}
+                  </Button>
+                </Group>
+              </Box>
             )}
 
             {/* Results Count */}
@@ -387,9 +518,14 @@ export function PublicExplorePage() {
 
             {/* Loading State */}
             {isLoading ? (
-              <Center h={300}>
-                <Loader size="lg" />
-              </Center>
+              <>
+                <Box visibleFrom="sm">
+                  <LoadingSkeleton />
+                </Box>
+                <Box hiddenFrom="sm">
+                  <MobileLoadingSkeleton />
+                </Box>
+              </>
             ) : (
               <>
                 {/* Desktop Grid */}
@@ -401,7 +537,7 @@ export function PublicExplorePage() {
                           {hasActiveFilters ? t("results.noMatch") : t("results.noListings")}
                         </Text>
                         {hasActiveFilters && (
-                          <Button variant="subtle" size="sm" onClick={handleClearFilters}>
+                          <Button variant="subtle" size="sm" onClick={handleClearFilters} radius="md">
                             {t("filters.clearFilters")}
                           </Button>
                         )}
@@ -425,20 +561,19 @@ export function PublicExplorePage() {
                           {hasActiveFilters ? t("results.noMatch") : t("results.noListings")}
                         </Text>
                         {hasActiveFilters && (
-                          <Button variant="subtle" size="sm" onClick={handleClearFilters}>
+                          <Button variant="subtle" size="sm" onClick={handleClearFilters} radius="md">
                             {t("filters.clearFilters")}
                           </Button>
                         )}
                       </Stack>
                     </Center>
                   ) : (
-                    <Stack gap={0}>
+                    <div className={styles.mobileGrid}>
                       {posts.map((post) => (
-                        <PostFeedItem key={post.id} post={post} linkPrefix="/explore" />
+                        <PostCard key={post.id} post={post} linkPrefix="/explore" />
                       ))}
-                    </Stack>
+                    </div>
                   )}
-
                 </Box>
 
                 {/* Infinite scroll sentinel and loading indicator */}
@@ -462,57 +597,40 @@ export function PublicExplorePage() {
           </Box>
         </div>
 
-        {/* Mobile Filter Drawer - Opens from bottom */}
+        {/* Mobile Filter Drawer */}
         <Drawer
           opened={drawerOpened}
           onClose={closeDrawer}
           title={
             <Group gap="xs">
-              <IconAdjustments size={20} />
-              <Text fw={600}>{t("filters.title")}</Text>
+              <IconAdjustments size={16} />
+              <Text size="sm" fw={500}>{t("filters.title")}</Text>
             </Group>
           }
-          size="70%"
+          size="85%"
           position="bottom"
           radius="lg"
           hiddenFrom="md"
+          classNames={{ body: styles.drawerBody, content: styles.drawerContent }}
         >
           {filterContent}
         </Drawer>
       </Container>
 
-      {/* Mobile Sticky Filter Button - Outside Container for proper fixed positioning */}
-      <Box hiddenFrom="md" className={styles.filterButtonWrapper}>
-        <Button
-          variant="default"
-          leftSection={<IconAdjustments size={18} />}
-          rightSection={
-            activeFilterCount > 0 && (
-              <Badge size="sm" circle variant="filled">
-                {activeFilterCount}
-              </Badge>
-            )
-          }
-          onClick={openDrawer}
-          radius="xl"
-          className={styles.filterButton}
-        >
-          {t("filters.title")}
-        </Button>
-      </Box>
-
-      {/* Mobile Sticky Bottom Bar - Outside Container for proper fixed positioning */}
+      {/* Mobile Sticky Bottom Bar */}
       <Box hiddenFrom="md" className={styles.mobileBottomBar}>
         <div className={styles.mobileBottomBarContent}>
           <Button
             variant="default"
             size="sm"
+            radius="lg"
             onClick={() => navigate({ to: "/login" })}
           >
             {tCommon("buttons.logIn")}
           </Button>
           <Button
             size="sm"
+            radius="lg"
             onClick={() => navigate({ to: "/sign-up" })}
           >
             {tCommon("buttons.signUp")}

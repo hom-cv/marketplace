@@ -1,0 +1,91 @@
+/**
+ * LoginPage Styles - Clean & Minimal Design
+ */
+
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-bg);
+  padding: 48px 24px;
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 400px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.logoIcon {
+  width: 40px;
+  height: 40px;
+  background: var(--mantine-color-blue-6);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin: 0 auto 16px;
+}
+
+[data-mantine-color-scheme="dark"] .logoIcon {
+  background: var(--mantine-color-blue-5);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--mantine-color-dimmed);
+}
+
+.link {
+  color: var(--mantine-color-blue-6);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.formCard {
+  background: var(--app-surface);
+  border-color: var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .formCard {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+.submitButton {
+  margin-top: 8px;
+  height: 46px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 32px 16px;
+    padding-bottom: 100px;
+  }
+
+  .title {
+    font-size: 1.375rem;
+  }
+
+  .formCard {
+    padding: 20px 16px;
+  }
+}

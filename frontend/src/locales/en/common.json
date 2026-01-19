@@ -184,6 +184,8 @@
     "redirecting": "Redirecting to login in {{count}} seconds...",
     "continueToLogin": "Continue to Login",
     "failed": "Verification Failed",
+    "failedError": "Failed to verify email. The link may have expired.",
+    "resendError": "Failed to send verification email. Please try again.",
     "goHome": "Go to Home",
     "verifyYourEmail": "Verify Your Email",
     "sentTo": "We've sent a verification email to",
@@ -268,12 +270,32 @@
   "footer": {
     "terms": "Terms & Conditions",
     "privacy": "Privacy Policy",
-    "copyright": "All rights reserved."
+    "copyright": "All rights reserved.",
+    "tagline": "Your trusted platform for buying and selling quality pre-loved items.",
+    "explore": "Explore",
+    "browseAll": "Browse All",
+    "electronics": "Electronics",
+    "fashion": "Fashion",
+    "homeGarden": "Home & Garden",
+    "company": "Company",
+    "about": "About Us",
+    "contact": "Contact",
+    "help": "Help Center",
+    "legal": "Legal",
+    "refund": "Refund Policy"
   },
   "landing": {
     "hero": {
       "title": "Discover Unique Fashion",
       "subtitle": "Join the community-driven marketplace for unique fashion. Buy, sell, and discover items that tell a story."
+    },
+    "search": {
+      "placeholder": "Search for items...",
+      "button": "Search"
+    },
+    "recent": {
+      "title": "Recently Added",
+      "viewAll": "View All"
     },
     "features": {
       "sectionLabel": "Our Promise",

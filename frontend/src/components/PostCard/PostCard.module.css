@@ -1,79 +1,240 @@
-/* PostCard styles with hover effects and modern aesthetics */
+/**
+ * PostCard Styles - Soft & Airy Design
+ * Features: 4:5 aspect ratio card, floating like, hover lift
+ */
 
 .card {
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
   overflow: hidden;
+  background: var(--app-surface);
+  border-color: var(--mantine-color-gray-2);
+  aspect-ratio: 4 / 5;
+  display: flex;
+  flex-direction: column;
 }
 
 .card:hover {
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  box-shadow: var(--card-hover-shadow);
+}
+
+.card:active {
+  transform: translateY(-2px);
+}
+
+[data-mantine-color-scheme="dark"] .card {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
 }
 
 .imageSection {
   position: relative;
   overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Image fills the section */
+.imageWrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  background: var(--mantine-color-gray-1);
+}
+
+[data-mantine-color-scheme="dark"] .imageWrapper {
+  background: var(--mantine-color-dark-5);
+}
+
+.imageWrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .image {
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-slow);
 }
 
 .card:hover .image {
   transform: scale(1.05);
 }
 
-.topBadges {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-}
-
-.topBadges :global(.mantine-Badge-root) {
-  text-transform: uppercase;
-  font-size: 10px;
-  letter-spacing: 0.5px;
-}
-
-.soldBadge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  text-transform: uppercase;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
 .imageSold {
-  transition: transform 0.3s ease;
-  filter: grayscale(60%);
-  opacity: 0.8;
+  transition: transform var(--transition-slow);
+  filter: grayscale(50%);
+  opacity: 0.85;
 }
 
 .card:hover .imageSold {
   transform: scale(1.05);
 }
 
+/* Placeholder */
+.imagePlaceholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--mantine-color-gray-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-mantine-color-scheme="dark"] .imagePlaceholder {
+  background-color: var(--mantine-color-dark-5);
+}
+
+/* Status Badge (Sold/Removed) */
+.statusBadge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  z-index: 10;
+}
+
+/* Owner Badge */
+.ownerBadge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+/* Menu */
 .menuWrapper {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 50;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.card:hover .menuWrapper {
+  opacity: 1;
 }
 
 .menuButton {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-radius: 50%;
+  box-shadow: var(--shadow-md);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
 }
 
 .menuButton:hover {
   transform: scale(1.1);
 }
 
-.imagePlaceholder {
-  background-color: var(--mantine-color-gray-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Content */
+.content {
+  padding: 12px !important;
+  flex-shrink: 0;
+}
+
+.title {
+  color: var(--mantine-color-text);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+[data-mantine-color-scheme="dark"] .title {
+  color: var(--mantine-color-gray-1);
+}
+
+.priceRow {
+  margin-bottom: 6px;
+}
+
+.price {
+  color: var(--mantine-color-text);
+  letter-spacing: -0.02em;
+  font-size: 16px;
+}
+
+[data-mantine-color-scheme="dark"] .price {
+  color: var(--mantine-color-white);
+}
+
+.metaRow {
+  margin-top: 2px;
+}
+
+.typeBadge {
+  font-size: 11px;
+}
+
+.separator {
+  font-size: 12px;
+}
+
+.sizeText {
+  font-size: 12px;
+}
+
+/* Mobile adjustments - Instagram-like feed, flat cards */
+@media (max-width: 768px) {
+  .card {
+    aspect-ratio: 4 / 5.2;
+    border-radius: 0;
+    box-shadow: none;
+    border: none;
+  }
+
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .card:active {
+    transform: none;
+  }
+
+  .content {
+    padding: 14px 16px !important;
+  }
+
+  .title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .priceRow {
+    margin-bottom: 10px;
+  }
+
+  .price {
+    font-size: 20px;
+  }
+
+  .typeBadge {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .separator {
+    font-size: 14px;
+  }
+
+  .sizeText {
+    font-size: 14px;
+  }
+
+  .likeButtonWrapper {
+    top: 6px;
+    right: 6px;
+  }
 }

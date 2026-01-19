@@ -1,3 +1,11 @@
+/**
+ * PublicExplorePage Styles - Soft & Airy Design
+ */
+
+.container {
+  padding-bottom: 80px;
+}
+
 .layout {
   display: flex;
   gap: 2rem;
@@ -5,15 +13,114 @@
 }
 
 .sidebar {
-  width: 280px;
+  width: 300px;
   flex-shrink: 0;
-}
-
-.sidebarCard {
   position: sticky;
   top: 80px;
   max-height: calc(100vh - 100px);
+}
+
+.sidebarCard {
+  background: var(--app-surface);
+  border-color: var(--mantine-color-gray-2);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+[data-mantine-color-scheme="dark"] .sidebarCard {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+.sidebarHeader {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  flex-shrink: 0;
+}
+
+[data-mantine-color-scheme="dark"] .sidebarHeader {
+  border-bottom-color: var(--mantine-color-dark-4);
+}
+
+.sidebarContent {
+  padding: 12px 16px;
   overflow-y: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--mantine-color-gray-3) transparent;
+}
+
+/* Webkit scrollbar */
+.sidebarContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebarContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebarContent::-webkit-scrollbar-thumb {
+  background: var(--mantine-color-gray-3);
+  border-radius: 3px;
+}
+
+.sidebarContent::-webkit-scrollbar-thumb:hover {
+  background: var(--mantine-color-gray-4);
+}
+
+[data-mantine-color-scheme="dark"] .sidebarContent {
+  scrollbar-color: var(--mantine-color-dark-4) transparent;
+}
+
+[data-mantine-color-scheme="dark"] .sidebarContent::-webkit-scrollbar-thumb {
+  background: var(--mantine-color-dark-4);
+}
+
+[data-mantine-color-scheme="dark"] .sidebarContent::-webkit-scrollbar-thumb:hover {
+  background: var(--mantine-color-dark-3);
+}
+
+/* Filter Sidebar Styles */
+.searchSection {
+  padding-bottom: 0;
+}
+
+.filterPillGroup {
+  padding: 2px 0;
+}
+
+.filterPill {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  padding: 5px 10px;
+  height: auto;
+  font-weight: 500;
+  font-size: 12px;
+  border-radius: 12px;
+}
+
+.filterPill:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.filterPill:active {
+  transform: scale(0.97);
+}
+
+.clearButton {
+  margin-top: 4px;
+  transition: all var(--transition-normal);
+}
+
+.clearButton:hover {
+  background: var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .clearButton:hover {
+  background: var(--mantine-color-dark-5);
 }
 
 .content {
@@ -21,55 +128,220 @@
   min-width: 0;
 }
 
+/* Search Inputs */
+.searchInput {
+  background: var(--app-surface);
+  border-color: var(--mantine-color-gray-3);
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.searchInput:focus {
+  border-color: var(--mantine-color-blue-5);
+  box-shadow: 0 0 0 3px var(--mantine-color-blue-1);
+}
+
+[data-mantine-color-scheme="dark"] .searchInput {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+.mobileSearchInput {
+  background: var(--app-surface);
+  border-color: var(--mantine-color-gray-3);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Floating Filter Button (Mobile) */
+.floatingFilterButton {
+  position: fixed;
+  bottom: calc(var(--bottom-nav-total-height) + 70px);
+  right: 16px;
+  z-index: var(--z-sticky);
+}
+
+.filterFab {
+  width: 56px;
+  height: 56px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.filterFab:hover {
+  transform: scale(1.05);
+}
+
+.filterFab:active {
+  transform: scale(0.95);
+}
+
+.filterBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  pointer-events: none;
+}
+
+/* Active Filter Badges */
+.activeBadge {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.activeBadge:hover {
+  background: var(--mantine-color-gray-2);
+}
+
+/* Grid */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+  gap: 20px;
 }
 
-/* Mobile Filter Button - sticky above footer */
-.filterButtonWrapper {
-  position: fixed;
-  bottom: 60px;
-  left: 0;
-  right: 0;
+/* Mobile Feed - Instagram-like single column, flat cards */
+.mobileGrid {
   display: flex;
-  justify-content: center;
-  padding: var(--mantine-spacing-xs) 0;
-  z-index: 101;
+  flex-direction: column;
+  gap: 0;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 0 0 20px;
+  background: var(--app-bg);
 }
 
-.filterButton {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+[data-mantine-color-scheme="dark"] .mobileGrid {
+  background: var(--app-bg);
 }
 
-/* Mobile Sticky Bottom Bar */
+/* Make cards completely flat on mobile */
+.mobileGrid :global(.mantine-Card-root) {
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+  box-shadow: none;
+  background: var(--app-surface);
+}
+
+[data-mantine-color-scheme="dark"] .mobileGrid :global(.mantine-Card-root) {
+  border-bottom-color: var(--mantine-color-dark-5);
+  background: var(--mantine-color-dark-7);
+}
+
+.mobileGrid :global(.mantine-Card-root):hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.mobileGrid :global(.mantine-Card-root):active {
+  transform: none;
+}
+
+/* Skeleton Loading - matches PostCard structure */
+.skeletonCard {
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  display: flex;
+  flex-direction: column;
+}
+
+.skeletonImage {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Mobile skeleton - matches mobile PostCard */
+@media (max-width: 768px) {
+  .skeletonCard {
+    aspect-ratio: 4 / 5.2;
+    border-radius: 0 !important;
+  }
+}
+
+/* Drawer */
+.drawerContent {
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+}
+
+.drawerBody {
+  padding: 16px;
+  padding-bottom: 100px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+/* Mobile Bottom Bar */
 .mobileBottomBar {
   position: fixed;
-  bottom: 0;
+  bottom: var(--bottom-nav-total-height);
   left: 0;
   right: 0;
-  background: var(--mantine-color-body);
-  border-top: 1px solid var(--mantine-color-default-border);
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
-  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--mantine-color-gray-2);
+  padding: 12px 16px;
+  z-index: var(--z-sticky);
+}
+
+[data-mantine-color-scheme="dark"] .mobileBottomBar {
+  background: var(--glass-bg-dark);
+  border-top-color: var(--mantine-color-dark-4);
 }
 
 .mobileBottomBarContent {
   display: flex;
   justify-content: center;
-  gap: var(--mantine-spacing-sm);
+  gap: 12px;
+}
+
+.mobileBottomBarContent button {
+  flex: 1;
+  max-width: 160px;
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .container {
+    padding-bottom: 40px;
+  }
 }
 
 /* Mobile */
 @media (max-width: 768px) {
+  .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
   .layout {
     flex-direction: column;
+    gap: 0;
   }
 
   .content {
     padding: 0;
-    /* Add padding at bottom for the sticky filter button + bottom bar */
-    padding-bottom: 120px;
+  }
+
+  /* Single column feed - edge to edge */
+  .mobileGrid {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Override filter chips wrapper for edge-to-edge container */
+  .filterChipsWrapper {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0 16px;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }

@@ -3,7 +3,13 @@
     "seller": "Verified Seller"
   },
   "stats": {
-    "totalLikes": "total likes"
+    "totalLikes": "Likes",
+    "listings": "Listings"
+  },
+  "tabs": {
+    "all": "All",
+    "available": "Available",
+    "sold": "Sold"
   },
   "sections": {
     "listings": "Listings"

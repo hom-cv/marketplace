@@ -3,7 +3,13 @@
     "seller": "ผู้ขายยืนยันแล้ว"
   },
   "stats": {
-    "totalLikes": "ถูกใจทั้งหมด"
+    "totalLikes": "ถูกใจ",
+    "listings": "รายการ"
+  },
+  "tabs": {
+    "all": "ทั้งหมด",
+    "available": "พร้อมขาย",
+    "sold": "ขายแล้ว"
   },
   "sections": {
     "listings": "รายการสินค้า"

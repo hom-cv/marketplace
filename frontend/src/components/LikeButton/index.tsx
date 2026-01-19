@@ -1,6 +1,7 @@
 /**
  * LikeButton component for liking/unliking posts
  * Shows heart icon with count, handles auth state
+ * Supports "floating" variant for frosted glass overlay
  */
 
 import { useEffect, useState } from "react";
@@ -18,6 +19,8 @@ interface LikeButtonProps {
   initialCount: number;
   size?: "sm" | "md" | "lg";
   onAuthRequired?: () => void;
+  /** Floating variant with frosted glass background */
+  variant?: "default" | "floating";
 }
 
 export function LikeButton({
@@ -26,6 +29,7 @@ export function LikeButton({
   initialCount,
   size = "md",
   onAuthRequired,
+  variant = "default",
 }: LikeButtonProps) {
   const { t } = useTranslation("common");
   const queryClient = useQueryClient();
@@ -34,6 +38,7 @@ export function LikeButton({
   // Local optimistic state
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
+  const [justLiked, setJustLiked] = useState(false);
 
   useEffect(() => {
     setIsLiked(initialLiked);
@@ -46,6 +51,8 @@ export function LikeButton({
       // Optimistic update
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
+      setJustLiked(true);
+      setTimeout(() => setJustLiked(false), 400);
     },
     onError: () => {
       // Revert on error
@@ -95,6 +102,31 @@ export function LikeButton({
   const isLoading = likeMutation.isPending || unlikeMutation.isPending;
   const iconSize = size === "sm" ? 16 : size === "md" ? 20 : 24;
 
+  // Floating variant with frosted glass
+  if (variant === "floating") {
+    return (
+      <div
+        className={`${styles.floatingButton} ${justLiked ? styles.heartPop : ""}`}
+        onClick={handleClick}
+      >
+        <ActionIcon
+          variant="transparent"
+          color={isLiked ? "red" : "white"}
+          size={size}
+          loading={isLoading}
+          className={styles.floatingIcon}
+        >
+          {isLiked ? (
+            <IconHeartFilled size={iconSize} />
+          ) : (
+            <IconHeart size={iconSize} stroke={2} />
+          )}
+        </ActionIcon>
+      </div>
+    );
+  }
+
+  // Default variant
   return (
     <Group gap={4} className={styles.likeButton} onClick={handleClick}>
       <Tooltip label={isLiked ? t("likes.unlike") : t("likes.like")}>
@@ -103,7 +135,7 @@ export function LikeButton({
           color={isLiked ? "red" : "gray"}
           size={size}
           loading={isLoading}
-          className={styles.heartIcon}
+          className={`${styles.heartIcon} ${justLiked ? styles.heartPop : ""}`}
         >
           {isLiked ? (
             <IconHeartFilled size={iconSize} />

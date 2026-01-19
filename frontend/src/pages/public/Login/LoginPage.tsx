@@ -1,3 +1,8 @@
+/**
+ * Login Page - Clean & Minimal design
+ * Features: Centered form with logo, clean layout
+ */
+
 import { useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -7,14 +12,15 @@ import {
   Paper,
   Title,
   Text,
-  Container,
   Stack,
   Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
+import { IconMail, IconLock, IconShoppingBag } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -52,46 +58,63 @@ export function LoginPage() {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Title ta="center">{t("login.title")}</Title>
-      <Text c="dimmed" size="sm" ta="center" mt={5}>
-        {t("login.noAccount")}{" "}
-        <Link to="/sign-up" style={{ color: "var(--mantine-color-blue-6)" }}>
-          {t("login.signUpLink")}
-        </Link>
-      </Text>
+    <div className={styles.wrapper}>
+      <div className={styles.formContainer}>
+        {/* Header with Logo */}
+        <div className={styles.header}>
+          <div className={styles.logoIcon}>
+            <IconShoppingBag size={20} />
+          </div>
+          <Title className={styles.title}>{t("login.title")}</Title>
+          <Text size="sm" className={styles.subtitle}>
+            {t("login.noAccount")}{" "}
+            <Link to="/sign-up" className={styles.link}>
+              {t("login.signUpLink")}
+            </Link>
+          </Text>
+        </div>
 
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack>
-            {loginMutation.isError && (
-              <Alert color="red" title={t("login.failed")}>
-                {loginMutation.error?.message || t("login.invalidCredentials")}
-              </Alert>
-            )}
-            <TextInput
-              label={t("login.email")}
-              placeholder={t("login.emailPlaceholder")}
-              required
-              {...form.getInputProps("email")}
-            />
-            <PasswordInput
-              label={t("login.password")}
-              placeholder={t("login.passwordPlaceholder")}
-              required
-              {...form.getInputProps("password")}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              mt="xl"
-              loading={loginMutation.isPending}
-            >
-              {t("login.submit")}
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+        {/* Form Card */}
+        <Paper radius="md" p="lg" withBorder className={styles.formCard}>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="lg">
+              {loginMutation.isError && (
+                <Alert color="red" title={t("login.failed")} radius="md">
+                  {loginMutation.error?.message || t("login.invalidCredentials")}
+                </Alert>
+              )}
+              <TextInput
+                label={t("login.email")}
+                placeholder={t("login.emailPlaceholder")}
+                required
+                size="sm"
+                radius="md"
+                leftSection={<IconMail size={16} />}
+                {...form.getInputProps("email")}
+              />
+              <PasswordInput
+                label={t("login.password")}
+                placeholder={t("login.passwordPlaceholder")}
+                required
+                size="sm"
+                radius="md"
+                leftSection={<IconLock size={16} />}
+                {...form.getInputProps("password")}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                size="md"
+                radius="md"
+                loading={loginMutation.isPending}
+                className={styles.submitButton}
+              >
+                {t("login.submit")}
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      </div>
+    </div>
   );
 }

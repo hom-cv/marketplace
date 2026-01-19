@@ -1,6 +1,7 @@
 import { createRouter, createRootRoute, createRoute } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
+import { BottomNavigation } from "@/components/BottomNavigation";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
@@ -55,6 +56,7 @@ const rootRoute = createRootRoute({
                 <Outlet />
             </main>
             <Footer />
+            <BottomNavigation />
         </div>
     ),
 });
@@ -111,6 +113,10 @@ const publicExploreRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/explore",
     component: PublicExplorePage,
+    validateSearch: (search: Record<string, unknown>): { q?: string; category?: string } => ({
+        q: search.q ? String(search.q) : undefined,
+        category: search.category ? String(search.category) : undefined,
+    }),
 });
 
 const publicPostViewRoute = createRoute({
@@ -301,7 +307,11 @@ const routeTree = rootRoute.addChildren([
     ]),
 ]);
 
-export const router = createRouter({ routeTree });
+export const router = createRouter({
+    routeTree,
+    defaultPreloadStaleTime: 0,
+    scrollRestoration: true,
+});
 
 declare module "@tanstack/react-router" {
     interface Register {

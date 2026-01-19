@@ -25,5 +25,13 @@
     "purchaseHistory": "ประวัติการซื้อ",
     "soldListings": "สินค้าที่ขายแล้ว",
     "likedListings": "รายการที่ถูกใจ"
+  },
+  "bottomNav": {
+    "home": "หน้าหลัก",
+    "explore": "สำรวจ",
+    "sell": "ขาย",
+    "likes": "ถูกใจ",
+    "profile": "โปรไฟล์",
+    "sellAction": "สร้างรายการขาย"
   }
 }

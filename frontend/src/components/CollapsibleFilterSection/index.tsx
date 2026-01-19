@@ -47,17 +47,17 @@ export function CollapsibleFilterSection({
       >
         <Group gap="xs">
           {icon}
-          <Text fw={600} size="sm">
+          <Text fw={500} size="sm">
             {title}
           </Text>
           {badge !== undefined && badge > 0 && (
-            <Badge size="sm" variant="filled" circle>
+            <Badge size="xs" variant="filled" circle>
               {badge}
             </Badge>
           )}
         </Group>
         <IconChevronDown
-          size={18}
+          size={14}
           className={`${styles.chevron} ${opened ? styles.chevronOpen : ""}`}
         />
       </UnstyledButton>

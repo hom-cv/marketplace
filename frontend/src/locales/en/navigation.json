@@ -25,5 +25,13 @@
     "purchaseHistory": "Purchase History",
     "soldListings": "Sold Listings",
     "likedListings": "Liked Listings"
+  },
+  "bottomNav": {
+    "home": "Home",
+    "explore": "Explore",
+    "sell": "Sell",
+    "likes": "Likes",
+    "profile": "Profile",
+    "sellAction": "create a listing"
   }
 }

@@ -1,0 +1,435 @@
+/**
+ * Policy Pages Styles - Soft & Airy Design
+ * Shared styles for Terms and Privacy pages
+ */
+
+.wrapper {
+  min-height: 100vh;
+  background: var(--app-bg);
+  padding-bottom: 80px;
+}
+
+/* Header Banner */
+.header {
+  background: linear-gradient(
+    135deg,
+    var(--mantine-color-blue-4) 0%,
+    var(--mantine-color-blue-6) 50%,
+    var(--mantine-color-grape-5) 100%
+  );
+  padding: 40px 24px;
+  text-align: center;
+}
+
+[data-mantine-color-scheme="dark"] .header {
+  background: linear-gradient(
+    135deg,
+    var(--mantine-color-blue-8) 0%,
+    var(--mantine-color-blue-9) 50%,
+    var(--mantine-color-grape-9) 100%
+  );
+}
+
+.headerContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.backLink:hover {
+  color: white;
+}
+
+.pageTitle {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.lastUpdated {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+}
+
+/* Main Content Layout */
+.contentWrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+}
+
+/* Sidebar - Table of Contents */
+.sidebar {
+  position: sticky;
+  top: 24px;
+  height: fit-content;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.tocCard {
+  background: var(--app-surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .tocCard {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+.tocTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--mantine-color-dimmed);
+  margin-bottom: 12px;
+}
+
+.tocList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tocItem {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--mantine-color-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 2px solid transparent;
+}
+
+.tocItem:hover {
+  background: var(--mantine-color-gray-1);
+  color: var(--mantine-color-blue-6);
+}
+
+[data-mantine-color-scheme="dark"] .tocItem:hover {
+  background: var(--mantine-color-dark-5);
+}
+
+.tocItem.active {
+  background: var(--mantine-color-blue-0);
+  color: var(--mantine-color-blue-7);
+  border-left-color: var(--mantine-color-blue-6);
+  font-weight: 500;
+}
+
+[data-mantine-color-scheme="dark"] .tocItem.active {
+  background: rgba(34, 139, 230, 0.15);
+  color: var(--mantine-color-blue-4);
+}
+
+.tocSublist {
+  list-style: none;
+  padding: 0;
+  padding-left: 12px;
+  margin: 4px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tocSubItem {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  color: var(--mantine-color-dimmed);
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: all 0.2s ease;
+}
+
+.tocSubItem:hover {
+  color: var(--mantine-color-blue-6);
+  background: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme="dark"] .tocSubItem:hover {
+  background: var(--mantine-color-dark-5);
+}
+
+/* Main Content */
+.content {
+  min-width: 0;
+}
+
+.mainCard {
+  background: var(--app-surface);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .mainCard {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+/* Section */
+.section {
+  scroll-margin-top: 24px;
+}
+
+.section + .section {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .section + .section {
+  border-top-color: var(--mantine-color-dark-4);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 8px 0;
+  margin: -8px 0;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+}
+
+.sectionHeader:hover {
+  background: var(--mantine-color-gray-0);
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+[data-mantine-color-scheme="dark"] .sectionHeader:hover {
+  background: var(--mantine-color-dark-5);
+}
+
+.sectionTitle {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--mantine-color-text);
+  margin: 0;
+}
+
+.sectionToggle {
+  color: var(--mantine-color-dimmed);
+  transition: transform 0.3s ease;
+}
+
+.sectionToggle.expanded {
+  transform: rotate(180deg);
+}
+
+.sectionContent {
+  margin-top: 12px;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+  color: var(--mantine-color-text);
+}
+
+.sectionContent :global(.mantine-Text-root) {
+  font-size: 0.9375rem;
+}
+
+.sectionContent.collapsed {
+  display: none;
+}
+
+/* Major Divider */
+.majorDivider {
+  margin: 40px 0;
+  padding: 20px 0;
+  border-top: 2px solid var(--mantine-color-gray-3);
+  border-bottom: none;
+}
+
+[data-mantine-color-scheme="dark"] .majorDivider {
+  border-top-color: var(--mantine-color-dark-4);
+}
+
+.majorTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--mantine-color-text);
+  margin-bottom: 4px;
+}
+
+.majorSubtitle {
+  font-size: 0.875rem;
+  color: var(--mantine-color-dimmed);
+}
+
+/* Mobile Styles */
+@media (max-width: 900px) {
+  .contentWrapper {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 16px;
+  }
+
+  .sidebar {
+    position: static;
+    display: none;
+  }
+
+  .sidebar.mobileVisible {
+    display: block;
+  }
+
+  .mainCard {
+    padding: 24px;
+    border-radius: var(--radius-lg);
+  }
+
+  .header {
+    padding: 32px 16px;
+  }
+
+  .pageTitle {
+    font-size: 1.25rem;
+  }
+
+  .sectionTitle {
+    font-size: 1rem;
+  }
+
+  /* Mobile collapsible by default */
+  .sectionContent {
+    display: none;
+  }
+
+  .sectionContent.expanded {
+    display: block;
+  }
+}
+
+/* Mobile TOC Drawer */
+.mobileTocTrigger {
+  display: none;
+  position: fixed;
+  bottom: calc(var(--bottom-nav-height) + 16px);
+  right: 16px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--mantine-color-blue-6);
+  color: white;
+  border: none;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.mobileTocTrigger:hover {
+  transform: scale(1.05);
+  background: var(--mantine-color-blue-7);
+}
+
+@media (max-width: 900px) {
+  .mobileTocTrigger {
+    display: flex;
+  }
+
+  .wrapper {
+    padding-bottom: 120px;
+  }
+}
+
+/* Mobile TOC Sheet */
+.mobileTocSheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 200;
+  background: var(--app-surface);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  padding: 24px;
+  padding-bottom: calc(24px + var(--bottom-nav-height));
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+[data-mantine-color-scheme="dark"] .mobileTocSheet {
+  background: var(--mantine-color-dark-6);
+}
+
+.mobileTocSheet.open {
+  transform: translateY(0);
+}
+
+.mobileTocHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.mobileTocTitle {
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.mobileTocClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--mantine-color-gray-1);
+  color: var(--mantine-color-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-mantine-color-scheme="dark"] .mobileTocClose {
+  background: var(--mantine-color-dark-5);
+}
+
+/* Backdrop */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 199;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}

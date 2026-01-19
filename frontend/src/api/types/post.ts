@@ -149,6 +149,7 @@ export const SIZE_CATEGORY_CONFIG: readonly SizeCategoryConfig[] = [
     sizes: ["ONE_SIZE"],
     postTypes: ["ACCESSORIES"],
     labelKey: "sizeCategories.accessories",
+    formatLabel: () => "OS",
   },
 ];
 
@@ -192,6 +193,16 @@ export function getSizesForType(type: PostType): readonly string[] {
       // Compile-time exhaustive check - will error if a PostType case is missing
       return assertNever(type);
   }
+}
+
+/**
+ * Format size for display. Converts internal values to user-friendly labels.
+ * e.g., "ONE_SIZE" → "OS", shoe sizes could add "EU" prefix
+ */
+export function formatSizeDisplay(size: string, type?: PostType): string {
+  if (size === "ONE_SIZE") return "OS";
+  if (type === "SHOES") return `EU ${size}`;
+  return size;
 }
 
 export interface Post {

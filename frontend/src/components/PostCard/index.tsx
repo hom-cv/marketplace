@@ -1,19 +1,17 @@
 /**
- * PostCard component for displaying post in a card format
- * Premium, modern design with subtle animations
+ * PostCard component - Soft & Airy design
+ * Features: 4:5 aspect ratio, floating like button, hover lift animation
  */
 
 import { useMemo } from "react";
 import {
   Card,
-  Image,
   Text,
   Badge,
-  Group,
-  Stack,
   Box,
   Menu,
   ActionIcon,
+  Group,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
@@ -24,6 +22,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
+import { formatSizeDisplay } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
@@ -109,50 +108,39 @@ export function PostCard({ post, onReportClick, linkPrefix = "/app/posts" }: Pos
     >
       <Card.Section className={styles.imageSection}>
         {post.image_url ? (
-          <Image
-            src={post.image_url}
-            height={220}
-            alt={post.title}
-            className={post.is_sold ? styles.imageSold : styles.image}
-          />
+          <div className={styles.imageWrapper}>
+            <img
+              src={post.image_url}
+              alt={post.title}
+              className={post.is_sold ? styles.imageSold : styles.image}
+            />
+          </div>
         ) : (
-          <Box h={220} className={styles.imagePlaceholder}>
-            <ImagePlaceholder iconSize={48} showText={false} />
-          </Box>
+          <div className={styles.imagePlaceholder}>
+            <ImagePlaceholder iconSize={40} showText={false} />
+          </div>
         )}
-        {/* Top-left badges: Category + Owner indicator */}
-        <Group gap={4} className={styles.topBadges}>
-          <Badge color={typeColors[post.type]} variant="filled" size="sm">
-            {typeLabels[post.type]}
-          </Badge>
-          {isOwner && (
-            <Badge variant="filled" color="gray" size="sm">
-              {t("badges.yourListing")}
-            </Badge>
-          )}
-        </Group>
+
+        {/* Status Badges - Center */}
         {post.is_sold && (
-          <Badge
-            className={styles.soldBadge}
-            color="red"
-            variant="filled"
-            size="lg"
-          >
+          <Badge className={styles.statusBadge} color="red" variant="filled" size="md" radius="md">
             {t("badges.sold")}
           </Badge>
         )}
         {post.is_banned && (
-          <Badge
-            className={styles.soldBadge}
-            color="dark"
-            variant="filled"
-            size="lg"
-          >
+          <Badge className={styles.statusBadge} color="dark" variant="filled" size="md" radius="md">
             {t("badges.removed")}
           </Badge>
         )}
 
-        {/* Report Menu - only show for non-owners when handler is provided */}
+        {/* Owner Badge - Bottom left */}
+        {isOwner && (
+          <Badge className={styles.ownerBadge} variant="filled" color="gray" size="xs" radius="md">
+            {t("badges.yourListing")}
+          </Badge>
+        )}
+
+        {/* Report Menu - Top right (only for non-owners) */}
         {!isOwner && onReportClick && (
           <div className={styles.menuWrapper}>
             <Menu shadow="md" width={180} position="bottom-end">
@@ -162,9 +150,10 @@ export function PostCard({ post, onReportClick, linkPrefix = "/app/posts" }: Pos
                   variant="white"
                   color="gray"
                   size="sm"
+                  radius="xl"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <IconDotsVertical size={16} />
+                  <IconDotsVertical size={14} />
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
@@ -188,46 +177,44 @@ export function PostCard({ post, onReportClick, linkPrefix = "/app/posts" }: Pos
         )}
       </Card.Section>
 
-      <Box p="md">
-        <Stack gap={6}>
-          <Text fw={600} size="md" lineClamp={1}>
-            {post.title}
-          </Text>
+      {/* Content Section */}
+      <Box className={styles.content}>
+        {/* Title - What is this item? */}
+        <Text fw={500} lineClamp={1} className={styles.title}>
+          {post.title}
+        </Text>
 
-          {/* Size display */}
+        {/* Price + Like - Key decision row */}
+        <Group justify="space-between" align="center" className={styles.priceRow}>
+          <Text fw={700} className={styles.price}>
+            ฿{price.toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            })}
+          </Text>
+          <LikeButton
+            postId={post.id}
+            initialLiked={post.is_liked}
+            initialCount={post.like_count}
+            size="md"
+            onAuthRequired={openLoginModal}
+          />
+        </Group>
+
+        {/* Type + Size - Category and fit info */}
+        <Group gap={8} align="center" className={styles.metaRow}>
+          <Badge color={typeColors[post.type]} variant="light" size="sm" radius="sm" className={styles.typeBadge}>
+            {typeLabels[post.type]}
+          </Badge>
           {post.size && (
-            <Text size="sm" c="dimmed">
-              {t("postCard.size")}: {post.size}
-            </Text>
+            <>
+              <Text c="dimmed" className={styles.separator}>·</Text>
+              <Text c="dimmed" fw={500} className={styles.sizeText}>
+                {formatSizeDisplay(post.size, post.type)}
+              </Text>
+            </>
           )}
-
-          <Group justify="space-between" align="center">
-            <Text size="xl" fw={700} c="dark">
-              ฿
-              {price.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </Text>
-            <LikeButton
-              postId={post.id}
-              initialLiked={post.is_liked}
-              initialCount={post.like_count}
-              size="sm"
-              onAuthRequired={openLoginModal}
-            />
-          </Group>
-
-          <Text size="sm" c="dimmed" lineClamp={2}>
-            {post.description}
-          </Text>
-
-          <Group gap={4} mt={4}>
-            <Text size="xs" c="dimmed">
-              @{post.user.username}
-            </Text>
-          </Group>
-        </Stack>
+        </Group>
       </Box>
 
       <LoginPromptModal

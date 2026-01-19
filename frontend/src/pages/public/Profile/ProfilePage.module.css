@@ -1,5 +1,136 @@
+/**
+ * ProfilePage Styles - Clean & Minimal
+ */
+
+.wrapper {
+  min-height: 100vh;
+  background: var(--app-bg);
+  padding-top: 24px;
+  padding-bottom: 100px;
+}
+
+/* Container */
+.container {
+  padding: 0 16px;
+}
+
+/* Profile Card */
+.profileCard {
+  background: var(--app-surface);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--mantine-color-gray-2);
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+[data-mantine-color-scheme="dark"] .profileCard {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+/* Avatar */
+.avatar {
+  flex-shrink: 0;
+}
+
+/* Profile Info */
+.profileInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.username {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.displayName {
+  margin-top: 2px;
+}
+
+.bio {
+  margin-top: 8px;
+  line-height: 1.5;
+  color: var(--mantine-color-dimmed);
+}
+
+/* Stats Row */
+.statsRow {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.statValue {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.statLabel {
+  color: var(--mantine-color-dimmed);
+  font-size: 0.875rem;
+}
+
+/* Segmented Control */
+.segmentedControl {
+  background: var(--mantine-color-gray-1);
+}
+
+[data-mantine-color-scheme="dark"] .segmentedControl {
+  background: var(--mantine-color-dark-6);
+}
+
+/* Listings Grid */
+.listingsSection {
+  padding-bottom: 40px;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .wrapper {
+    padding-top: 16px;
+  }
+
+  .profileCard {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .profileInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .statsRow {
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .username {
+    font-size: 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 }

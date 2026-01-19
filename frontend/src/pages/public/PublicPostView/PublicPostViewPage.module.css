@@ -1,0 +1,185 @@
+/**
+ * PublicPostViewPage Styles - Soft & Airy Design
+ */
+
+.wrapper {
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.container {
+  padding-bottom: 100px;
+}
+
+/* Mobile Header */
+.mobileHeader {
+  padding: 12px 16px;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .mobileHeader {
+  border-bottom-color: var(--mantine-color-dark-4);
+}
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: start;
+}
+
+.imageColumn {
+  position: sticky;
+  top: 80px;
+}
+
+.galleryWrapper {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.detailsColumn {
+  padding-top: 8px;
+}
+
+/* Floating Like on Mobile */
+.floatingLike {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+/* Title */
+.title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--mantine-color-text);
+}
+
+/* Price */
+.price {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--mantine-color-text);
+}
+
+/* Description */
+.description {
+  white-space: pre-wrap;
+  line-height: 1.6;
+  color: var(--mantine-color-text);
+}
+
+/* Seller Card */
+.sellerCard {
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  background: var(--app-surface);
+  border-color: var(--mantine-color-gray-2);
+}
+
+.sellerCard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+[data-mantine-color-scheme="dark"] .sellerCard {
+  background: var(--mantine-color-dark-6);
+  border-color: var(--mantine-color-dark-4);
+}
+
+/* Buy Button */
+.buyButton {
+  height: 48px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  box-shadow: var(--shadow-md);
+}
+
+.buyButton:hover:not(:disabled) {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Sticky Buy Bar (Mobile) */
+.stickyBuyBar {
+  position: fixed;
+  bottom: var(--bottom-nav-total-height);
+  left: 0;
+  right: 0;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid var(--mantine-color-gray-2);
+  padding: 12px 16px;
+  z-index: var(--z-sticky);
+}
+
+[data-mantine-color-scheme="dark"] .stickyBuyBar {
+  background: var(--glass-bg-dark);
+  border-top-color: var(--mantine-color-dark-4);
+}
+
+.buyBarContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.buyBarPrice {
+  display: flex;
+  flex-direction: column;
+}
+
+.buyBarButton {
+  flex-shrink: 0;
+  min-width: 140px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .imageColumn {
+    position: static;
+  }
+
+  .detailsColumn {
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding-bottom: 0;
+  }
+
+  .container {
+    padding-top: 0;
+    padding-bottom: 160px;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .price {
+    font-size: 1.25rem;
+  }
+
+  .galleryWrapper {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+  }
+}
