@@ -71,13 +71,13 @@ export function Footer() {
               <Link to="/explore" className={styles.link}>
                 {t("footer.browseAll", "Browse All")}
               </Link>
-              <Link to="/explore" search={{ category: "SHIRT" }} className={styles.link}>
+              <Link to="/explore" search={{ categories: "SHIRT" }} className={styles.link}>
                 {t("footer.fashion", "Fashion")}
               </Link>
-              <Link to="/explore" search={{ category: "SHOES" }} className={styles.link}>
+              <Link to="/explore" search={{ categories: "SHOES" }} className={styles.link}>
                 {t("footer.shoes", "Shoes")}
               </Link>
-              <Link to="/explore" search={{ category: "ACCESSORIES" }} className={styles.link}>
+              <Link to="/explore" search={{ categories: "ACCESSORIES" }} className={styles.link}>
                 {t("footer.accessories", "Accessories")}
               </Link>
             </div>

@@ -113,9 +113,14 @@ const publicExploreRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/explore",
     component: PublicExplorePage,
-    validateSearch: (search: Record<string, unknown>): { q?: string; category?: string } => ({
+    validateSearch: (search: Record<string, unknown>): { q?: string; categories?: string; sizes?: string } => ({
         q: search.q ? String(search.q) : undefined,
-        category: search.category ? String(search.category) : undefined,
+        categories: search.categories
+            ? String(search.categories)
+            : search.category
+                ? String(search.category)
+                : undefined,
+        sizes: search.sizes ? String(search.sizes) : undefined,
     }),
 });
 

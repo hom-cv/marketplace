@@ -87,7 +87,7 @@ export function HomePage() {
   );
 
   const handleCategoryClick = (category: PostType) => {
-    navigate({ to: "/explore", search: { category } });
+    navigate({ to: "/explore", search: { categories: category } });
   };
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {

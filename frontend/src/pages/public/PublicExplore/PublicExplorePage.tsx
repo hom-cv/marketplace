@@ -3,7 +3,7 @@
  * Features: Horizontal filter chips on mobile, collapsible sidebar on desktop
  */
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import {
@@ -38,7 +38,7 @@ import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
-import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
+import { SIZE_CATEGORY_CONFIG, POST_TYPES } from "@/api/types/post";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
@@ -48,6 +48,26 @@ import {
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import styles from "./PublicExplorePage.module.css";
 
+/** Check if a string is a valid PostType */
+function isValidPostType(value: string): value is PostType {
+  return POST_TYPES.includes(value as PostType);
+}
+
+/** Parse comma-separated categories from URL */
+function parseCategories(categoriesParam: string | undefined): PostType[] {
+  if (!categoriesParam) return [];
+  return categoriesParam
+    .split(",")
+    .map((c) => c.trim().toUpperCase())
+    .filter(isValidPostType);
+}
+
+/** Parse comma-separated sizes from URL */
+function parseSizes(sizesParam: string | undefined): string[] {
+  if (!sizesParam) return [];
+  return sizesParam.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export function PublicExplorePage() {
   const navigate = useNavigate();
   const searchParams = useSearch({ from: "/explore" });
@@ -55,44 +75,68 @@ export function PublicExplorePage() {
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
-  const [filters, setFilters] = useState<FiltersState>(() => {
-    // Initialize filters from URL params
-    const initialTypes: PostType[] = [];
-    const category = searchParams?.category;
-    if (category && ["SHIRT", "PANTS", "JACKET", "SHOES", "ACCESSORIES", "OTHER"].includes(category.toUpperCase())) {
-      initialTypes.push(category.toUpperCase() as PostType);
-    }
-    return {
-      types: initialTypes,
-      sizes: [],
-      search: searchParams?.q || "",
-    };
-  });
 
-  // Sync URL changes to filters (e.g., when navigating from home page)
+  // Derive filter state from URL (URL is the single source of truth for types/sizes)
+  const urlFilters = useMemo(() => ({
+    types: parseCategories(searchParams?.categories),
+    sizes: parseSizes(searchParams?.sizes),
+    search: searchParams?.q || "",
+  }), [searchParams?.categories, searchParams?.sizes, searchParams?.q]);
+
+  // Local search state for responsive typing (syncs to URL on debounce)
+  const [localSearch, setLocalSearch] = useState(urlFilters.search);
+
+  // Sync local search when URL changes (e.g., navigation from another page)
   useEffect(() => {
-    const category = searchParams?.category;
-    const q = searchParams?.q;
-    const newTypes: PostType[] = [];
-    if (category && ["SHIRT", "PANTS", "JACKET", "SHOES", "ACCESSORIES", "OTHER"].includes(category.toUpperCase())) {
-      newTypes.push(category.toUpperCase() as PostType);
+    setLocalSearch(urlFilters.search);
+  }, [urlFilters.search]);
+
+  // Debounce the local search value
+  const [debouncedLocalSearch] = useDebouncedValue(localSearch, 300);
+
+  // Sync debounced search to URL
+  useEffect(() => {
+    if (debouncedLocalSearch !== urlFilters.search) {
+      updateUrlFilters({ search: debouncedLocalSearch });
     }
-    setFilters(prev => ({
-      ...prev,
-      types: newTypes,
-      search: q || "",
-    }));
-  }, [searchParams?.category, searchParams?.q]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedLocalSearch]);
+
+  // Update URL with new filters
+  const updateUrlFilters = useCallback((updates: Partial<FiltersState>) => {
+    const newFilters = {
+      types: updates.types ?? urlFilters.types,
+      sizes: updates.sizes ?? urlFilters.sizes,
+      search: updates.search ?? urlFilters.search,
+    };
+
+    const search: { q?: string; categories?: string; sizes?: string } = {};
+
+    if (newFilters.search.trim()) {
+      search.q = newFilters.search.trim();
+    }
+    if (newFilters.types.length > 0) {
+      search.categories = newFilters.types.join(",");
+    }
+    if (newFilters.sizes.length > 0) {
+      search.sizes = newFilters.sizes.join(",");
+    }
+
+    navigate({ to: "/explore", search, replace: true });
+  }, [navigate, urlFilters]);
+
+  // Combined filters state (URL filters + local search for display)
+  const filters: FiltersState = useMemo(() => ({
+    types: urlFilters.types,
+    sizes: urlFilters.sizes,
+    search: localSearch,
+  }), [urlFilters.types, urlFilters.sizes, localSearch]);
 
   const typeOptions: { value: PostType; label: string }[] = useMemo(
-    () => [
-      { value: "SHIRT", label: tListings("categories.shirt") },
-      { value: "PANTS", label: tListings("categories.pants") },
-      { value: "JACKET", label: tListings("categories.jacket") },
-      { value: "SHOES", label: tListings("categories.shoes") },
-      { value: "ACCESSORIES", label: tListings("categories.accessories") },
-      { value: "OTHER", label: tListings("categories.other") },
-    ],
+    () => POST_TYPES.map((type) => ({
+      value: type,
+      label: tListings(`categories.${type.toLowerCase()}`),
+    })),
     [tListings]
   );
 
@@ -115,8 +159,6 @@ export function PublicExplorePage() {
       return { ...config, isVisible };
     }).filter((c) => c.isVisible);
   }, [filters.types]);
-
-  const [debouncedSearch] = useDebouncedValue(filters.search, 300);
 
   const queryFilters = useMemo<PostFilters>(() => {
     const apiFilters: PostFilters = {};
@@ -145,12 +187,12 @@ export function PublicExplorePage() {
       apiFilters.types = [...typesSet];
     }
 
-    if (debouncedSearch.trim()) {
-      apiFilters.search = debouncedSearch.trim();
+    if (debouncedLocalSearch.trim()) {
+      apiFilters.search = debouncedLocalSearch.trim();
     }
 
     return apiFilters;
-  }, [filters.types, filters.sizes, debouncedSearch, sizeCategoryMap]);
+  }, [filters.types, filters.sizes, debouncedLocalSearch, sizeCategoryMap]);
 
   const {
     data,
@@ -184,7 +226,7 @@ export function PublicExplorePage() {
   const hasActiveFilters =
     filters.types.length > 0 ||
     filters.sizes.length > 0 ||
-    filters.search.trim() !== "";
+    localSearch.trim() !== "";
   const activeFilterCount = filters.types.length + filters.sizes.length;
 
   // Scroll to top smoothly
@@ -196,7 +238,7 @@ export function PublicExplorePage() {
     const newTypes = filters.types.includes(type)
       ? filters.types.filter((t) => t !== type)
       : [...filters.types, type];
-    setFilters({ ...filters, types: newTypes, sizes: [] });
+    updateUrlFilters({ types: newTypes, sizes: [] });
     scrollToTop();
   };
 
@@ -205,12 +247,13 @@ export function PublicExplorePage() {
     const newSizes = filters.sizes.includes(sizeKey)
       ? filters.sizes.filter((s) => s !== sizeKey)
       : [...filters.sizes, sizeKey];
-    setFilters({ ...filters, sizes: newSizes });
+    updateUrlFilters({ sizes: newSizes });
     scrollToTop();
   };
 
   const handleClearFilters = () => {
-    setFilters({ types: [], sizes: [], search: "" });
+    setLocalSearch("");
+    updateUrlFilters({ types: [], sizes: [], search: "" });
     scrollToTop();
   };
 
@@ -256,17 +299,17 @@ export function PublicExplorePage() {
         <TextInput
           placeholder={t("search.placeholder")}
           leftSection={<IconSearch size={16} />}
-          value={filters.search}
-          onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.currentTarget.value)}
           radius="lg"
           size="sm"
           classNames={{ input: styles.searchInput }}
           rightSection={
-            filters.search && (
+            localSearch && (
               <IconX
                 size={12}
                 style={{ cursor: "pointer" }}
-                onClick={() => setFilters({ ...filters, search: "" })}
+                onClick={() => setLocalSearch("")}
               />
             )
           }
@@ -369,17 +412,17 @@ export function PublicExplorePage() {
           <TextInput
             placeholder={t("search.placeholder")}
             leftSection={<IconSearch size={16} />}
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.currentTarget.value)}
             radius="lg"
             size="sm"
             classNames={{ input: styles.mobileSearchInput }}
             rightSection={
-              filters.search && (
+              localSearch && (
                 <IconX
                   size={12}
                   style={{ cursor: "pointer" }}
-                  onClick={() => setFilters({ ...filters, search: "" })}
+                  onClick={() => setLocalSearch("")}
                 />
               )
             }
@@ -437,7 +480,7 @@ export function PublicExplorePage() {
             {hasActiveFilters && (
               <Box visibleFrom="md" mb="md">
                 <Group gap="xs">
-                  {filters.search.trim() && (
+                  {localSearch.trim() && (
                     <Badge
                       variant="light"
                       size="md"
@@ -446,12 +489,12 @@ export function PublicExplorePage() {
                         <IconX
                           size={12}
                           style={{ cursor: "pointer" }}
-                          onClick={() => setFilters({ ...filters, search: "" })}
+                          onClick={() => setLocalSearch("")}
                         />
                       }
                       className={styles.activeBadge}
                     >
-                      {t("search.label")}: "{filters.search}"
+                      {t("search.label")}: "{localSearch}"
                     </Badge>
                   )}
                   {filters.types.map((type) => (
