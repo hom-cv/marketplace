@@ -79,8 +79,8 @@ export function PublicExplorePage() {
     }
     setFilters(prev => ({
       ...prev,
-      types: newTypes.length > 0 ? newTypes : prev.types,
-      search: q || prev.search,
+      types: newTypes,
+      search: q || "",
     }));
   }, [searchParams?.category, searchParams?.q]);
 
