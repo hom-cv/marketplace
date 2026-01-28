@@ -32,9 +32,12 @@ export function Footer() {
                 {t("appName", "Marketplace")}
               </Link>
               <p className={styles.tagline}>
-                {t("footer.tagline", "Your trusted platform for buying and selling quality pre-loved items.")}
+                {t(
+                  "footer.tagline",
+                  "Your trusted platform for buying and selling quality pre-loved items.",
+                )}
               </p>
-              <div className={styles.socialLinks}>
+              {/*<div className={styles.socialLinks}>
                 <a
                   href="https://facebook.com"
                   target="_blank"
@@ -62,29 +65,45 @@ export function Footer() {
                 >
                   <IconBrandTwitter size={18} />
                 </a>
-              </div>
+              </div>*/}
             </div>
 
             {/* Explore Column */}
             <div className={styles.column}>
-              <h4 className={styles.columnTitle}>{t("footer.explore", "Explore")}</h4>
+              <h4 className={styles.columnTitle}>
+                {t("footer.explore", "Explore")}
+              </h4>
               <Link to="/explore" className={styles.link}>
                 {t("footer.browseAll", "Browse All")}
               </Link>
-              <Link to="/explore" search={{ categories: "SHIRT" }} className={styles.link}>
+              <Link
+                to="/explore"
+                search={{ categories: "SHIRT" }}
+                className={styles.link}
+              >
                 {t("footer.fashion", "Fashion")}
               </Link>
-              <Link to="/explore" search={{ categories: "SHOES" }} className={styles.link}>
+              <Link
+                to="/explore"
+                search={{ categories: "SHOES" }}
+                className={styles.link}
+              >
                 {t("footer.shoes", "Shoes")}
               </Link>
-              <Link to="/explore" search={{ categories: "ACCESSORIES" }} className={styles.link}>
+              <Link
+                to="/explore"
+                search={{ categories: "ACCESSORIES" }}
+                className={styles.link}
+              >
                 {t("footer.accessories", "Accessories")}
               </Link>
             </div>
 
             {/* Company Column */}
             <div className={styles.column}>
-              <h4 className={styles.columnTitle}>{t("footer.company", "Company")}</h4>
+              <h4 className={styles.columnTitle}>
+                {t("footer.company", "Company")}
+              </h4>
               <Link to="/" className={styles.link}>
                 {t("footer.about", "About Us")}
               </Link>
@@ -98,7 +117,9 @@ export function Footer() {
 
             {/* Legal Column */}
             <div className={styles.column}>
-              <h4 className={styles.columnTitle}>{t("footer.legal", "Legal")}</h4>
+              <h4 className={styles.columnTitle}>
+                {t("footer.legal", "Legal")}
+              </h4>
               <Link to="/terms" className={styles.link}>
                 {t("footer.terms")}
               </Link>
