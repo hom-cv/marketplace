@@ -89,16 +89,26 @@
 
 .filterPillGroup {
   padding: 2px 0;
+  gap: 8px;
 }
 
 .filterPill {
   cursor: pointer;
   transition: all var(--transition-normal);
-  padding: 5px 10px;
+  padding: 8px 12px;
+  min-height: 36px;
   height: auto;
   font-weight: 500;
   font-size: 12px;
   border-radius: 12px;
+}
+
+/* Increase touch target on mobile */
+@media (max-width: 768px) {
+  .filterPill {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
 }
 
 .filterPill:hover {

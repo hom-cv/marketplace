@@ -132,12 +132,22 @@ export function PolicyPageLayout({
         <div
           className={styles.sectionHeader}
           onClick={() => toggleSection(sectionId)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              toggleSection(sectionId);
+            }
+          }}
+          role={isMobile ? "button" : undefined}
+          tabIndex={isMobile ? 0 : undefined}
+          aria-expanded={isMobile ? isExpanded : undefined}
         >
           <h3 className={styles.sectionTitle}>{t(`${groupId}.${section}.title`)}</h3>
           {isMobile && (
             <IconChevronDown
               size={20}
               className={`${styles.sectionToggle} ${isExpanded ? styles.expanded : ""}`}
+              aria-hidden="true"
             />
           )}
         </div>
@@ -160,6 +170,14 @@ export function PolicyPageLayout({
             key={section}
             className={`${styles.tocSubItem} ${activeSection === `${group.id}-${section}` ? styles.active : ""}`}
             onClick={() => scrollToSection(`${group.id}-${section}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                scrollToSection(`${group.id}-${section}`);
+              }
+            }}
+            role="button"
+            tabIndex={0}
           >
             {t(`${group.id}.${section}.title`)}
           </li>
@@ -180,6 +198,14 @@ export function PolicyPageLayout({
             key={section}
             className={`${styles.tocSubItem} ${activeSection === `${group.id}-${section}` ? styles.active : ""}`}
             onClick={() => scrollToSection(`${group.id}-${section}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                scrollToSection(`${group.id}-${section}`);
+              }
+            }}
+            role="button"
+            tabIndex={0}
           >
             {t(`${group.id}.${section}.title`)}
           </li>

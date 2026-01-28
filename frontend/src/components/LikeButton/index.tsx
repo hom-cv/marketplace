@@ -108,6 +108,15 @@ export function LikeButton({
       <div
         className={`${styles.floatingButton} ${justLiked ? styles.heartPop : ""}`}
         onClick={handleClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleClick(e as unknown as React.MouseEvent);
+          }
+        }}
+        aria-label={isLiked ? t("likes.ariaUnlike") : t("likes.ariaLike")}
       >
         <ActionIcon
           variant="transparent"
@@ -115,6 +124,7 @@ export function LikeButton({
           size={size}
           loading={isLoading}
           className={styles.floatingIcon}
+          aria-hidden="true"
         >
           {isLiked ? (
             <IconHeartFilled size={iconSize} />
@@ -127,6 +137,10 @@ export function LikeButton({
   }
 
   // Default variant
+  const likeCountLabel = likeCount === 1
+    ? t("likes.countOne", { count: likeCount })
+    : t("likes.count", { count: likeCount });
+
   return (
     <Group gap={4} className={styles.likeButton} onClick={handleClick}>
       <Tooltip label={isLiked ? t("likes.unlike") : t("likes.like")}>
@@ -136,6 +150,7 @@ export function LikeButton({
           size={size}
           loading={isLoading}
           className={`${styles.heartIcon} ${justLiked ? styles.heartPop : ""}`}
+          aria-label={isLiked ? t("likes.ariaUnlike") : t("likes.ariaLike")}
         >
           {isLiked ? (
             <IconHeartFilled size={iconSize} />
@@ -144,7 +159,7 @@ export function LikeButton({
           )}
         </ActionIcon>
       </Tooltip>
-      <Text size={size === "sm" ? "xs" : "sm"} c="dimmed">
+      <Text size={size === "sm" ? "xs" : "sm"} c="dimmed" aria-label={likeCountLabel}>
         {likeCount}
       </Text>
     </Group>

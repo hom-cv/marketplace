@@ -41,7 +41,7 @@ export function BottomNavigation() {
 
   return (
     <>
-      <Box component="nav" className={styles.bottomNav}>
+      <Box component="nav" className={styles.bottomNav} aria-label={t("bottomNav.ariaLabel")}>
         <div className={styles.navContainer}>
           <BottomNavItem
             to="/"

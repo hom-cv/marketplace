@@ -54,14 +54,14 @@ export function BottomNavItem({
   // Use onClick handler or Link component
   if (onClick) {
     return (
-      <UnstyledButton className={className} onClick={onClick}>
+      <UnstyledButton className={className} onClick={onClick} aria-label={label}>
         {content}
       </UnstyledButton>
     );
   }
 
   return (
-    <UnstyledButton component={Link} to={to} className={className}>
+    <UnstyledButton component={Link} to={to} className={className} aria-label={label}>
       {content}
     </UnstyledButton>
   );

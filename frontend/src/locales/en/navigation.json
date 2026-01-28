@@ -32,6 +32,7 @@
     "sell": "Sell",
     "likes": "Likes",
     "profile": "Profile",
-    "sellAction": "create a listing"
+    "sellAction": "create a listing",
+    "ariaLabel": "Main navigation"
   }
 }

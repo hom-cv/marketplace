@@ -113,6 +113,7 @@ export function PostCard({ post, onReportClick, linkPrefix = "/app/posts" }: Pos
               src={post.image_url}
               alt={post.title}
               className={post.is_sold ? styles.imageSold : styles.image}
+              loading="lazy"
             />
           </div>
         ) : (

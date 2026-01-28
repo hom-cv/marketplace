@@ -66,7 +66,11 @@
     "noLikesHint": "สำรวจมาร์เก็ตเพลสและกดถูกใจสินค้าที่คุณสนใจ",
     "noMore": "คุณดูรายการที่ถูกใจทั้งหมดแล้ว",
     "oneItem": "รายการ",
-    "multipleItems": "รายการ"
+    "multipleItems": "รายการ",
+    "count": "{{count}} คนถูกใจ",
+    "countOne": "{{count}} คนถูกใจ",
+    "ariaLike": "ถูกใจสินค้านี้",
+    "ariaUnlike": "เลิกถูกใจสินค้านี้"
   },
   "filtersSidebar": {
     "filters": "ตัวกรอง",

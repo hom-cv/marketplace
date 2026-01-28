@@ -95,6 +95,8 @@ export function PublicExplorePage() {
   const [debouncedLocalSearch] = useDebouncedValue(localSearch, 300);
 
   // Sync debounced search to URL
+  // Note: urlFilters.search is intentionally excluded from deps to prevent infinite loops:
+  // localSearch -> debounce -> updateUrl -> urlFilters.search changes -> repeat
   useEffect(() => {
     if (debouncedLocalSearch !== urlFilters.search) {
       updateUrlFilters({ search: debouncedLocalSearch });
