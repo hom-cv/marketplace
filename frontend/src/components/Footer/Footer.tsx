@@ -100,7 +100,7 @@ export function Footer() {
             </div>
 
             {/* Company Column */}
-            <div className={styles.column}>
+            {/*<div className={styles.column}>
               <h4 className={styles.columnTitle}>
                 {t("footer.company", "Company")}
               </h4>
@@ -113,7 +113,7 @@ export function Footer() {
               <Link to="/" className={styles.link}>
                 {t("footer.help", "Help Center")}
               </Link>
-            </div>
+            </div>*/}
 
             {/* Legal Column */}
             <div className={styles.column}>
