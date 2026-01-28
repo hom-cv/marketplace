@@ -7,7 +7,13 @@
 import { Box } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
-import { IconHome2, IconSearch, IconPlus, IconHeart, IconUser } from "@tabler/icons-react";
+import {
+  IconHome2,
+  IconSearch,
+  IconPlus,
+  IconHeart,
+  IconUser,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -24,11 +30,14 @@ export function BottomNavigation() {
   const isAuthenticated = !!token;
 
   // Determine links based on auth state
-  const profileLink = isAuthenticated && user
-    ? `/app/profile/${user.username}`
-    : "/login";
+  const profileLink =
+    isAuthenticated && user
+      ? `/app/profile/${user.username}`
+      : `/login?redirect_url=${encodeURIComponent("/app/profile")}`;
 
-  const likesLink = isAuthenticated ? "/app/likes" : "/login";
+  const likesLink = isAuthenticated
+    ? "/app/likes"
+    : `/login?redirect_url=${encodeURIComponent("/app/likes")}`;
 
   // Handle sell button click - requires auth
   const handleSellClick = () => {
@@ -41,13 +50,13 @@ export function BottomNavigation() {
 
   return (
     <>
-      <Box component="nav" className={styles.bottomNav} aria-label={t("bottomNav.ariaLabel")}>
+      <Box
+        component="nav"
+        className={styles.bottomNav}
+        aria-label={t("bottomNav.ariaLabel")}
+      >
         <div className={styles.navContainer}>
-          <BottomNavItem
-            to="/"
-            label={t("bottomNav.home")}
-            icon={IconHome2}
-          />
+          <BottomNavItem to="/" label={t("bottomNav.home")} icon={IconHome2} />
           <BottomNavItem
             to="/explore"
             label={t("bottomNav.explore")}
