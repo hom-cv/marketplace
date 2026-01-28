@@ -1,9 +1,7 @@
 /**
  * LikeButton Styles
- * Includes default and floating variants with animations
  */
 
-/* Default variant */
 .likeButton {
   cursor: pointer;
 }
@@ -20,7 +18,6 @@
   transform: scale(0.95);
 }
 
-/* Heart pop animation */
 .heartPop {
   animation: heartPop 0.4s ease-out;
 }
@@ -37,50 +34,5 @@
   }
   100% {
     transform: scale(1);
-  }
-}
-
-/* Floating variant - frosted glass */
-.floatingButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-md);
-  cursor: pointer;
-  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
-}
-
-.floatingButton:hover {
-  transform: scale(1.1);
-  box-shadow: var(--shadow-lg);
-}
-
-.floatingButton:active {
-  transform: scale(0.95);
-}
-
-[data-mantine-color-scheme="dark"] .floatingButton {
-  background: var(--glass-bg-dark);
-}
-
-.floatingIcon {
-  color: var(--mantine-color-gray-7);
-}
-
-.floatingIcon:hover {
-  background: transparent !important;
-}
-
-/* Small size adjustments */
-@media (max-width: 768px) {
-  .floatingButton {
-    width: 28px;
-    height: 28px;
   }
 }

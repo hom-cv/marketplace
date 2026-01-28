@@ -66,11 +66,7 @@
     "noLikesHint": "Browse the marketplace and like items you're interested in",
     "noMore": "You've seen all your liked listings",
     "oneItem": "listing",
-    "multipleItems": "listings",
-    "count": "{{count}} likes",
-    "countOne": "{{count}} like",
-    "ariaLike": "Like this item",
-    "ariaUnlike": "Unlike this item"
+    "multipleItems": "listings"
   },
   "filtersSidebar": {
     "filters": "Filters",
