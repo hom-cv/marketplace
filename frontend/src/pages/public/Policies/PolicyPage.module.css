@@ -9,25 +9,16 @@
   padding-bottom: 80px;
 }
 
-/* Header Banner */
+/* Header */
 .header {
-  background: linear-gradient(
-    135deg,
-    var(--mantine-color-blue-4) 0%,
-    var(--mantine-color-blue-6) 50%,
-    var(--mantine-color-grape-5) 100%
-  );
-  padding: 40px 24px;
+  background: var(--app-surface);
+  padding: 48px 24px;
   text-align: center;
+  border-bottom: 1px solid var(--mantine-color-gray-2);
 }
 
 [data-mantine-color-scheme="dark"] .header {
-  background: linear-gradient(
-    135deg,
-    var(--mantine-color-blue-8) 0%,
-    var(--mantine-color-blue-9) 50%,
-    var(--mantine-color-grape-9) 100%
-  );
+  border-bottom-color: var(--mantine-color-dark-4);
 }
 
 .headerContent {
@@ -39,7 +30,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--mantine-color-dimmed);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;
@@ -48,18 +39,18 @@
 }
 
 .backLink:hover {
-  color: white;
+  color: var(--mantine-color-blue-6);
 }
 
 .pageTitle {
-  color: white;
+  color: var(--mantine-color-text);
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 8px;
 }
 
 .lastUpdated {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--mantine-color-dimmed);
   font-size: 0.875rem;
 }
 

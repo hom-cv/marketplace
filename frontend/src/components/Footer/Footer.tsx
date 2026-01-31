@@ -5,12 +5,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import {
-  IconBrandFacebook,
-  IconBrandInstagram,
-  IconBrandTwitter,
-  IconShoppingBag,
-} from "@tabler/icons-react";
+import { IconShoppingBag } from "@tabler/icons-react";
 import styles from "./Footer.module.css";
 
 export function Footer() {

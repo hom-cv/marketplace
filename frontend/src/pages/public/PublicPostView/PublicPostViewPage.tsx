@@ -146,7 +146,6 @@ export function PublicPostViewPage() {
                     initialCount={post.like_count}
                     size="lg"
                     onAuthRequired={handleLikeAuthRequired}
-                    variant="floating"
                   />
                 </Box>
               </div>
