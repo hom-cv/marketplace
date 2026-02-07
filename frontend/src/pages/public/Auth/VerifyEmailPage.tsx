@@ -7,8 +7,22 @@
 
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Box, Title, Text, Button, Stack, Loader, Alert, Anchor } from "@mantine/core";
-import { IconCheck, IconX, IconMail, IconAlertCircle } from "@tabler/icons-react";
+import {
+  Box,
+  Title,
+  Text,
+  Button,
+  Stack,
+  Loader,
+  Alert,
+  Anchor,
+} from "@mantine/core";
+import {
+  IconCheck,
+  IconX,
+  IconMail,
+  IconAlertCircle,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import {
   verifyEmail,
@@ -59,7 +73,9 @@ export function VerifyEmailPage() {
         })
         .catch((error) => {
           setMode("error");
-          setMessage(error.detail || t("verifyEmail.verificationFailedDefault"));
+          setMessage(
+            error?.detail || t("verifyEmail.verificationFailedDefault"),
+          );
         });
     } else if (authToken && user && !user.email_verified) {
       // Logged in but not verified - show resend UI
@@ -101,7 +117,9 @@ export function VerifyEmailPage() {
     } catch (error: unknown) {
       setResendStatus("error");
       const apiError = error as { detail?: string };
-      setResendMessage(apiError.detail || t("verifyEmail.resendFailedDefault"));
+      setResendMessage(
+        apiError?.detail || t("verifyEmail.resendFailedDefault"),
+      );
     }
   };
 
@@ -127,7 +145,10 @@ export function VerifyEmailPage() {
       case "loading":
         return { title: t("verifyEmail.loading"), subtitle: "" };
       case "verify":
-        return { title: t("verifyEmail.verifying"), subtitle: t("verifyEmail.pleaseWait") };
+        return {
+          title: t("verifyEmail.verifying"),
+          subtitle: t("verifyEmail.pleaseWait"),
+        };
       case "success":
         return { title: t("verifyEmail.verified"), subtitle: message };
       case "error":
@@ -210,7 +231,11 @@ export function VerifyEmailPage() {
                 </Button>
                 <Text size="sm" ta="center" className={styles.subtitle}>
                   {tAuth("login.noAccount")}{" "}
-                  <Anchor component={Link} to="/sign-up" className={styles.link}>
+                  <Anchor
+                    component={Link}
+                    to="/sign-up"
+                    className={styles.link}
+                  >
                     {tAuth("login.signUpLink")}
                   </Anchor>
                 </Text>
