@@ -89,7 +89,7 @@ export function LikeButton({
     <Tooltip label={isLiked ? t("likes.unlike") : t("likes.like")}>
       <button
         type="button"
-        className={`${styles.button} ${isLiked ? styles.liked : ""} ${isLoading ? styles.loading : ""}`}
+        className={[styles.button, isLiked && styles.liked, isLoading && styles.loading].filter(Boolean).join(' ')}
         onClick={handleClick}
         disabled={isLoading}
       >
