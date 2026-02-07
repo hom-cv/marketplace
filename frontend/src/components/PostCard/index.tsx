@@ -136,7 +136,7 @@ export function PostCard({
           )}
         </Group>
         <Text size="md" fw={600} c="var(--color-text)" mb={8}>
-          ฿{price.toLocaleString(undefined, { minimumFractionDigits: 0 })}
+          ฿{price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </Text>
         <Group justify="space-between" align="center">
           <Text size="xs" c="var(--color-text-muted)">@{post.user.username}</Text>
