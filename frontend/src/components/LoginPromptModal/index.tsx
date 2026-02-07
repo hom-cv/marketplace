@@ -41,12 +41,12 @@ export function LoginPromptModal({
             ? t("loginPrompt.messageWithAction", { action })
             : t("loginPrompt.message")}
         </Text>
-        <Button fullWidth onClick={(e) => { e.stopPropagation(); handleLogin(); }}>
+        <Button fullWidth onClick={handleLogin}>
           {t("buttons.logIn")}
         </Button>
         <UnstyledButton
           className={styles.cancel}
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          onClick={onClose}
         >
           <Text size="sm" c="var(--color-text-muted)">{t("buttons.cancel")}</Text>
         </UnstyledButton>
