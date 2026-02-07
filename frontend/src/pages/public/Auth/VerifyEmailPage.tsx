@@ -25,8 +25,7 @@ const REDIRECT_DELAY_SECONDS = 5;
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/verify-email" });
-  const token = (search as { token?: string }).token;
+  const { token } = useSearch({ from: "/verify-email" });
   const { user, token: authToken, setUser } = useAuthStore();
   const { t } = useTranslation("common");
   const { t: tAuth } = useTranslation("auth");
