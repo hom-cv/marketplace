@@ -21,7 +21,7 @@ export function SignUpPage() {
   const navigate = useNavigate();
   const registerMutation = useRegisterMutation();
   const loginMutation = useLoginMutation();
-  const { token, setToken, setUser } = useAuthStore();
+  const { token, setUser } = useAuthStore();
   const { t } = useTranslation("auth");
 
   useEffect(() => {
@@ -69,13 +69,12 @@ export function SignUpPage() {
           loginMutation.mutate(
             { email: values.email, password: values.password },
             {
-              onSuccess: (loginResponse) => {
-                setToken(loginResponse.access_token);
+              onSuccess: () => {
                 setUser(user);
                 navigate({ to: "/verify-email", search: { token: undefined } });
               },
               onError: () => {
-                navigate({ to: "/login" });
+                navigate({ to: "/login", search: { registered: true } });
               },
             },
           );

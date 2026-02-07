@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   TextInput,
   PasswordInput,
@@ -22,6 +22,12 @@ export function LoginPage() {
   const loginMutation = useLoginMutation();
   const { token } = useAuthStore();
   const { t } = useTranslation("auth");
+  const routerState = useRouterState();
+
+  const registered = useMemo(() => {
+    const searchParams = new URLSearchParams(routerState.location.searchStr);
+    return searchParams.get("registered") === "true";
+  }, [routerState.location.searchStr]);
 
   useEffect(() => {
     if (token) {
@@ -37,8 +43,6 @@ export function LoginPage() {
     validate: {
       email: (value) =>
         /^\S+@\S+$/.test(value) ? null : t("validation.invalidEmail"),
-      password: (value) =>
-        value.length >= 6 ? null : t("validation.passwordMin6"),
     },
   });
 
@@ -71,6 +75,15 @@ export function LoginPage() {
         <Box className={styles.card}>
           <form onSubmit={form.onSubmit(handleSubmit)}>
             <Stack gap="md">
+              {registered && (
+                <Alert
+                  color="green"
+                  title={t("login.registrationSuccess")}
+                  radius="xs"
+                >
+                  {t("login.registrationSuccessMessage")}
+                </Alert>
+              )}
               {loginMutation.isError && (
                 <Alert color="red" title={t("login.failed")} radius="xs">
                   {loginMutation.error?.message ||
