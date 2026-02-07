@@ -53,15 +53,6 @@ export const theme = createTheme({
   },
   white: "#fafafa",
   black: "#1a1a1a",
-  other: {
-    // Custom color tokens for easy access
-    backgroundWhite: "#fafafa",
-    backgroundGrey: "#b7b7b7",
-    accentBlueDark: "#2443ff",
-    accentBlueLight: "#92a1ff",
-    accentYellowBright: "#ffdd04",
-    accentYellowSaturated: "#ffee9b",
-  },
   fontFamily:
     '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   headings: {
