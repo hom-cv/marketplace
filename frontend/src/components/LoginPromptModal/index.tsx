@@ -31,6 +31,9 @@ export function LoginPromptModal({
       padding="lg"
       radius="sm"
       withCloseButton={false}
+      overlayProps={{
+        onClick: (e) => e.stopPropagation(),
+      }}
     >
       <Stack align="center" gap="xs" onClick={(e) => e.stopPropagation()}>
         <Text size="lg" fw={600} c="var(--color-text)" ta="center">
