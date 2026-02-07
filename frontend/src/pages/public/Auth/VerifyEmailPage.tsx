@@ -59,9 +59,7 @@ export function VerifyEmailPage() {
         })
         .catch((error) => {
           setMode("error");
-          setMessage(
-            error.detail || "Failed to verify email. The link may have expired."
-          );
+          setMessage(error.detail || t("verifyEmail.verificationFailedDefault"));
         });
     } else if (authToken && user && !user.email_verified) {
       // Logged in but not verified - show resend UI
@@ -103,9 +101,7 @@ export function VerifyEmailPage() {
     } catch (error: unknown) {
       setResendStatus("error");
       const apiError = error as { detail?: string };
-      setResendMessage(
-        apiError.detail || "Failed to send verification email. Please try again."
-      );
+      setResendMessage(apiError.detail || t("verifyEmail.resendFailedDefault"));
     }
   };
 

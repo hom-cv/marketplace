@@ -185,6 +185,7 @@
     "continueToLogin": "Continue to Login",
     "continueToApp": "Continue to App",
     "failed": "Verification Failed",
+    "verificationFailedDefault": "Failed to verify email. The link may have expired.",
     "goHome": "Go to Home",
     "verifyYourEmail": "Verify Your Email",
     "sentTo": "We've sent a verification email to",
@@ -192,6 +193,7 @@
     "didntReceive": "Didn't receive the email? Check your spam folder or click below to resend.",
     "emailSent": "Email Sent!",
     "resendEmail": "Resend Verification Email",
+    "resendFailedDefault": "Failed to send verification email. Please try again.",
     "alreadyVerified": "I've verified my email"
   },
   "purchases": {

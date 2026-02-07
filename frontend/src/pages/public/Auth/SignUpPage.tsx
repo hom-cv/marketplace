@@ -55,32 +55,30 @@ export function SignUpPage() {
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
-    registerMutation.mutate(
-      {
+  const handleSubmit = async (values: typeof form.values) => {
+    try {
+      const user = await registerMutation.mutateAsync({
         username: values.username,
         first_name: values.firstName,
         last_name: values.lastName,
         email_address: values.email,
         password: values.password,
-      },
-      {
-        onSuccess: (user) => {
-          loginMutation.mutate(
-            { email: values.email, password: values.password },
-            {
-              onSuccess: () => {
-                setUser(user);
-                navigate({ to: "/verify-email", search: { token: undefined } });
-              },
-              onError: () => {
-                navigate({ to: "/login", search: { registered: true } });
-              },
-            },
-          );
-        },
-      },
-    );
+      });
+
+      try {
+        await loginMutation.mutateAsync({
+          email: values.email,
+          password: values.password,
+        });
+        setUser(user);
+        navigate({ to: "/verify-email", search: { token: undefined } });
+      } catch {
+        // Auto-login failed, redirect to login page
+        navigate({ to: "/login", search: { registered: true } });
+      }
+    } catch {
+      // Registration error is handled by registerMutation.isError
+    }
   };
 
   return (
