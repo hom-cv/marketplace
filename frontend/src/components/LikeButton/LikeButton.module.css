@@ -3,27 +3,26 @@
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border: 1px solid #eee;
-  border-radius: 4px;
-  background: #fff;
-  color: #888;
-  font-size: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  color: var(--color-text-muted);
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .button:hover {
-  border-color: #ddd;
-  color: #666;
+  border-color: var(--color-border-hover);
+  color: var(--color-text-secondary);
 }
 
 .button.liked {
-  color: #e03131;
-  border-color: #ffc9c9;
+  color: var(--color-error);
+  border-color: var(--color-error-light);
 }
 
 .button.liked:hover {
-  border-color: #e03131;
+  border-color: var(--color-error);
 }
 
 .button.loading {
@@ -33,4 +32,5 @@
 
 .count {
   font-weight: 500;
+  font-size: 12px;
 }

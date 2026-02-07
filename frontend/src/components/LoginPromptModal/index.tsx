@@ -1,4 +1,4 @@
-import { Modal, Button } from "@mantine/core";
+import { Modal, Button, Text, Stack, UnstyledButton } from "@mantine/core";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import styles from "./LoginPromptModal.module.css";
@@ -32,20 +32,25 @@ export function LoginPromptModal({
       radius="sm"
       withCloseButton={false}
     >
-      <div className={styles.content} onClick={(e) => e.stopPropagation()}>
-        <h3 className={styles.title}>{t("loginPrompt.title")}</h3>
-        <p className={styles.message}>
+      <Stack align="center" gap="xs" onClick={(e) => e.stopPropagation()}>
+        <Text size="lg" fw={600} c="var(--color-text)" ta="center">
+          {t("loginPrompt.title")}
+        </Text>
+        <Text size="sm" c="var(--color-text-secondary)" ta="center" mb="md">
           {action
             ? t("loginPrompt.messageWithAction", { action })
             : t("loginPrompt.message")}
-        </p>
+        </Text>
         <Button fullWidth onClick={(e) => { e.stopPropagation(); handleLogin(); }}>
           {t("buttons.logIn")}
         </Button>
-        <button type="button" className={styles.cancel} onClick={(e) => { e.stopPropagation(); onClose(); }}>
-          {t("buttons.cancel")}
-        </button>
-      </div>
+        <UnstyledButton
+          className={styles.cancel}
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+        >
+          <Text size="sm" c="var(--color-text-muted)">{t("buttons.cancel")}</Text>
+        </UnstyledButton>
+      </Stack>
     </Modal>
   );
 }

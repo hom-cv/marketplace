@@ -1,6 +1,6 @@
 .page {
   min-height: 100vh;
-  background: #fafafa;
+  background: var(--color-bg);
 }
 
 /* Hero */
@@ -14,14 +14,14 @@
 .title {
   font-size: 2rem;
   font-weight: 700;
-  color: #1a1a1a;
+  color: var(--color-text);
   margin: 0 0 12px;
   letter-spacing: -0.02em;
 }
 
 .subtitle {
   font-size: 0.95rem;
-  color: #666;
+  color: var(--color-text-secondary);
   margin: 0 0 24px;
   line-height: 1.5;
 }
@@ -36,7 +36,7 @@
 .sectionTitle {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #1a1a1a;
+  color: var(--color-text);
   margin: 0 0 20px;
 }
 
@@ -68,7 +68,7 @@
   left: 0;
   right: 0;
   height: 200px;
-  background: linear-gradient(to bottom, transparent 0%, #fafafa 70%);
+  background: linear-gradient(to bottom, transparent 0%, var(--color-bg) 70%);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -115,7 +115,6 @@
 
   .grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
   }
 
   .gridWrapper {

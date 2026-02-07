@@ -1,4 +1,4 @@
-import { Image, Badge, Box, Menu, ActionIcon } from "@mantine/core";
+import { Image, Badge, Box, Menu, ActionIcon, Text, Group } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import {
@@ -124,20 +124,22 @@ export function PostCard({
         )}
       </div>
 
-      <div className={styles.info}>
-        <div className={styles.titleRow}>
-          <p className={styles.title}>{post.title}</p>
+      <Box className={styles.info}>
+        <Group className={styles.titleRow} justify="space-between" gap="xs" wrap="nowrap">
+          <Text size="sm" c="var(--color-text)" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
+            {post.title}
+          </Text>
           {post.size && (
-            <span className={styles.size}>
+            <Text size="sm" fw={600} c="var(--color-text)">
               {post.size === "ONE_SIZE" ? "OS" : post.size}
-            </span>
+            </Text>
           )}
-        </div>
-        <p className={styles.price}>
+        </Group>
+        <Text size="md" fw={600} c="var(--color-text)" mb={8}>
           ฿{price.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-        </p>
-        <div className={styles.footer}>
-          <p className={styles.seller}>@{post.user.username}</p>
+        </Text>
+        <Group justify="space-between" align="center">
+          <Text size="xs" c="var(--color-text-muted)">@{post.user.username}</Text>
           <LikeButton
             postId={post.id}
             initialLiked={post.is_liked}
@@ -145,8 +147,8 @@ export function PostCard({
             size="sm"
             onAuthRequired={openLoginModal}
           />
-        </div>
-      </div>
+        </Group>
+      </Box>
 
       <LoginPromptModal
         opened={loginModalOpened}

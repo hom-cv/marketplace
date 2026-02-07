@@ -1,7 +1,7 @@
 .header {
   height: 60px;
-  background-color: #fafafa;
-  border-bottom: 1px solid #eeeeee;
+  background-color: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .headerContent {
