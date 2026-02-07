@@ -1,10 +1,5 @@
-/**
- * LikeButton component for liking/unliking posts
- * Shows heart icon with count, handles auth state
- */
-
 import { useEffect, useState } from "react";
-import { ActionIcon, Group, Text, Tooltip } from "@mantine/core";
+import { Tooltip } from "@mantine/core";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -31,7 +26,6 @@ export function LikeButton({
   const queryClient = useQueryClient();
   const isAuthenticated = useIsAuthenticated();
 
-  // Local optimistic state
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
 
@@ -43,17 +37,14 @@ export function LikeButton({
   const likeMutation = useMutation({
     mutationFn: () => likePost(postId),
     onMutate: () => {
-      // Optimistic update
       setIsLiked(true);
       setLikeCount((prev) => prev + 1);
     },
     onError: () => {
-      // Revert on error
       setIsLiked(false);
       setLikeCount((prev) => Math.max(0, prev - 1));
     },
     onSuccess: () => {
-      // Invalidate queries to refetch fresh data (single source of truth)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
@@ -70,7 +61,6 @@ export function LikeButton({
       setLikeCount((prev) => prev + 1);
     },
     onSuccess: () => {
-      // Invalidate queries to refetch fresh data (single source of truth)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["likedPosts"] });
@@ -78,7 +68,7 @@ export function LikeButton({
   });
 
   const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click navigation
+    e.stopPropagation();
 
     if (!isAuthenticated) {
       onAuthRequired?.();
@@ -93,28 +83,23 @@ export function LikeButton({
   };
 
   const isLoading = likeMutation.isPending || unlikeMutation.isPending;
-  const iconSize = size === "sm" ? 16 : size === "md" ? 20 : 24;
+  const iconSize = size === "sm" ? 14 : size === "md" ? 18 : 22;
 
   return (
-    <Group gap={4} className={styles.likeButton} onClick={handleClick}>
-      <Tooltip label={isLiked ? t("likes.unlike") : t("likes.like")}>
-        <ActionIcon
-          variant="subtle"
-          color={isLiked ? "red" : "gray"}
-          size={size}
-          loading={isLoading}
-          className={styles.heartIcon}
-        >
-          {isLiked ? (
-            <IconHeartFilled size={iconSize} />
-          ) : (
-            <IconHeart size={iconSize} />
-          )}
-        </ActionIcon>
-      </Tooltip>
-      <Text size={size === "sm" ? "xs" : "sm"} c="dimmed">
-        {likeCount}
-      </Text>
-    </Group>
+    <Tooltip label={isLiked ? t("likes.unlike") : t("likes.like")}>
+      <button
+        type="button"
+        className={[styles.button, isLiked && styles.liked, isLoading && styles.loading].filter(Boolean).join(' ')}
+        onClick={handleClick}
+        disabled={isLoading}
+      >
+        {isLiked ? (
+          <IconHeartFilled size={iconSize} />
+        ) : (
+          <IconHeart size={iconSize} />
+        )}
+        <span className={styles.count}>{likeCount}</span>
+      </button>
+    </Tooltip>
   );
 }

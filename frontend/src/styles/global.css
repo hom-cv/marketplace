@@ -1,0 +1,52 @@
+/* Global Styles - Theme Colors */
+
+:root {
+  /* Background colors */
+  --color-bg: #fafafa;
+  --color-bg-card: #ffffff;
+  --color-bg-muted: #f5f5f5;
+
+  /* Primary accents (blue) */
+  --color-primary: #2443ff;
+  --color-primary-light: #92a1ff;
+
+  /* Secondary accents (yellow) */
+  --color-secondary: #ffdd04;
+  --color-secondary-light: #ffee9b;
+
+  /* Text colors */
+  --color-text: #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-muted: #999999;
+
+  /* Border colors */
+  --color-border: #eeeeee;
+  --color-border-hover: #dddddd;
+
+  /* Status colors */
+  --color-error: #e03131;
+  --color-error-light: #ffc9c9;
+
+  /* Radius */
+  --radius-sm: 4px;
+}
+
+html, body {
+  background-color: var(--color-bg);
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* Override Mantine body color */
+body {
+  --mantine-color-body: #fafafa;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--color-primary-light);
+  color: white;
+}
