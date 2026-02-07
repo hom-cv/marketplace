@@ -1,0 +1,32 @@
+.content {
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.message {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.cancel {
+  margin-top: 12px;
+  background: none;
+  border: none;
+  padding: 8px;
+  font-size: 13px;
+  color: #999;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.cancel:hover {
+  color: #666;
+}

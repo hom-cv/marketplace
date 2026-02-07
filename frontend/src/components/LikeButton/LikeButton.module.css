@@ -1,17 +1,36 @@
-/* LikeButton styles with hover effects */
-
-.likeButton {
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid #eee;
+  border-radius: 4px;
+  background: #fff;
+  color: #888;
+  font-size: 12px;
   cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
-.heartIcon {
-  transition: transform 0.2s ease;
+.button:hover {
+  border-color: #ddd;
+  color: #666;
 }
 
-.heartIcon:hover {
-  transform: scale(1.1);
+.button.liked {
+  color: #e03131;
+  border-color: #ffc9c9;
 }
 
-.heartIcon:active {
-  transform: scale(0.95);
+.button.liked:hover {
+  border-color: #e03131;
+}
+
+.button.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.count {
+  font-weight: 500;
 }

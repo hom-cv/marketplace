@@ -1,0 +1,40 @@
+/* Global Styles - Theme Colors */
+
+:root {
+  /* Background colors */
+  --color-bg-white: #fafafa;
+  --color-bg-grey: #b7b7b7;
+
+  /* Primary accents (blue) */
+  --color-primary-dark: #2443ff;
+  --color-primary-light: #92a1ff;
+
+  /* Secondary accents (yellow) */
+  --color-secondary-bright: #ffdd04;
+  --color-secondary-saturated: #ffee9b;
+
+  /* Text colors */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #606060;
+  --color-border: #eeeeee;
+}
+
+html, body {
+  background-color: var(--color-bg-white);
+}
+
+#root {
+  min-height: 100vh;
+  background-color: var(--color-bg-white);
+}
+
+/* Override Mantine body color */
+body {
+  --mantine-color-body: #fafafa;
+}
+
+/* Selection styling */
+::selection {
+  background-color: var(--color-primary-light);
+  color: white;
+}
