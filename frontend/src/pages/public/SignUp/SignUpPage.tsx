@@ -4,10 +4,9 @@ import {
   TextInput,
   PasswordInput,
   Button,
-  Paper,
+  Box,
   Title,
   Text,
-  Container,
   Stack,
   Alert,
   Anchor,
@@ -16,6 +15,7 @@ import { useForm } from "@mantine/form";
 import { Trans, useTranslation } from "react-i18next";
 import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import styles from "./SignUpPage.module.css";
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -66,7 +66,6 @@ export function SignUpPage() {
       },
       {
         onSuccess: (user) => {
-          // Auto-login after successful registration
           loginMutation.mutate(
             { email: values.email, password: values.password },
             {
@@ -76,7 +75,6 @@ export function SignUpPage() {
                 navigate({ to: "/verify-email", search: { token: undefined } });
               },
               onError: () => {
-                // If auto-login fails, redirect to login page
                 navigate({ to: "/login" });
               },
             },
@@ -87,98 +85,109 @@ export function SignUpPage() {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Title ta="center">{t("signup.title")}</Title>
-      <Text c="dimmed" size="sm" ta="center" mt={5}>
-        {t("signup.hasAccount")}{" "}
-        <Link to="/login" style={{ color: "var(--mantine-color-blue-6)" }}>
-          {t("signup.signInLink")}
-        </Link>
-      </Text>
+    <Box className={styles.page}>
+      <Box className={styles.container}>
+        <Box className={styles.header}>
+          <Title order={1} className={styles.title}>
+            {t("signup.title")}
+          </Title>
+          <Text size="sm" className={styles.subtitle}>
+            {t("signup.hasAccount")}{" "}
+            <Anchor component={Link} to="/login" className={styles.link}>
+              {t("signup.signInLink")}
+            </Anchor>
+          </Text>
+        </Box>
 
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack>
-            {registerMutation.isError && (
-              <Alert color="red" title={t("signup.failed")}>
-                {registerMutation.error?.message || t("signup.couldNotCreate")}
-              </Alert>
-            )}
-            <TextInput
-              label={t("signup.username")}
-              placeholder={t("signup.usernamePlaceholder")}
-              required
-              {...form.getInputProps("username")}
-            />
-            <TextInput
-              label={t("signup.firstName")}
-              placeholder={t("signup.firstNamePlaceholder")}
-              required
-              {...form.getInputProps("firstName")}
-            />
-            <TextInput
-              label={t("signup.lastName")}
-              placeholder={t("signup.lastNamePlaceholder")}
-              required
-              {...form.getInputProps("lastName")}
-            />
-            <TextInput
-              label={t("signup.email")}
-              placeholder={t("signup.emailPlaceholder")}
-              required
-              {...form.getInputProps("email")}
-            />
-            <PasswordInput
-              label={t("signup.password")}
-              placeholder={t("signup.passwordPlaceholder")}
-              required
-              {...form.getInputProps("password")}
-            />
-            <PasswordInput
-              label={t("signup.confirmPassword")}
-              placeholder={t("signup.confirmPasswordPlaceholder")}
-              required
-              {...form.getInputProps("confirmPassword")}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              mt="md"
-              loading={registerMutation.isPending}
-            >
-              {t("signup.submit")}
-            </Button>
-
-            {/* Policy acceptance text - at bottom of form */}
-            <Text size="xs" c="dimmed" ta="center">
-              <Trans
-                i18nKey="signup.policyAcceptance"
-                ns="policies"
-                components={{
-                  termsLink: (
-                    <Anchor
-                      component={Link}
-                      to="/terms"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="xs"
-                    />
-                  ),
-                  privacyLink: (
-                    <Anchor
-                      component={Link}
-                      to="/privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="xs"
-                    />
-                  ),
-                }}
+        <Box className={styles.card}>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              {registerMutation.isError && (
+                <Alert color="red" title={t("signup.failed")} radius="xs">
+                  {registerMutation.error?.message || t("signup.couldNotCreate")}
+                </Alert>
+              )}
+              <TextInput
+                label={t("signup.username")}
+                placeholder={t("signup.usernamePlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("username")}
               />
-            </Text>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+              <TextInput
+                label={t("signup.firstName")}
+                placeholder={t("signup.firstNamePlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("firstName")}
+              />
+              <TextInput
+                label={t("signup.lastName")}
+                placeholder={t("signup.lastNamePlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("lastName")}
+              />
+              <TextInput
+                label={t("signup.email")}
+                placeholder={t("signup.emailPlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("email")}
+              />
+              <PasswordInput
+                label={t("signup.password")}
+                placeholder={t("signup.passwordPlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("password")}
+              />
+              <PasswordInput
+                label={t("signup.confirmPassword")}
+                placeholder={t("signup.confirmPasswordPlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("confirmPassword")}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                mt="sm"
+                loading={registerMutation.isPending}
+              >
+                {t("signup.submit")}
+              </Button>
+
+              <Text size="xs" ta="center" className={styles.policy}>
+                <Trans
+                  i18nKey="signup.policyAcceptance"
+                  ns="policies"
+                  components={{
+                    termsLink: (
+                      <Anchor
+                        component={Link}
+                        to="/terms"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="xs"
+                      />
+                    ),
+                    privacyLink: (
+                      <Anchor
+                        component={Link}
+                        to="/privacy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="xs"
+                      />
+                    ),
+                  }}
+                />
+              </Text>
+            </Stack>
+          </form>
+        </Box>
+      </Box>
+    </Box>
   );
 }

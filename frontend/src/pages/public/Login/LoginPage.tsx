@@ -4,17 +4,18 @@ import {
   TextInput,
   PasswordInput,
   Button,
-  Paper,
+  Box,
   Title,
   Text,
-  Container,
   Stack,
   Alert,
+  Anchor,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -34,7 +35,8 @@ export function LoginPage() {
       password: "",
     },
     validate: {
-      email: (value) => (/^\S+@\S+$/.test(value) ? null : t("validation.invalidEmail")),
+      email: (value) =>
+        /^\S+@\S+$/.test(value) ? null : t("validation.invalidEmail"),
       password: (value) =>
         value.length >= 6 ? null : t("validation.passwordMin6"),
     },
@@ -52,46 +54,55 @@ export function LoginPage() {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Title ta="center">{t("login.title")}</Title>
-      <Text c="dimmed" size="sm" ta="center" mt={5}>
-        {t("login.noAccount")}{" "}
-        <Link to="/sign-up" style={{ color: "var(--mantine-color-blue-6)" }}>
-          {t("login.signUpLink")}
-        </Link>
-      </Text>
+    <Box className={styles.page}>
+      <Box className={styles.container}>
+        <Box className={styles.header}>
+          <Title order={1} className={styles.title}>
+            {t("login.title")}
+          </Title>
+          <Text size="sm" className={styles.subtitle}>
+            {t("login.noAccount")}{" "}
+            <Anchor component={Link} to="/sign-up" className={styles.link}>
+              {t("login.signUpLink")}
+            </Anchor>
+          </Text>
+        </Box>
 
-      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack>
-            {loginMutation.isError && (
-              <Alert color="red" title={t("login.failed")}>
-                {loginMutation.error?.message || t("login.invalidCredentials")}
-              </Alert>
-            )}
-            <TextInput
-              label={t("login.email")}
-              placeholder={t("login.emailPlaceholder")}
-              required
-              {...form.getInputProps("email")}
-            />
-            <PasswordInput
-              label={t("login.password")}
-              placeholder={t("login.passwordPlaceholder")}
-              required
-              {...form.getInputProps("password")}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              mt="xl"
-              loading={loginMutation.isPending}
-            >
-              {t("login.submit")}
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
-    </Container>
+        <Box className={styles.card}>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              {loginMutation.isError && (
+                <Alert color="red" title={t("login.failed")} radius="xs">
+                  {loginMutation.error?.message ||
+                    t("login.invalidCredentials")}
+                </Alert>
+              )}
+              <TextInput
+                label={t("login.email")}
+                placeholder={t("login.emailPlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("email")}
+              />
+              <PasswordInput
+                label={t("login.password")}
+                placeholder={t("login.passwordPlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("password")}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                mt="md"
+                loading={loginMutation.isPending}
+              >
+                {t("login.submit")}
+              </Button>
+            </Stack>
+          </form>
+        </Box>
+      </Box>
+    </Box>
   );
 }
