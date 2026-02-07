@@ -15,7 +15,7 @@ import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
-import styles from "./LoginPage.module.css";
+import styles from "./Auth.module.css";
 
 export function LoginPage() {
   const navigate = useNavigate();

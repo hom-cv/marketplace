@@ -1,7 +1,6 @@
 // Public pages - no authentication required
 export { HomePage } from "./Home";
-export { LoginPage } from "./Login";
-export { SignUpPage } from "./SignUp";
+export { LoginPage, SignUpPage } from "./Auth";
 export { VerifyEmailPage } from "./VerifyEmail";
 export { TermsPage, PrivacyPage } from "./Policies";
 export { ProfilePage } from "./Profile";
