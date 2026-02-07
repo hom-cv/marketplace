@@ -9,6 +9,8 @@ import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import styles from "./HomePage.module.css";
 
+const PREVIEW_POST_COUNT = 12;
+
 export function HomePage() {
   const navigate = useNavigate();
   const { token } = useAuthStore();
@@ -16,7 +18,7 @@ export function HomePage() {
 
   const { data: postsData } = useQuery({
     queryKey: ["posts", "guest-landing-preview"],
-    queryFn: () => getPosts(0, 12),
+    queryFn: () => getPosts(0, PREVIEW_POST_COUNT),
   });
 
   const posts = useMemo(() => {
@@ -53,13 +55,7 @@ export function HomePage() {
           <div className={styles.gridWrapper}>
             <div className={styles.grid}>
               {posts.map((post) => (
-                <div
-                  key={post.id}
-                  className={styles.card}
-                  onClick={() => navigate({ to: "/login" })}
-                >
-                  <PostCard post={post} />
-                </div>
+                <PostCard key={post.id} post={post} linkPrefix="/explore" />
               ))}
             </div>
             <div className={styles.fade}>
