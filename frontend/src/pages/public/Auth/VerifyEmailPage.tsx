@@ -5,51 +5,58 @@
  * - Resend verification email UI when no token (for logged-in unverified users)
  */
 
-import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import {
-  Box,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Loader,
-  Alert,
-  Anchor,
-} from "@mantine/core";
-import {
-  IconCheck,
-  IconX,
-  IconMail,
-  IconAlertCircle,
-} from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Box, Title, Text, Stack, Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
-import {
-  verifyEmail,
-  resendVerificationEmail,
-  getCurrentUser,
-} from "@/api/auth";
 import { useAuthStore } from "@/stores/authStore";
+import { useVerifyEmailQuery } from "@/hooks/useAuth";
+import { VerifySuccess } from "./components/VerifySuccess";
+import { VerifyError } from "./components/VerifyError";
+import { ResendVerification } from "./components/ResendVerification";
 import styles from "./Auth.module.css";
 
 type PageMode = "loading" | "verify" | "resend" | "success" | "error";
-type ResendStatus = "idle" | "loading" | "success" | "error";
 
 const REDIRECT_DELAY_SECONDS = 5;
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
   const { token } = useSearch({ from: "/verify-email" });
-  const { user, token: authToken, setUser } = useAuthStore();
+  const { user, token: authToken } = useAuthStore();
   const { t } = useTranslation("common");
-  const { t: tAuth } = useTranslation("auth");
 
-  const [mode, setMode] = useState<PageMode>("loading");
-  const [message, setMessage] = useState("");
   const [countdown, setCountdown] = useState(REDIRECT_DELAY_SECONDS);
-  const [resendStatus, setResendStatus] = useState<ResendStatus>("idle");
-  const [resendMessage, setResendMessage] = useState("");
-  const hasAttempted = useRef(false);
+
+  const verifyQuery = useVerifyEmailQuery(token);
+
+  // Derive mode from query state and auth state
+  const getMode = (): PageMode => {
+    if (token) {
+      if (verifyQuery.isPending) return "verify";
+      if (verifyQuery.isSuccess) return "success";
+      if (verifyQuery.isError) return "error";
+    }
+    if (authToken && user && !user.email_verified) return "resend";
+    if (!authToken) return "loading"; // Will redirect to login
+    return "loading";
+  };
+
+  const mode = getMode();
+
+  // Get error/success message from query
+  const getMessage = (): string => {
+    if (verifyQuery.isSuccess) {
+      return verifyQuery.data.message;
+    }
+    if (verifyQuery.isError) {
+      const error = verifyQuery.error as { detail?: string };
+      return error?.detail || t("verifyEmail.verificationFailedDefault");
+    }
+    return "";
+  };
+
+  const message = getMessage();
 
   // Redirect verified users to /app
   useEffect(() => {
@@ -58,35 +65,12 @@ export function VerifyEmailPage() {
     }
   }, [user, navigate]);
 
-  // Determine initial mode and handle verification
+  // Redirect to login if not logged in and no token
   useEffect(() => {
-    if (hasAttempted.current) return;
-    hasAttempted.current = true;
-
-    if (token) {
-      // Token present - attempt verification
-      setMode("verify");
-      verifyEmail(token)
-        .then((response) => {
-          setMode("success");
-          setMessage(response.message);
-        })
-        .catch((error) => {
-          setMode("error");
-          setMessage(
-            error?.detail || t("verifyEmail.verificationFailedDefault"),
-          );
-        });
-    } else if (authToken && user && !user.email_verified) {
-      // Logged in but not verified - show resend UI
-      setMode("resend");
-    } else if (!authToken) {
-      // Not logged in and no token - redirect to login
+    if (!authToken && !token) {
       navigate({ to: "/login" });
-    } else {
-      setMode("loading");
     }
-  }, [token, authToken, user, navigate]);
+  }, [authToken, token, navigate]);
 
   // Auto-redirect countdown after successful verification
   useEffect(() => {
@@ -106,37 +90,12 @@ export function VerifyEmailPage() {
     return () => clearInterval(timer);
   }, [mode, navigate, authToken]);
 
-  const handleResend = async () => {
-    setResendStatus("loading");
-    setResendMessage("");
-
-    try {
-      const response = await resendVerificationEmail();
-      setResendStatus("success");
-      setResendMessage(response.message);
-    } catch (error: unknown) {
-      setResendStatus("error");
-      const apiError = error as { detail?: string };
-      setResendMessage(
-        apiError?.detail || t("verifyEmail.resendFailedDefault"),
-      );
-    }
-  };
-
-  const handleCheckStatus = async () => {
-    try {
-      const updatedUser = await getCurrentUser();
-      setUser(updatedUser);
-      if (updatedUser.email_verified) {
-        navigate({ to: "/app" });
-      }
-    } catch {
-      // Ignore errors, user can try again
-    }
-  };
-
   const handleContinue = () => {
     navigate({ to: authToken ? "/app" : "/login" });
+  };
+
+  const handleGoHome = () => {
+    navigate({ to: "/" });
   };
 
   // Get title and subtitle based on mode
@@ -161,6 +120,10 @@ export function VerifyEmailPage() {
   };
 
   const { title, subtitle } = getHeaderContent();
+
+  const continueLabel = authToken
+    ? t("verifyEmail.continueToApp")
+    : t("verifyEmail.continueToLogin");
 
   return (
     <Box className={styles.page}>
@@ -196,120 +159,19 @@ export function VerifyEmailPage() {
 
             {/* Success state */}
             {mode === "success" && (
-              <>
-                <Box className={styles.statusContainer}>
-                  <Box className={`${styles.statusIcon} ${styles.success}`}>
-                    <IconCheck size={32} stroke={2.5} />
-                  </Box>
-                </Box>
-                <Text size="sm" ta="center" className={styles.subtitle}>
-                  {t("verifyEmail.redirecting", { count: countdown })}
-                </Text>
-                <Button fullWidth onClick={handleContinue} radius="xs">
-                  {authToken
-                    ? t("verifyEmail.continueToApp")
-                    : t("verifyEmail.continueToLogin")}
-                </Button>
-              </>
+              <VerifySuccess
+                countdown={countdown}
+                onContinue={handleContinue}
+                continueLabel={continueLabel}
+              />
             )}
 
             {/* Error state */}
-            {mode === "error" && (
-              <>
-                <Box className={styles.statusContainer}>
-                  <Box className={`${styles.statusIcon} ${styles.error}`}>
-                    <IconX size={32} stroke={2.5} />
-                  </Box>
-                </Box>
-                <Button
-                  fullWidth
-                  variant="outline"
-                  onClick={() => navigate({ to: "/" })}
-                  radius="xs"
-                >
-                  {t("verifyEmail.goHome")}
-                </Button>
-                <Text size="sm" ta="center" className={styles.subtitle}>
-                  {tAuth("login.noAccount")}{" "}
-                  <Anchor
-                    component={Link}
-                    to="/sign-up"
-                    className={styles.link}
-                  >
-                    {tAuth("login.signUpLink")}
-                  </Anchor>
-                </Text>
-              </>
-            )}
+            {mode === "error" && <VerifyError onGoHome={handleGoHome} />}
 
             {/* Resend verification email state */}
-            {mode === "resend" && (
-              <>
-                <Box className={styles.statusContainer}>
-                  <Box className={`${styles.statusIcon} ${styles.info}`}>
-                    <IconMail size={32} stroke={1.5} />
-                  </Box>
-                </Box>
-
-                <Text size="sm" ta="center" c="dimmed">
-                  {t("verifyEmail.sentTo")}{" "}
-                  <Text component="span" className={styles.link} fw={500}>
-                    {user?.email_address}
-                  </Text>
-                </Text>
-
-                <Text size="sm" ta="center" c="dimmed">
-                  {t("verifyEmail.checkInbox")}
-                </Text>
-
-                {resendStatus === "success" && (
-                  <Alert
-                    icon={<IconCheck size={16} />}
-                    color="green"
-                    variant="light"
-                    radius="xs"
-                  >
-                    {resendMessage}
-                  </Alert>
-                )}
-
-                {resendStatus === "error" && (
-                  <Alert
-                    icon={<IconAlertCircle size={16} />}
-                    color="red"
-                    variant="light"
-                    radius="xs"
-                  >
-                    {resendMessage}
-                  </Alert>
-                )}
-
-                <Text size="xs" ta="center" c="dimmed" mt="sm">
-                  {t("verifyEmail.didntReceive")}
-                </Text>
-
-                <Button
-                  fullWidth
-                  onClick={handleResend}
-                  loading={resendStatus === "loading"}
-                  disabled={resendStatus === "success"}
-                  leftSection={<IconMail size={18} />}
-                  radius="xs"
-                >
-                  {resendStatus === "success"
-                    ? t("verifyEmail.emailSent")
-                    : t("verifyEmail.resendEmail")}
-                </Button>
-
-                <Button
-                  fullWidth
-                  variant="subtle"
-                  onClick={handleCheckStatus}
-                  radius="xs"
-                >
-                  {t("verifyEmail.alreadyVerified")}
-                </Button>
-              </>
+            {mode === "resend" && user && (
+              <ResendVerification email={user.email_address} />
             )}
           </Stack>
         </Box>
