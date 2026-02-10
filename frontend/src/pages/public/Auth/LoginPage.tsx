@@ -15,6 +15,7 @@ import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import { getErrorMessage } from "@/utils/error";
 import styles from "./Auth.module.css";
 
 export function LoginPage() {
@@ -86,8 +87,7 @@ export function LoginPage() {
               )}
               {loginMutation.isError && (
                 <Alert color="red" title={t("login.failed")} radius="xs">
-                  {loginMutation.error?.message ||
-                    t("login.invalidCredentials")}
+                  {getErrorMessage(loginMutation.error, t("login.invalidCredentials"))}
                 </Alert>
               )}
               <TextInput

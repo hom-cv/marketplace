@@ -45,6 +45,7 @@ import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { getErrorMessage } from "@/utils/error";
 
 import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
@@ -319,7 +320,7 @@ export function CreatePostPage() {
 
       {mutation.error && (
         <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="lg">
-          {mutation.error instanceof Error ? mutation.error.message : t("create.error")}
+          {getErrorMessage(mutation.error, t("create.error"))}
         </Alert>
       )}
 

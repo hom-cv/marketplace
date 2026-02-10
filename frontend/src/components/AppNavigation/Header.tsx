@@ -2,7 +2,7 @@
  * Header bar component
  */
 
-import { Container, Group, Title, Button, Burger } from "@mantine/core";
+import { Container, Group, Title, Button, Burger, Text } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
@@ -18,14 +18,20 @@ interface HeaderProps {
   onLogout: () => void;
 }
 
-export function Header({ user, isAuthenticated, drawerOpened, onToggleDrawer, onLogout }: HeaderProps) {
+export function Header({
+  user,
+  isAuthenticated,
+  drawerOpened,
+  onToggleDrawer,
+  onLogout,
+}: HeaderProps) {
   const { t } = useTranslation("navigation");
 
   return (
     <header className={styles.header}>
       <Container size="md" className={styles.headerContent}>
         <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <Title>marketplace</Title>
+          <Title>tallad.co</Title>
         </Link>
 
         <Group visibleFrom="xs">

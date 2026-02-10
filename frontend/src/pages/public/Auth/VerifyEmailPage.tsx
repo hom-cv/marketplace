@@ -10,7 +10,8 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Box, Title, Text, Stack, Loader } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
-import { useVerifyEmailQuery } from "@/hooks/useAuth";
+import { useVerifyEmailQuery, useCurrentUser } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/utils/error";
 import { VerifySuccess } from "./components/VerifySuccess";
 import { VerifyError } from "./components/VerifyError";
 import { ResendVerification } from "./components/ResendVerification";
@@ -29,6 +30,7 @@ export function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(REDIRECT_DELAY_SECONDS);
 
   const verifyQuery = useVerifyEmailQuery(token);
+  const { refetch: refetchUser } = useCurrentUser();
 
   // Derive mode from query state and auth state
   const getMode = (): PageMode => {
@@ -50,13 +52,19 @@ export function VerifyEmailPage() {
       return verifyQuery.data.message;
     }
     if (verifyQuery.isError) {
-      const error = verifyQuery.error as { detail?: string };
-      return error?.detail || t("verifyEmail.verificationFailedDefault");
+      return getErrorMessage(verifyQuery.error, t("verifyEmail.verificationFailedDefault"));
     }
     return "";
   };
 
   const message = getMessage();
+
+  // Refetch user after verification success to update authStore
+  useEffect(() => {
+    if (verifyQuery.isSuccess) {
+      refetchUser();
+    }
+  }, [verifyQuery.isSuccess, refetchUser]);
 
   // Redirect verified users to /app
   useEffect(() => {

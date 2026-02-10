@@ -1,10 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Box, Text, Button, Alert } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { IconMail, IconCheck, IconAlertCircle } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getCurrentUser } from "@/api/auth";
 import { useAuthStore } from "@/stores/authStore";
 import { useResendVerificationMutation } from "@/hooks/useAuth";
+import { getErrorMessage } from "@/utils/error";
 import styles from "../Auth.module.css";
 
 interface ResendVerificationProps {
@@ -25,8 +27,12 @@ export function ResendVerification({ email }: ResendVerificationProps) {
       if (updatedUser.email_verified) {
         navigate({ to: "/app" });
       }
-    } catch {
-      // Ignore errors, user can try again
+    } catch (error) {
+      notifications.show({
+        title: t("status.error"),
+        message: getErrorMessage(error, t("verifyEmail.checkStatusFailed")),
+        color: "red",
+      });
     }
   };
 
@@ -67,8 +73,7 @@ export function ResendVerification({ email }: ResendVerificationProps) {
           variant="light"
           radius="xs"
         >
-          {(resendMutation.error as { detail?: string })?.detail ||
-            t("verifyEmail.resendFailedDefault")}
+          {getErrorMessage(resendMutation.error, t("verifyEmail.resendFailedDefault"))}
         </Alert>
       )}
 

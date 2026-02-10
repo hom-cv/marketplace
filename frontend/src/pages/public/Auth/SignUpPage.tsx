@@ -11,10 +11,12 @@ import {
   Alert,
   Anchor,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useForm } from "@mantine/form";
 import { Trans, useTranslation } from "react-i18next";
 import { useRegisterMutation, useLoginMutation } from "@/hooks/useAuth";
 import { useAuthStore } from "@/stores/authStore";
+import { getErrorMessage } from "@/utils/error";
 import styles from "./Auth.module.css";
 
 export function SignUpPage() {
@@ -72,8 +74,12 @@ export function SignUpPage() {
         });
         setUser(user);
         navigate({ to: "/verify-email", search: { token: undefined } });
-      } catch {
-        // Auto-login failed, redirect to login page
+      } catch (error) {
+        notifications.show({
+          title: t("signup.loginFailed"),
+          message: getErrorMessage(error, t("signup.loginFailedMessage")),
+          color: "orange",
+        });
         navigate({ to: "/login", search: { registered: true } });
       }
     } catch {
@@ -101,7 +107,7 @@ export function SignUpPage() {
             <Stack gap="md">
               {registerMutation.isError && (
                 <Alert color="red" title={t("signup.failed")} radius="xs">
-                  {registerMutation.error?.message || t("signup.couldNotCreate")}
+                  {getErrorMessage(registerMutation.error, t("signup.couldNotCreate"))}
                 </Alert>
               )}
               <TextInput

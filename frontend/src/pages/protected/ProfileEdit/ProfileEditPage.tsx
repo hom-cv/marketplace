@@ -18,6 +18,7 @@ import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { updateMyProfile } from "@/api/users";
 import { useAuthStore } from "@/stores/authStore";
+import { getErrorMessage } from "@/utils/error";
 import type { UpdateProfileRequest } from "@/api/types/user";
 
 export function ProfileEditPage() {
@@ -67,7 +68,7 @@ export function ProfileEditPage() {
 
       {updateMutation.isError && (
         <Alert icon={<IconAlertCircle size={16} />} title={tCommon("status.error")} color="red" mb="lg">
-          {updateMutation.error instanceof Error ? updateMutation.error.message : tCommon("errors.generic")}
+          {getErrorMessage(updateMutation.error, tCommon("errors.generic"))}
         </Alert>
       )}
 

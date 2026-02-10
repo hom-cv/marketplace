@@ -194,7 +194,8 @@
     "emailSent": "Email Sent!",
     "resendEmail": "Resend Verification Email",
     "resendFailedDefault": "Failed to send verification email. Please try again.",
-    "alreadyVerified": "I've verified my email"
+    "alreadyVerified": "I've verified my email",
+    "checkStatusFailed": "Could not check verification status. Please try again."
   },
   "purchases": {
     "title": "Purchase History",
