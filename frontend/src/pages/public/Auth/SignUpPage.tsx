@@ -58,32 +58,28 @@ export function SignUpPage() {
   });
 
   const handleSubmit = async (values: typeof form.values) => {
+    const user = await registerMutation.mutateAsync({
+      username: values.username,
+      first_name: values.firstName,
+      last_name: values.lastName,
+      email_address: values.email,
+      password: values.password,
+    });
+
     try {
-      const user = await registerMutation.mutateAsync({
-        username: values.username,
-        first_name: values.firstName,
-        last_name: values.lastName,
-        email_address: values.email,
+      await loginMutation.mutateAsync({
+        email: values.email,
         password: values.password,
       });
-
-      try {
-        await loginMutation.mutateAsync({
-          email: values.email,
-          password: values.password,
-        });
-        setUser(user);
-        navigate({ to: "/verify-email", search: { token: undefined } });
-      } catch (error) {
-        notifications.show({
-          title: t("signup.loginFailed"),
-          message: getErrorMessage(error, t("signup.loginFailedMessage")),
-          color: "orange",
-        });
-        navigate({ to: "/login", search: { registered: true } });
-      }
-    } catch {
-      // Registration error is handled by registerMutation.isError
+      setUser(user);
+      navigate({ to: "/verify-email", search: { token: undefined } });
+    } catch (error) {
+      notifications.show({
+        title: t("signup.loginFailed"),
+        message: getErrorMessage(error, t("signup.loginFailedMessage")),
+        color: "orange",
+      });
+      navigate({ to: "/login", search: { registered: true } });
     }
   };
 
