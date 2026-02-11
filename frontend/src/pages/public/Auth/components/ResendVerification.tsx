@@ -1,40 +1,24 @@
-import { useNavigate } from "@tanstack/react-router";
 import { Box, Text, Button, Alert } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { IconMail, IconCheck, IconAlertCircle } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getCurrentUser } from "@/api/auth";
-import { useAuthStore } from "@/stores/authStore";
 import { useResendVerificationMutation } from "@/hooks/useAuth";
 import { getErrorMessage } from "@/utils/error";
 import styles from "../Auth.module.css";
 
 interface ResendVerificationProps {
   email: string;
+  onCheckStatus: () => void;
+  isCheckingStatus: boolean;
 }
 
-export function ResendVerification({ email }: ResendVerificationProps) {
-  const navigate = useNavigate();
+export function ResendVerification({
+  email,
+  onCheckStatus,
+  isCheckingStatus,
+}: ResendVerificationProps) {
   const { t } = useTranslation("common");
-  const { setUser } = useAuthStore();
 
   const resendMutation = useResendVerificationMutation();
-
-  const handleCheckStatus = async () => {
-    try {
-      const updatedUser = await getCurrentUser();
-      setUser(updatedUser);
-      if (updatedUser.email_verified) {
-        navigate({ to: "/app" });
-      }
-    } catch (error) {
-      notifications.show({
-        title: t("status.error"),
-        message: getErrorMessage(error, t("verifyEmail.checkStatusFailed")),
-        color: "red",
-      });
-    }
-  };
 
   return (
     <>
@@ -97,7 +81,8 @@ export function ResendVerification({ email }: ResendVerificationProps) {
       <Button
         fullWidth
         variant="subtle"
-        onClick={handleCheckStatus}
+        onClick={onCheckStatus}
+        loading={isCheckingStatus}
         radius="xs"
       >
         {t("verifyEmail.alreadyVerified")}

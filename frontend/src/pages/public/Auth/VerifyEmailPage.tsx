@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Box, Title, Text, Stack, Loader } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { useVerifyEmailQuery, useCurrentUser } from "@/hooks/useAuth";
@@ -28,6 +29,7 @@ export function VerifyEmailPage() {
   const { t } = useTranslation("common");
 
   const [countdown, setCountdown] = useState(REDIRECT_DELAY_SECONDS);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
   const verifyQuery = useVerifyEmailQuery(token);
   const { refetch: refetchUser } = useCurrentUser();
@@ -106,6 +108,24 @@ export function VerifyEmailPage() {
     navigate({ to: "/" });
   };
 
+  const handleCheckStatus = async () => {
+    setIsCheckingStatus(true);
+    try {
+      const result = await refetchUser();
+      if (result.data?.email_verified) {
+        navigate({ to: "/app" });
+      }
+    } catch (error) {
+      notifications.show({
+        title: t("status.error"),
+        message: getErrorMessage(error, t("verifyEmail.checkStatusFailed")),
+        color: "red",
+      });
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
+
   // Get title and subtitle based on mode
   const getHeaderContent = () => {
     switch (mode) {
@@ -179,7 +199,11 @@ export function VerifyEmailPage() {
 
             {/* Resend verification email state */}
             {mode === "resend" && user && (
-              <ResendVerification email={user.email_address} />
+              <ResendVerification
+                email={user.email_address}
+                onCheckStatus={handleCheckStatus}
+                isCheckingStatus={isCheckingStatus}
+              />
             )}
           </Stack>
         </Box>
