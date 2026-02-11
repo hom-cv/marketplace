@@ -26,6 +26,14 @@
   /* Status colors */
   --color-error: #e03131;
   --color-error-light: #ffc9c9;
+  --color-error-border: #ffa8a8;
+
+  --color-success: #2f9e44;
+  --color-success-light: #d3f9d8;
+  --color-success-border: #8ce99a;
+
+  /* Primary border (for info state) */
+  --color-primary-border: #748ffc;
 
   /* Radius */
   --radius-sm: 4px;

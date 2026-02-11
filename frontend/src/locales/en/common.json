@@ -181,9 +181,11 @@
     "verifying": "Verifying your email...",
     "pleaseWait": "Please wait while we verify your email address.",
     "verified": "Email Verified!",
-    "redirecting": "Redirecting to login in {{count}} seconds...",
+    "redirecting": "Redirecting in {{count}} seconds...",
     "continueToLogin": "Continue to Login",
+    "continueToApp": "Continue to App",
     "failed": "Verification Failed",
+    "verificationFailedDefault": "Failed to verify email. The link may have expired.",
     "goHome": "Go to Home",
     "verifyYourEmail": "Verify Your Email",
     "sentTo": "We've sent a verification email to",
@@ -191,7 +193,9 @@
     "didntReceive": "Didn't receive the email? Check your spam folder or click below to resend.",
     "emailSent": "Email Sent!",
     "resendEmail": "Resend Verification Email",
-    "alreadyVerified": "I've verified my email"
+    "resendFailedDefault": "Failed to send verification email. Please try again.",
+    "alreadyVerified": "I've verified my email",
+    "checkStatusFailed": "Could not check verification status. Please try again."
   },
   "purchases": {
     "title": "Purchase History",
