@@ -3,7 +3,7 @@
  * Contains search, category checkboxes, and size filters
  */
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Stack, Group, Checkbox, TextInput } from "@mantine/core";
 import {
   IconSearch,
@@ -24,7 +24,9 @@ import styles from "./ExploreFiltersPanel.module.css";
 
 interface ExploreFiltersPanelProps {
   filters: FiltersState;
-  onFiltersChange: (filters: FiltersState) => void;
+  onFiltersChange: (
+    update: FiltersState | ((current: FiltersState) => FiltersState),
+  ) => void;
 }
 
 export function ExploreFiltersPanel({
@@ -64,24 +66,41 @@ export function ExploreFiltersPanel({
     filters.sizes.length > 0 ||
     filters.search.trim() !== "";
 
-  const handleTypeToggle = (type: PostType) => {
-    const newTypes = filters.types.includes(type)
-      ? filters.types.filter((t) => t !== type)
-      : [...filters.types, type];
-    onFiltersChange({ ...filters, types: newTypes, sizes: [] });
-  };
+  const handleTypeToggle = useCallback(
+    (type: PostType) => {
+      onFiltersChange((current) => {
+        const newTypes = current.types.includes(type)
+          ? current.types.filter((t) => t !== type)
+          : [...current.types, type];
+        return { ...current, types: newTypes, sizes: [] };
+      });
+    },
+    [onFiltersChange],
+  );
 
-  const handleSizeToggle = (category: SizeCategory, size: string) => {
-    const sizeKey = createSizeKey(category, size);
-    const newSizes = filters.sizes.includes(sizeKey)
-      ? filters.sizes.filter((s) => s !== sizeKey)
-      : [...filters.sizes, sizeKey];
-    onFiltersChange({ ...filters, sizes: newSizes });
-  };
+  const handleSizeToggle = useCallback(
+    (category: SizeCategory, size: string) => {
+      const sizeKey = createSizeKey(category, size);
+      onFiltersChange((current) => {
+        const newSizes = current.sizes.includes(sizeKey)
+          ? current.sizes.filter((s) => s !== sizeKey)
+          : [...current.sizes, sizeKey];
+        return { ...current, sizes: newSizes };
+      });
+    },
+    [onFiltersChange],
+  );
 
-  const handleClearFilters = () => {
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      onFiltersChange((current) => ({ ...current, search: value }));
+    },
+    [onFiltersChange],
+  );
+
+  const handleClearFilters = useCallback(() => {
     onFiltersChange({ types: [], sizes: [], search: "" });
-  };
+  }, [onFiltersChange]);
 
   return (
     <Stack gap="lg">
@@ -90,9 +109,7 @@ export function ExploreFiltersPanel({
         placeholder={t("search.placeholder")}
         leftSection={<IconSearch size={16} />}
         value={filters.search}
-        onChange={(e) =>
-          onFiltersChange({ ...filters, search: e.currentTarget.value })
-        }
+        onChange={(e) => handleSearchChange(e.currentTarget.value)}
         radius="xs"
         className={styles.searchInput}
         rightSection={
@@ -100,7 +117,7 @@ export function ExploreFiltersPanel({
             <IconX
               size={14}
               className={styles.clearIcon}
-              onClick={() => onFiltersChange({ ...filters, search: "" })}
+              onClick={() => handleSearchChange("")}
             />
           )
         }
