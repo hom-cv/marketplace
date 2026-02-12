@@ -65,5 +65,5 @@
 }
 
 .content {
-    padding-top: 12px;
+    padding-top: var(--mantine-spacing-sm);
 }
