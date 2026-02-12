@@ -75,7 +75,8 @@ export function PublicExplorePage() {
   const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
-  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
     sizes: [],
@@ -91,17 +92,17 @@ export function PublicExplorePage() {
       { value: "ACCESSORIES", label: tListings("categories.accessories") },
       { value: "OTHER", label: tListings("categories.other") },
     ],
-    [tListings]
+    [tListings],
   );
 
   const typeLabelsMap = useMemo(
     () => new Map(typeOptions.map((o) => [o.value, o.label])),
-    [typeOptions]
+    [typeOptions],
   );
 
   const sizeCategoryMap = useMemo(
     () => new Map(SIZE_CATEGORY_CONFIG.map((c) => [c.category, c])),
-    []
+    [],
   );
 
   const visibleSizeCategories = useMemo(() => {
@@ -159,7 +160,8 @@ export function PublicExplorePage() {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["public-posts", queryFilters],
-    queryFn: ({ pageParam = 0 }) => getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
+    queryFn: ({ pageParam = 0 }) =>
+      getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
     getNextPageParam: (lastPage) => {
       const nextSkip = lastPage.skip + lastPage.limit;
       return nextSkip < lastPage.total ? nextSkip : undefined;
@@ -212,7 +214,9 @@ export function PublicExplorePage() {
         placeholder={t("search.placeholder")}
         leftSection={<IconSearch size={16} />}
         value={filters.search}
-        onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
+        onChange={(e) =>
+          setFilters({ ...filters, search: e.currentTarget.value })
+        }
         radius="xs"
         className={styles.searchInput}
         rightSection={
@@ -268,10 +272,16 @@ export function PublicExplorePage() {
                 return (
                   <Checkbox
                     key={sizeKey}
-                    label={categoryConfig.formatLabel ? categoryConfig.formatLabel(size) : size}
+                    label={
+                      categoryConfig.formatLabel
+                        ? categoryConfig.formatLabel(size)
+                        : size
+                    }
                     size="xs"
                     checked={filters.sizes.includes(sizeKey)}
-                    onChange={() => handleSizeToggle(categoryConfig.category, size)}
+                    onChange={() =>
+                      handleSizeToggle(categoryConfig.category, size)
+                    }
                     radius="xs"
                     className={styles.checkbox}
                   />
@@ -300,7 +310,9 @@ export function PublicExplorePage() {
             <div className={styles.emptyState}>
               <IconAlertCircle size={24} color="var(--color-error)" />
               <p className={styles.emptyStateText}>
-                {error instanceof Error ? error.message : t("errors.failedToLoad")}
+                {error instanceof Error
+                  ? error.message
+                  : t("errors.failedToLoad")}
               </p>
             </div>
           </div>
@@ -318,14 +330,18 @@ export function PublicExplorePage() {
             <div className={styles.sidebarCard}>
               <div className={styles.sidebarHeader}>
                 <IconAdjustments size={18} />
-                <span className={styles.sidebarTitle}>{t("filters.title")}</span>
+                <span className={styles.sidebarTitle}>
+                  {t("filters.title")}
+                </span>
               </div>
               {filterContent}
             </div>
           </Box>
 
           {/* Main Content */}
-          <div className={`${styles.content} ${isAuthenticated ? styles.contentAuth : ''}`}>
+          <div
+            className={`${styles.content} ${isAuthenticated ? styles.contentAuth : ""}`}
+          >
             {/* Header */}
             <header className={styles.header}>
               <h1 className={styles.title}>{t("title")}</h1>
@@ -335,18 +351,18 @@ export function PublicExplorePage() {
             {hasActiveFilters && (
               <div className={styles.filterBadges}>
                 {filters.search.trim() && (
-                  <div
+                  <button
                     className={styles.filterBadge}
                     onClick={() => setFilters({ ...filters, search: "" })}
                   >
-                    <span>{t("search.label")}: "{filters.search}"</span>
+                    <span>"{filters.search}"</span>
                     <span className={styles.filterBadgeRemove}>
                       <IconX size={12} />
                     </span>
-                  </div>
+                  </button>
                 )}
                 {filters.types.map((type) => (
-                  <div
+                  <button
                     key={type}
                     className={styles.filterBadge}
                     onClick={() => handleTypeToggle(type)}
@@ -355,7 +371,7 @@ export function PublicExplorePage() {
                     <span className={styles.filterBadgeRemove}>
                       <IconX size={12} />
                     </span>
-                  </div>
+                  </button>
                 ))}
                 {filters.sizes.map((sizeKey) => {
                   const { category, size } = parseSizeKey(sizeKey);
@@ -364,7 +380,7 @@ export function PublicExplorePage() {
                     ? categoryConfig.formatLabel(size)
                     : size;
                   return (
-                    <div
+                    <button
                       key={sizeKey}
                       className={styles.filterBadge}
                       onClick={() => handleSizeToggle(category, size)}
@@ -373,10 +389,13 @@ export function PublicExplorePage() {
                       <span className={styles.filterBadgeRemove}>
                         <IconX size={12} />
                       </span>
-                    </div>
+                    </button>
                   );
                 })}
-                <button className={styles.clearAllBadge} onClick={handleClearFilters}>
+                <button
+                  className={styles.clearAllBadge}
+                  onClick={handleClearFilters}
+                >
                   <IconX size={12} />
                   <span>{tCommon("buttons.clearAll")}</span>
                 </button>
@@ -385,7 +404,8 @@ export function PublicExplorePage() {
 
             {/* Results Count */}
             <p className={styles.resultsCount}>
-              {totalCount} {totalCount === 1 ? t("results.listing") : t("results.listings")}
+              {totalCount}{" "}
+              {totalCount === 1 ? t("results.listing") : t("results.listings")}
               {hasActiveFilters && ` ${t("results.found")}`}
             </p>
 
@@ -409,7 +429,11 @@ export function PublicExplorePage() {
                   ) : (
                     <div className={styles.grid}>
                       {posts.map((post) => (
-                        <PostCard key={post.id} post={post} linkPrefix="/explore" />
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          linkPrefix="/explore"
+                        />
                       ))}
                     </div>
                   )}
@@ -428,7 +452,11 @@ export function PublicExplorePage() {
                   ) : (
                     <Stack gap={0}>
                       {posts.map((post) => (
-                        <PostFeedItem key={post.id} post={post} linkPrefix="/explore" />
+                        <PostFeedItem
+                          key={post.id}
+                          post={post}
+                          linkPrefix="/explore"
+                        />
                       ))}
                     </Stack>
                   )}
@@ -444,9 +472,7 @@ export function PublicExplorePage() {
                       </div>
                     )}
                     {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
-                      <p className={styles.endMessage}>
-                        {t("results.noMore")}
-                      </p>
+                      <p className={styles.endMessage}>{t("results.noMore")}</p>
                     )}
                   </>
                 )}
@@ -476,7 +502,14 @@ export function PublicExplorePage() {
       </Drawer>
 
       {/* Mobile Sticky Filter Button */}
-      <Box hiddenFrom="md" className={isAuthenticated ? styles.filterButtonWrapperAuth : styles.filterButtonWrapper}>
+      <Box
+        hiddenFrom="md"
+        className={
+          isAuthenticated
+            ? styles.filterButtonWrapperAuth
+            : styles.filterButtonWrapper
+        }
+      >
         <button className={styles.filterButton} onClick={openDrawer}>
           <IconAdjustments size={18} />
           <span>{t("filters.title")}</span>
