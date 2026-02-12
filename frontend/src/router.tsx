@@ -3,7 +3,6 @@ import {
   createRootRoute,
   createRoute,
   redirect,
-  ScrollRestoration,
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";

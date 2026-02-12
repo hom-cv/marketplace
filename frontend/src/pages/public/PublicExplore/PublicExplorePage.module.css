@@ -135,36 +135,6 @@
   margin-bottom: 16px;
 }
 
-.filterBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-
-.filterBadge:hover {
-  border-color: var(--color-border-hover);
-}
-
-.filterBadgeRemove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.6;
-  transition: opacity 0.15s ease;
-}
-
-.filterBadge:hover .filterBadgeRemove {
-  opacity: 1;
-}
-
 .clearAllBadge {
   padding: 6px 10px;
   background: none;

@@ -29,6 +29,7 @@ import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
+import { FilterBadge } from "@/components/FilterBadge";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
 import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
@@ -351,27 +352,17 @@ export function PublicExplorePage() {
             {hasActiveFilters && (
               <div className={styles.filterBadges}>
                 {filters.search.trim() && (
-                  <button
-                    className={styles.filterBadge}
-                    onClick={() => setFilters({ ...filters, search: "" })}
-                  >
-                    <span>"{filters.search}"</span>
-                    <span className={styles.filterBadgeRemove}>
-                      <IconX size={12} />
-                    </span>
-                  </button>
+                  <FilterBadge
+                    label={`"${filters.search}"`}
+                    onRemove={() => setFilters({ ...filters, search: "" })}
+                  />
                 )}
                 {filters.types.map((type) => (
-                  <button
+                  <FilterBadge
                     key={type}
-                    className={styles.filterBadge}
-                    onClick={() => handleTypeToggle(type)}
-                  >
-                    <span>{typeLabelsMap.get(type)}</span>
-                    <span className={styles.filterBadgeRemove}>
-                      <IconX size={12} />
-                    </span>
-                  </button>
+                    label={typeLabelsMap.get(type) ?? type}
+                    onRemove={() => handleTypeToggle(type)}
+                  />
                 ))}
                 {filters.sizes.map((sizeKey) => {
                   const { category, size } = parseSizeKey(sizeKey);
@@ -380,16 +371,11 @@ export function PublicExplorePage() {
                     ? categoryConfig.formatLabel(size)
                     : size;
                   return (
-                    <button
+                    <FilterBadge
                       key={sizeKey}
-                      className={styles.filterBadge}
-                      onClick={() => handleSizeToggle(category, size)}
-                    >
-                      <span>{displayLabel}</span>
-                      <span className={styles.filterBadgeRemove}>
-                        <IconX size={12} />
-                      </span>
-                    </button>
+                      label={displayLabel}
+                      onRemove={() => handleSizeToggle(category, size)}
+                    />
                   );
                 })}
                 <button
