@@ -4,25 +4,16 @@
  */
 
 import type { ReactNode } from "react";
-import {
-  Box,
-  Collapse,
-  UnstyledButton,
-} from "@mantine/core";
+import { Box, Collapse, UnstyledButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import styles from "./CollapsibleFilterSection.module.css";
 
 interface CollapsibleFilterSectionProps {
-  /** Section title displayed in the header */
   title: string;
-  /** Optional icon displayed before the title */
   icon?: ReactNode;
-  /** Whether the section is expanded by default */
   defaultOpen?: boolean;
-  /** Optional badge showing active filter count */
   badge?: number;
-  /** Section content (filter controls) */
   children: ReactNode;
 }
 

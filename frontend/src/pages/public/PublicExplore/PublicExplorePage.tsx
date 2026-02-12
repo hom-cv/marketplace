@@ -6,29 +6,14 @@
 import { useState, useMemo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Loader,
-  Stack,
-  Box,
-  Group,
-  Checkbox,
-  TextInput,
-  Drawer,
-} from "@mantine/core";
+import { Loader, Stack, Box, Drawer } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import {
-  IconAlertCircle,
-  IconAdjustments,
-  IconX,
-  IconSearch,
-  IconCategory,
-  IconRuler,
-} from "@tabler/icons-react";
+import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
-import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
+import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
 import { FilterBadge } from "@/components/FilterBadge";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
 import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
@@ -105,16 +90,6 @@ export function PublicExplorePage() {
     () => new Map(SIZE_CATEGORY_CONFIG.map((c) => [c.category, c])),
     [],
   );
-
-  const visibleSizeCategories = useMemo(() => {
-    const selectedTypes = filters.types;
-    return SIZE_CATEGORY_CONFIG.map((config) => {
-      const isVisible =
-        selectedTypes.length === 0 ||
-        config.postTypes.some((pt) => selectedTypes.includes(pt));
-      return { ...config, isVisible };
-    }).filter((c) => c.isVisible);
-  }, [filters.types]);
 
   const [debouncedSearch] = useDebouncedValue(filters.search, 300);
 
@@ -211,102 +186,6 @@ export function PublicExplorePage() {
     setFilters({ types: [], sizes: [], search: "" });
   };
 
-  // Reusable filter content for both sidebar and drawer
-  const filterContent = (
-    <Stack gap="lg">
-      {/* Search Input */}
-      <TextInput
-        placeholder={t("search.placeholder")}
-        leftSection={<IconSearch size={16} />}
-        value={filters.search}
-        onChange={(e) =>
-          setFilters({ ...filters, search: e.currentTarget.value })
-        }
-        radius="xs"
-        className={styles.searchInput}
-        rightSection={
-          filters.search && (
-            <IconX
-              size={14}
-              className={styles.clearIcon}
-              onClick={() => setFilters({ ...filters, search: "" })}
-            />
-          )
-        }
-      />
-
-      {/* Category Filter */}
-      <CollapsibleFilterSection
-        title={tCommon("filtersSidebar.category")}
-        icon={<IconCategory size={18} />}
-        badge={filters.types.length}
-        defaultOpen={true}
-      >
-        <Stack gap="xs">
-          {typeOptions.map((option) => (
-            <Checkbox
-              key={option.value}
-              label={option.label}
-              checked={filters.types.includes(option.value)}
-              onChange={() => handleTypeToggle(option.value)}
-              radius="xs"
-              className={styles.checkbox}
-            />
-          ))}
-        </Stack>
-      </CollapsibleFilterSection>
-
-      {/* Size Filters */}
-      {visibleSizeCategories.map((categoryConfig) => {
-        const activeSizesInCategory = filters.sizes.filter((sizeKey) => {
-          const { category } = parseSizeKey(sizeKey);
-          return category === categoryConfig.category;
-        }).length;
-
-        return (
-          <CollapsibleFilterSection
-            key={categoryConfig.category}
-            title={tListings(categoryConfig.labelKey)}
-            icon={<IconRuler size={18} />}
-            badge={activeSizesInCategory}
-            defaultOpen={false}
-          >
-            <Group gap="xs" wrap="wrap">
-              {categoryConfig.sizes.map((size) => {
-                const sizeKey = createSizeKey(categoryConfig.category, size);
-                return (
-                  <Checkbox
-                    key={sizeKey}
-                    label={
-                      categoryConfig.formatLabel
-                        ? categoryConfig.formatLabel(size)
-                        : size
-                    }
-                    size="xs"
-                    checked={filters.sizes.includes(sizeKey)}
-                    onChange={() =>
-                      handleSizeToggle(categoryConfig.category, size)
-                    }
-                    radius="xs"
-                    className={styles.checkbox}
-                  />
-                );
-              })}
-            </Group>
-          </CollapsibleFilterSection>
-        );
-      })}
-
-      {/* Clear Filters Button */}
-      {hasActiveFilters && (
-        <button className={styles.clearButton} onClick={handleClearFilters}>
-          <IconX size={14} />
-          <span>{tCommon("buttons.clearAll")}</span>
-        </button>
-      )}
-    </Stack>
-  );
-
   if (error) {
     return (
       <div className={styles.page}>
@@ -339,7 +218,10 @@ export function PublicExplorePage() {
                   {t("filters.title")}
                 </span>
               </div>
-              {filterContent}
+              <ExploreFiltersPanel
+                filters={filters}
+                onFiltersChange={setFilters}
+              />
             </div>
           </Box>
 
@@ -488,7 +370,10 @@ export function PublicExplorePage() {
         hiddenFrom="md"
         className={styles.drawer}
       >
-        {filterContent}
+        <ExploreFiltersPanel
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
       </Drawer>
 
       {/* Mobile Sticky Filter Button */}

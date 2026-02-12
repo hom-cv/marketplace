@@ -45,27 +45,6 @@
   color: var(--color-text);
 }
 
-/* Search input in sidebar */
-.searchInput input {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-}
-
-.searchInput input:focus {
-  border-color: var(--color-primary);
-}
-
-.clearIcon {
-  cursor: pointer;
-}
-
-/* Checkbox styling */
-.checkbox [data-checked] {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
 /* Drawer styling */
 .drawer [data-mantine-drawer-content] {
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
@@ -75,37 +54,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-/* Filter sections */
-.filterSection {
-  margin-bottom: 20px;
-}
-
-.filterSection:last-child {
-  margin-bottom: 0;
-}
-
-/* Clear button */
-.clearButton {
-  width: 100%;
-  padding: 8px 12px;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.clearButton:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text-secondary);
 }
 
 /* Main content */
@@ -284,7 +232,9 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .mobileBottomButtonOutline {
