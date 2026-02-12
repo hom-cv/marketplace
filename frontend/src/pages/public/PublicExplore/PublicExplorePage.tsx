@@ -186,7 +186,11 @@ export function PublicExplorePage() {
     filters.types.length > 0 ||
     filters.sizes.length > 0 ||
     filters.search.trim() !== "";
-  const activeFilterCount = filters.types.length + filters.sizes.length;
+
+  const activeFilterCount =
+    filters.types.length +
+    filters.sizes.length +
+    (filters.search.trim() ? 1 : 0);
 
   const handleTypeToggle = (type: PostType) => {
     const newTypes = filters.types.includes(type)
