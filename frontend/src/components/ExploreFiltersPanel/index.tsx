@@ -99,7 +99,7 @@ export function ExploreFiltersPanel({
   );
 
   const handleClearFilters = useCallback(() => {
-    onFiltersChange({ types: [], sizes: [], search: "" });
+    onFiltersChange(() => ({ types: [], sizes: [], search: "" }));
   }, [onFiltersChange]);
 
   return (
