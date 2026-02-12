@@ -7,10 +7,7 @@ import type { ReactNode } from "react";
 import {
   Box,
   Collapse,
-  Group,
-  Text,
   UnstyledButton,
-  Badge,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
@@ -45,19 +42,15 @@ export function CollapsibleFilterSection({
         className={styles.header}
         aria-expanded={opened}
       >
-        <Group gap="xs">
-          {icon}
-          <Text fw={600} size="sm">
-            {title}
-          </Text>
+        <div className={styles.headerLeft}>
+          {icon && <span className={styles.icon}>{icon}</span>}
+          <span className={styles.title}>{title}</span>
           {badge !== undefined && badge > 0 && (
-            <Badge size="sm" variant="filled" circle>
-              {badge}
-            </Badge>
+            <span className={styles.badge}>{badge}</span>
           )}
-        </Group>
+        </div>
         <IconChevronDown
-          size={18}
+          size={16}
           className={`${styles.chevron} ${opened ? styles.chevronOpen : ""}`}
         />
       </UnstyledButton>

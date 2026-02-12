@@ -47,7 +47,8 @@
   "sizeCategories": {
     "tops": "Tops (Shirt/Jacket)",
     "pants": "Pants (Waist)",
-    "shoes": "Shoes (EU)"
+    "shoes": "Shoes (EU)",
+    "accessories": "Accessories"
   },
   "images": {
     "noImages": "No images uploaded",

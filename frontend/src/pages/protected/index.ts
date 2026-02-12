@@ -1,6 +1,5 @@
 // Protected pages - requires authentication
 export { DashboardPage } from "./Dashboard";
-export { ExplorePage } from "./Explore";
 export { PurchaseHistoryPage } from "./PurchaseHistory";
 export { LikedListingsPage } from "./LikedListings";
 export { MyListingsPage } from "./MyListings";

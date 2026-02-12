@@ -1,6 +1,6 @@
 .section {
-  border-bottom: 1px solid var(--mantine-color-gray-2);
-  padding-bottom: var(--mantine-spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 16px;
 }
 
 .section:last-child {
@@ -13,19 +13,51 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--mantine-spacing-sm) 0;
+  padding: 8px 0;
   cursor: pointer;
   transition: color 150ms ease;
-  color: var(--mantine-color-text);
+  color: var(--color-text);
 }
 
 .header:hover {
-  color: var(--mantine-primary-color-filled);
+  color: var(--color-primary);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  color: var(--color-text-muted);
+}
+
+.title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-sm);
 }
 
 .chevron {
   transition: transform 200ms ease;
-  color: var(--mantine-color-dimmed);
+  color: var(--color-text-muted);
 }
 
 .chevronOpen {
@@ -33,12 +65,5 @@
 }
 
 .content {
-  padding-top: var(--mantine-spacing-sm);
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .section {
-    border-color: var(--mantine-color-dark-4);
-  }
+  padding-top: 12px;
 }
