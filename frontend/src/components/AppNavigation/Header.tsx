@@ -2,7 +2,7 @@
  * Header bar component
  */
 
-import { Container, Group, Title, Button, Burger, Text } from "@mantine/core";
+import { Container, Group, Title, Button, Burger } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
