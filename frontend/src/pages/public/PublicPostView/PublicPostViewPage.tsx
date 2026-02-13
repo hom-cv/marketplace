@@ -190,7 +190,7 @@ export function PublicPostViewPage() {
             <button
               className={styles.buyBarButton}
               onClick={handleBuyClick}
-              disabled={!!isBanned}
+              disabled={isBanned}
             >
               <IconShoppingCart size={20} />
               {t("view.buyNow")} - ฿{price.toLocaleString()}
