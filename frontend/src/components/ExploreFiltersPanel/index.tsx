@@ -59,6 +59,15 @@ export function ExploreFiltersPanel({
     );
   }, [filters.types]);
 
+  const activeSizeCountByCategory = useMemo(() => {
+    const counts = new Map<SizeCategory, number>();
+    for (const sizeKey of filters.sizes) {
+      const { category } = parseSizeKey(sizeKey);
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+    return counts;
+  }, [filters.sizes]);
+
   const hasActiveFilters =
     filters.types.length > 0 ||
     filters.sizes.length > 0 ||
@@ -139,20 +148,14 @@ export function ExploreFiltersPanel({
       </CollapsibleFilterSection>
 
       {/* Size Filters */}
-      {visibleSizeCategories.map((categoryConfig) => {
-        const activeSizesInCategory = filters.sizes.filter((sizeKey) => {
-          const { category } = parseSizeKey(sizeKey);
-          return category === categoryConfig.category;
-        }).length;
-
-        return (
-          <CollapsibleFilterSection
-            key={categoryConfig.category}
-            title={tListings(categoryConfig.labelKey)}
-            icon={<IconRuler size={18} />}
-            badge={activeSizesInCategory}
-            defaultOpen={false}
-          >
+      {visibleSizeCategories.map((categoryConfig) => (
+        <CollapsibleFilterSection
+          key={categoryConfig.category}
+          title={tListings(categoryConfig.labelKey)}
+          icon={<IconRuler size={18} />}
+          badge={activeSizeCountByCategory.get(categoryConfig.category) ?? 0}
+          defaultOpen={false}
+        >
             <Group gap="xs" wrap="wrap">
               {categoryConfig.sizes.map((size) => {
                 const sizeKey = createSizeKey(categoryConfig.category, size);
@@ -175,9 +178,8 @@ export function ExploreFiltersPanel({
                 );
               })}
             </Group>
-          </CollapsibleFilterSection>
-        );
-      })}
+        </CollapsibleFilterSection>
+      ))}
 
       {/* Clear Filters Button */}
       {hasActiveFilters && (
