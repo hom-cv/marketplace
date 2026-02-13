@@ -8,7 +8,11 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { IconChevronLeft, IconChevronRight, IconPhoto } from "@tabler/icons-react";
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconPhoto,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import styles from "./PostImageCarousel.module.css";
 
@@ -45,15 +49,18 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
     return () => resizeObserver.disconnect();
   }, []);
 
-  const goToSlide = useCallback((index: number) => {
-    if (index < 0) {
-      setCurrentIndex(0);
-    } else if (index >= imageCount) {
-      setCurrentIndex(imageCount - 1);
-    } else {
-      setCurrentIndex(index);
-    }
-  }, [imageCount]);
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (index < 0) {
+        setCurrentIndex(0);
+      } else if (index >= imageCount) {
+        setCurrentIndex(imageCount - 1);
+      } else {
+        setCurrentIndex(index);
+      }
+    },
+    [imageCount],
+  );
 
   const goToPrev = useCallback(() => {
     goToSlide(currentIndex - 1);
@@ -64,33 +71,35 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
   }, [currentIndex, goToSlide]);
 
   // Touch handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!hasMultipleImages) return;
-    startXRef.current = e.touches[0].clientX;
-    currentXRef.current = e.touches[0].clientX;
-    setIsDragging(true);
-    // Update container width at the start of touch
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.offsetWidth);
-    }
-  }, [hasMultipleImages]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (!hasMultipleImages) return;
+      startXRef.current = e.touches[0].clientX;
+      currentXRef.current = e.touches[0].clientX;
+      setIsDragging(true);
+    },
+    [hasMultipleImages],
+  );
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!isDragging || !hasMultipleImages || containerWidth === 0) return;
-    currentXRef.current = e.touches[0].clientX;
-    const diff = currentXRef.current - startXRef.current;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isDragging || !hasMultipleImages || containerWidth === 0) return;
+      currentXRef.current = e.touches[0].clientX;
+      const diff = currentXRef.current - startXRef.current;
 
-    // Limit drag at edges
-    const maxDrag = containerWidth * 0.3;
+      // Limit drag at edges
+      const maxDrag = containerWidth * 0.3;
 
-    if (currentIndex === 0 && diff > 0) {
-      setDragOffset(Math.min(diff, maxDrag) * 0.3);
-    } else if (currentIndex === imageCount - 1 && diff < 0) {
-      setDragOffset(Math.max(diff, -maxDrag) * 0.3);
-    } else {
-      setDragOffset(diff);
-    }
-  }, [isDragging, hasMultipleImages, currentIndex, imageCount, containerWidth]);
+      if (currentIndex === 0 && diff > 0) {
+        setDragOffset(Math.min(diff, maxDrag) * 0.3);
+      } else if (currentIndex === imageCount - 1 && diff < 0) {
+        setDragOffset(Math.max(diff, -maxDrag) * 0.3);
+      } else {
+        setDragOffset(diff);
+      }
+    },
+    [isDragging, hasMultipleImages, currentIndex, imageCount, containerWidth],
+  );
 
   const handleTouchEnd = useCallback(() => {
     if (!isDragging || !hasMultipleImages) return;
@@ -106,11 +115,19 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
 
     setIsDragging(false);
     setDragOffset(0);
-  }, [isDragging, hasMultipleImages, currentIndex, imageCount, goToPrev, goToNext]);
+  }, [
+    isDragging,
+    hasMultipleImages,
+    currentIndex,
+    imageCount,
+    goToPrev,
+    goToNext,
+  ]);
 
   // Calculate transform
   const baseOffset = -currentIndex * 100;
-  const dragPercent = containerWidth > 0 ? (dragOffset / containerWidth) * 100 : 0;
+  const dragPercent =
+    containerWidth > 0 ? (dragOffset / containerWidth) * 100 : 0;
   const transform = `translateX(${baseOffset + dragPercent}%)`;
 
   if (imageCount === 0) {
@@ -119,7 +136,9 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
         <div className={styles.imageContainer}>
           <div className={styles.placeholder}>
             <IconPhoto size={48} className={styles.placeholderIcon} />
-            <span className={styles.placeholderText}>{t("images.noImagesAvailable")}</span>
+            <span className={styles.placeholderText}>
+              {t("images.noImagesAvailable")}
+            </span>
           </div>
         </div>
       </div>
