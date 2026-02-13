@@ -30,17 +30,19 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
   const imageCount = imageUrls.length;
   const hasMultipleImages = imageCount > 1;
 
-  // Update container width on mount and resize
+  // Update container width using ResizeObserver for better performance
   useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
+    const container = containerRef.current;
+    if (!container) return;
 
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
   }, []);
 
   const goToSlide = useCallback((index: number) => {

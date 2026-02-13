@@ -5,14 +5,13 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { Loader, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
-  IconChevronRight,
   IconDotsVertical,
   IconFlag,
   IconUserExclamation,
@@ -20,13 +19,11 @@ import {
 import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
-import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
-import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { ReportModal } from "@/components/ReportModal";
-import { EarningsPreview } from "@/components/EarningsPreview";
 import type { ReportType } from "@/api/types/admin";
+import { PostDetails, SellerInfoCard, PostActions } from "./components";
 import styles from "./PublicPostViewPage.module.css";
 
 export function PublicPostViewPage() {
@@ -80,6 +77,16 @@ export function PublicPostViewPage() {
     openLoginModal();
   };
 
+  const handleReportPost = () => {
+    setReportType("post");
+    setReportModalOpened(true);
+  };
+
+  const handleReportUser = () => {
+    setReportType("user");
+    setReportModalOpened(true);
+  };
+
   if (isLoading) {
     return (
       <div className={styles.page}>
@@ -104,9 +111,6 @@ export function PublicPostViewPage() {
   }
 
   const price = parseFloat(post.price);
-  const shippingCost = parseFloat(post.shipping_cost || "0");
-
-  // Show report menu for authenticated non-owners
   const showReportMenu = isAuthenticated && !isOwner;
 
   return (
@@ -135,20 +139,14 @@ export function PublicPostViewPage() {
                     <Menu.Item
                       color="red"
                       leftSection={<IconFlag size={14} />}
-                      onClick={() => {
-                        setReportType("post");
-                        setReportModalOpened(true);
-                      }}
+                      onClick={handleReportPost}
                     >
                       {t("view.reportListing")}
                     </Menu.Item>
                     <Menu.Item
                       color="red"
                       leftSection={<IconUserExclamation size={14} />}
-                      onClick={() => {
-                        setReportType("user");
-                        setReportModalOpened(true);
-                      }}
+                      onClick={handleReportUser}
                     >
                       {t("view.reportUser")}
                     </Menu.Item>
@@ -167,151 +165,21 @@ export function PublicPostViewPage() {
 
             {/* Right: Details Card */}
             <div className={styles.detailsCard}>
-              {/* Status badges */}
-              {(isOwner || post.is_sold) && (
-                <div className={styles.badges}>
-                  {isOwner && (
-                    <span className={`${styles.badge} ${styles.badgeOwner}`}>
-                      {t("view.yourListing")}
-                    </span>
-                  )}
-                  {post.is_sold && (
-                    <span className={`${styles.badge} ${styles.badgeSold}`}>
-                      {tCommon("badges.sold")}
-                    </span>
-                  )}
-                </div>
-              )}
+              <PostDetails
+                post={post}
+                isOwner={isOwner}
+                onLikeAuthRequired={handleLikeAuthRequired}
+              />
 
-              {/* Title */}
-              <h1 className={styles.title}>{post.title}</h1>
+              <SellerInfoCard user={post.user} isOwner={isOwner} />
 
-              {/* Price and Like */}
-              <div className={styles.priceRow}>
-                <div className={styles.priceSection}>
-                  <span className={styles.price}>฿{price.toLocaleString()}</span>
-                  {shippingCost > 0 ? (
-                    <span className={styles.shippingCost}>
-                      + ฿{shippingCost.toLocaleString()} {t("view.shipping")}
-                    </span>
-                  ) : (
-                    <span className={styles.freeShipping}>
-                      {t("view.freeShipping")}
-                    </span>
-                  )}
-                </div>
-                <LikeButton
-                  postId={post.id}
-                  initialLiked={post.is_liked}
-                  initialCount={post.like_count}
-                  size="lg"
-                  onAuthRequired={handleLikeAuthRequired}
-                />
-              </div>
-
-              <hr className={styles.divider} />
-
-              {/* Size */}
-              {post.size && (
-                <div>
-                  <div className={styles.sectionLabel}>
-                    {tCommon("postCard.size")}
-                  </div>
-                  <span className={styles.sizeBadge}>{post.size}</span>
-                </div>
-              )}
-
-              {/* Description */}
-              <div>
-                <div className={styles.sectionLabel}>{t("view.description")}</div>
-                <p className={styles.description}>{post.description}</p>
-              </div>
-
-              {/* Measurements Section */}
-              {post.measurements && (
-                <MeasurementsDisplay measurements={post.measurements} />
-              )}
-
-              <hr className={styles.divider} />
-
-              {/* Seller Info */}
-              {isOwner ? (
-                <div className={styles.sellerCardStatic}>
-                  <div className={styles.sellerInfo}>
-                    <div className={styles.sellerAvatar}>
-                      {post.user.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className={styles.sellerDetails}>
-                      <div className={styles.sellerUsername}>
-                        @{post.user.username}
-                      </div>
-                      <div className={styles.sellerName}>
-                        {post.user.first_name} {post.user.last_name}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  to="/profile/$username"
-                  params={{ username: post.user.username }}
-                  className={styles.sellerCard}
-                >
-                  <div className={styles.sellerInfo}>
-                    <div className={styles.sellerAvatar}>
-                      {post.user.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div className={styles.sellerDetails}>
-                      <div className={styles.sellerUsername}>
-                        @{post.user.username}
-                      </div>
-                      <div className={styles.sellerName}>
-                        {post.user.first_name} {post.user.last_name}
-                      </div>
-                    </div>
-                  </div>
-                  <IconChevronRight size={20} className={styles.sellerArrow} />
-                </Link>
-              )}
-
-              {/* Ban Warning */}
-              {isBanned && (
-                <div className={styles.alert}>
-                  <IconAlertCircle size={18} className={styles.alertIcon} />
-                  <span>
-                    {post.is_banned
-                      ? t("view.listingRemoved")
-                      : t("view.sellerSuspended")}
-                  </span>
-                </div>
-              )}
-
-              {/* Buy Button - hide for owners, show sold state */}
-              {!isOwner && (
-                post.is_sold ? (
-                  <div className={styles.soldButton}>
-                    {tCommon("badges.sold")}
-                  </div>
-                ) : (
-                  <button
-                    className={styles.buyButtonDesktop}
-                    onClick={handleBuyClick}
-                    disabled={isBanned}
-                  >
-                    <IconShoppingCart size={20} />
-                    {t("view.buyNow")} - ฿{price.toLocaleString()}
-                  </button>
-                )
-              )}
-
-              {/* Earnings Preview - only show for owners */}
-              {isOwner && (
-                <EarningsPreview
-                  postId={postId ?? undefined}
-                  title={t("view.yourEarnings")}
-                />
-              )}
-
+              <PostActions
+                post={post}
+                postId={postId}
+                isOwner={isOwner}
+                isBanned={!!isBanned}
+                onBuyClick={handleBuyClick}
+              />
             </div>
           </div>
         </div>
@@ -322,7 +190,7 @@ export function PublicPostViewPage() {
             <button
               className={styles.buyBarButton}
               onClick={handleBuyClick}
-              disabled={isBanned}
+              disabled={!!isBanned}
             >
               <IconShoppingCart size={20} />
               {t("view.buyNow")} - ฿{price.toLocaleString()}
