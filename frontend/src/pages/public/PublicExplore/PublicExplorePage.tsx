@@ -15,6 +15,7 @@ import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
 import { FilterBadge } from "@/components/FilterBadge";
+import { EmptyState } from "@/components/EmptyState";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
 import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
@@ -28,34 +29,6 @@ import {
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useIsAuthenticated } from "@/stores/authStore";
 import styles from "./PublicExplorePage.module.css";
-
-// Empty state component to avoid duplication between desktop and mobile views
-function EmptyState({
-  hasActiveFilters,
-  onClearFilters,
-  noMatchText,
-  noListingsText,
-  clearFiltersText,
-}: {
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-  noMatchText: string;
-  noListingsText: string;
-  clearFiltersText: string;
-}) {
-  return (
-    <div className={styles.emptyState}>
-      <p className={styles.emptyStateText}>
-        {hasActiveFilters ? noMatchText : noListingsText}
-      </p>
-      {hasActiveFilters && (
-        <button className={styles.emptyStateClear} onClick={onClearFilters}>
-          {clearFiltersText}
-        </button>
-      )}
-    </div>
-  );
-}
 
 export function PublicExplorePage() {
   const navigate = useNavigate();
@@ -200,14 +173,14 @@ export function PublicExplorePage() {
       <div className={styles.page}>
         <div className={styles.layout}>
           <div className={styles.content}>
-            <div className={styles.emptyState}>
-              <IconAlertCircle size={24} color="var(--color-error)" />
-              <p className={styles.emptyStateText}>
-                {error instanceof Error
+            <EmptyState
+              icon={<IconAlertCircle size={24} color="var(--color-error)" />}
+              message={
+                error instanceof Error
                   ? error.message
-                  : t("errors.failedToLoad")}
-              </p>
-            </div>
+                  : t("errors.failedToLoad")
+              }
+            />
           </div>
         </div>
       </div>
@@ -301,11 +274,17 @@ export function PublicExplorePage() {
                 <Box visibleFrom="sm">
                   {posts.length === 0 ? (
                     <EmptyState
-                      hasActiveFilters={hasActiveFilters}
-                      onClearFilters={handleClearAllFilters}
-                      noMatchText={t("results.noMatch")}
-                      noListingsText={t("results.noListings")}
-                      clearFiltersText={t("filters.clearFilters")}
+                      message={
+                        hasActiveFilters
+                          ? t("results.noMatch")
+                          : t("results.noListings")
+                      }
+                      actionLabel={
+                        hasActiveFilters ? t("filters.clearFilters") : undefined
+                      }
+                      onAction={
+                        hasActiveFilters ? handleClearAllFilters : undefined
+                      }
                     />
                   ) : (
                     <div className={styles.grid}>
@@ -324,11 +303,17 @@ export function PublicExplorePage() {
                 <Box hiddenFrom="sm">
                   {posts.length === 0 ? (
                     <EmptyState
-                      hasActiveFilters={hasActiveFilters}
-                      onClearFilters={handleClearAllFilters}
-                      noMatchText={t("results.noMatch")}
-                      noListingsText={t("results.noListings")}
-                      clearFiltersText={t("filters.clearFilters")}
+                      message={
+                        hasActiveFilters
+                          ? t("results.noMatch")
+                          : t("results.noListings")
+                      }
+                      actionLabel={
+                        hasActiveFilters ? t("filters.clearFilters") : undefined
+                      }
+                      onAction={
+                        hasActiveFilters ? handleClearAllFilters : undefined
+                      }
                     />
                   ) : (
                     <Stack gap={0}>
