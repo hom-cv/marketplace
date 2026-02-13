@@ -4,7 +4,20 @@
 
 import type { User } from "./user";
 
-export type PostType = "SHIRT" | "PANTS" | "JACKET" | "SHOES" | "ACCESSORIES" | "OTHER";
+/**
+ * All available post types.
+ * Single source of truth for post type values.
+ */
+export const POST_TYPES = [
+  "SHIRT",
+  "PANTS",
+  "JACKET",
+  "SHOES",
+  "ACCESSORIES",
+  "OTHER",
+] as const;
+
+export type PostType = (typeof POST_TYPES)[number];
 
 // Letter-based sizes for shirts, jackets, tops
 export const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;

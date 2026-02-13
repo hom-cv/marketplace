@@ -16,7 +16,7 @@ import { PostFeedItem } from "@/components/PostFeedItem";
 import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
 import { FilterBadge } from "@/components/FilterBadge";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
-import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
+import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
@@ -71,15 +71,12 @@ export function PublicExplorePage() {
     search: "",
   });
 
-  const typeOptions: { value: PostType; label: string }[] = useMemo(
-    () => [
-      { value: "SHIRT", label: tListings("categories.shirt") },
-      { value: "PANTS", label: tListings("categories.pants") },
-      { value: "JACKET", label: tListings("categories.jacket") },
-      { value: "SHOES", label: tListings("categories.shoes") },
-      { value: "ACCESSORIES", label: tListings("categories.accessories") },
-      { value: "OTHER", label: tListings("categories.other") },
-    ],
+  const typeOptions = useMemo(
+    () =>
+      POST_TYPES.map((postType) => ({
+        value: postType,
+        label: tListings(`categories.${postType.toLowerCase()}`),
+      })),
     [tListings],
   );
 

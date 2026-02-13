@@ -14,7 +14,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
 import type { PostType, SizeCategory } from "@/api/types/post";
-import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
+import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
   type FiltersState,
   createSizeKey,
@@ -41,28 +41,22 @@ export function ExploreFiltersPanel({
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
 
-  const typeOptions: { value: PostType; label: string }[] = useMemo(
-    () => [
-      { value: "SHIRT", label: tListings("categories.shirt") },
-      { value: "PANTS", label: tListings("categories.pants") },
-      { value: "JACKET", label: tListings("categories.jacket") },
-      { value: "SHOES", label: tListings("categories.shoes") },
-      { value: "ACCESSORIES", label: tListings("categories.accessories") },
-      { value: "OTHER", label: tListings("categories.other") },
-    ],
+  const typeOptions = useMemo(
+    () =>
+      POST_TYPES.map((postType) => ({
+        value: postType,
+        label: tListings(`categories.${postType.toLowerCase()}`),
+      })),
     [tListings],
   );
 
   const visibleSizeCategories = useMemo(() => {
-    const selectedTypes = filters.types;
-
-    return SIZE_CATEGORY_CONFIG.map((config) => {
-      const isVisible =
-        selectedTypes.length === 0 ||
-        config.postTypes.some((pt) => selectedTypes.includes(pt));
-
-      return { ...config, isVisible };
-    }).filter((c) => c.isVisible);
+    if (filters.types.length === 0) {
+      return SIZE_CATEGORY_CONFIG;
+    }
+    return SIZE_CATEGORY_CONFIG.filter((config) =>
+      config.postTypes.some((postType) => filters.types.includes(postType)),
+    );
   }, [filters.types]);
 
   const hasActiveFilters =
