@@ -297,9 +297,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         *,
         id: int,
         include_deleted: bool = False,
-    ) -> tuple[Post, bool, bool] | None:
+    ) -> tuple[Post, bool, bool, bool] | None:
         """
-        Get a post by ID with ban status in a single query.
+        Get a post by ID with ban status and sold status in a single query.
 
         Args:
             db: The async database session.
@@ -307,12 +307,20 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             include_deleted: If True, include soft-deleted posts.
 
         Returns:
-            Tuple of (Post, is_post_banned, is_user_banned) or None if not found.
+            Tuple of (Post, is_post_banned, is_user_banned, is_sold) or None if not found.
         """
         is_post_banned_expr, is_user_banned_expr = self._ban_status_expressions()
 
+        # Subquery to determine if a post is sold
+        is_sold_subquery = (
+            exists()
+            .where(Payment.post_id == self.model.id)
+            .where(Payment.status == PaymentStatus.SUCCESSFUL)
+        )
+        is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
+
         query = (
-            select(self.model, is_post_banned_expr, is_user_banned_expr)
+            select(self.model, is_post_banned_expr, is_user_banned_expr, is_sold_expr)
             .options(
                 selectinload(self.model.user).selectinload(User.seller_profile)
             )
@@ -327,8 +335,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         if row is None:
             return None
 
-        post, is_post_banned, is_user_banned = row
-        return (post, bool(is_post_banned), bool(is_user_banned))
+        post, is_post_banned, is_user_banned, is_sold = row
+        return (post, bool(is_post_banned), bool(is_user_banned), bool(is_sold))
 
     async def create_post(
         self,

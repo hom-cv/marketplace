@@ -1,15 +1,17 @@
 /**
  * EarningsPreview - Shows seller earnings breakdown
- * 
+ *
  * Three modes:
  * 1. postId: Fetches breakdown from backend using post ID
  * 2. breakdown: Displays pre-fetched breakdown data directly
  * 3. itemPrice/shippingCost: Fetches preview from backend (for create post page)
  */
-import { Paper, Text, Stack, Group, Loader, Center } from "@mantine/core";
+import { Loader } from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getPriceBreakdown, getEarningsPreview } from "@/api/payments";
+import styles from "./EarningsPreview.module.css";
 
 interface BreakdownData {
   itemPrice: number;
@@ -64,32 +66,56 @@ export function EarningsPreview({
   });
 
   const isLoading = postQuery.isLoading || previewQuery.isLoading;
+  const isError = postQuery.isError || previewQuery.isError;
   const apiData = postQuery.data || previewQuery.data;
 
   // Use provided breakdown or convert API response
-  const data: BreakdownData | null = breakdown ?? (apiData ? {
-    itemPrice: parseFloat(apiData.item_price),
-    shippingCost: parseFloat(apiData.shipping_cost),
-    totalFees: parseFloat(apiData.total_fees),
-    sellerPayout: parseFloat(apiData.seller_payout),
-  } : null);
+  const data: BreakdownData | null =
+    breakdown ??
+    (apiData
+      ? {
+          itemPrice: parseFloat(apiData.item_price),
+          shippingCost: parseFloat(apiData.shipping_cost),
+          totalFees: parseFloat(apiData.total_fees),
+          sellerPayout: parseFloat(apiData.seller_payout),
+        }
+      : null);
 
   const format = (v: number) =>
-    v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    v.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
-  const textSize = compact ? "xs" : "sm";
+  const containerClass = compact
+    ? `${styles.container} ${styles.containerCompact} ${styles.compact}`
+    : styles.container;
+
+  const titleClass = compact
+    ? `${styles.title} ${styles.titleCompact}`
+    : styles.title;
 
   if (isLoading) {
     return (
-      <Paper withBorder={!compact} p={compact ? "" : "md"} radius="md" bg={compact ? "transparent" : "gray.0"}>
-        {displayTitle && <Text size={textSize} fw={600} mb="xs">{displayTitle}</Text>}
-        <Center py="sm">
-          <Stack align="center" gap={4}>
-            <Loader size="sm" />
-            <Text size="xs" c="dimmed">{t("earnings.calculating")}</Text>
-          </Stack>
-        </Center>
-      </Paper>
+      <div className={containerClass}>
+        {displayTitle && <div className={titleClass}>{displayTitle}</div>}
+        <div className={styles.loading}>
+          <Loader size="sm" />
+          <span className={styles.loadingText}>{t("earnings.calculating")}</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className={containerClass}>
+        {displayTitle && <div className={titleClass}>{displayTitle}</div>}
+        <div className={styles.error}>
+          <IconAlertCircle size={16} />
+          <span>{t("earnings.error")}</span>
+        </div>
+      </div>
     );
   }
 
@@ -98,40 +124,35 @@ export function EarningsPreview({
   }
 
   return (
-    <Paper withBorder={!compact} p={compact ? "" : "md"} radius="md" bg={compact ? "transparent" : "gray.0"}>
-      {displayTitle && <Text size={textSize} fw={600} mb="xs">{displayTitle}</Text>}
-      <Stack gap={2}>
-        <Group justify="space-between">
-          <Text size={textSize} c="dimmed">{t("earnings.itemPrice")}</Text>
-          <Text size={textSize}>฿{format(data.itemPrice)}</Text>
-        </Group>
-        {data.shippingCost > 0 && (
-          <Group justify="space-between">
-            <Text size={textSize} c="dimmed">{t("earnings.shipping")}</Text>
-            <Text size={textSize}>฿{format(data.shippingCost)}</Text>
-          </Group>
-        )}
-        <Group justify="space-between">
-          <Text size={textSize} c="dimmed">{t("earnings.fees")}</Text>
-          <Text size={textSize} c="red">-฿{format(data.totalFees)}</Text>
-        </Group>
-        <Group
-          justify="space-between"
-          mt={4}
-          pt={4}
-          style={{ borderTop: "1px solid var(--mantine-color-gray-3)" }}
-        >
-          <Text size={textSize} fw={600}>{t("earnings.youReceive")}</Text>
-          <Text size={textSize} fw={700} c="green">
-            ฿{format(data.sellerPayout)}
-          </Text>
-        </Group>
-      </Stack>
+    <div className={containerClass}>
+      {displayTitle && <div className={titleClass}>{displayTitle}</div>}
+      <table className={styles.table}>
+        <tbody>
+          <tr className={styles.row}>
+            <td className={styles.labelCell}>{t("earnings.itemPrice")}</td>
+            <td className={styles.valueCell}>฿{format(data.itemPrice)}</td>
+          </tr>
+          {data.shippingCost > 0 && (
+            <tr className={styles.row}>
+              <td className={styles.labelCell}>{t("earnings.shipping")}</td>
+              <td className={styles.valueCell}>฿{format(data.shippingCost)}</td>
+            </tr>
+          )}
+          <tr className={styles.row}>
+            <td className={styles.labelCell}>{t("earnings.fees")}</td>
+            <td className={`${styles.valueCell} ${styles.valueFee}`}>
+              -฿{format(data.totalFees)}
+            </td>
+          </tr>
+          <tr className={styles.rowTotal}>
+            <td className={styles.labelTotal}>{t("earnings.youReceive")}</td>
+            <td className={styles.valueTotal}>฿{format(data.sellerPayout)}</td>
+          </tr>
+        </tbody>
+      </table>
       {!hideExplanation && (
-        <Text size="xs" c="dimmed" mt="xs">
-          {t("earnings.feesExplanation")}
-        </Text>
+        <p className={styles.explanation}>{t("earnings.feesExplanation")}</p>
       )}
-    </Paper>
+    </div>
   );
 }

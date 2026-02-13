@@ -1,54 +1,49 @@
 /**
- * Public Post View Page - View a single post without authentication
- * Shows login prompt for actions like Buy and Like
+ * Post View Page - View a single post
+ * Works for both authenticated and unauthenticated users
  */
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
-import {
-  Container,
-  Title,
-  Text,
-  Button,
-  Stack,
-  Alert,
-  Grid,
-  Group,
-  Badge,
-  Paper,
-  Loader,
-  Center,
-  Divider,
-  Avatar,
-} from "@mantine/core";
+import { Loader, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
+  IconChevronRight,
+  IconDotsVertical,
+  IconFlag,
+  IconUserExclamation,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
+import { useAuthStore } from "@/stores/authStore";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
-import { PostImageGallery } from "@/components/PostImageGallery";
-import { POST_TYPE_COLORS, getPostTypeLabels } from "@/constants/postTypes";
+import { PostImageCarousel } from "@/components/PostImageCarousel";
+import { ReportModal } from "@/components/ReportModal";
+import { EarningsPreview } from "@/components/EarningsPreview";
+import type { ReportType } from "@/api/types/admin";
+import styles from "./PublicPostViewPage.module.css";
 
 export function PublicPostViewPage() {
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const postIdString = params.postId;
   const postId = postIdString ? parseInt(postIdString, 10) : null;
+  const currentUser = useAuthStore((state) => state.user);
+  const isAuthenticated = !!currentUser;
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
 
-  // Type labels with translations (from shared constants)
-  const typeLabels = useMemo(() => getPostTypeLabels(t), [t]);
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
   const [loginAction, setLoginAction] = useState<string>("");
+  const [reportModalOpened, setReportModalOpened] = useState(false);
+  const [reportType, setReportType] = useState<ReportType>("post");
 
   const {
     data: post,
@@ -68,11 +63,16 @@ export function PublicPostViewPage() {
         ? [post.image_url]
         : [];
 
+  const isOwner = currentUser?.id === post?.user.id;
   const isBanned = post?.is_banned || post?.is_user_banned;
 
   const handleBuyClick = () => {
-    setLoginAction(t("view.purchaseAction"));
-    openLoginModal();
+    if (isAuthenticated) {
+      navigate({ to: `/app/checkout/${postId}` });
+    } else {
+      setLoginAction(t("view.purchaseAction"));
+      openLoginModal();
+    }
   };
 
   const handleLikeAuthRequired = () => {
@@ -82,67 +82,124 @@ export function PublicPostViewPage() {
 
   if (isLoading) {
     return (
-      <Center h={400}>
-        <Loader size="lg" />
-      </Center>
+      <div className={styles.page}>
+        <div className={styles.loading}>
+          <Loader size="lg" />
+        </div>
+      </div>
     );
   }
 
   if (error || !post) {
     return (
-      <Container size="lg" my={40}>
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error instanceof Error ? error.message : t("view.failedToLoad")}
-        </Alert>
-      </Container>
+      <div className={styles.page}>
+        <div className={styles.errorContainer}>
+          <div className={styles.alert}>
+            <IconAlertCircle size={18} className={styles.alertIcon} />
+            <span>{error instanceof Error ? error.message : t("view.failedToLoad")}</span>
+          </div>
+        </div>
+      </div>
     );
   }
 
   const price = parseFloat(post.price);
+  const shippingCost = parseFloat(post.shipping_cost || "0");
+
+  // Show report menu for authenticated non-owners
+  const showReportMenu = isAuthenticated && !isOwner;
 
   return (
     <>
-      <Container size="lg" py="lg">
-        {/* Header with Back button */}
-        <Group justify="space-between" mb="lg">
-          <Button
-            variant="subtle"
-            leftSection={<IconArrowLeft size={16} />}
-            onClick={() => navigate({ to: "/explore" })}
-          >
-            {t("view.backToExplore")}
-          </Button>
-        </Group>
+      <div className={styles.page}>
+        <div className={styles.container}>
+          {/* Header with Back button and Menu */}
+          <header className={styles.header}>
+            <div className={styles.headerRow}>
+              <button
+                className={styles.backButton}
+                onClick={() => navigate({ to: "/explore" })}
+              >
+                <IconArrowLeft size={16} />
+                {t("view.backToExplore")}
+              </button>
 
-        <Grid gutter="xl">
-          {/* Left: Image Gallery */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <PostImageGallery imageUrls={imageUrls} alt={post.title} />
-          </Grid.Col>
+              {showReportMenu && (
+                <Menu shadow="md" width={200} position="bottom-end">
+                  <Menu.Target>
+                    <button className={styles.menuButton}>
+                      <IconDotsVertical size={20} />
+                    </button>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      color="red"
+                      leftSection={<IconFlag size={14} />}
+                      onClick={() => {
+                        setReportType("post");
+                        setReportModalOpened(true);
+                      }}
+                    >
+                      {t("view.reportListing")}
+                    </Menu.Item>
+                    <Menu.Item
+                      color="red"
+                      leftSection={<IconUserExclamation size={14} />}
+                      onClick={() => {
+                        setReportType("user");
+                        setReportModalOpened(true);
+                      }}
+                    >
+                      {t("view.reportUser")}
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              )}
+            </div>
+          </header>
 
-          {/* Right: Details */}
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <Stack gap="md">
-              {/* Category badge */}
-              <Group>
-                <Badge color={POST_TYPE_COLORS[post.type]} size="lg" variant="light">
-                  {typeLabels[post.type]}
-                </Badge>
-                {post.is_sold && (
-                  <Badge color="red" size="lg" variant="filled">
-                    {tCommon("badges.sold")}
-                  </Badge>
-                )}
-              </Group>
+          {/* Main layout */}
+          <div className={styles.layout}>
+            {/* Left: Sticky Image Carousel */}
+            <div className={styles.imageColumn}>
+              <PostImageCarousel imageUrls={imageUrls} alt={post.title} />
+            </div>
+
+            {/* Right: Details Card */}
+            <div className={styles.detailsCard}>
+              {/* Status badges */}
+              {(isOwner || post.is_sold) && (
+                <div className={styles.badges}>
+                  {isOwner && (
+                    <span className={`${styles.badge} ${styles.badgeOwner}`}>
+                      {t("view.yourListing")}
+                    </span>
+                  )}
+                  {post.is_sold && (
+                    <span className={`${styles.badge} ${styles.badgeSold}`}>
+                      {tCommon("badges.sold")}
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Title */}
-              <Title order={1}>{post.title}</Title>
+              <h1 className={styles.title}>{post.title}</h1>
 
               {/* Price and Like */}
-              <Group justify="space-between" align="center">
-                <Text size="2rem" fw={700} c="dark">
-                  ฿{price.toLocaleString()}
-                </Text>
+              <div className={styles.priceRow}>
+                <div className={styles.priceSection}>
+                  <span className={styles.price}>฿{price.toLocaleString()}</span>
+                  {shippingCost > 0 ? (
+                    <span className={styles.shippingCost}>
+                      + ฿{shippingCost.toLocaleString()} {t("view.shipping")}
+                    </span>
+                  ) : (
+                    <span className={styles.freeShipping}>
+                      {t("view.freeShipping")}
+                    </span>
+                  )}
+                </div>
                 <LikeButton
                   postId={post.id}
                   initialLiked={post.is_liked}
@@ -150,30 +207,24 @@ export function PublicPostViewPage() {
                   size="lg"
                   onAuthRequired={handleLikeAuthRequired}
                 />
-              </Group>
+              </div>
 
-              <Divider />
+              <hr className={styles.divider} />
 
               {/* Size */}
               {post.size && (
                 <div>
-                  <Text size="sm" fw={500} c="dimmed" mb="xs">
+                  <div className={styles.sectionLabel}>
                     {tCommon("postCard.size")}
-                  </Text>
-                  <Badge size="lg" variant="light" color="gray">
-                    {post.size}
-                  </Badge>
+                  </div>
+                  <span className={styles.sizeBadge}>{post.size}</span>
                 </div>
               )}
 
               {/* Description */}
               <div>
-                <Text size="sm" fw={500} c="dimmed" mb="xs">
-                  {t("view.description")}
-                </Text>
-                <Text style={{ whiteSpace: "pre-wrap" }}>
-                  {post.description}
-                </Text>
+                <div className={styles.sectionLabel}>{t("view.description")}</div>
+                <p className={styles.description}>{post.description}</p>
               </div>
 
               {/* Measurements Section */}
@@ -181,70 +232,121 @@ export function PublicPostViewPage() {
                 <MeasurementsDisplay measurements={post.measurements} />
               )}
 
-              <Divider />
+              <hr className={styles.divider} />
 
               {/* Seller Info */}
-              <Paper
-                p="md"
-                radius="md"
-                withBorder
-                style={{ cursor: "pointer" }}
-                onClick={() =>
-                  navigate({ to: `/profile/${post.user.username}` })
-                }
-              >
-                <Group>
-                  <Avatar size="lg" radius="xl" color="blue">
-                    {post.user.username.charAt(0).toUpperCase()}
-                  </Avatar>
-                  <div>
-                    <Text fw={500}>@{post.user.username}</Text>
-                    <Text size="sm" c="dimmed">
-                      {post.user.first_name} {post.user.last_name}
-                    </Text>
+              {isOwner ? (
+                <div className={styles.sellerCardStatic}>
+                  <div className={styles.sellerInfo}>
+                    <div className={styles.sellerAvatar}>
+                      {post.user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className={styles.sellerDetails}>
+                      <div className={styles.sellerUsername}>
+                        @{post.user.username}
+                      </div>
+                      <div className={styles.sellerName}>
+                        {post.user.first_name} {post.user.last_name}
+                      </div>
+                    </div>
                   </div>
-                </Group>
-              </Paper>
+                </div>
+              ) : (
+                <div
+                  className={styles.sellerCard}
+                  onClick={() => navigate({ to: `/profile/${post.user.username}` })}
+                >
+                  <div className={styles.sellerInfo}>
+                    <div className={styles.sellerAvatar}>
+                      {post.user.username.charAt(0).toUpperCase()}
+                    </div>
+                    <div className={styles.sellerDetails}>
+                      <div className={styles.sellerUsername}>
+                        @{post.user.username}
+                      </div>
+                      <div className={styles.sellerName}>
+                        {post.user.first_name} {post.user.last_name}
+                      </div>
+                    </div>
+                  </div>
+                  <IconChevronRight size={20} className={styles.sellerArrow} />
+                </div>
+              )}
 
               {/* Ban Warning */}
               {isBanned && (
-                <Alert
-                  icon={<IconAlertCircle size={16} />}
-                  color="red"
-                  variant="light"
-                >
-                  {post.is_banned
-                    ? t("view.listingRemoved")
-                    : t("view.sellerSuspended")}
-                </Alert>
+                <div className={styles.alert}>
+                  <IconAlertCircle size={18} className={styles.alertIcon} />
+                  <span>
+                    {post.is_banned
+                      ? t("view.listingRemoved")
+                      : t("view.sellerSuspended")}
+                  </span>
+                </div>
               )}
 
-              {/* Buy Button - prompts login */}
-              <Button
-                size="xl"
-                leftSection={<IconShoppingCart size={20} />}
-                onClick={handleBuyClick}
-                mt="md"
-                disabled={isBanned || post.is_sold}
-              >
-                {t("view.buyNow")} - ฿{price.toLocaleString()}
-              </Button>
-
-              {post.is_sold && (
-                <Text ta="center" c="dimmed" size="sm">
-                  {t("view.itemSold")}
-                </Text>
+              {/* Buy Button - hide for owners, show sold state */}
+              {!isOwner && (
+                post.is_sold ? (
+                  <div className={styles.soldButton}>
+                    {tCommon("badges.sold")}
+                  </div>
+                ) : (
+                  <button
+                    className={styles.buyButtonDesktop}
+                    onClick={handleBuyClick}
+                    disabled={isBanned}
+                  >
+                    <IconShoppingCart size={20} />
+                    {t("view.buyNow")} - ฿{price.toLocaleString()}
+                  </button>
+                )
               )}
-            </Stack>
-          </Grid.Col>
-        </Grid>
-      </Container>
+
+              {/* Earnings Preview - only show for owners */}
+              {isOwner && (
+                <EarningsPreview
+                  postId={postId ?? undefined}
+                  title={t("view.yourEarnings")}
+                />
+              )}
+
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Sticky Buy Bar - hide for owners and sold items */}
+        {!isOwner && !post.is_sold && (
+          <div className={styles.buyBar}>
+            <button
+              className={styles.buyBarButton}
+              onClick={handleBuyClick}
+              disabled={isBanned}
+            >
+              <IconShoppingCart size={20} />
+              {t("view.buyNow")} - ฿{price.toLocaleString()}
+            </button>
+          </div>
+        )}
+      </div>
 
       <LoginPromptModal
         opened={loginModalOpened}
         onClose={closeLoginModal}
         action={loginAction}
       />
+
+      {isAuthenticated && (
+        <ReportModal
+          opened={reportModalOpened}
+          onClose={() => setReportModalOpened(false)}
+          reportType={reportType}
+          entityId={reportType === "post" ? post.id : post.user.id}
+          entityName={
+            reportType === "post" ? post.title : `@${post.user.username}`
+          }
+        />
+      )}
     </>
   );
 }
