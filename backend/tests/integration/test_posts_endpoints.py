@@ -104,7 +104,7 @@ class TestGetPostEndpoint:
         mock_post.user = create_mock_user()
 
         # Configure CRUD to return (post, is_banned, is_user_banned, is_sold)
-        mock_post_crud.get_by_id_with_ban_status.return_value = (
+        mock_post_crud.get_by_id_with_status.return_value = (
             mock_post,
             False,
             False,
