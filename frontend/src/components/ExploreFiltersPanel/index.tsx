@@ -3,7 +3,7 @@
  * Contains search, category checkboxes, and size filters
  */
 
-import { useCallback, useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { Stack, Group, Checkbox, TextInput } from "@mantine/core";
 import {
   IconSearch,
@@ -24,9 +24,7 @@ import styles from "./ExploreFiltersPanel.module.css";
 
 interface ExploreFiltersPanelProps {
   filters: FiltersState;
-  onFiltersChange: (
-    update: FiltersState | ((current: FiltersState) => FiltersState),
-  ) => void;
+  onFiltersChange: (filters: FiltersState) => void;
 }
 
 export function ExploreFiltersPanel({
@@ -68,39 +66,41 @@ export function ExploreFiltersPanel({
 
   const handleTypeToggle = useCallback(
     (type: PostType) => {
-      onFiltersChange((current) => {
-        const newTypes = current.types.includes(type)
-          ? current.types.filter((t) => t !== type)
-          : [...current.types, type];
-        return { ...current, types: newTypes, sizes: [] };
-      });
+      const newTypes = filters.types.includes(type)
+        ? filters.types.filter((t) => t !== type)
+        : [...filters.types, type];
+
+      // Keep sizes that are still relevant to the new type selection
+      const newSizes =
+        newTypes.length === 0
+          ? filters.sizes // All categories visible when no types selected
+          : filters.sizes.filter((sizeKey) => {
+              const { category } = parseSizeKey(sizeKey);
+              const categoryConfig = SIZE_CATEGORY_CONFIG.find(
+                (c) => c.category === category,
+              );
+              // Keep if category has at least one post type in common with selection
+              return categoryConfig?.postTypes.some((pt) =>
+                newTypes.includes(pt),
+              );
+            });
+
+      onFiltersChange({ ...filters, types: newTypes, sizes: newSizes });
     },
-    [onFiltersChange],
+    [filters, onFiltersChange],
   );
 
-  const handleSizeToggle = useCallback(
-    (category: SizeCategory, size: string) => {
-      const sizeKey = createSizeKey(category, size);
-      onFiltersChange((current) => {
-        const newSizes = current.sizes.includes(sizeKey)
-          ? current.sizes.filter((s) => s !== sizeKey)
-          : [...current.sizes, sizeKey];
-        return { ...current, sizes: newSizes };
-      });
-    },
-    [onFiltersChange],
-  );
+  const handleSizeToggle = (category: SizeCategory, size: string) => {
+    const sizeKey = createSizeKey(category, size);
+    const newSizes = filters.sizes.includes(sizeKey)
+      ? filters.sizes.filter((s) => s !== sizeKey)
+      : [...filters.sizes, sizeKey];
+    onFiltersChange({ ...filters, sizes: newSizes });
+  };
 
-  const handleSearchChange = useCallback(
-    (value: string) => {
-      onFiltersChange((current) => ({ ...current, search: value }));
-    },
-    [onFiltersChange],
-  );
-
-  const handleClearFilters = useCallback(() => {
-    onFiltersChange(() => ({ types: [], sizes: [], search: "" }));
-  }, [onFiltersChange]);
+  const handleClearFilters = () => {
+    onFiltersChange({ types: [], sizes: [], search: "" });
+  };
 
   return (
     <Stack gap="lg">
@@ -109,7 +109,9 @@ export function ExploreFiltersPanel({
         placeholder={t("search.placeholder")}
         leftSection={<IconSearch size={16} />}
         value={filters.search}
-        onChange={(e) => handleSearchChange(e.currentTarget.value)}
+        onChange={(e) =>
+          onFiltersChange({ ...filters, search: e.currentTarget.value })
+        }
         radius="xs"
         className={styles.searchInput}
         rightSection={
@@ -117,7 +119,7 @@ export function ExploreFiltersPanel({
             <IconX
               size={14}
               className={styles.clearIcon}
-              onClick={() => handleSearchChange("")}
+              onClick={() => onFiltersChange({ ...filters, search: "" })}
             />
           )
         }

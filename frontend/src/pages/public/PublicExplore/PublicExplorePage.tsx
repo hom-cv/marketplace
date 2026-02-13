@@ -3,7 +3,7 @@
  * Features a persistent filter sidebar on desktop with collapsible sections
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader, Stack, Box, Drawer } from "@mantine/core";
@@ -96,7 +96,9 @@ export function PublicExplorePage() {
   const queryFilters = useMemo<PostFilters>(() => {
     const apiFilters: PostFilters = {};
 
+    // Start with explicitly selected types
     const typesSet = new Set<PostType>(filters.types);
+    const hasExplicitTypes = filters.types.length > 0;
 
     if (filters.sizes.length > 0) {
       const rawSizes: string[] = [];
@@ -105,10 +107,13 @@ export function PublicExplorePage() {
         const { category, size } = parseSizeKey(sizeKey);
         rawSizes.push(size);
 
-        const categoryConfig = sizeCategoryMap.get(category);
-        if (categoryConfig) {
-          for (const postType of categoryConfig.postTypes) {
-            typesSet.add(postType);
+        // Only auto-expand types if user hasn't selected any types explicitly
+        if (!hasExplicitTypes) {
+          const categoryConfig = sizeCategoryMap.get(category);
+          if (categoryConfig) {
+            for (const postType of categoryConfig.postTypes) {
+              typesSet.add(postType);
+            }
           }
         }
       }
@@ -167,12 +172,29 @@ export function PublicExplorePage() {
     filters.sizes.length +
     (filters.search.trim() ? 1 : 0);
 
-  const handleTypeToggle = (type: PostType) => {
-    const newTypes = filters.types.includes(type)
-      ? filters.types.filter((t) => t !== type)
-      : [...filters.types, type];
-    setFilters({ ...filters, types: newTypes, sizes: [] });
-  };
+  const handleTypeToggle = useCallback(
+    (type: PostType) => {
+      const newTypes = filters.types.includes(type)
+        ? filters.types.filter((t) => t !== type)
+        : [...filters.types, type];
+
+      // Keep sizes that are still relevant to the new type selection
+      const newSizes =
+        newTypes.length === 0
+          ? filters.sizes // All categories visible when no types selected
+          : filters.sizes.filter((sizeKey) => {
+              const { category } = parseSizeKey(sizeKey);
+              const categoryConfig = sizeCategoryMap.get(category);
+              // Keep if category has at least one post type in common with selection
+              return categoryConfig?.postTypes.some((pt) =>
+                newTypes.includes(pt),
+              );
+            });
+
+      setFilters({ ...filters, types: newTypes, sizes: newSizes });
+    },
+    [filters, sizeCategoryMap],
+  );
 
   const handleSizeToggle = (category: SizeCategory, size: string) => {
     const sizeKey = createSizeKey(category, size);
