@@ -287,7 +287,7 @@
 }
 
 .buyButtonDesktop:hover:not(:disabled) {
-  background: #1a33e0;
+  background: var(--color-primary-hover);
 }
 
 .buyButtonDesktop:disabled {
