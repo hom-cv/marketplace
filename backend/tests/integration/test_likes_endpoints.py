@@ -7,10 +7,9 @@ using mocked CRUDs (allowing real service logic to run).
 from decimal import Decimal
 from unittest.mock import MagicMock
 
-from httpx import AsyncClient
-
 from app.models.like import Like
 from app.models.post import Post, PostType
+from httpx import AsyncClient
 from tests.integration.conftest import create_mock_user
 
 
@@ -313,7 +312,12 @@ class TestPostsEndpointLikeData:
     ):
         """Get single post should include like_count and is_liked."""
         mock_post = create_mock_post()
-        mock_post_crud.get_by_id_with_ban_status.return_value = (mock_post, False, False, False)
+        mock_post_crud.get_by_id_with_status.return_value = (
+            mock_post,
+            False,
+            False,
+            False,
+        )
         mock_like_crud.get_likes_for_posts.return_value = {
             1: {"count": 15, "is_liked": False}
         }
