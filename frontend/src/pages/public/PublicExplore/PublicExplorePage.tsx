@@ -174,39 +174,46 @@ export function PublicExplorePage() {
 
   const handleTypeToggle = useCallback(
     (type: PostType) => {
-      const newTypes = filters.types.includes(type)
-        ? filters.types.filter((t) => t !== type)
-        : [...filters.types, type];
+      setFilters((prev) => {
+        const newTypes = prev.types.includes(type)
+          ? prev.types.filter((t) => t !== type)
+          : [...prev.types, type];
 
-      // Keep sizes that are still relevant to the new type selection
-      const newSizes =
-        newTypes.length === 0
-          ? filters.sizes // All categories visible when no types selected
-          : filters.sizes.filter((sizeKey) => {
-              const { category } = parseSizeKey(sizeKey);
-              const categoryConfig = sizeCategoryMap.get(category);
-              // Keep if category has at least one post type in common with selection
-              return categoryConfig?.postTypes.some((pt) =>
-                newTypes.includes(pt),
-              );
-            });
+        // Keep sizes that are still relevant to the new type selection
+        const newSizes =
+          newTypes.length === 0
+            ? prev.sizes // All categories visible when no types selected
+            : prev.sizes.filter((sizeKey) => {
+                const { category } = parseSizeKey(sizeKey);
+                const categoryConfig = sizeCategoryMap.get(category);
+                // Keep if category has at least one post type in common with selection
+                return categoryConfig?.postTypes.some((pt) =>
+                  newTypes.includes(pt),
+                );
+              });
 
-      setFilters({ ...filters, types: newTypes, sizes: newSizes });
+        return { ...prev, types: newTypes, sizes: newSizes };
+      });
     },
-    [filters, sizeCategoryMap],
+    [sizeCategoryMap],
   );
 
-  const handleSizeToggle = (category: SizeCategory, size: string) => {
-    const sizeKey = createSizeKey(category, size);
-    const newSizes = filters.sizes.includes(sizeKey)
-      ? filters.sizes.filter((s) => s !== sizeKey)
-      : [...filters.sizes, sizeKey];
-    setFilters({ ...filters, sizes: newSizes });
-  };
+  const handleSizeToggle = useCallback(
+    (category: SizeCategory, size: string) => {
+      const sizeKey = createSizeKey(category, size);
+      setFilters((prev) => ({
+        ...prev,
+        sizes: prev.sizes.includes(sizeKey)
+          ? prev.sizes.filter((s) => s !== sizeKey)
+          : [...prev.sizes, sizeKey],
+      }));
+    },
+    [],
+  );
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({ types: [], sizes: [], search: "" });
-  };
+  }, []);
 
   if (error) {
     return (
