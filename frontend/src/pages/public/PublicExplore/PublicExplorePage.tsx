@@ -20,8 +20,10 @@ import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
-  createSizeKey,
   parseSizeKey,
+  toggleTypeFilter,
+  toggleSizeFilter,
+  clearSearchFilter,
 } from "@/utils/filterHelpers";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useIsAuthenticated } from "@/stores/authStore";
@@ -173,46 +175,27 @@ export function PublicExplorePage() {
     (filters.search.trim() ? 1 : 0);
 
   const handleTypeToggle = useCallback(
-    (type: PostType) => {
-      setFilters((prev) => {
-        const newTypes = prev.types.includes(type)
-          ? prev.types.filter((t) => t !== type)
-          : [...prev.types, type];
-
-        // Keep sizes that are still relevant to the new type selection
-        const newSizes =
-          newTypes.length === 0
-            ? prev.sizes // All categories visible when no types selected
-            : prev.sizes.filter((sizeKey) => {
-                const { category } = parseSizeKey(sizeKey);
-                const categoryConfig = sizeCategoryMap.get(category);
-                // Keep if category has at least one post type in common with selection
-                return categoryConfig?.postTypes.some((pt) =>
-                  newTypes.includes(pt),
-                );
-              });
-
-        return { ...prev, types: newTypes, sizes: newSizes };
-      });
-    },
-    [sizeCategoryMap],
-  );
-
-  const handleSizeToggle = useCallback(
-    (category: SizeCategory, size: string) => {
-      const sizeKey = createSizeKey(category, size);
-      setFilters((prev) => ({
-        ...prev,
-        sizes: prev.sizes.includes(sizeKey)
-          ? prev.sizes.filter((s) => s !== sizeKey)
-          : [...prev.sizes, sizeKey],
-      }));
+    (postType: PostType) => {
+      setFilters((prev) =>
+        toggleTypeFilter(prev, postType, SIZE_CATEGORY_CONFIG),
+      );
     },
     [],
   );
 
-  const handleClearFilters = useCallback(() => {
+  const handleSizeToggle = useCallback(
+    (category: SizeCategory, size: string) => {
+      setFilters((prev) => toggleSizeFilter(prev, category, size));
+    },
+    [],
+  );
+
+  const handleClearAllFilters = useCallback(() => {
     setFilters({ types: [], sizes: [], search: "" });
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setFilters((prev) => clearSearchFilter(prev));
   }, []);
 
   if (error) {
@@ -269,7 +252,7 @@ export function PublicExplorePage() {
                 {filters.search.trim() && (
                   <FilterBadge
                     label={`"${filters.search}"`}
-                    onRemove={() => setFilters({ ...filters, search: "" })}
+                    onRemove={handleSearchClear}
                   />
                 )}
                 {filters.types.map((type) => (
@@ -295,7 +278,7 @@ export function PublicExplorePage() {
                 })}
                 <button
                   className={styles.clearAllBadge}
-                  onClick={handleClearFilters}
+                  onClick={handleClearAllFilters}
                 >
                   <IconX size={12} />
                   <span>{tCommon("buttons.clearAll")}</span>
@@ -322,7 +305,7 @@ export function PublicExplorePage() {
                   {posts.length === 0 ? (
                     <EmptyState
                       hasActiveFilters={hasActiveFilters}
-                      onClearFilters={handleClearFilters}
+                      onClearFilters={handleClearAllFilters}
                       noMatchText={t("results.noMatch")}
                       noListingsText={t("results.noListings")}
                       clearFiltersText={t("filters.clearFilters")}
@@ -345,7 +328,7 @@ export function PublicExplorePage() {
                   {posts.length === 0 ? (
                     <EmptyState
                       hasActiveFilters={hasActiveFilters}
-                      onClearFilters={handleClearFilters}
+                      onClearFilters={handleClearAllFilters}
                       noMatchText={t("results.noMatch")}
                       noListingsText={t("results.noListings")}
                       clearFiltersText={t("filters.clearFilters")}

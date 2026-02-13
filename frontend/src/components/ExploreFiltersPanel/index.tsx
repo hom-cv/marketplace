@@ -19,6 +19,10 @@ import {
   type FiltersState,
   createSizeKey,
   parseSizeKey,
+  toggleTypeFilter,
+  toggleSizeFilter,
+  updateSearchFilter,
+  clearSearchFilter,
 } from "@/utils/filterHelpers";
 import styles from "./ExploreFiltersPanel.module.css";
 
@@ -67,60 +71,35 @@ export function ExploreFiltersPanel({
     filters.search.trim() !== "";
 
   const handleTypeToggle = useCallback(
-    (type: PostType) => {
-      onFiltersChange((prev) => {
-        const newTypes = prev.types.includes(type)
-          ? prev.types.filter((t) => t !== type)
-          : [...prev.types, type];
-
-        // Keep sizes that are still relevant to the new type selection
-        const newSizes =
-          newTypes.length === 0
-            ? prev.sizes // All categories visible when no types selected
-            : prev.sizes.filter((sizeKey) => {
-                const { category } = parseSizeKey(sizeKey);
-                const categoryConfig = SIZE_CATEGORY_CONFIG.find(
-                  (c) => c.category === category,
-                );
-                // Keep if category has at least one post type in common with selection
-                return categoryConfig?.postTypes.some((pt) =>
-                  newTypes.includes(pt),
-                );
-              });
-
-        return { ...prev, types: newTypes, sizes: newSizes };
-      });
+    (postType: PostType) => {
+      onFiltersChange((prev) =>
+        toggleTypeFilter(prev, postType, SIZE_CATEGORY_CONFIG),
+      );
     },
     [onFiltersChange],
   );
 
   const handleSizeToggle = useCallback(
     (category: SizeCategory, size: string) => {
-      const sizeKey = createSizeKey(category, size);
-      onFiltersChange((prev) => ({
-        ...prev,
-        sizes: prev.sizes.includes(sizeKey)
-          ? prev.sizes.filter((s) => s !== sizeKey)
-          : [...prev.sizes, sizeKey],
-      }));
+      onFiltersChange((prev) => toggleSizeFilter(prev, category, size));
     },
     [onFiltersChange],
   );
 
-  const handleClearFilters = useCallback(() => {
+  const handleClearAllFilters = useCallback(() => {
     onFiltersChange({ types: [], sizes: [], search: "" });
   }, [onFiltersChange]);
 
   const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const searchText = e.currentTarget.value;
-      onFiltersChange((prev) => ({ ...prev, search: searchText }));
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const searchTerm = event.currentTarget.value;
+      onFiltersChange((prev) => updateSearchFilter(prev, searchTerm));
     },
     [onFiltersChange],
   );
 
   const handleSearchClear = useCallback(() => {
-    onFiltersChange((prev) => ({ ...prev, search: "" }));
+    onFiltersChange((prev) => clearSearchFilter(prev));
   }, [onFiltersChange]);
 
   return (
@@ -208,7 +187,7 @@ export function ExploreFiltersPanel({
 
       {/* Clear Filters Button */}
       {hasActiveFilters && (
-        <button className={styles.clearButton} onClick={handleClearFilters}>
+        <button className={styles.clearButton} onClick={handleClearAllFilters}>
           <IconX size={14} />
           <span>{tCommon("buttons.clearAll")}</span>
         </button>
