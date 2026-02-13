@@ -191,6 +191,8 @@
   padding: 16px;
   cursor: pointer;
   transition: border-color 0.15s ease;
+  text-decoration: none;
+  color: inherit;
 }
 
 .sellerCard:hover {

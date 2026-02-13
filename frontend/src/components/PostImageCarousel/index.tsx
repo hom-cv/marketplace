@@ -5,7 +5,6 @@
  * - Arrow navigation on desktop (hover to reveal)
  * - Dot indicators on mobile
  * - Thumbnail strip on desktop
- * - Keyboard navigation (arrow keys)
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -106,32 +105,6 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
     setIsDragging(false);
     setDragOffset(0);
   }, [isDragging, hasMultipleImages, currentIndex, imageCount, goToPrev, goToNext]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!hasMultipleImages) return;
-
-      // Only handle if carousel is focused or no other input is focused
-      const activeElement = document.activeElement;
-      const isInputFocused = activeElement instanceof HTMLInputElement ||
-                            activeElement instanceof HTMLTextAreaElement ||
-                            activeElement instanceof HTMLSelectElement;
-
-      if (isInputFocused) return;
-
-      if (e.key === "ArrowLeft") {
-        e.preventDefault();
-        goToPrev();
-      } else if (e.key === "ArrowRight") {
-        e.preventDefault();
-        goToNext();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [hasMultipleImages, goToPrev, goToNext]);
 
   // Calculate transform
   const baseOffset = -currentIndex * 100;

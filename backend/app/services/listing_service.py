@@ -134,8 +134,8 @@ class ListingService:
         )
 
         return [
-            _post_with_ban_to_response(post, is_banned, is_user_banned)
-            for post, is_banned, is_user_banned in posts_with_ban_status
+            _post_with_ban_to_response(post, is_banned, is_user_banned, is_sold)
+            for post, is_banned, is_user_banned, is_sold in posts_with_ban_status
         ]
 
     async def get_listing(self, post_id: int) -> PostResponseSchema | None:

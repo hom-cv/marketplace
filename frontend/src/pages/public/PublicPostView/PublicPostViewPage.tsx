@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Loader, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
@@ -252,9 +252,10 @@ export function PublicPostViewPage() {
                   </div>
                 </div>
               ) : (
-                <div
+                <Link
+                  to="/profile/$username"
+                  params={{ username: post.user.username }}
                   className={styles.sellerCard}
-                  onClick={() => navigate({ to: `/profile/${post.user.username}` })}
                 >
                   <div className={styles.sellerInfo}>
                     <div className={styles.sellerAvatar}>
@@ -270,7 +271,7 @@ export function PublicPostViewPage() {
                     </div>
                   </div>
                   <IconChevronRight size={20} className={styles.sellerArrow} />
-                </div>
+                </Link>
               )}
 
               {/* Ban Warning */}

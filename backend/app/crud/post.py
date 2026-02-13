@@ -225,11 +225,11 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         skip: int = 0,
         limit: int = 50,
         include_deleted: bool = False,
-    ) -> list[tuple[Post, bool, bool]]:
+    ) -> list[tuple[Post, bool, bool, bool]]:
         """
-        Get all posts by a specific user with ban status in a single query.
+        Get all posts by a specific user with ban status and sold status in a single query.
 
-        Avoids N+1 query issue by computing ban status in the same query.
+        Avoids N+1 query issue by computing ban status and sold status in the same query.
 
         Args:
             db: The async database session.
@@ -239,12 +239,20 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             include_deleted: If True, include soft-deleted posts.
 
         Returns:
-            List of (Post, is_post_banned, is_user_banned) tuples.
+            List of (Post, is_post_banned, is_user_banned, is_sold) tuples.
         """
         is_post_banned_expr, is_user_banned_expr = self._ban_status_expressions()
 
+        # Subquery to determine if a post is sold
+        is_sold_subquery = (
+            exists()
+            .where(Payment.post_id == self.model.id)
+            .where(Payment.status == PaymentStatus.SUCCESSFUL)
+        )
+        is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
+
         query = (
-            select(self.model, is_post_banned_expr, is_user_banned_expr)
+            select(self.model, is_post_banned_expr, is_user_banned_expr, is_sold_expr)
             .options(
                 selectinload(self.model.user).selectinload(User.seller_profile)
             )
@@ -259,7 +267,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         result = await db.execute(query)
         rows = result.all()
 
-        return [(post, bool(is_post_banned), bool(is_user_banned)) for post, is_post_banned, is_user_banned in rows]
+        return [(post, bool(is_post_banned), bool(is_user_banned), bool(is_sold)) for post, is_post_banned, is_user_banned, is_sold in rows]
 
     async def get_by_id_with_user(
         self,

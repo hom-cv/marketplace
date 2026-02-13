@@ -9,12 +9,10 @@ import styles from "./MeasurementsDisplay.module.css";
 
 interface MeasurementsDisplayProps {
   measurements: Record<string, number | null | undefined>;
-  showDivider?: boolean;
 }
 
 export function MeasurementsDisplay({
   measurements,
-  showDivider = true,
 }: MeasurementsDisplayProps) {
   const { t } = useTranslation("listings");
 
@@ -38,7 +36,6 @@ export function MeasurementsDisplay({
 
   return (
     <div className={styles.container}>
-      {showDivider && <hr className={styles.divider} />}
       <div className={styles.header}>
         <IconRuler size={16} className={styles.headerIcon} />
         <span className={styles.headerLabel}>{t("view.measurements")}</span>

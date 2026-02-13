@@ -104,8 +104,8 @@ class TestGetPostEndpoint:
         mock_post.measurements = None
         mock_post.user = create_mock_user()
 
-        # Configure CRUD to return (post, is_banned, is_user_banned)
-        mock_post_crud.get_by_id_with_ban_status.return_value = (mock_post, False, False)
+        # Configure CRUD to return (post, is_banned, is_user_banned, is_sold)
+        mock_post_crud.get_by_id_with_ban_status.return_value = (mock_post, False, False, False)
 
         response = await async_client.get("/api/v1/posts/1")
 
