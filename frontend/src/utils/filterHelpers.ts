@@ -66,7 +66,7 @@ export function toggleTypeFilter(
 
   const updatedSizes =
     updatedTypes.length === 0
-      ? currentFilters.sizes
+      ? []
       : currentFilters.sizes.filter((sizeKey) => {
           const { category } = parseSizeKey(sizeKey);
           const categoryConfig = sizeCategoryConfig.find(
