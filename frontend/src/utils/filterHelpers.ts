@@ -3,7 +3,11 @@
  * Shared helpers for handling post filters with size categories
  */
 
-import type { PostType, SizeCategory } from "@/api/types/post";
+import type {
+  PostType,
+  SizeCategory,
+  SizeCategoryConfig,
+} from "@/api/types/post";
 
 /**
  * State for post filters
@@ -39,7 +43,72 @@ export function createSizeKey(category: SizeCategory, size: string): string {
 /**
  * Parse a prefixed size key back into category and size
  */
-export function parseSizeKey(key: string): { category: SizeCategory; size: string } {
+export function parseSizeKey(key: string): {
+  category: SizeCategory;
+  size: string;
+} {
   const [category, size] = key.split(":");
   return { category: category as SizeCategory, size };
+}
+
+/**
+ * Toggle a post type in the filter state.
+ * When types change, removes sizes that no longer belong to any selected type.
+ */
+export function toggleTypeFilter(
+  currentFilters: FiltersState,
+  typeToToggle: PostType,
+  sizeCategoryConfig: readonly SizeCategoryConfig[],
+): FiltersState {
+  const updatedTypes = currentFilters.types.includes(typeToToggle)
+    ? currentFilters.types.filter((t) => t !== typeToToggle)
+    : [...currentFilters.types, typeToToggle];
+
+  const updatedSizes =
+    updatedTypes.length === 0
+      ? []
+      : currentFilters.sizes.filter((sizeKey) => {
+          const { category } = parseSizeKey(sizeKey);
+          const categoryConfig = sizeCategoryConfig.find(
+            (config) => config.category === category,
+          );
+          return categoryConfig?.postTypes.some((postType) =>
+            updatedTypes.includes(postType),
+          );
+        });
+
+  return { ...currentFilters, types: updatedTypes, sizes: updatedSizes };
+}
+
+/**
+ * Toggle a size filter in the filter state.
+ */
+export function toggleSizeFilter(
+  currentFilters: FiltersState,
+  category: SizeCategory,
+  size: string,
+): FiltersState {
+  const sizeKey = createSizeKey(category, size);
+  const updatedSizes = currentFilters.sizes.includes(sizeKey)
+    ? currentFilters.sizes.filter((key) => key !== sizeKey)
+    : [...currentFilters.sizes, sizeKey];
+
+  return { ...currentFilters, sizes: updatedSizes };
+}
+
+/**
+ * Update the search term in the filter state.
+ */
+export function updateSearchFilter(
+  currentFilters: FiltersState,
+  searchTerm: string,
+): FiltersState {
+  return { ...currentFilters, search: searchTerm };
+}
+
+/**
+ * Clear the search term in the filter state.
+ */
+export function clearSearchFilter(currentFilters: FiltersState): FiltersState {
+  return { ...currentFilters, search: "" };
 }

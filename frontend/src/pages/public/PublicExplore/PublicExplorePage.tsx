@@ -3,101 +3,74 @@
  * Features a persistent filter sidebar on desktop with collapsible sections
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  Loader,
-  Center,
-  Alert,
-  Text,
-  Stack,
-  Box,
-  Group,
-  Title,
-  Checkbox,
-  Button,
-  TextInput,
-  Badge,
-  Drawer,
-  Card,
-  Container,
-} from "@mantine/core";
+import { Loader, Stack, Box, Drawer } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import {
-  IconAlertCircle,
-  IconAdjustments,
-  IconX,
-  IconSearch,
-  IconCategory,
-  IconRuler,
-} from "@tabler/icons-react";
+import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getPosts } from "@/api/posts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
-import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
+import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
+import { FilterBadge } from "@/components/FilterBadge";
+import { EmptyState } from "@/components/EmptyState";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
-import { SIZE_CATEGORY_CONFIG } from "@/api/types/post";
+import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
-  createSizeKey,
   parseSizeKey,
+  toggleTypeFilter,
+  toggleSizeFilter,
+  clearSearchFilter,
 } from "@/utils/filterHelpers";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+import { useIsAuthenticated } from "@/stores/authStore";
 import styles from "./PublicExplorePage.module.css";
 
 export function PublicExplorePage() {
   const navigate = useNavigate();
+  const isAuthenticated = useIsAuthenticated();
   const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
-  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
   const [filters, setFilters] = useState<FiltersState>({
     types: [],
     sizes: [],
     search: "",
   });
 
-  const typeOptions: { value: PostType; label: string }[] = useMemo(
-    () => [
-      { value: "SHIRT", label: tListings("categories.shirt") },
-      { value: "PANTS", label: tListings("categories.pants") },
-      { value: "JACKET", label: tListings("categories.jacket") },
-      { value: "SHOES", label: tListings("categories.shoes") },
-      { value: "ACCESSORIES", label: tListings("categories.accessories") },
-      { value: "OTHER", label: tListings("categories.other") },
-    ],
-    [tListings]
+  const typeOptions = useMemo(
+    () =>
+      POST_TYPES.map((postType) => ({
+        value: postType,
+        label: tListings(`categories.${postType.toLowerCase()}`),
+      })),
+    [tListings],
   );
 
   const typeLabelsMap = useMemo(
     () => new Map(typeOptions.map((o) => [o.value, o.label])),
-    [typeOptions]
+    [typeOptions],
   );
 
   const sizeCategoryMap = useMemo(
     () => new Map(SIZE_CATEGORY_CONFIG.map((c) => [c.category, c])),
-    []
+    [],
   );
-
-  const visibleSizeCategories = useMemo(() => {
-    const selectedTypes = filters.types;
-    return SIZE_CATEGORY_CONFIG.map((config) => {
-      const isVisible =
-        selectedTypes.length === 0 ||
-        config.postTypes.some((pt) => selectedTypes.includes(pt));
-      return { ...config, isVisible };
-    }).filter((c) => c.isVisible);
-  }, [filters.types]);
 
   const [debouncedSearch] = useDebouncedValue(filters.search, 300);
 
   const queryFilters = useMemo<PostFilters>(() => {
     const apiFilters: PostFilters = {};
 
+    // Start with explicitly selected types
     const typesSet = new Set<PostType>(filters.types);
+    const hasExplicitTypes = filters.types.length > 0;
 
     if (filters.sizes.length > 0) {
       const rawSizes: string[] = [];
@@ -106,19 +79,20 @@ export function PublicExplorePage() {
         const { category, size } = parseSizeKey(sizeKey);
         rawSizes.push(size);
 
-        const categoryConfig = sizeCategoryMap.get(category);
-        if (categoryConfig) {
-          for (const postType of categoryConfig.postTypes) {
-            typesSet.add(postType);
+        // Only auto-expand types if user hasn't selected any types explicitly
+        if (!hasExplicitTypes) {
+          const categoryConfig = sizeCategoryMap.get(category);
+          if (categoryConfig) {
+            for (const postType of categoryConfig.postTypes) {
+              typesSet.add(postType);
+            }
           }
         }
       }
 
-      // Remove duplicates from raw sizes
       apiFilters.sizes = [...new Set(rawSizes)];
     }
 
-    // Only include types filter if we have types to filter by
     if (typesSet.size > 0) {
       apiFilters.types = [...typesSet];
     }
@@ -139,7 +113,8 @@ export function PublicExplorePage() {
     isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["public-posts", queryFilters],
-    queryFn: ({ pageParam = 0 }) => getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
+    queryFn: ({ pageParam = 0 }) =>
+      getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
     getNextPageParam: (lastPage) => {
       const nextSkip = lastPage.skip + lastPage.limit;
       return nextSkip < lastPage.total ? nextSkip : undefined;
@@ -153,7 +128,6 @@ export function PublicExplorePage() {
 
   const totalCount = data?.pages[0]?.total ?? 0;
 
-  // Use shared infinite scroll hook
   const loadMoreRef = useInfiniteScroll({
     hasNextPage: !!hasNextPage,
     isFetchingNextPage,
@@ -164,184 +138,99 @@ export function PublicExplorePage() {
     filters.types.length > 0 ||
     filters.sizes.length > 0 ||
     filters.search.trim() !== "";
-  const activeFilterCount = filters.types.length + filters.sizes.length;
 
-  const handleTypeToggle = (type: PostType) => {
-    const newTypes = filters.types.includes(type)
-      ? filters.types.filter((t) => t !== type)
-      : [...filters.types, type];
-    // Clear sizes when category changes to avoid confusion
-    setFilters({ ...filters, types: newTypes, sizes: [] });
-  };
+  const activeFilterCount =
+    filters.types.length +
+    filters.sizes.length +
+    (filters.search.trim() ? 1 : 0);
 
-  const handleSizeToggle = (category: SizeCategory, size: string) => {
-    const sizeKey = createSizeKey(category, size);
-    const newSizes = filters.sizes.includes(sizeKey)
-      ? filters.sizes.filter((s) => s !== sizeKey)
-      : [...filters.sizes, sizeKey];
-    setFilters({ ...filters, sizes: newSizes });
-  };
-
-  const handleClearFilters = () => {
-    setFilters({ types: [], sizes: [], search: "" });
-  };
-
-  // Reusable filter content for both sidebar and drawer
-  const filterContent = (
-    <Stack gap="lg">
-      {/* Search Input */}
-      <TextInput
-        placeholder={t("search.placeholder")}
-        leftSection={<IconSearch size={16} />}
-        value={filters.search}
-        onChange={(e) => setFilters({ ...filters, search: e.currentTarget.value })}
-        rightSection={
-          filters.search && (
-            <IconX
-              size={14}
-              style={{ cursor: "pointer" }}
-              onClick={() => setFilters({ ...filters, search: "" })}
-            />
-          )
-        }
-      />
-
-      {/* Category Filter */}
-      <CollapsibleFilterSection
-        title={tCommon("filtersSidebar.category")}
-        icon={<IconCategory size={18} />}
-        badge={filters.types.length}
-        defaultOpen={true}
-      >
-        <Stack gap="xs">
-          {typeOptions.map((option) => (
-            <Checkbox
-              key={option.value}
-              label={option.label}
-              checked={filters.types.includes(option.value)}
-              onChange={() => handleTypeToggle(option.value)}
-            />
-          ))}
-        </Stack>
-      </CollapsibleFilterSection>
-
-      {/* Size Filters - Separate dropdown per category */}
-      {visibleSizeCategories.map((categoryConfig) => {
-        // Count active sizes in this category using prefixed keys
-        const activeSizesInCategory = filters.sizes.filter((sizeKey) => {
-          const { category } = parseSizeKey(sizeKey);
-          return category === categoryConfig.category;
-        }).length;
-
-        return (
-          <CollapsibleFilterSection
-            key={categoryConfig.category}
-            title={tListings(categoryConfig.labelKey)}
-            icon={<IconRuler size={18} />}
-            badge={activeSizesInCategory}
-            defaultOpen={false}
-          >
-            <Group gap="xs" wrap="wrap">
-              {categoryConfig.sizes.map((size) => {
-                const sizeKey = createSizeKey(categoryConfig.category, size);
-                return (
-                  <Checkbox
-                    key={sizeKey}
-                    label={categoryConfig.formatLabel ? categoryConfig.formatLabel(size) : size}
-                    size="xs"
-                    checked={filters.sizes.includes(sizeKey)}
-                    onChange={() => handleSizeToggle(categoryConfig.category, size)}
-                  />
-                );
-              })}
-            </Group>
-          </CollapsibleFilterSection>
-        );
-      })}
-
-      {/* Clear Filters Button */}
-      {hasActiveFilters && (
-        <Button
-          variant="subtle"
-          color="gray"
-          size="sm"
-          leftSection={<IconX size={14} />}
-          onClick={handleClearFilters}
-          fullWidth
-        >
-          {tCommon("buttons.clearAll")}
-        </Button>
-      )}
-    </Stack>
+  const handleTypeToggle = useCallback(
+    (postType: PostType) => {
+      setFilters((prev) =>
+        toggleTypeFilter(prev, postType, SIZE_CATEGORY_CONFIG),
+      );
+    },
+    [],
   );
+
+  const handleSizeToggle = useCallback(
+    (category: SizeCategory, size: string) => {
+      setFilters((prev) => toggleSizeFilter(prev, category, size));
+    },
+    [],
+  );
+
+  const handleClearAllFilters = useCallback(() => {
+    setFilters({ types: [], sizes: [], search: "" });
+  }, []);
+
+  const handleSearchClear = useCallback(() => {
+    setFilters((prev) => clearSearchFilter(prev));
+  }, []);
 
   if (error) {
     return (
-      <Container size="xl" py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error instanceof Error ? error.message : t("errors.failedToLoad")}
-        </Alert>
-      </Container>
+      <div className={styles.page}>
+        <div className={styles.layout}>
+          <div className={styles.content}>
+            <EmptyState
+              icon={<IconAlertCircle size={24} color="var(--color-error)" />}
+              message={
+                error instanceof Error
+                  ? error.message
+                  : t("errors.failedToLoad")
+              }
+            />
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <>
-      <Container size="xl" py="lg">
+      <div className={styles.page}>
         <div className={styles.layout}>
-          {/* Desktop Filter Sidebar - Always visible */}
+          {/* Desktop Filter Sidebar */}
           <Box visibleFrom="md" className={styles.sidebar}>
-            <Card radius="lg" withBorder p="md" className={styles.sidebarCard}>
-              <Group justify="space-between" mb="md">
-                <Group gap="xs">
-                  <IconAdjustments size={20} />
-                  <Text fw={600}>{t("filters.title")}</Text>
-                </Group>
-              </Group>
-              {filterContent}
-            </Card>
+            <div className={styles.sidebarCard}>
+              <div className={styles.sidebarHeader}>
+                <IconAdjustments size={18} />
+                <span className={styles.sidebarTitle}>
+                  {t("filters.title")}
+                </span>
+              </div>
+              <ExploreFiltersPanel
+                filters={filters}
+                onFiltersChange={setFilters}
+              />
+            </div>
           </Box>
 
           {/* Main Content */}
-          <Box className={styles.content}>
+          <div
+            className={`${styles.content} ${isAuthenticated ? styles.contentAuth : ""}`}
+          >
             {/* Header */}
-            <Title order={2} mb="lg">{t("title")}</Title>
+            <header className={styles.header}>
+              <h1 className={styles.title}>{t("title")}</h1>
+            </header>
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
-              <Group gap="xs" mb="md">
+              <div className={styles.filterBadges}>
                 {filters.search.trim() && (
-                  <Badge
-                    variant="light"
-                    size="lg"
-                    rightSection={
-                      <IconX
-                        size={12}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => setFilters({ ...filters, search: "" })}
-                      />
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    {t("search.label")}: "{filters.search}"
-                  </Badge>
+                  <FilterBadge
+                    label={`"${filters.search}"`}
+                    onRemove={handleSearchClear}
+                  />
                 )}
                 {filters.types.map((type) => (
-                  <Badge
+                  <FilterBadge
                     key={type}
-                    variant="light"
-                    size="lg"
-                    rightSection={
-                      <IconX
-                        size={12}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => handleTypeToggle(type)}
-                      />
-                    }
-                    style={{ cursor: "pointer" }}
-                  >
-                    {typeLabelsMap.get(type)}
-                  </Badge>
+                    label={typeLabelsMap.get(type) ?? type}
+                    onRemove={() => handleTypeToggle(type)}
+                  />
                 ))}
                 {filters.sizes.map((sizeKey) => {
                   const { category, size } = parseSizeKey(sizeKey);
@@ -350,67 +239,61 @@ export function PublicExplorePage() {
                     ? categoryConfig.formatLabel(size)
                     : size;
                   return (
-                    <Badge
+                    <FilterBadge
                       key={sizeKey}
-                      variant="light"
-                      size="lg"
-                      rightSection={
-                        <IconX
-                          size={12}
-                          style={{ cursor: "pointer" }}
-                          onClick={() => handleSizeToggle(category, size)}
-                        />
-                      }
-                      style={{ cursor: "pointer" }}
-                    >
-                      {displayLabel}
-                    </Badge>
+                      label={displayLabel}
+                      onRemove={() => handleSizeToggle(category, size)}
+                    />
                   );
                 })}
-                <Button
-                  variant="subtle"
-                  color="gray"
-                  size="xs"
-                  leftSection={<IconX size={14} />}
-                  onClick={handleClearFilters}
+                <button
+                  className={styles.clearAllBadge}
+                  onClick={handleClearAllFilters}
                 >
-                  {tCommon("buttons.clearAll")}
-                </Button>
-              </Group>
+                  <IconX size={12} />
+                  <span>{tCommon("buttons.clearAll")}</span>
+                </button>
+              </div>
             )}
 
             {/* Results Count */}
-            <Text size="sm" c="dimmed" mb="md">
-              {totalCount} {totalCount === 1 ? t("results.listing") : t("results.listings")}
+            <p className={styles.resultsCount}>
+              {totalCount}{" "}
+              {totalCount === 1 ? t("results.listing") : t("results.listings")}
               {hasActiveFilters && ` ${t("results.found")}`}
-            </Text>
+            </p>
 
             {/* Loading State */}
             {isLoading ? (
-              <Center h={300}>
+              <div className={styles.loadingWrapper}>
                 <Loader size="lg" />
-              </Center>
+              </div>
             ) : (
               <>
                 {/* Desktop Grid */}
                 <Box visibleFrom="sm">
                   {posts.length === 0 ? (
-                    <Center h={200}>
-                      <Stack align="center" gap="xs">
-                        <Text c="dimmed">
-                          {hasActiveFilters ? t("results.noMatch") : t("results.noListings")}
-                        </Text>
-                        {hasActiveFilters && (
-                          <Button variant="subtle" size="sm" onClick={handleClearFilters}>
-                            {t("filters.clearFilters")}
-                          </Button>
-                        )}
-                      </Stack>
-                    </Center>
+                    <EmptyState
+                      message={
+                        hasActiveFilters
+                          ? t("results.noMatch")
+                          : t("results.noListings")
+                      }
+                      actionLabel={
+                        hasActiveFilters ? t("filters.clearFilters") : undefined
+                      }
+                      onAction={
+                        hasActiveFilters ? handleClearAllFilters : undefined
+                      }
+                    />
                   ) : (
                     <div className={styles.grid}>
                       {posts.map((post) => (
-                        <PostCard key={post.id} post={post} linkPrefix="/explore" />
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          linkPrefix="/explore"
+                        />
                       ))}
                     </div>
                   )}
@@ -419,106 +302,111 @@ export function PublicExplorePage() {
                 {/* Mobile Feed */}
                 <Box hiddenFrom="sm">
                   {posts.length === 0 ? (
-                    <Center h={200}>
-                      <Stack align="center" gap="xs">
-                        <Text c="dimmed">
-                          {hasActiveFilters ? t("results.noMatch") : t("results.noListings")}
-                        </Text>
-                        {hasActiveFilters && (
-                          <Button variant="subtle" size="sm" onClick={handleClearFilters}>
-                            {t("filters.clearFilters")}
-                          </Button>
-                        )}
-                      </Stack>
-                    </Center>
+                    <EmptyState
+                      message={
+                        hasActiveFilters
+                          ? t("results.noMatch")
+                          : t("results.noListings")
+                      }
+                      actionLabel={
+                        hasActiveFilters ? t("filters.clearFilters") : undefined
+                      }
+                      onAction={
+                        hasActiveFilters ? handleClearAllFilters : undefined
+                      }
+                    />
                   ) : (
                     <Stack gap={0}>
                       {posts.map((post) => (
-                        <PostFeedItem key={post.id} post={post} linkPrefix="/explore" />
+                        <PostFeedItem
+                          key={post.id}
+                          post={post}
+                          linkPrefix="/explore"
+                        />
                       ))}
                     </Stack>
                   )}
-
                 </Box>
 
-                {/* Infinite scroll sentinel and loading indicator */}
+                {/* Infinite scroll sentinel */}
                 {posts.length > 0 && (
                   <>
-                    <div ref={loadMoreRef} style={{ height: 1 }} />
+                    <div ref={loadMoreRef} className={styles.scrollSentinel} />
                     {isFetchingNextPage && (
-                      <Center py="xl">
+                      <div className={styles.loadingMore}>
                         <Loader size="sm" />
-                      </Center>
+                      </div>
                     )}
                     {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
-                      <Text ta="center" c="dimmed" size="sm" py="md">
-                        {t("results.noMore")}
-                      </Text>
+                      <p className={styles.endMessage}>{t("results.noMore")}</p>
                     )}
                   </>
                 )}
               </>
             )}
-          </Box>
+          </div>
         </div>
+      </div>
 
-        {/* Mobile Filter Drawer - Opens from bottom */}
-        <Drawer
-          opened={drawerOpened}
-          onClose={closeDrawer}
-          title={
-            <Group gap="xs">
-              <IconAdjustments size={20} />
-              <Text fw={600}>{t("filters.title")}</Text>
-            </Group>
-          }
-          size="70%"
-          position="bottom"
-          radius="lg"
-          hiddenFrom="md"
-        >
-          {filterContent}
-        </Drawer>
-      </Container>
+      {/* Mobile Filter Drawer */}
+      <Drawer
+        opened={drawerOpened}
+        onClose={closeDrawer}
+        title={
+          <div className={styles.drawerTitle}>
+            <IconAdjustments size={18} />
+            <span className={styles.sidebarTitle}>{t("filters.title")}</span>
+          </div>
+        }
+        size="70%"
+        position="bottom"
+        radius="sm"
+        hiddenFrom="md"
+        className={styles.drawer}
+      >
+        <ExploreFiltersPanel
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
+      </Drawer>
 
-      {/* Mobile Sticky Filter Button - Outside Container for proper fixed positioning */}
-      <Box hiddenFrom="md" className={styles.filterButtonWrapper}>
-        <Button
-          variant="default"
-          leftSection={<IconAdjustments size={18} />}
-          rightSection={
-            activeFilterCount > 0 && (
-              <Badge size="sm" circle variant="filled">
-                {activeFilterCount}
-              </Badge>
-            )
-          }
-          onClick={openDrawer}
-          radius="xl"
-          className={styles.filterButton}
-        >
-          {t("filters.title")}
-        </Button>
+      {/* Mobile Sticky Filter Button */}
+      <Box
+        hiddenFrom="md"
+        className={
+          isAuthenticated
+            ? styles.filterButtonWrapperAuth
+            : styles.filterButtonWrapper
+        }
+      >
+        <button className={styles.filterButton} onClick={openDrawer}>
+          <IconAdjustments size={18} />
+          <span>{t("filters.title")}</span>
+          {activeFilterCount > 0 && (
+            <span className={styles.filterCount}>{activeFilterCount}</span>
+          )}
+        </button>
       </Box>
 
-      {/* Mobile Sticky Bottom Bar - Outside Container for proper fixed positioning */}
-      <Box hiddenFrom="md" className={styles.mobileBottomBar}>
-        <div className={styles.mobileBottomBarContent}>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => navigate({ to: "/login" })}
-          >
-            {tCommon("buttons.logIn")}
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => navigate({ to: "/sign-up" })}
-          >
-            {tCommon("buttons.signUp")}
-          </Button>
-        </div>
-      </Box>
+      {/* Mobile Sticky Bottom Bar - only show when not authenticated */}
+      {!isAuthenticated && (
+        <Box hiddenFrom="md" className={styles.mobileBottomBar}>
+          <div className={styles.mobileBottomBarContent}>
+            <button
+              className={`${styles.mobileBottomButton} ${styles.mobileBottomButtonOutline}`}
+              onClick={() => navigate({ to: "/login" })}
+            >
+              {tCommon("buttons.logIn")}
+            </button>
+            <button
+              className={`${styles.mobileBottomButton} ${styles.mobileBottomButtonPrimary}`}
+              onClick={() => navigate({ to: "/sign-up" })}
+            >
+              {tCommon("buttons.signUp")}
+            </button>
+          </div>
+        </Box>
+      )}
     </>
   );
 }

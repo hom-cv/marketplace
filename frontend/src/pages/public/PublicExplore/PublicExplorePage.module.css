@@ -1,46 +1,182 @@
-.layout {
-  display: flex;
-  gap: 2rem;
-  min-height: calc(100vh - 200px);
+/* Page container */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 32px 48px 48px;
 }
 
+/* Layout with sidebar */
+.layout {
+  display: flex;
+  gap: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Sidebar */
 .sidebar {
-  width: 280px;
+  width: 260px;
   flex-shrink: 0;
 }
 
 .sidebarCard {
   position: sticky;
   top: 80px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 20px;
   max-height: calc(100vh - 100px);
   overflow-y: auto;
 }
 
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sidebarTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Drawer styling */
+.drawer [data-mantine-drawer-content] {
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.drawerTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Main content */
 .content {
   flex: 1;
   min-width: 0;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
+/* Header */
+.header {
+  margin-bottom: 20px;
 }
 
-/* Mobile Filter Button - sticky above footer */
-.filterButtonWrapper {
-  position: fixed;
-  bottom: 60px;
-  left: 0;
-  right: 0;
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Active filter badges */
+.filterBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.clearAllBadge {
+  padding: 6px 10px;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.clearAllBadge:hover {
+  color: var(--color-text-secondary);
+}
+
+/* Results count */
+.resultsCount {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 20px;
+}
+
+/* Grid - 4 columns on desktop */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+/* Loading and end states */
+.loadingWrapper {
   display: flex;
   justify-content: center;
-  padding: var(--mantine-spacing-xs) 0;
+  align-items: center;
+  height: 300px;
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.endMessage {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  padding: 24px 0;
+}
+
+.scrollSentinel {
+  height: 1px;
+}
+
+/* Mobile Filter Button - floating */
+.filterButtonWrapper {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 101;
+}
+
+.filterButtonWrapperAuth {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 101;
 }
 
 .filterButton {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.filterButton:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Note: .filterCount uses same styles as .badge in CollapsibleFilterSection */
+.filterCount {
+  composes: badge from "../../../components/CollapsibleFilterSection/CollapsibleFilterSection.module.css";
 }
 
 /* Mobile Sticky Bottom Bar */
@@ -49,27 +185,95 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--mantine-color-body);
-  border-top: 1px solid var(--mantine-color-default-border);
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
+  padding: 12px 16px;
   z-index: 100;
 }
 
 .mobileBottomBarContent {
   display: flex;
   justify-content: center;
-  gap: var(--mantine-spacing-sm);
+  gap: 12px;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
+.mobileBottomButton {
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.mobileBottomButtonOutline {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.mobileBottomButtonOutline:hover {
+  border-color: var(--color-border-hover);
+}
+
+.mobileBottomButtonPrimary {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: white;
+}
+
+.mobileBottomButtonPrimary:hover {
+  background: var(--color-primary);
+}
+
+/* Tablet - 3 columns */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 992px) {
+  .page {
+    padding: 24px 24px 48px;
+  }
+
   .layout {
     flex-direction: column;
+    gap: 0;
+  }
+
+  .sidebar {
+    display: none;
   }
 
   .content {
-    padding: 0;
-    /* Add padding at bottom for the sticky filter button + bottom bar */
-    padding-bottom: 120px;
+    padding-bottom: 140px;
+  }
+
+  .contentAuth {
+    padding-bottom: 80px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 20px 16px 32px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .filterBadges {
+    margin-bottom: 12px;
   }
 }
