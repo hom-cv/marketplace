@@ -45,6 +45,15 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         is_user_banned_expr = case((self._user_ban_subquery(), 1), else_=0).label("is_user_banned")
         return is_post_banned_expr, is_user_banned_expr
 
+    def _sold_status_expression(self):
+        """Build labeled case expression for sold status column."""
+        is_sold_subquery = (
+            exists()
+            .where(Payment.post_id == self.model.id)
+            .where(Payment.status == PaymentStatus.SUCCESSFUL)
+        )
+        return case((is_sold_subquery, 1), else_=0).label("is_sold")
+
     async def get_all_posts(
         self,
         db: AsyncSession,
@@ -242,14 +251,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             List of (Post, is_post_banned, is_user_banned, is_sold) tuples.
         """
         is_post_banned_expr, is_user_banned_expr = self._ban_status_expressions()
-
-        # Subquery to determine if a post is sold
-        is_sold_subquery = (
-            exists()
-            .where(Payment.post_id == self.model.id)
-            .where(Payment.status == PaymentStatus.SUCCESSFUL)
-        )
-        is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
+        is_sold_expr = self._sold_status_expression()
 
         query = (
             select(self.model, is_post_banned_expr, is_user_banned_expr, is_sold_expr)
@@ -318,14 +320,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             Tuple of (Post, is_post_banned, is_user_banned, is_sold) or None if not found.
         """
         is_post_banned_expr, is_user_banned_expr = self._ban_status_expressions()
-
-        # Subquery to determine if a post is sold
-        is_sold_subquery = (
-            exists()
-            .where(Payment.post_id == self.model.id)
-            .where(Payment.status == PaymentStatus.SUCCESSFUL)
-        )
-        is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
+        is_sold_expr = self._sold_status_expression()
 
         query = (
             select(self.model, is_post_banned_expr, is_user_banned_expr, is_sold_expr)
