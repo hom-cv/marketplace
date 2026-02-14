@@ -29,7 +29,9 @@
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .backButton:hover {
@@ -240,8 +242,6 @@
   color: var(--color-text);
 }
 
-}
-
 .sellerArrow {
   color: var(--color-text-muted);
   flex-shrink: 0;
@@ -385,7 +385,9 @@
   border-radius: var(--radius-sm);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .menuButton:hover {
