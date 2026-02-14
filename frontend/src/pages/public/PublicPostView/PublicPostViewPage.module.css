@@ -240,9 +240,6 @@
   color: var(--color-text);
 }
 
-.sellerName {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
 }
 
 .sellerArrow {
