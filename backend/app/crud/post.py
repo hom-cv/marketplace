@@ -125,19 +125,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         Returns:
             Tuple of (list of (Post, is_sold) tuples, total count).
         """
-        # Subquery to determine if a post is sold
-        is_sold_subquery = (
-            exists()
-            .where(Payment.post_id == self.model.id)
-            .where(Payment.status == PaymentStatus.SUCCESSFUL)
-        )
-
-        # Use helper methods for ban subqueries
+        # Use helper methods for subqueries
         is_post_banned_subquery = self._post_ban_subquery()
         is_user_banned_subquery = self._user_ban_subquery()
-
-        # Use case() to get a sortable value (0 for non-sold, 1 for sold)
-        is_sold_expr = case((is_sold_subquery, 1), else_=0).label("is_sold")
+        is_sold_expr = self._sold_status_expression()
 
         # Base query selecting Post and is_sold
         base_query = (

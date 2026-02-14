@@ -21,6 +21,8 @@ interface PostImageCarouselProps {
   alt: string;
 }
 
+const SWIPE_THRESHOLD = 50; // Minimum swipe distance
+
 export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -105,11 +107,10 @@ export function PostImageCarousel({ imageUrls, alt }: PostImageCarouselProps) {
     if (!isDragging || !hasMultipleImages) return;
 
     const diff = currentXRef.current - startXRef.current;
-    const threshold = 50; // Minimum swipe distance
 
-    if (diff > threshold && currentIndex > 0) {
+    if (diff > SWIPE_THRESHOLD && currentIndex > 0) {
       goToPrev();
-    } else if (diff < -threshold && currentIndex < imageCount - 1) {
+    } else if (diff < -SWIPE_THRESHOLD && currentIndex < imageCount - 1) {
       goToNext();
     }
 

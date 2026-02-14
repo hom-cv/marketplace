@@ -205,14 +205,14 @@ class TestGetMyPostsEndpoint:
         mock_post_crud: MagicMock,
     ):
         """My posts should return list of user's posts."""
-        mock_post_crud.get_by_user_id_with_ban_status.return_value = []
+        mock_post_crud.get_by_user_id_with_status.return_value = []
 
         response = await async_client.get("/api/v1/posts/me")
 
         assert response.status_code == 200
         assert isinstance(response.json(), list)
         # Verify CRUD was called
-        mock_post_crud.get_by_user_id_with_ban_status.assert_called_once()
+        mock_post_crud.get_by_user_id_with_status.assert_called_once()
 
     async def test_get_my_posts_unauthorized_returns_401(
         self,
