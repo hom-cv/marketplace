@@ -6,6 +6,7 @@
  * 2. breakdown: Displays pre-fetched breakdown data directly
  * 3. itemPrice/shippingCost: Fetches preview from backend (for create post page)
  */
+import { useMemo } from "react";
 import { Loader } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
@@ -69,17 +70,17 @@ export function EarningsPreview({
   const isError = postQuery.isError || previewQuery.isError;
   const apiData = postQuery.data || previewQuery.data;
 
-  // Use provided breakdown or convert API response
-  const data: BreakdownData | null =
-    breakdown ??
-    (apiData
-      ? {
-          itemPrice: parseFloat(apiData.item_price),
-          shippingCost: parseFloat(apiData.shipping_cost),
-          totalFees: parseFloat(apiData.total_fees),
-          sellerPayout: parseFloat(apiData.seller_payout),
-        }
-      : null);
+  // Use provided breakdown or convert API response (memoized to prevent re-creation)
+  const data = useMemo<BreakdownData | null>(() => {
+    if (breakdown) return breakdown;
+    if (!apiData) return null;
+    return {
+      itemPrice: parseFloat(apiData.item_price),
+      shippingCost: parseFloat(apiData.shipping_cost),
+      totalFees: parseFloat(apiData.total_fees),
+      sellerPayout: parseFloat(apiData.seller_payout),
+    };
+  }, [breakdown, apiData]);
 
   const format = (v: number) =>
     v.toLocaleString(undefined, {

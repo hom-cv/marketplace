@@ -20,9 +20,6 @@ export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
       </div>
       <div className={styles.sellerDetails}>
         <div className={styles.sellerUsername}>@{user.username}</div>
-        <div className={styles.sellerName}>
-          {user.first_name} {user.last_name}
-        </div>
       </div>
     </div>
   );
