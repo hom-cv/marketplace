@@ -230,11 +230,21 @@ async def get_post(
 
     Includes ban status for the post and user (optimized single query).
     Also includes like_count and is_liked status.
+
+    Banned posts are only visible to their owner or administrators.
     """
     post = await listing_service.get_listing(post_id)
 
     if not post:
         raise not_found_error("Post not found")
+
+    # Check if post is banned - only owner or admin can view banned posts
+    is_banned = post.is_banned or post.is_user_banned
+    if is_banned:
+        is_owner = current_user and current_user.id == post.user.id
+        is_admin = current_user and current_user.is_admin
+        if not (is_owner or is_admin):
+            raise not_found_error("Post not found")
 
     # Get like data
     like_data = await like_crud_dep.get_likes_for_posts(
