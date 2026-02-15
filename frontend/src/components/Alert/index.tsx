@@ -39,7 +39,7 @@ export function Alert({
     fullWidth && styles.fullWidth,
     marginBottom && styles.marginBottom,
     marginVertical && styles.marginVertical,
-    isInline && !title && styles.inline,
+    isInline && styles.inline,
     className,
   ]
     .filter(Boolean)
