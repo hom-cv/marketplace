@@ -47,7 +47,7 @@ export function Alert({
     <div className={classNames} {...props}>
       <span className={styles.icon}>{displayIcon}</span>
       <div className={styles.content}>
-        {title && <div className={styles.title}>{title}</div>}
+        {title && <h4 className={styles.title}>{title}</h4>}
         {children && <div className={styles.message}>{children}</div>}
       </div>
     </div>
