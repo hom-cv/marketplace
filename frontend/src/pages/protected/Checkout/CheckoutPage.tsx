@@ -6,20 +6,10 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import { Loader, TextInput, SimpleGrid } from "@mantine/core";
+import { Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import {
-  IconArrowLeft,
-  IconMapPin,
-  IconCreditCard,
-  IconQrcode,
-  IconInfoCircle,
-  IconCheck,
-  IconX,
-  IconShoppingBag,
-  IconArrowRight,
-} from "@tabler/icons-react";
-import { Trans, useTranslation } from "react-i18next";
+import { IconArrowLeft, IconX } from "@tabler/icons-react";
+import { useTranslation } from "react-i18next";
 import {
   createCardPayment,
   createPromptPayPayment,
@@ -28,7 +18,14 @@ import {
 } from "@/api/payments";
 import { getPost } from "@/api/posts";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
-import { StatusIcon } from "@/components/StatusIcon";
+import {
+  CheckoutStepper,
+  ShippingForm,
+  PaymentForm,
+  OrderSummary,
+  ShippingPreview,
+  PaymentStatus,
+} from "./components";
 import styles from "./CheckoutPage.module.css";
 
 type PaymentMethod = "card" | "promptpay";
@@ -48,8 +45,8 @@ declare global {
         },
         callback: (
           statusCode: number,
-          response: { id?: string; message?: string },
-        ) => void,
+          response: { id?: string; message?: string }
+        ) => void
       ) => void;
     };
     OmiseCard: unknown;
@@ -224,7 +221,7 @@ export function CheckoutPage() {
           return_uri: `${window.location.origin}/app/payment-return`,
           shipping: shippingForm.values,
         });
-      },
+      }
     );
   };
 
@@ -237,12 +234,6 @@ export function CheckoutPage() {
       shipping: shippingForm.values,
     });
   };
-
-  const formatAmount = (v: number) =>
-    v.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
 
   // Loading state
   if (postLoading) {
@@ -281,15 +272,7 @@ export function CheckoutPage() {
     );
   }
 
-  const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
-  const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
   const total = parseFloat(priceBreakdown?.total ?? "0");
-  const isSuccess =
-    paymentStatus?.status === "successful" ||
-    paymentResponse?.status === "successful";
-  const isFailed =
-    paymentStatus?.status === "failed" || paymentResponse?.status === "failed";
-  const showQR = paymentResponse?.qr_code_uri && !isSuccess && !isFailed;
   const hasPaymentResponse = !!paymentResponse;
   const isLoading =
     isTokenizing ||
@@ -314,428 +297,45 @@ export function CheckoutPage() {
         <div className={styles.layout}>
           {/* Main content */}
           <div>
-            {/* Error alert */}
-            {error && (
-              <div className={styles.errorAlert}>
-                <IconX size={18} className={styles.errorAlertIcon} />
-                <div className={styles.errorAlertContent}>
-                  <p className={styles.errorAlertTitle}>{t("status.error")}</p>
-                  <p className={styles.errorAlertMessage}>{error}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Success state */}
-            {isSuccess && (
-              <div className={styles.card}>
-                <div className={styles.successContainer}>
-                  <StatusIcon variant="success" size={64}>
-                    <IconCheck size={32} />
-                  </StatusIcon>
-                  <h2 className={styles.successTitle}>
-                    {t("checkout.paymentSuccess")}
-                  </h2>
-                  <p className={styles.successMessage}>
-                    {t("checkout.paymentSuccessMessage")}
-                  </p>
-                  <div className={styles.buttonGroup}>
-                    <button
-                      className={styles.secondaryButton}
-                      onClick={() => navigate({ to: "/app/purchases" })}
-                    >
-                      <IconShoppingBag size={18} />
-                      {t("checkout.viewPurchases")}
-                    </button>
-                    <button
-                      className={styles.primaryButtonCompact}
-                      onClick={() => navigate({ to: "/app/explore" })}
-                    >
-                      {t("checkout.continueShoppingBtn")}
-                      <IconArrowRight size={18} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Failed state */}
-            {isFailed && (
-              <div className={styles.errorAlert}>
-                <IconX size={18} className={styles.errorAlertIcon} />
-                <div className={styles.errorAlertContent}>
-                  <p className={styles.errorAlertTitle}>
-                    {t("checkout.paymentFailed")}
-                  </p>
-                  <p className={styles.errorAlertMessage}>
-                    {paymentStatus?.failure_message ||
-                      t("checkout.paymentFailedMessage")}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* QR Code state */}
-            {showQR && (
-              <div className={styles.card}>
-                <div className={styles.qrContainer}>
-                  <h3 className={styles.qrTitle}>{t("checkout.scanToPay")}</h3>
-                  <p className={styles.qrSubtitle}>
-                    {t("checkout.scanWithApp")}
-                  </p>
-                  <img
-                    src={paymentResponse.qr_code_uri ?? undefined}
-                    alt="PromptPay QR Code"
-                    className={styles.qrCode}
-                  />
-                  {paymentResponse.expires_at && (
-                    <p className={styles.qrExpiry}>
-                      {t("checkout.expires", {
-                        time: new Date(
-                          paymentResponse.expires_at,
-                        ).toLocaleTimeString(),
-                      })}
-                    </p>
-                  )}
-                  <div className={styles.waitingIndicator}>
-                    <Loader size="xs" />
-                    <span>{t("checkout.waitingForPayment")}</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <PaymentStatus
+              paymentResponse={paymentResponse}
+              paymentStatus={paymentStatus ?? null}
+              error={error}
+            />
 
             {/* Checkout forms */}
             {!hasPaymentResponse && (
               <>
-                {/* Stepper */}
-                <div className={styles.stepper}>
-                  <div
-                    className={`${styles.step} ${
-                      step === 0
-                        ? styles.stepActive
-                        : step > 0
-                          ? styles.stepCompleted
-                          : ""
-                    }`}
-                  >
-                    <span className={styles.stepNumber}>
-                      {step > 0 ? <IconCheck size={14} /> : "1"}
-                    </span>
-                    <IconMapPin size={16} />
-                    {t("checkout.shipping")}
-                  </div>
-                  <div
-                    className={`${styles.step} ${
-                      step === 1 ? styles.stepActive : ""
-                    }`}
-                  >
-                    <span className={styles.stepNumber}>2</span>
-                    <IconCreditCard size={16} />
-                    {t("checkout.payment")}
-                  </div>
-                </div>
+                <CheckoutStepper currentStep={step} />
 
-                {/* Step 0: Shipping */}
                 {step === 0 && (
-                  <div className={styles.card}>
-                    <h3 className={styles.cardTitle}>
-                      {t("checkout.shippingAddress")}
-                    </h3>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleNextStep();
-                      }}
-                    >
-                      <div className={styles.formRow}>
-                        <TextInput
-                          label={t("checkout.recipientName")}
-                          placeholder={t("checkout.namePlaceholder")}
-                          radius="xs"
-                          {...shippingForm.getInputProps("name")}
-                        />
-                        <TextInput
-                          label={t("checkout.form.phone")}
-                          placeholder={t("checkout.phonePlaceholder")}
-                          radius="xs"
-                          {...shippingForm.getInputProps("phone")}
-                        />
-                        <TextInput
-                          label={t("checkout.form.address")}
-                          placeholder={t("checkout.addressPlaceholder")}
-                          radius="xs"
-                          {...shippingForm.getInputProps("address")}
-                        />
-                        <TextInput
-                          label={t("checkout.form.district")}
-                          placeholder={t("checkout.districtPlaceholder")}
-                          radius="xs"
-                          {...shippingForm.getInputProps("district")}
-                        />
-                        <SimpleGrid cols={2}>
-                          <TextInput
-                            label={t("checkout.form.province")}
-                            placeholder={t("checkout.provincePlaceholder")}
-                            radius="xs"
-                            {...shippingForm.getInputProps("province")}
-                          />
-                          <TextInput
-                            label={t("checkout.form.postalCode")}
-                            placeholder={t("checkout.postalPlaceholder")}
-                            maxLength={5}
-                            radius="xs"
-                            {...shippingForm.getInputProps("postal_code")}
-                          />
-                        </SimpleGrid>
-                        <button type="submit" className={styles.primaryButton}>
-                          {t("checkout.continueToPayment")}
-                          <IconArrowRight size={18} />
-                        </button>
-                      </div>
-                    </form>
-                  </div>
+                  <ShippingForm form={shippingForm} onSubmit={handleNextStep} />
                 )}
 
-                {/* Step 1: Payment */}
                 {step === 1 && (
-                  <div className={styles.card}>
-                    <h3 className={styles.cardTitle}>
-                      {t("checkout.paymentMethod")}
-                    </h3>
-
-                    {/* Payment tabs */}
-                    <div className={styles.paymentTabs}>
-                      <button
-                        className={`${styles.paymentTab} ${
-                          paymentMethod === "card"
-                            ? styles.paymentTabActive
-                            : ""
-                        }`}
-                        onClick={() => setPaymentMethod("card")}
-                      >
-                        <IconCreditCard size={18} />
-                        {t("checkout.creditCard")}
-                      </button>
-                      <button
-                        className={`${styles.paymentTab} ${
-                          paymentMethod === "promptpay"
-                            ? styles.paymentTabActive
-                            : ""
-                        }`}
-                        onClick={() => setPaymentMethod("promptpay")}
-                      >
-                        <IconQrcode size={18} />
-                        PromptPay
-                      </button>
-                    </div>
-
-                    {/* Card form */}
-                    {paymentMethod === "card" && (
-                      <div className={styles.formRow}>
-                        <TextInput
-                          label={t("checkout.cardholderName")}
-                          placeholder={t("checkout.nameOnCard")}
-                          radius="xs"
-                          {...cardForm.getInputProps("name")}
-                        />
-                        <TextInput
-                          label={t("checkout.cardNumber")}
-                          placeholder={t("checkout.cardPlaceholder")}
-                          radius="xs"
-                          {...cardForm.getInputProps("number")}
-                        />
-                        <SimpleGrid cols={3}>
-                          <TextInput
-                            label={t("checkout.expMonth")}
-                            placeholder="MM"
-                            maxLength={2}
-                            radius="xs"
-                            {...cardForm.getInputProps("expMonth")}
-                          />
-                          <TextInput
-                            label={t("checkout.expYear")}
-                            placeholder="YY"
-                            maxLength={4}
-                            radius="xs"
-                            {...cardForm.getInputProps("expYear")}
-                          />
-                          <TextInput
-                            label={t("checkout.cvv")}
-                            placeholder="123"
-                            maxLength={4}
-                            radius="xs"
-                            {...cardForm.getInputProps("cvv")}
-                          />
-                        </SimpleGrid>
-                      </div>
-                    )}
-
-                    {/* Notice */}
-                    <div className={styles.notice}>
-                      <IconInfoCircle size={18} className={styles.noticeIcon} />
-                      <p className={styles.noticeText}>
-                        <Trans
-                          i18nKey="checkout.refundNotice"
-                          ns="policies"
-                          components={{
-                            refundLink: (
-                              <a
-                                href="/terms#refund-policy"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              />
-                            ),
-                          }}
-                        />
-                      </p>
-                    </div>
-
-                    {/* Payment button */}
-                    {paymentMethod === "card" ? (
-                      <button
-                        className={styles.primaryButton}
-                        onClick={handleCardSubmit}
-                        disabled={isLoading || !cardForm.isValid()}
-                      >
-                        {isLoading ? (
-                          <Loader size="xs" color="white" />
-                        ) : (
-                          t("checkout.payAmount", {
-                            amount: formatAmount(total),
-                          })
-                        )}
-                      </button>
-                    ) : (
-                      <button
-                        className={styles.primaryButton}
-                        onClick={handlePromptPay}
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <Loader size="xs" color="white" />
-                        ) : (
-                          t("checkout.generateQR", {
-                            amount: formatAmount(total),
-                          })
-                        )}
-                      </button>
-                    )}
-
-                    {/* Policy text */}
-                    <p className={styles.policyText}>
-                      <Trans
-                        i18nKey="checkout.paymentAcknowledgment"
-                        ns="policies"
-                        components={{
-                          termsLink: (
-                            <a
-                              href="/terms"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            />
-                          ),
-                          privacyLink: (
-                            <a
-                              href="/privacy"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            />
-                          ),
-                        }}
-                      />
-                    </p>
-                  </div>
+                  <PaymentForm
+                    paymentMethod={paymentMethod}
+                    onPaymentMethodChange={setPaymentMethod}
+                    cardForm={cardForm}
+                    onCardSubmit={handleCardSubmit}
+                    onPromptPaySubmit={handlePromptPay}
+                    total={total}
+                    isLoading={isLoading}
+                  />
                 )}
               </>
             )}
           </div>
 
-          {/* Sidebar - Order Summary */}
+          {/* Sidebar */}
           <div className={styles.sidebar}>
-            {/* Shipping preview - show on payment step */}
             {step === 1 && !hasPaymentResponse && (
-              <div className={styles.shippingPreview}>
-                <div className={styles.shippingHeader}>
-                  <span className={styles.shippingLabel}>
-                    {t("checkout.shipToLabel")}
-                  </span>
-                  <button
-                    className={styles.editButton}
-                    onClick={() => setStep(0)}
-                  >
-                    {t("buttons.edit")}
-                  </button>
-                </div>
-                <p className={styles.shippingName}>
-                  {shippingForm.values.name}
-                </p>
-                <p className={styles.shippingDetail}>
-                  {shippingForm.values.phone}
-                </p>
-                <p className={styles.shippingDetail}>
-                  {shippingForm.values.address}
-                </p>
-                <p className={styles.shippingDetail}>
-                  {shippingForm.values.district}, {shippingForm.values.province}{" "}
-                  {shippingForm.values.postal_code}
-                </p>
-              </div>
+              <ShippingPreview
+                address={shippingForm.values}
+                onEdit={() => setStep(0)}
+              />
             )}
-
-            <div className={styles.card}>
-              <h3 className={styles.cardTitle}>{t("checkout.orderSummary")}</h3>
-
-              {/* Item */}
-              <div className={styles.itemCard}>
-                {post.image_url && (
-                  <img
-                    src={post.image_url}
-                    alt={post.title}
-                    className={styles.itemImage}
-                  />
-                )}
-                <div className={styles.itemDetails}>
-                  <p className={styles.itemTitle}>{post.title}</p>
-                  <p className={styles.itemSeller}>
-                    {t("checkout.soldBy", { username: post.user.username })}
-                  </p>
-                </div>
-              </div>
-
-              <hr className={styles.divider} />
-
-              {/* Price breakdown */}
-              <div className={styles.priceRow}>
-                <span className={styles.priceLabel}>
-                  {t("checkout.itemPrice")}
-                </span>
-                <span className={styles.priceValue}>
-                  ฿{formatAmount(itemPrice)}
-                </span>
-              </div>
-              <div className={styles.priceRow}>
-                <span className={styles.priceLabel}>
-                  {t("checkout.shippingLabel")}
-                </span>
-                <span
-                  className={`${styles.priceValue} ${
-                    shippingCost === 0 ? styles.freeShipping : ""
-                  }`}
-                >
-                  {shippingCost === 0
-                    ? t("checkout.freeShipping")
-                    : `฿${formatAmount(shippingCost)}`}
-                </span>
-              </div>
-
-              {/* Total */}
-              <div className={styles.totalRow}>
-                <span className={styles.totalLabel}>{t("checkout.total")}</span>
-                <span className={styles.totalValue}>
-                  ฿{formatAmount(total)}
-                </span>
-              </div>
-            </div>
+            <OrderSummary post={post} priceBreakdown={priceBreakdown} />
           </div>
         </div>
       </div>
