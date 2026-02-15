@@ -18,6 +18,7 @@ export function Button({
   rightIcon,
   children,
   className,
+  type = "button",
   ...props
 }: ButtonProps) {
   const classNames = [
@@ -31,7 +32,7 @@ export function Button({
     .join(" ");
 
   return (
-    <button className={classNames} {...props}>
+    <button type={type} className={classNames} {...props}>
       {leftIcon}
       {children}
       {rightIcon}
