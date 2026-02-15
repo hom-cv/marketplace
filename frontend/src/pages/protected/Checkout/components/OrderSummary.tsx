@@ -1,21 +1,6 @@
-/**
- * OrderSummary - Displays item and price breakdown for buyers
- * Buyers pay only item price + shipping (no extra fees)
- */
-
-import {
-  Paper,
-  Title,
-  Text,
-  Image,
-  Card,
-  Group,
-  Box,
-  Stack,
-  Divider,
-} from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
+import styles from "../CheckoutPage.module.css";
 
 interface Post {
   id: number;
@@ -31,55 +16,63 @@ interface OrderSummaryProps {
 
 export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
   const { t } = useTranslation("common");
+
+  const formatAmount = (v: number) =>
+    v.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
   const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
   const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
   const total = parseFloat(priceBreakdown?.total ?? "0");
 
   return (
-    <Paper withBorder p="xl" radius="md" pos="sticky" top={100}>
-      <Title order={4} mb="lg">{t("checkout.orderSummary")}</Title>
+    <div className={styles.card}>
+      <h3 className={styles.cardTitle}>{t("checkout.orderSummary")}</h3>
 
       {/* Item */}
-      <Card withBorder p="sm" radius="md" mb="lg">
-        <Group>
-          {post.image_url && (
-            <Image
-              src={post.image_url}
-              alt={post.title}
-              w={80}
-              h={80}
-              radius="md"
-              fit="cover"
-            />
-          )}
-          <Box style={{ flex: 1 }}>
-            <Text fw={500} lineClamp={2}>{post.title}</Text>
-            <Text size="sm" c="dimmed">{t("checkout.soldBy", { username: post.user.username })}</Text>
-          </Box>
-        </Group>
-      </Card>
+      <div className={styles.itemCard}>
+        {post.image_url && (
+          <img
+            src={post.image_url}
+            alt={post.title}
+            className={styles.itemImage}
+          />
+        )}
+        <div className={styles.itemDetails}>
+          <p className={styles.itemTitle}>{post.title}</p>
+          <p className={styles.itemSeller}>
+            {t("checkout.soldBy", { username: post.user.username })}
+          </p>
+        </div>
+      </div>
 
-      <Divider my="md" />
+      <hr className={styles.divider} />
 
-      <Stack gap="xs">
-        <Group justify="space-between">
-          <Text size="sm">{t("checkout.itemPrice")}</Text>
-          <Text size="sm" fw={500}>฿{itemPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-        </Group>
-        <Group justify="space-between">
-          <Text size="sm">{t("checkout.shippingLabel")}</Text>
-          <Text size="sm" fw={500} c={shippingCost === 0 ? "green" : undefined}>
-            {shippingCost === 0 ? t("checkout.freeShipping") : `฿${shippingCost.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
-          </Text>
-        </Group>
-      </Stack>
+      {/* Price breakdown */}
+      <div className={styles.priceRow}>
+        <span className={styles.priceLabel}>{t("checkout.itemPrice")}</span>
+        <span className={styles.priceValue}>฿{formatAmount(itemPrice)}</span>
+      </div>
+      <div className={styles.priceRow}>
+        <span className={styles.priceLabel}>{t("checkout.shippingLabel")}</span>
+        <span
+          className={`${styles.priceValue} ${
+            shippingCost === 0 ? styles.freeShipping : ""
+          }`}
+        >
+          {shippingCost === 0
+            ? t("checkout.freeShipping")
+            : `฿${formatAmount(shippingCost)}`}
+        </span>
+      </div>
 
-      <Divider my="md" />
-
-      <Group justify="space-between">
-        <Text size="lg" fw={600}>{t("checkout.total")}</Text>
-        <Text size="xl" fw={700}>฿{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
-      </Group>
-    </Paper>
+      {/* Total */}
+      <div className={styles.totalRow}>
+        <span className={styles.totalLabel}>{t("checkout.total")}</span>
+        <span className={styles.totalValue}>฿{formatAmount(total)}</span>
+      </div>
+    </div>
   );
 }

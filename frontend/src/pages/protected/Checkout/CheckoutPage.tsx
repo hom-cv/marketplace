@@ -1,33 +1,32 @@
 /**
  * Checkout Page - Dedicated page for completing purchases
- * Layout: Left side (forms) | Right side (order summary)
+ * Flat design matching homepage/auth/explore pages
  */
 
 import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
-import {
-  Container,
-  Grid,
-  Stack,
-  Title,
-  Button,
-  Alert,
-  Loader,
-  Center,
-  Stepper,
-} from "@mantine/core";
+import { Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconCreditCard, IconMapPin, IconArrowLeft } from "@tabler/icons-react";
+import { IconArrowLeft, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { createCardPayment, createPromptPayPayment, getPaymentStatus, getPriceBreakdown } from "@/api/payments";
+import {
+  createCardPayment,
+  createPromptPayPayment,
+  getPaymentStatus,
+  getPriceBreakdown,
+} from "@/api/payments";
 import { getPost } from "@/api/posts";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
-
-import { OrderSummary } from "./components/OrderSummary";
-import { ShippingAddressForm } from "./components/ShippingAddressForm";
-import { PaymentMethodForm } from "./components/PaymentMethodForm";
-import { PaymentStatusView } from "./components/PaymentStatusView";
+import {
+  CheckoutStepper,
+  ShippingForm,
+  PaymentForm,
+  OrderSummary,
+  ShippingPreview,
+  PaymentStatus,
+} from "./components";
+import styles from "./CheckoutPage.module.css";
 
 type PaymentMethod = "card" | "promptpay";
 
@@ -44,7 +43,10 @@ declare global {
           expiration_year: string;
           security_code: string;
         },
-        callback: (statusCode: number, response: { id?: string; message?: string }) => void
+        callback: (
+          statusCode: number,
+          response: { id?: string; message?: string }
+        ) => void
       ) => void;
     };
     OmiseCard: unknown;
@@ -58,7 +60,8 @@ export function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [error, setError] = useState<string | null>(null);
-  const [paymentResponse, setPaymentResponse] = useState<PaymentResponse | null>(null);
+  const [paymentResponse, setPaymentResponse] =
+    useState<PaymentResponse | null>(null);
   const [isTokenizing, setIsTokenizing] = useState(false);
 
   // Card form
@@ -71,11 +74,20 @@ export function CheckoutPage() {
       cvv: "",
     },
     validate: {
-      name: (value) => (value.trim().length < 2 ? t("checkout.form.nameRequired") : null),
-      number: (value) => (value.replace(/\s/g, "").length < 13 ? t("checkout.form.cardRequired") : null),
-      expMonth: (value) => (/^(0[1-9]|1[0-2]|[1-9])$/.test(value) ? null : t("checkout.form.validMonth")),
-      expYear: (value) => (/^\d{2,4}$/.test(value) ? null : t("checkout.form.validYear")),
-      cvv: (value) => (/^\d{3,4}$/.test(value) ? null : t("checkout.form.validCvv")),
+      name: (value) =>
+        value.trim().length < 2 ? t("checkout.form.nameRequired") : null,
+      number: (value) =>
+        value.replace(/\s/g, "").length < 13
+          ? t("checkout.form.cardRequired")
+          : null,
+      expMonth: (value) =>
+        /^(0[1-9]|1[0-2]|[1-9])$/.test(value)
+          ? null
+          : t("checkout.form.validMonth"),
+      expYear: (value) =>
+        /^\d{2,4}$/.test(value) ? null : t("checkout.form.validYear"),
+      cvv: (value) =>
+        /^\d{3,4}$/.test(value) ? null : t("checkout.form.validCvv"),
     },
   });
 
@@ -90,17 +102,27 @@ export function CheckoutPage() {
       postal_code: "",
     },
     validate: {
-      name: (value) => (value.trim().length < 2 ? t("checkout.form.nameRequired") : null),
-      phone: (value) => (value.trim().length < 9 ? t("checkout.form.phoneRequired") : null),
-      address: (value) => (value.trim().length < 5 ? t("checkout.form.addressRequired") : null),
-      district: (value) => (value.trim().length < 2 ? t("checkout.form.districtRequired") : null),
-      province: (value) => (value.trim().length < 2 ? t("checkout.form.provinceRequired") : null),
-      postal_code: (value) => (/^\d{5}$/.test(value) ? null : t("checkout.form.postalRequired")),
+      name: (value) =>
+        value.trim().length < 2 ? t("checkout.form.nameRequired") : null,
+      phone: (value) =>
+        value.trim().length < 9 ? t("checkout.form.phoneRequired") : null,
+      address: (value) =>
+        value.trim().length < 5 ? t("checkout.form.addressRequired") : null,
+      district: (value) =>
+        value.trim().length < 2 ? t("checkout.form.districtRequired") : null,
+      province: (value) =>
+        value.trim().length < 2 ? t("checkout.form.provinceRequired") : null,
+      postal_code: (value) =>
+        /^\d{5}$/.test(value) ? null : t("checkout.form.postalRequired"),
     },
   });
 
   // Queries
-  const { data: post, isLoading: postLoading, error: postError } = useQuery({
+  const {
+    data: post,
+    isLoading: postLoading,
+    error: postError,
+  } = useQuery({
     queryKey: ["post", postId],
     queryFn: () => getPost(parseInt(postId, 10)),
     enabled: !!postId,
@@ -115,7 +137,10 @@ export function CheckoutPage() {
   const { data: paymentStatus } = useQuery({
     queryKey: ["paymentStatus", paymentResponse?.payment_id],
     queryFn: () => getPaymentStatus(paymentResponse!.payment_id),
-    enabled: !!paymentResponse?.payment_id && paymentResponse.status === "pending" && paymentMethod === "promptpay",
+    enabled:
+      !!paymentResponse?.payment_id &&
+      paymentResponse.status === "pending" &&
+      paymentMethod === "promptpay",
     refetchInterval: 3000,
   });
 
@@ -146,10 +171,8 @@ export function CheckoutPage() {
     };
 
     if (window.Omise) {
-      // Script already loaded
       setOmiseKey();
     } else {
-      // Load script and set key on load
       const script = document.createElement("script");
       script.src = "https://cdn.omise.co/omise.js";
       script.async = true;
@@ -215,90 +238,107 @@ export function CheckoutPage() {
   // Loading state
   if (postLoading) {
     return (
-      <Center h={400}>
-        <Loader size="lg" />
-      </Center>
+      <div className={styles.page}>
+        <div className={styles.loading}>
+          <Loader size="lg" />
+        </div>
+      </div>
     );
   }
 
   // Error state
   if (postError || !post) {
     return (
-      <Container size="md" py="xl">
-        <Alert color="red" title={t("status.error")}>
-          {t("checkout.failedToLoadProduct")}
-        </Alert>
-        <Button mt="md" variant="light" leftSection={<IconArrowLeft size={16} />} onClick={() => navigate({ to: "/app/explore" })}>
-          {t("checkout.backToExplore")}
-        </Button>
-      </Container>
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.errorAlert}>
+            <IconX size={18} className={styles.errorAlertIcon} />
+            <div className={styles.errorAlertContent}>
+              <p className={styles.errorAlertTitle}>{t("status.error")}</p>
+              <p className={styles.errorAlertMessage}>
+                {t("checkout.failedToLoadProduct")}
+              </p>
+            </div>
+          </div>
+          <button
+            className={styles.backButton}
+            onClick={() => navigate({ to: "/app/explore" })}
+          >
+            <IconArrowLeft size={16} />
+            {t("checkout.backToExplore")}
+          </button>
+        </div>
+      </div>
     );
   }
 
   const total = parseFloat(priceBreakdown?.total ?? "0");
   const hasPaymentResponse = !!paymentResponse;
+  const isLoading =
+    isTokenizing ||
+    cardPaymentMutation.isPending ||
+    promptPayMutation.isPending;
 
   return (
-    <Container size="lg">
-      <Button
-        variant="subtle"
-        leftSection={<IconArrowLeft size={16} />}
-        mb="lg"
-        onClick={() => navigate({ to: `/app/posts/${postId}` })}
-      >
-        {t("checkout.backToListing")}
-      </Button>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        {/* Header */}
+        <div className={styles.header}>
+          <button
+            className={styles.backButton}
+            onClick={() => navigate({ to: `/explore/${postId}` })}
+          >
+            <IconArrowLeft size={16} />
+            {t("checkout.backToListing")}
+          </button>
+          <h1 className={styles.title}>{t("checkout.title")}</h1>
+        </div>
 
-      <Title order={1} mb="xl">{t("checkout.title")}</Title>
-
-      <Grid gutter="xl">
-        {/* LEFT SIDE - Forms */}
-        <Grid.Col span={{ base: 12, md: 7 }}>
-          <Stack gap="lg">
-            <PaymentStatusView
+        <div className={styles.layout}>
+          {/* Main content */}
+          <div>
+            <PaymentStatus
               paymentResponse={paymentResponse}
               paymentStatus={paymentStatus ?? null}
               error={error}
             />
 
+            {/* Checkout forms */}
             {!hasPaymentResponse && (
               <>
-                <Stepper active={step} size="sm">
-                  <Stepper.Step label={t("checkout.shipping")} icon={<IconMapPin size={18} />} />
-                  <Stepper.Step label={t("checkout.payment")} icon={<IconCreditCard size={18} />} />
-                </Stepper>
+                <CheckoutStepper currentStep={step} />
 
                 {step === 0 && (
-                  <ShippingAddressForm
-                    form={shippingForm}
-                    onSubmit={handleNextStep}
-                  />
+                  <ShippingForm form={shippingForm} onSubmit={handleNextStep} />
                 )}
 
                 {step === 1 && (
-                  <PaymentMethodForm
-                    shippingAddress={shippingForm.values}
+                  <PaymentForm
                     paymentMethod={paymentMethod}
                     onPaymentMethodChange={setPaymentMethod}
                     cardForm={cardForm}
                     onCardSubmit={handleCardSubmit}
                     onPromptPaySubmit={handlePromptPay}
-                    onEditShipping={() => setStep(0)}
                     total={total}
-                    isCardLoading={isTokenizing || cardPaymentMutation.isPending}
-                    isPromptPayLoading={promptPayMutation.isPending}
+                    isLoading={isLoading}
                   />
                 )}
               </>
             )}
-          </Stack>
-        </Grid.Col>
+          </div>
 
-        {/* RIGHT SIDE - Order Summary */}
-        <Grid.Col span={{ base: 12, md: 5 }}>
-          <OrderSummary post={post} priceBreakdown={priceBreakdown} />
-        </Grid.Col>
-      </Grid>
-    </Container>
+          {/* Sidebar */}
+          <div className={styles.sidebar}>
+            {step === 1 && !hasPaymentResponse && (
+              <ShippingPreview
+                address={shippingForm.values}
+                onEdit={() => setStep(0)}
+              />
+            )}
+            <OrderSummary post={post} priceBreakdown={priceBreakdown} />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
