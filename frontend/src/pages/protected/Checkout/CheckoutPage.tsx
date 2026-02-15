@@ -347,9 +347,8 @@ export function CheckoutPage() {
                       {t("checkout.viewPurchases")}
                     </button>
                     <button
-                      className={styles.primaryButton}
+                      className={styles.primaryButtonCompact}
                       onClick={() => navigate({ to: "/app/explore" })}
-                      style={{ width: "auto", padding: "12px 20px" }}
                     >
                       {t("checkout.continueShoppingBtn")}
                       <IconArrowRight size={18} />

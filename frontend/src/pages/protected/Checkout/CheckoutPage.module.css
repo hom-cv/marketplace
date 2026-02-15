@@ -330,6 +330,12 @@
   cursor: not-allowed;
 }
 
+.primaryButtonCompact {
+  composes: primaryButton;
+  width: auto;
+  padding: 12px 20px;
+}
+
 /* Policy text */
 .policyText {
   font-size: 0.75rem;
