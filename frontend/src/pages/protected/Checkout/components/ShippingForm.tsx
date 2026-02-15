@@ -3,6 +3,8 @@ import { IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import styles from "../CheckoutPage.module.css";
 
 interface ShippingFormProps {
@@ -14,8 +16,7 @@ export function ShippingForm({ form, onSubmit }: ShippingFormProps) {
   const { t } = useTranslation("common");
 
   return (
-    <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{t("checkout.shippingAddress")}</h3>
+    <Card title={t("checkout.shippingAddress")}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -62,12 +63,17 @@ export function ShippingForm({ form, onSubmit }: ShippingFormProps) {
               {...form.getInputProps("postal_code")}
             />
           </SimpleGrid>
-          <button type="submit" className={styles.primaryButton}>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            fullWidth
+            rightIcon={<IconArrowRight size={18} />}
+          >
             {t("checkout.continueToPayment")}
-            <IconArrowRight size={18} />
-          </button>
+          </Button>
         </div>
       </form>
-    </div>
+    </Card>
   );
 }

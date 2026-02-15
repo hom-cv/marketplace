@@ -8,15 +8,12 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
-import {
-  IconCheck,
-  IconX,
-  IconShoppingBag,
-  IconArrowRight,
-  IconAlertCircle,
-} from "@tabler/icons-react";
+import { IconCheck, IconX, IconShoppingBag, IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getPaymentStatus } from "@/api/payments";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import { StatusIcon } from "@/components/StatusIcon";
 import styles from "./PaymentReturnPage.module.css";
 
@@ -69,19 +66,15 @@ export function PaymentReturnPage() {
   if (!paymentId) {
     return (
       <div className={styles.page}>
-        <div className={styles.card}>
-          <div className={styles.alert}>
-            <IconAlertCircle size={18} className={styles.alertIcon} />
-            <div className={styles.alertContent}>
-              <p className={styles.alertTitle}>
-                {t("paymentReturn.noPayment")}
-              </p>
-              <p className={styles.alertMessage}>
-                {t("paymentReturn.noPaymentMessage")}
-              </p>
-            </div>
-          </div>
-        </div>
+        <Card padding="lg" centered>
+          <Alert
+            variant="warning"
+            title={t("paymentReturn.noPayment")}
+            fullWidth
+          >
+            {t("paymentReturn.noPaymentMessage")}
+          </Alert>
+        </Card>
       </div>
     );
   }
@@ -90,14 +83,14 @@ export function PaymentReturnPage() {
   if (isLoading) {
     return (
       <div className={styles.page}>
-        <div className={styles.card}>
+        <Card padding="lg" centered>
           <div className={styles.loadingContainer}>
             <Loader size="lg" />
             <p className={styles.loadingText}>
               {t("paymentReturn.loadingStatus")}
             </p>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -106,33 +99,18 @@ export function PaymentReturnPage() {
   if (error) {
     return (
       <div className={styles.page}>
-        <div className={styles.card}>
-          <div className={`${styles.alert} ${styles.alertError}`}>
-            <IconX
-              size={18}
-              className={`${styles.alertIcon} ${styles.alertIconError}`}
-            />
-            <div className={styles.alertContent}>
-              <p className={`${styles.alertTitle} ${styles.alertTitleError}`}>
-                {t("status.error")}
-              </p>
-              <p
-                className={`${styles.alertMessage} ${styles.alertMessageError}`}
-              >
-                {error instanceof Error
-                  ? error.message
-                  : t("errors.failedToLoad")}
-              </p>
-            </div>
-          </div>
-        </div>
+        <Card padding="lg" centered>
+          <Alert variant="error" title={t("status.error")} fullWidth>
+            {error instanceof Error ? error.message : t("errors.failedToLoad")}
+          </Alert>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className={styles.page}>
-      <div className={styles.card}>
+      <Card padding="lg" centered className={styles.card}>
         {/* Success */}
         {isSuccess && (
           <>
@@ -148,20 +126,24 @@ export function PaymentReturnPage() {
               })}
             </p>
             <div className={styles.buttonGroup}>
-              <button
-                className={styles.secondaryButton}
+              <Button
+                variant="secondary"
+                size="md"
+                fullWidth
+                leftIcon={<IconShoppingBag size={18} />}
                 onClick={() => navigate({ to: "/app/purchases" })}
               >
-                <IconShoppingBag size={18} />
                 {t("paymentReturn.viewPurchases")}
-              </button>
-              <button
-                className={styles.primaryButton}
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                fullWidth
+                rightIcon={<IconArrowRight size={18} />}
                 onClick={() => navigate({ to: "/app/explore" })}
               >
                 {t("paymentReturn.continueShopping")}
-                <IconArrowRight size={18} />
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -187,12 +169,14 @@ export function PaymentReturnPage() {
               </p>
             )}
             <div className={styles.buttonGroup}>
-              <button
-                className={styles.primaryButton}
+              <Button
+                variant="primary"
+                size="md"
+                fullWidth
                 onClick={() => navigate({ to: "/app/explore" })}
               >
                 {t("paymentReturn.returnToShop")}
-              </button>
+              </Button>
             </div>
           </>
         )}
@@ -214,7 +198,7 @@ export function PaymentReturnPage() {
             )}
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

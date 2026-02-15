@@ -1,0 +1,43 @@
+/* Card - Shared card container component */
+
+.card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+/* Padding sizes */
+.sm {
+  padding: 16px;
+}
+
+.md {
+  padding: 24px;
+}
+
+.lg {
+  padding: 32px;
+}
+
+/* Card title */
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 20px;
+}
+
+/* Centered variant (for modals/status pages) */
+.centered {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .lg {
+    padding: 24px;
+  }
+}

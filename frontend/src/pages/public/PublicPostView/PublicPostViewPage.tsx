@@ -9,7 +9,6 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { Loader, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
-  IconAlertCircle,
   IconShoppingCart,
   IconArrowLeft,
   IconDotsVertical,
@@ -19,6 +18,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { getPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { ReportModal } from "@/components/ReportModal";
@@ -101,10 +102,9 @@ export function PublicPostViewPage() {
     return (
       <div className={styles.page}>
         <div className={styles.errorContainer}>
-          <div className={styles.alert}>
-            <IconAlertCircle size={18} className={styles.alertIcon} />
-            <span>{error instanceof Error ? error.message : t("view.failedToLoad")}</span>
-          </div>
+          <Alert variant="error">
+            {error instanceof Error ? error.message : t("view.failedToLoad")}
+          </Alert>
         </div>
       </div>
     );
@@ -120,13 +120,14 @@ export function PublicPostViewPage() {
           {/* Header with Back button and Menu */}
           <header className={styles.header}>
             <div className={styles.headerRow}>
-              <button
-                className={styles.backButton}
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<IconArrowLeft size={16} />}
                 onClick={() => navigate({ to: "/explore" })}
               >
-                <IconArrowLeft size={16} />
                 {t("view.backToExplore")}
-              </button>
+              </Button>
 
               {showReportMenu && (
                 <Menu shadow="md" width={200} position="bottom-end">

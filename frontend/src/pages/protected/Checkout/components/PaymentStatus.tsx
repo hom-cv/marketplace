@@ -1,12 +1,10 @@
 import { Loader } from "@mantine/core";
-import {
-  IconCheck,
-  IconX,
-  IconShoppingBag,
-  IconArrowRight,
-} from "@tabler/icons-react";
+import { IconCheck, IconShoppingBag, IconArrowRight } from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import { StatusIcon } from "@/components/StatusIcon";
 import type { PaymentResponse, PaymentStatusResponse } from "@/api/types/payment";
 import styles from "../CheckoutPage.module.css";
@@ -36,18 +34,18 @@ export function PaymentStatus({
     <>
       {/* Error alert */}
       {error && (
-        <div className={styles.errorAlert}>
-          <IconX size={18} className={styles.errorAlertIcon} />
-          <div className={styles.errorAlertContent}>
-            <p className={styles.errorAlertTitle}>{t("status.error")}</p>
-            <p className={styles.errorAlertMessage}>{error}</p>
-          </div>
-        </div>
+        <Alert
+          variant="error"
+          title={t("status.error")}
+          style={{ marginBottom: 20 }}
+        >
+          {error}
+        </Alert>
       )}
 
       {/* Success state */}
       {isSuccess && (
-        <div className={styles.card}>
+        <Card>
           <div className={styles.successContainer}>
             <StatusIcon variant="success" size={64}>
               <IconCheck size={32} />
@@ -59,44 +57,39 @@ export function PaymentStatus({
               {t("checkout.paymentSuccessMessage")}
             </p>
             <div className={styles.buttonGroup}>
-              <button
-                className={styles.secondaryButton}
+              <Button
+                variant="secondary"
+                leftIcon={<IconShoppingBag size={18} />}
                 onClick={() => navigate({ to: "/app/purchases" })}
               >
-                <IconShoppingBag size={18} />
                 {t("checkout.viewPurchases")}
-              </button>
-              <button
-                className={styles.primaryButtonCompact}
+              </Button>
+              <Button
+                variant="primary"
+                rightIcon={<IconArrowRight size={18} />}
                 onClick={() => navigate({ to: "/app/explore" })}
               >
                 {t("checkout.continueShoppingBtn")}
-                <IconArrowRight size={18} />
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Failed state */}
       {isFailed && (
-        <div className={styles.errorAlert}>
-          <IconX size={18} className={styles.errorAlertIcon} />
-          <div className={styles.errorAlertContent}>
-            <p className={styles.errorAlertTitle}>
-              {t("checkout.paymentFailed")}
-            </p>
-            <p className={styles.errorAlertMessage}>
-              {paymentStatus?.failure_message ||
-                t("checkout.paymentFailedMessage")}
-            </p>
-          </div>
-        </div>
+        <Alert
+          variant="error"
+          title={t("checkout.paymentFailed")}
+          style={{ marginBottom: 20 }}
+        >
+          {paymentStatus?.failure_message || t("checkout.paymentFailedMessage")}
+        </Alert>
       )}
 
       {/* QR Code state */}
       {showQR && paymentResponse && (
-        <div className={styles.card}>
+        <Card>
           <div className={styles.qrContainer}>
             <h3 className={styles.qrTitle}>{t("checkout.scanToPay")}</h3>
             <p className={styles.qrSubtitle}>{t("checkout.scanWithApp")}</p>
@@ -119,7 +112,7 @@ export function PaymentStatus({
               <span>{t("checkout.waitingForPayment")}</span>
             </div>
           </div>
-        </div>
+        </Card>
       )}
     </>
   );

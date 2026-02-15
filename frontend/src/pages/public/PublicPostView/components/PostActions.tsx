@@ -2,8 +2,9 @@
  * PostActions - Buy button, sold state, and earnings preview for owners
  */
 
-import { IconShoppingCart, IconAlertCircle } from "@tabler/icons-react";
+import { IconShoppingCart } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { Alert } from "@/components/Alert";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import type { Post } from "@/api/types/post";
 import styles from "../PublicPostViewPage.module.css";
@@ -32,14 +33,11 @@ export function PostActions({
     <>
       {/* Ban Warning */}
       {isBanned && (
-        <div className={styles.alert}>
-          <IconAlertCircle size={18} className={styles.alertIcon} />
-          <span>
-            {post.is_banned
-              ? t("view.listingRemoved")
-              : t("view.sellerSuspended")}
-          </span>
-        </div>
+        <Alert variant="error">
+          {post.is_banned
+            ? t("view.listingRemoved")
+            : t("view.sellerSuspended")}
+        </Alert>
       )}
 
       {/* Buy Button - hide for owners, show sold state */}

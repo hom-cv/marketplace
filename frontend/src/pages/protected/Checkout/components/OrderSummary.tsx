@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
+import { Card } from "@/components/Card";
 import styles from "../CheckoutPage.module.css";
 
 interface Post {
@@ -28,9 +29,7 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
   const total = parseFloat(priceBreakdown?.total ?? "0");
 
   return (
-    <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{t("checkout.orderSummary")}</h3>
-
+    <Card title={t("checkout.orderSummary")}>
       {/* Item */}
       <div className={styles.itemCard}>
         {post.image_url && (
@@ -73,6 +72,6 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
         <span className={styles.totalLabel}>{t("checkout.total")}</span>
         <span className={styles.totalValue}>฿{formatAmount(total)}</span>
       </div>
-    </div>
+    </Card>
   );
 }
