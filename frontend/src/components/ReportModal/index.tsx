@@ -29,7 +29,12 @@ interface ReportModalProps {
   entityName: string;
 }
 
-const reasonValues: ReportReason[] = ["counterfeit", "prohibited_item", "scam", "abuse_of_system"];
+const reasonValues: ReportReason[] = [
+  "counterfeit",
+  "prohibited_item",
+  "scam",
+  "abuse_of_system",
+];
 
 function isValidReportReason(value: string | null): value is ReportReason {
   return reasonValues.includes(value as ReportReason);
@@ -47,12 +52,15 @@ export function ReportModal({
   const { t } = useTranslation("common");
 
   // Reason options with translations
-  const reasonOptions = useMemo(() => [
-    { value: "counterfeit", label: t("report.reasons.counterfeit") },
-    { value: "prohibited_item", label: t("report.reasons.prohibited_item") },
-    { value: "scam", label: t("report.reasons.scam") },
-    { value: "abuse_of_system", label: t("report.reasons.abuse_of_system") },
-  ], [t]);
+  const reasonOptions = useMemo(
+    () => [
+      { value: "counterfeit", label: t("report.reasons.counterfeit") },
+      { value: "prohibited_item", label: t("report.reasons.prohibited_item") },
+      { value: "scam", label: t("report.reasons.scam") },
+      { value: "abuse_of_system", label: t("report.reasons.abuse_of_system") },
+    ],
+    [t],
+  );
 
   const reportMutation = useMutation({
     mutationFn: (request: ReportCreateRequest) => submitReport(request),
@@ -97,7 +105,8 @@ export function ReportModal({
   };
 
   const isValid = reason !== null && description.trim().length >= 10;
-  const entityLabel = reportType === "user" ? t("report.user") : t("report.listing");
+  const entityLabel =
+    reportType === "user" ? t("report.user") : t("report.listing");
 
   return (
     <Modal
@@ -105,8 +114,10 @@ export function ReportModal({
       onClose={handleClose}
       title={
         <Group gap="xs">
-          <IconFlag size={20} />
-          <Text fw={600}>{t("report.title", { type: entityLabel })}</Text>
+          <IconFlag size={20} color="var(--color-error)" />
+          <Text fw={600} c="var(--color-error)">
+            {t("report.title", { type: entityLabel })}
+          </Text>
         </Group>
       }
       size="md"
