@@ -1,0 +1,25 @@
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: 1px solid;
+}
+
+.success {
+  background: var(--color-success-light);
+  border-color: var(--color-success-border);
+  color: var(--color-success);
+}
+
+.error {
+  background: var(--color-error-light);
+  border-color: var(--color-error-border);
+  color: var(--color-error);
+}
+
+.pending {
+  background: var(--color-bg-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
