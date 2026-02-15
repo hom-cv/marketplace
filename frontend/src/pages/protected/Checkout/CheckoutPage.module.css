@@ -270,10 +270,9 @@
 /* Notice box */
 .notice {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--color-primary-light);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
   margin: 20px 0;
@@ -282,12 +281,11 @@
 .noticeIcon {
   flex-shrink: 0;
   color: var(--color-primary);
-  margin-top: 1em;
 }
 
 .noticeText {
   font-size: 0.85rem;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   line-height: 1.5;
 }
 
