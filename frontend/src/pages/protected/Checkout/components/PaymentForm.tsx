@@ -110,7 +110,7 @@ export function PaymentForm({
       )}
 
       {/* Notice */}
-      <Alert variant="info" marginVertical>
+      <Alert variant="info" margin="vertical">
         <Trans
           i18nKey="checkout.refundNotice"
           ns="policies"
