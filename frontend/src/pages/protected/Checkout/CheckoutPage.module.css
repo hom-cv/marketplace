@@ -273,7 +273,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--mantine-primary-color-light);
+  background: var(--color-primary-light);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
   margin: 20px 0;
