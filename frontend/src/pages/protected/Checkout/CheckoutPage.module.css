@@ -16,28 +16,6 @@
   margin-bottom: 24px;
 }
 
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.backButton:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-}
-
 .title {
   font-size: 2rem;
   font-weight: 700;
@@ -52,21 +30,6 @@
   grid-template-columns: 1fr 380px;
   gap: 32px;
   align-items: start;
-}
-
-/* Cards */
-.card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 24px;
-}
-
-.cardTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 20px;
 }
 
 /* Stepper */
@@ -267,73 +230,6 @@
   color: var(--color-text);
 }
 
-/* Notice box */
-.notice {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-  margin: 20px 0;
-}
-
-.noticeIcon {
-  flex-shrink: 0;
-  color: var(--color-primary);
-}
-
-.noticeText {
-  font-size: 0.85rem;
-  color: var(--color-text-primary);
-  line-height: 1.5;
-}
-
-.noticeText a {
-  color: var(--color-primary);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.noticeText a:hover {
-  text-decoration: underline;
-}
-
-/* Primary button */
-.primaryButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  padding: 16px 24px;
-  background: var(--color-primary);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-  color: white;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.primaryButton:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-}
-
-.primaryButton:disabled {
-  background: var(--color-bg-muted);
-  border-color: var(--color-border);
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-}
-
-.primaryButtonCompact {
-  composes: primaryButton;
-  width: auto;
-  padding: 12px 20px;
-}
-
 /* Policy text */
 .policyText {
   font-size: 0.75rem;
@@ -515,62 +411,6 @@
   justify-content: center;
 }
 
-.secondaryButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--color-text);
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.secondaryButton:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-muted);
-}
-
-/* Error alert */
-.errorAlert {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(--color-error-light);
-  border: 1px solid var(--color-error-border);
-  border-radius: var(--radius-sm);
-  margin-bottom: 20px;
-}
-
-.errorAlertIcon {
-  flex-shrink: 0;
-  color: var(--color-error);
-}
-
-.errorAlertContent {
-  flex: 1;
-}
-
-.errorAlertTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-error);
-  margin: 0 0 4px;
-}
-
-.errorAlertMessage {
-  font-size: 0.85rem;
-  color: var(--color-error);
-}
-
 /* Loading state */
 .loading {
   display: flex;
@@ -617,10 +457,5 @@
 
   .buttonGroup {
     flex-direction: column;
-  }
-
-  .secondaryButton,
-  .primaryButton {
-    width: 100%;
   }
 }

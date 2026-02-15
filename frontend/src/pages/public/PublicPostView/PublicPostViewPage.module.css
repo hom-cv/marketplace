@@ -17,28 +17,6 @@
   margin-bottom: 24px;
 }
 
-.backButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-
-.backButton:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-}
-
 /* Two-column grid layout */
 .layout {
   display: grid;
@@ -247,23 +225,6 @@
   flex-shrink: 0;
 }
 
-/* Alert */
-.alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--color-error-light);
-  border: 1px solid var(--color-error-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-error);
-  font-size: 0.875rem;
-}
-
-.alertIcon {
-  flex-shrink: 0;
-  margin-top: 1px;
-}
 
 /* Desktop buy button */
 .buyButtonDesktop {

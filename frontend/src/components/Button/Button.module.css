@@ -1,0 +1,91 @@
+/* Button - Shared button component */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.sm {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  gap: 6px;
+}
+
+.md {
+  padding: 12px 20px;
+  font-size: 0.9rem;
+}
+
+.lg {
+  padding: 16px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Full width */
+.fullWidth {
+  width: 100%;
+}
+
+/* Primary variant */
+.primary {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  color: white;
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.primary:disabled {
+  background: var(--color-bg-muted);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* Secondary variant */
+.secondary {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-muted);
+}
+
+.secondary:disabled {
+  color: var(--color-text-muted);
+}
+
+/* Ghost variant (for back buttons) */
+.ghost {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.ghost:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.ghost:disabled {
+  color: var(--color-text-muted);
+}

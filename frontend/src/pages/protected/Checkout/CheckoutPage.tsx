@@ -8,7 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconArrowLeft, IconX } from "@tabler/icons-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import {
   createCardPayment,
@@ -18,6 +18,8 @@ import {
 } from "@/api/payments";
 import { getPost } from "@/api/posts";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import {
   CheckoutStepper,
   ShippingForm,
@@ -251,22 +253,21 @@ export function CheckoutPage() {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
-          <div className={styles.errorAlert}>
-            <IconX size={18} className={styles.errorAlertIcon} />
-            <div className={styles.errorAlertContent}>
-              <p className={styles.errorAlertTitle}>{t("status.error")}</p>
-              <p className={styles.errorAlertMessage}>
-                {t("checkout.failedToLoadProduct")}
-              </p>
-            </div>
-          </div>
-          <button
-            className={styles.backButton}
+          <Alert
+            variant="error"
+            title={t("status.error")}
+            margin="bottom"
+          >
+            {t("checkout.failedToLoadProduct")}
+          </Alert>
+          <Button
+            variant="ghost"
+            size="sm"
+            leftIcon={<IconArrowLeft size={16} />}
             onClick={() => navigate({ to: "/app/explore" })}
           >
-            <IconArrowLeft size={16} />
             {t("checkout.backToExplore")}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -284,13 +285,14 @@ export function CheckoutPage() {
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>
-          <button
-            className={styles.backButton}
+          <Button
+            variant="ghost"
+            size="sm"
+            leftIcon={<IconArrowLeft size={16} />}
             onClick={() => navigate({ to: `/explore/${postId}` })}
           >
-            <IconArrowLeft size={16} />
             {t("checkout.backToListing")}
-          </button>
+          </Button>
           <h1 className={styles.title}>{t("checkout.title")}</h1>
         </div>
 

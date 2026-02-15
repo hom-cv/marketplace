@@ -1,7 +1,10 @@
 import { Loader, TextInput, SimpleGrid } from "@mantine/core";
-import { IconCreditCard, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
+import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
 import { Trans, useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import styles from "../CheckoutPage.module.css";
 
 type PaymentMethod = "card" | "promptpay";
@@ -42,9 +45,7 @@ export function PaymentForm({
     });
 
   return (
-    <div className={styles.card}>
-      <h3 className={styles.cardTitle}>{t("checkout.paymentMethod")}</h3>
-
+    <Card title={t("checkout.paymentMethod")}>
       {/* Payment tabs */}
       <div className={styles.paymentTabs}>
         <button
@@ -109,29 +110,28 @@ export function PaymentForm({
       )}
 
       {/* Notice */}
-      <div className={styles.notice}>
-        <IconInfoCircle size={18} className={styles.noticeIcon} />
-        <p className={styles.noticeText}>
-          <Trans
-            i18nKey="checkout.refundNotice"
-            ns="policies"
-            components={{
-              refundLink: (
-                <a
-                  href="/terms#refund-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
-              ),
-            }}
-          />
-        </p>
-      </div>
+      <Alert variant="info" margin="vertical">
+        <Trans
+          i18nKey="checkout.refundNotice"
+          ns="policies"
+          components={{
+            refundLink: (
+              <a
+                href="/terms#refund-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            ),
+          }}
+        />
+      </Alert>
 
       {/* Payment button */}
       {paymentMethod === "card" ? (
-        <button
-          className={styles.primaryButton}
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={onCardSubmit}
           disabled={isLoading || !cardForm.isValid()}
         >
@@ -140,10 +140,12 @@ export function PaymentForm({
           ) : (
             t("checkout.payAmount", { amount: formatAmount(total) })
           )}
-        </button>
+        </Button>
       ) : (
-        <button
-          className={styles.primaryButton}
+        <Button
+          variant="primary"
+          size="lg"
+          fullWidth
           onClick={onPromptPaySubmit}
           disabled={isLoading}
         >
@@ -152,7 +154,7 @@ export function PaymentForm({
           ) : (
             t("checkout.generateQR", { amount: formatAmount(total) })
           )}
-        </button>
+        </Button>
       )}
 
       {/* Policy text */}
@@ -170,6 +172,6 @@ export function PaymentForm({
           }}
         />
       </p>
-    </div>
+    </Card>
   );
 }

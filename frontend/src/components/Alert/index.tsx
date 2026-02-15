@@ -1,0 +1,55 @@
+import type { HTMLAttributes, ReactNode } from "react";
+import { IconAlertCircle, IconCheck, IconX, IconInfoCircle } from "@tabler/icons-react";
+import styles from "./Alert.module.css";
+
+export interface AlertProps extends HTMLAttributes<HTMLDivElement> {
+  variant: "error" | "success" | "warning" | "info";
+  title?: string;
+  icon?: ReactNode;
+  fullWidth?: boolean;
+  margin?: "bottom" | "vertical";
+  children?: ReactNode;
+}
+
+const defaultIcons: Record<AlertProps["variant"], ReactNode> = {
+  error: <IconX size={18} />,
+  success: <IconCheck size={18} />,
+  warning: <IconAlertCircle size={18} />,
+  info: <IconInfoCircle size={18} />,
+};
+
+export function Alert({
+  variant,
+  title,
+  icon,
+  fullWidth = false,
+  margin,
+  children,
+  className,
+  ...props
+}: AlertProps) {
+  const isInline = !title && children;
+  const displayIcon = icon ?? defaultIcons[variant];
+
+  const classNames = [
+    styles.alert,
+    styles[variant],
+    fullWidth && styles.fullWidth,
+    margin === "bottom" && styles.marginBottom,
+    margin === "vertical" && styles.marginVertical,
+    isInline && styles.inline,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <div className={classNames} {...props}>
+      <span className={styles.icon}>{displayIcon}</span>
+      <div className={styles.content}>
+        {title && <h4 className={styles.title}>{title}</h4>}
+        {children && <div className={styles.message}>{children}</div>}
+      </div>
+    </div>
+  );
+}
