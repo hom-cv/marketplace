@@ -7,6 +7,8 @@ export interface AlertProps extends HTMLAttributes<HTMLDivElement> {
   title?: string;
   icon?: ReactNode;
   fullWidth?: boolean;
+  marginBottom?: boolean;
+  marginVertical?: boolean;
   children?: ReactNode;
 }
 
@@ -22,6 +24,8 @@ export function Alert({
   title,
   icon,
   fullWidth = false,
+  marginBottom = false,
+  marginVertical = false,
   children,
   className,
   ...props
@@ -33,6 +37,8 @@ export function Alert({
     styles.alert,
     styles[variant],
     fullWidth && styles.fullWidth,
+    marginBottom && styles.marginBottom,
+    marginVertical && styles.marginVertical,
     isInline && !title && styles.inline,
     className,
   ]
@@ -44,7 +50,7 @@ export function Alert({
       <span className={styles.icon}>{displayIcon}</span>
       <div className={styles.content}>
         {title && <p className={styles.title}>{title}</p>}
-        {children && <p className={styles.message}>{children}</p>}
+        {children && <div className={styles.message}>{children}</div>}
       </div>
     </div>
   );

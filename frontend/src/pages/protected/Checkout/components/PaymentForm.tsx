@@ -110,7 +110,7 @@ export function PaymentForm({
       )}
 
       {/* Notice */}
-      <Alert variant="info" style={{ margin: "20px 0" }}>
+      <Alert variant="info" marginVertical>
         <Trans
           i18nKey="checkout.refundNotice"
           ns="policies"
@@ -120,7 +120,6 @@ export function PaymentForm({
                 href="/terms#refund-policy"
                 target="_blank"
                 rel="noopener noreferrer"
-                style={{ color: "var(--color-primary)", fontWeight: 500 }}
               />
             ),
           }}

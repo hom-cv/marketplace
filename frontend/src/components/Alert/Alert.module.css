@@ -124,3 +124,23 @@
 .inline .message {
   font-size: 0.875rem;
 }
+
+/* Margin variants */
+.marginBottom {
+  margin-bottom: 20px;
+}
+
+.marginVertical {
+  margin: 20px 0;
+}
+
+/* Link styling within alerts */
+.alert a {
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.alert a:hover {
+  text-decoration: underline;
+}

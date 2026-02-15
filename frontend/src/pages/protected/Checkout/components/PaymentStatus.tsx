@@ -34,11 +34,7 @@ export function PaymentStatus({
     <>
       {/* Error alert */}
       {error && (
-        <Alert
-          variant="error"
-          title={t("status.error")}
-          style={{ marginBottom: 20 }}
-        >
+        <Alert variant="error" title={t("status.error")} marginBottom>
           {error}
         </Alert>
       )}
@@ -78,11 +74,7 @@ export function PaymentStatus({
 
       {/* Failed state */}
       {isFailed && (
-        <Alert
-          variant="error"
-          title={t("checkout.paymentFailed")}
-          style={{ marginBottom: 20 }}
-        >
+        <Alert variant="error" title={t("checkout.paymentFailed")} marginBottom>
           {paymentStatus?.failure_message || t("checkout.paymentFailedMessage")}
         </Alert>
       )}

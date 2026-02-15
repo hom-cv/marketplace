@@ -256,7 +256,7 @@ export function CheckoutPage() {
           <Alert
             variant="error"
             title={t("status.error")}
-            style={{ marginBottom: 20 }}
+            marginBottom
           >
             {t("checkout.failedToLoadProduct")}
           </Alert>
