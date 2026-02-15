@@ -13,7 +13,6 @@ from app.models.post import Post
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
 from app.schemas.post import PostResponseSchema
 
-
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
 
@@ -70,13 +69,14 @@ def _payment_to_list_item(
     )
 
 
-def _post_with_ban_to_response(
-    post: Post, is_banned: bool, is_user_banned: bool
+def _post_with_status_to_response(
+    post: Post, is_banned: bool, is_user_banned: bool, is_sold: bool = False
 ) -> PostResponseSchema:
-    """Convert a post with ban status tuple to PostResponseSchema."""
+    """Convert a post with statuses to PostResponseSchema."""
     response = PostResponseSchema.model_validate(post)
     response.is_banned = is_banned
     response.is_user_banned = is_user_banned
+    response.is_sold = is_sold
     return response
 
 
@@ -128,33 +128,34 @@ class ListingService:
         Returns:
             List of PostResponseSchema with is_banned and is_user_banned populated.
         """
-        posts_with_ban_status = await self._post_crud.get_by_user_id_with_ban_status(
+        posts_with_ban_status = await self._post_crud.get_by_user_id_with_status(
             self.db, user_id=user_id, skip=skip, limit=limit
         )
 
         return [
-            _post_with_ban_to_response(post, is_banned, is_user_banned)
-            for post, is_banned, is_user_banned in posts_with_ban_status
+            _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
+            for post, is_banned, is_user_banned, is_sold in posts_with_ban_status
         ]
 
     async def get_listing(self, post_id: int) -> PostResponseSchema | None:
         """
-        Get a single listing by ID with ban status.
+        Get a single listing by ID with ban status and sold status.
 
-        Uses an optimized single query to fetch post and ban status.
+        Uses an optimized single query to fetch post, ban status, and sold status.
 
         Args:
             post_id: The post ID.
 
         Returns:
-            PostResponseSchema with is_banned and is_user_banned, or None if not found.
+            PostResponseSchema with is_banned, is_user_banned, and is_sold, or None if not found.
         """
-        result = await self._post_crud.get_by_id_with_ban_status(self.db, id=post_id)
+        result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
 
         if result is None:
             return None
 
-        return _post_with_ban_to_response(*result)
+        post, is_banned, is_user_banned, is_sold = result
+        return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
 
 
 def _get_listing_service(

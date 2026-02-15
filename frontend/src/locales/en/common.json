@@ -100,6 +100,7 @@
   "earnings": {
     "title": "Your Earnings Preview",
     "calculating": "Calculating...",
+    "error": "Unable to load earnings",
     "itemPrice": "Item Price",
     "shipping": "+ Shipping",
     "fees": "- Fees",

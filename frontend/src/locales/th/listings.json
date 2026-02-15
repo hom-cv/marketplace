@@ -74,7 +74,9 @@
     "sellerSuspended": "บัญชีของผู้ขายนี้ถูกระงับ",
     "failedToLoad": "ไม่สามารถโหลดโพสต์ได้",
     "purchaseAction": "ซื้อสินค้านี้",
-    "itemSold": "สินค้านี้ถูกขายแล้ว"
+    "itemSold": "สินค้านี้ถูกขายแล้ว",
+    "shipping": "ค่าจัดส่ง",
+    "freeShipping": "จัดส่งฟรี"
   },
   "myListings": {
     "title": "สินค้าของฉัน",

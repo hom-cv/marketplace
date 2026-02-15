@@ -111,8 +111,8 @@ def create_mock_post_crud() -> MagicMock:
     mock_crud.get_posts_with_filters = AsyncMock(return_value=([], 0))
     mock_crud.get_by_id = AsyncMock(return_value=None)
     mock_crud.get_by_id_with_user = AsyncMock(return_value=None)
-    mock_crud.get_by_id_with_ban_status = AsyncMock(return_value=None)
-    mock_crud.get_by_user_id_with_ban_status = AsyncMock(return_value=[])
+    mock_crud.get_by_id_with_status = AsyncMock(return_value=None)
+    mock_crud.get_by_user_id_with_status = AsyncMock(return_value=[])
     mock_crud.create_post = AsyncMock()
     mock_crud.soft_delete = AsyncMock()
     return mock_crud

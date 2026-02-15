@@ -1,20 +1,18 @@
 /**
- * MeasurementsDisplay - Displays item measurements in a formatted grid
+ * MeasurementsDisplay - Displays item measurements in a table
  */
 
-import { Text, Paper, Group, Divider } from "@mantine/core";
 import { IconRuler } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { MEASUREMENT_KEY_TO_TRANSLATION } from "@/api/types/post";
+import styles from "./MeasurementsDisplay.module.css";
 
 interface MeasurementsDisplayProps {
   measurements: Record<string, number | null | undefined>;
-  showDivider?: boolean;
 }
 
 export function MeasurementsDisplay({
   measurements,
-  showDivider = true,
 }: MeasurementsDisplayProps) {
   const { t } = useTranslation("listings");
 
@@ -37,28 +35,23 @@ export function MeasurementsDisplay({
   };
 
   return (
-    <>
-      {showDivider && <Divider />}
-      <div>
-        <Group gap="xs" mb="sm">
-          <IconRuler size={18} color="var(--mantine-color-dimmed)" />
-          <Text size="sm" fw={500} c="dimmed">
-            {t("view.measurements")}
-          </Text>
-        </Group>
-        <Paper p="sm" radius="md" withBorder>
-          <Group gap="lg" wrap="wrap" justify="space-around">
-            {validMeasurements.map(([key, value]) => (
-              <div key={key}>
-                <Text size="xs" c="dimmed">
-                  {formatLabel(key)}
-                </Text>
-                <Text fw={500}>{value} cm</Text>
-              </div>
-            ))}
-          </Group>
-        </Paper>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <IconRuler size={16} className={styles.headerIcon} />
+        <span className={styles.headerLabel}>{t("view.measurements")}</span>
       </div>
-    </>
+      <div className={styles.card}>
+        <table className={styles.table}>
+          <tbody>
+            {validMeasurements.map(([key, value]) => (
+              <tr key={key} className={styles.row}>
+                <td className={styles.labelCell}>{formatLabel(key)}</td>
+                <td className={styles.valueCell}>{value} cm</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

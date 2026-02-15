@@ -7,10 +7,9 @@ using mocked CRUDs (allowing real service logic to run).
 from decimal import Decimal
 from unittest.mock import MagicMock
 
-from httpx import AsyncClient
-
 from app.models.post import Post, PostType
-from tests.integration.conftest import create_mock_price_breakdown, create_mock_user
+from httpx import AsyncClient
+from tests.integration.conftest import create_mock_user
 
 
 class TestListPostsEndpoint:
@@ -78,7 +77,7 @@ class TestGetPostEndpoint:
         mock_post_crud: MagicMock,
     ):
         """Non-existent post should return 404."""
-        mock_post_crud.get_by_id_with_ban_status.return_value = None
+        mock_post_crud.get_by_id_with_status.return_value = None
 
         response = await async_client.get("/api/v1/posts/99999")
 
@@ -104,8 +103,13 @@ class TestGetPostEndpoint:
         mock_post.measurements = None
         mock_post.user = create_mock_user()
 
-        # Configure CRUD to return (post, is_banned, is_user_banned)
-        mock_post_crud.get_by_id_with_ban_status.return_value = (mock_post, False, False)
+        # Configure CRUD to return (post, is_banned, is_user_banned, is_sold)
+        mock_post_crud.get_by_id_with_status.return_value = (
+            mock_post,
+            False,
+            False,
+            False,
+        )
 
         response = await async_client.get("/api/v1/posts/1")
 
@@ -141,7 +145,9 @@ class TestPreviewEarningsEndpoint:
         async_client: AsyncClient,
     ):
         """Shipping cost should default to zero."""
-        response = await async_client.get("/api/v1/posts/preview/earnings?item_price=500")
+        response = await async_client.get(
+            "/api/v1/posts/preview/earnings?item_price=500"
+        )
 
         assert response.status_code == 200
         body = response.json()
@@ -161,7 +167,9 @@ class TestPreviewEarningsEndpoint:
         async_client: AsyncClient,
     ):
         """Price exceeding max should return 422."""
-        response = await async_client.get("/api/v1/posts/preview/earnings?item_price=9999999")
+        response = await async_client.get(
+            "/api/v1/posts/preview/earnings?item_price=9999999"
+        )
 
         assert response.status_code == 422
 
@@ -197,14 +205,14 @@ class TestGetMyPostsEndpoint:
         mock_post_crud: MagicMock,
     ):
         """My posts should return list of user's posts."""
-        mock_post_crud.get_by_user_id_with_ban_status.return_value = []
+        mock_post_crud.get_by_user_id_with_status.return_value = []
 
         response = await async_client.get("/api/v1/posts/me")
 
         assert response.status_code == 200
         assert isinstance(response.json(), list)
         # Verify CRUD was called
-        mock_post_crud.get_by_user_id_with_ban_status.assert_called_once()
+        mock_post_crud.get_by_user_id_with_status.assert_called_once()
 
     async def test_get_my_posts_unauthorized_returns_401(
         self,

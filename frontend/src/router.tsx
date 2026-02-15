@@ -33,7 +33,6 @@ import {
   MyListingsPage,
   SoldListingsPage,
   CreatePostPage,
-  PostViewPage,
   BecomeSellerPage,
   PaymentReturnPage,
   CheckoutPage,
@@ -184,12 +183,6 @@ const createPostRoute = createRoute({
   component: CreatePostPage,
 });
 
-const postViewRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/posts/$postId",
-  component: PostViewPage,
-});
-
 const becomeSellerRoute = createRoute({
   getParentRoute: () => dashboardLayout,
   path: "/become-seller",
@@ -290,7 +283,6 @@ const routeTree = rootRoute.addChildren([
       myListingsRoute,
       salesRoute,
       createPostRoute,
-      postViewRoute,
       becomeSellerRoute,
       paymentReturnRoute,
       checkoutRoute,

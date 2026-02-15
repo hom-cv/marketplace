@@ -1,0 +1,139 @@
+/* EarningsPreview - Flat design earnings breakdown */
+
+.container {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.containerCompact {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 12px;
+}
+
+.titleCompact {
+  font-size: 0.75rem;
+  margin-bottom: 8px;
+}
+
+/* Table layout */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.row {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.labelCell {
+  padding: 8px 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: left;
+}
+
+.valueCell {
+  padding: 8px 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.valueFee {
+  color: var(--color-error);
+}
+
+.rowTotal {
+  border-bottom: none;
+}
+
+.labelTotal {
+  padding: 10px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.valueTotal {
+  padding: 10px 0 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-success);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.explanation {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+/* Loading state */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+  gap: 8px;
+}
+
+.loadingText {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Error state */
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 0.85rem;
+  color: var(--color-error);
+  background: rgba(224, 49, 49, 0.08);
+  border-radius: var(--radius-sm);
+}
+
+/* Compact mode marker class (required for CSS Modules export) */
+.compact {
+  /* Marker class - styles applied via contextual selectors below */
+}
+
+/* Compact mode adjustments */
+.compact .labelCell,
+.compact .valueCell {
+  padding: 6px 0;
+  font-size: 0.8rem;
+}
+
+.compact .labelTotal,
+.compact .valueTotal {
+  padding: 8px 0 0;
+  font-size: 0.85rem;
+}
+
+.compact .explanation {
+  margin-top: 8px;
+}

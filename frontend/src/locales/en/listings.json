@@ -74,7 +74,9 @@
     "sellerSuspended": "This seller's account has been suspended.",
     "failedToLoad": "Failed to load post",
     "purchaseAction": "purchase this item",
-    "itemSold": "This item has been sold"
+    "itemSold": "This item has been sold",
+    "shipping": "shipping",
+    "freeShipping": "Free shipping"
   },
   "myListings": {
     "title": "My Listings",
