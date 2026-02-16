@@ -13,6 +13,7 @@ export interface UserInfo {
   last_name?: string;
   username: string;
   is_seller: boolean;
+  is_admin?: boolean;
 }
 
 export function getInitials(user: UserInfo | null): string {

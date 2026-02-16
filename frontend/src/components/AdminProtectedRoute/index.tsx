@@ -1,7 +1,7 @@
 /**
  * Admin Protected Route Component
  * Extends ProtectedRoute to also check if user is an admin.
- * Redirects to /app if user is not an admin.
+ * Redirects to /explore if user is not an admin.
  */
 
 import { useEffect } from "react";
@@ -16,7 +16,7 @@ export function AdminProtectedRoute() {
 
   useEffect(() => {
     if (user && !user.is_admin) {
-      navigate({ to: "/app" });
+      navigate({ to: "/explore" });
     }
   }, [user, navigate]);
 

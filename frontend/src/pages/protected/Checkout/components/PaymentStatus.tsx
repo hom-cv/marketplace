@@ -56,14 +56,14 @@ export function PaymentStatus({
               <Button
                 variant="secondary"
                 leftIcon={<IconShoppingBag size={18} />}
-                onClick={() => navigate({ to: "/app/purchases" })}
+                onClick={() => navigate({ to: "/account/purchases" })}
               >
                 {t("checkout.viewPurchases")}
               </Button>
               <Button
                 variant="primary"
                 rightIcon={<IconArrowRight size={18} />}
-                onClick={() => navigate({ to: "/app/explore" })}
+                onClick={() => navigate({ to: "/explore" })}
               >
                 {t("checkout.continueShoppingBtn")}
               </Button>

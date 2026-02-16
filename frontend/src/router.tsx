@@ -2,14 +2,12 @@ import {
   createRouter,
   createRootRoute,
   createRoute,
-  redirect,
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
-import { DashboardLayout } from "@/components/DashboardLayout";
 import { AdminLayout } from "@/components/AdminLayout";
 
 // Public pages
@@ -27,7 +25,6 @@ import {
 
 // Protected pages
 import {
-  DashboardPage,
   PurchaseHistoryPage,
   LikedListingsPage,
   MyListingsPage,
@@ -105,7 +102,7 @@ const privacyRoute = createRoute({
 // Public profile route
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/profile/$username",
+  path: "/$username",
   component: ProfilePage,
 });
 
@@ -129,68 +126,16 @@ const protectedLayout = createRoute({
   component: ProtectedRoute,
 });
 
-// Dashboard layout with sidebar - parent for all /app routes
-const dashboardLayout = createRoute({
+// Checkout route (protected, no sidebar)
+const checkoutRoute = createRoute({
   getParentRoute: () => protectedLayout,
-  path: "/app",
-  component: DashboardLayout,
+  path: "/checkout/$postId",
+  component: CheckoutPage,
 });
 
-// Dashboard pages
-const dashboardRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/",
-  component: DashboardPage,
-});
-
-// Redirect /app/explore to /explore (consolidated explore page)
-const exploreRedirect = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/explore",
-  beforeLoad: () => {
-    throw redirect({ to: "/explore" });
-  },
-  component: () => null,
-});
-
-const purchasesRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/purchases",
-  component: PurchaseHistoryPage,
-});
-
-const likedListingsRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/liked",
-  component: LikedListingsPage,
-});
-
-const myListingsRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/my-listings",
-  component: MyListingsPage,
-});
-
-const salesRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/sales",
-  component: SoldListingsPage,
-});
-
-const createPostRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/posts/new",
-  component: CreatePostPage,
-});
-
-const becomeSellerRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/become-seller",
-  component: BecomeSellerPage,
-});
-
+// Payment return route (protected, no sidebar)
 const paymentReturnRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
+  getParentRoute: () => protectedLayout,
   path: "/payment-return",
   component: PaymentReturnPage,
   validateSearch: (search: Record<string, unknown>) => ({
@@ -199,23 +144,47 @@ const paymentReturnRoute = createRoute({
   }),
 });
 
-const checkoutRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/checkout/$postId",
-  component: CheckoutPage,
+// Account routes (protected, no sidebar)
+const accountPurchasesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/purchases",
+  component: PurchaseHistoryPage,
 });
 
-const profileEditRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/settings/profile",
+const accountLikedRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/liked",
+  component: LikedListingsPage,
+});
+
+const accountListingsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/listings",
+  component: MyListingsPage,
+});
+
+const accountListingsNewRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/listings/new",
+  component: CreatePostPage,
+});
+
+const accountSalesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/sales",
+  component: SoldListingsPage,
+});
+
+const accountSettingsRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/settings",
   component: ProfileEditPage,
 });
 
-// Protected profile route (with sidebar for logged-in users)
-const appProfileRoute = createRoute({
-  getParentRoute: () => dashboardLayout,
-  path: "/profile/$username",
-  component: ProfilePage,
+const accountBecomeSellerRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/become-seller",
+  component: BecomeSellerPage,
 });
 
 // Admin protected route wrapper - ensures user is admin
@@ -270,25 +239,19 @@ const routeTree = rootRoute.addChildren([
   verifyEmailRoute,
   termsRoute,
   privacyRoute,
-  profileRoute,
   publicExploreRoute,
   publicPostViewRoute,
 
   protectedLayout.addChildren([
-    dashboardLayout.addChildren([
-      dashboardRoute,
-      exploreRedirect,
-      purchasesRoute,
-      likedListingsRoute,
-      myListingsRoute,
-      salesRoute,
-      createPostRoute,
-      becomeSellerRoute,
-      paymentReturnRoute,
-      checkoutRoute,
-      profileEditRoute,
-      appProfileRoute,
-    ]),
+    checkoutRoute,
+    paymentReturnRoute,
+    accountPurchasesRoute,
+    accountLikedRoute,
+    accountListingsRoute,
+    accountListingsNewRoute,
+    accountSalesRoute,
+    accountSettingsRoute,
+    accountBecomeSellerRoute,
     adminProtectedLayout.addChildren([
       adminLayout.addChildren([
         adminDashboardRoute,
@@ -299,6 +262,9 @@ const routeTree = rootRoute.addChildren([
       ]),
     ]),
   ]),
+
+  // Profile route comes last as it's a catch-all for /$username
+  profileRoute,
 ]);
 
 export const router = createRouter({

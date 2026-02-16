@@ -32,7 +32,7 @@ export function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      navigate({ to: "/app" });
+      navigate({ to: "/explore" });
     }
   }, [token, navigate]);
 
@@ -52,7 +52,7 @@ export function LoginPage() {
       { email: values.email, password: values.password },
       {
         onSuccess: () => {
-          navigate({ to: "/app" });
+          navigate({ to: "/explore" });
         },
       },
     );

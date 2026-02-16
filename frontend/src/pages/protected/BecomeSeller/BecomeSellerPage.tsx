@@ -88,7 +88,7 @@ export function BecomeSellerPage() {
             <Text c="dimmed" ta="center">
               {t("seller.verifiedMessage", { digits: sellerStatus.bank_last_digits })}
             </Text>
-            <Button onClick={() => navigate({ to: "/app/posts/new" })}>
+            <Button onClick={() => navigate({ to: "/account/listings/new" })}>
               {t("seller.createListing")}
             </Button>
           </Stack>

@@ -16,7 +16,7 @@ import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 
 interface PostFeedItemProps {
   post: Post;
-  /** Base path for navigation (default: "/app/posts") */
+  /** Base path for navigation (default: "/explore") */
   linkPrefix?: string;
 }
 
@@ -29,7 +29,7 @@ const typeColors: Record<PostType, string> = {
   OTHER: "gray",
 };
 
-export function PostFeedItem({ post, linkPrefix = "/app/posts" }: PostFeedItemProps) {
+export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);

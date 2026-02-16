@@ -1,0 +1,46 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.toggle:hover {
+  border-color: var(--color-border-hover);
+}
+
+.active,
+.inactive {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.active .label {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.inactive .label {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.flag {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.label {
+  font-size: 0.75rem;
+}
+
+.divider {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}

@@ -1,60 +1,38 @@
 /**
  * Language Switcher Component
- * Allows users to switch between English and Thai
+ * Toggle between English and Thai
  */
 
-import { Menu, UnstyledButton, Group, Text } from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import styles from "./LanguageSwitcher.module.css";
 
 const languages = [
-  { code: "en", label: "English", flag: "🇺🇸" },
-  { code: "th", label: "ไทย", flag: "🇹🇭" },
+  { code: "en", label: "EN", flag: "🇺🇸" },
+  { code: "th", label: "TH", flag: "🇹🇭" },
 ];
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();
-  const currentLang = languages.find((l) => l.code === i18n.language) || languages[0];
 
-  const handleLanguageChange = (code: string) => {
-    i18n.changeLanguage(code);
+  const handleToggle = () => {
+    const newLang = i18n.language === "en" ? "th" : "en";
+    i18n.changeLanguage(newLang);
   };
 
-  return (
-    <Menu shadow="md" width={150}>
-      <Menu.Target>
-        <UnstyledButton
-          style={{
-            padding: "6px 12px",
-            borderRadius: "var(--mantine-radius-md)",
-            border: "1px solid var(--mantine-color-gray-3)",
-          }}
-        >
-          <Group gap="xs">
-            <Text size="lg">{currentLang.flag}</Text>
-            <Text size="sm">{currentLang.label}</Text>
-            <IconChevronDown size={14} />
-          </Group>
-        </UnstyledButton>
-      </Menu.Target>
+  const currentLang = languages.find((l) => l.code === i18n.language) || languages[0];
+  const otherLang = languages.find((l) => l.code !== i18n.language) || languages[1];
 
-      <Menu.Dropdown>
-        {languages.map((lang) => (
-          <Menu.Item
-            key={lang.code}
-            onClick={() => handleLanguageChange(lang.code)}
-            leftSection={<Text size="lg">{lang.flag}</Text>}
-            style={{
-              backgroundColor:
-                i18n.language === lang.code
-                  ? "var(--mantine-color-blue-0)"
-                  : undefined,
-            }}
-          >
-            {lang.label}
-          </Menu.Item>
-        ))}
-      </Menu.Dropdown>
-    </Menu>
+  return (
+    <button type="button" className={styles.toggle} onClick={handleToggle}>
+      <span className={styles.active}>
+        <span className={styles.flag}>{currentLang.flag}</span>
+        <span className={styles.label}>{currentLang.label}</span>
+      </span>
+      <span className={styles.divider}>/</span>
+      <span className={styles.inactive}>
+        <span className={styles.flag}>{otherLang.flag}</span>
+        <span className={styles.label}>{otherLang.label}</span>
+      </span>
+    </button>
   );
 }

@@ -61,7 +61,7 @@ export function MyListingsPage() {
                 <Text size="sm" c="dimmed" mb="md">
                   {t("myListings.createFirst")}
                 </Text>
-                <Link to="/app/posts/new">
+                <Link to="/account/listings/new">
                   <Button leftSection={<IconPlus size={16} />}>{tNav("menu.createListing")}</Button>
                 </Link>
               </div>

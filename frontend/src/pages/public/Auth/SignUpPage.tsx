@@ -28,7 +28,7 @@ export function SignUpPage() {
 
   useEffect(() => {
     if (token) {
-      navigate({ to: "/app" });
+      navigate({ to: "/explore" });
     }
   }, [token, navigate]);
 
