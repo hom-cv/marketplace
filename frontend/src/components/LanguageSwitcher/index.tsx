@@ -19,8 +19,8 @@ export function LanguageSwitcher() {
     i18n.changeLanguage(newLang);
   };
 
-  const currentLang = languages.find((l) => l.code === i18n.language) || languages[0];
-  const otherLang = languages.find((l) => l.code !== i18n.language) || languages[1];
+  const currentLang = languages.find((l) => i18n.language.startsWith(l.code)) || languages[0];
+  const otherLang = languages.find((l) => !i18n.language.startsWith(l.code)) || languages[1];
 
   return (
     <button type="button" className={styles.toggle} onClick={handleToggle}>
