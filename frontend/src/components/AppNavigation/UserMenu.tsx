@@ -43,7 +43,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
 
         <Menu.Item
           component={Link}
-          to={`/${user?.username ?? ""}`}
+          to={`/profile/${user?.username ?? ""}`}
           leftSection={<IconUser size={14} />}
         >
           {t("menu.profile")}
