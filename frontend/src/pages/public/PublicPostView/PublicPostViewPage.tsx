@@ -66,7 +66,7 @@ export function PublicPostViewPage() {
 
   const handleBuyClick = () => {
     if (isAuthenticated) {
-      navigate({ to: `/app/checkout/${postId}` });
+      navigate({ to: `/checkout/${postId}` });
     } else {
       setLoginAction(t("view.purchaseAction"));
       openLoginModal();

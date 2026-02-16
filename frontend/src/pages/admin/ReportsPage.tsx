@@ -52,9 +52,14 @@ export function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [opened, { open, close }] = useDisclosure(false);
 
-  const { data: reportsData, isLoading, error } = useQuery({
+  const {
+    data: reportsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["admin-reports", statusFilter, typeFilter],
-    queryFn: () => getReports(statusFilter || undefined, typeFilter || undefined),
+    queryFn: () =>
+      getReports(statusFilter || undefined, typeFilter || undefined),
   });
 
   const handleAction = (report: Report) => {
@@ -83,7 +88,9 @@ export function ReportsPage() {
   return (
     <Stack gap="xl">
       <div>
-        <Title order={2} mb="xs">Reports</Title>
+        <Title order={2} mb="xs">
+          Reports
+        </Title>
         <Text c="dimmed">Review and manage user and listing reports.</Text>
       </div>
 
@@ -139,11 +146,20 @@ export function ReportsPage() {
       ) : (
         <Accordion variant="separated" radius="lg">
           {reports.map((report) => (
-            <Accordion.Item key={report.id} value={String(report.id)} style={{ backgroundColor: "white" }}>
+            <Accordion.Item
+              key={report.id}
+              value={String(report.id)}
+              style={{ backgroundColor: "white" }}
+            >
               <Accordion.Control>
                 <Group justify="space-between" wrap="nowrap" pr="md">
                   <Group gap="md">
-                    <Badge color={TYPE_COLORS[report.report_type]} variant="filled" size="sm" radius="sm">
+                    <Badge
+                      color={TYPE_COLORS[report.report_type]}
+                      variant="filled"
+                      size="sm"
+                      radius="sm"
+                    >
                       {report.report_type.toUpperCase()}
                     </Badge>
                     <Stack gap={0}>
@@ -158,17 +174,24 @@ export function ReportsPage() {
                     </Stack>
                   </Group>
                   <Group gap="xl">
-                    <Badge color={STATUS_COLORS[report.status]} variant="light" size="sm">
+                    <Badge
+                      color={STATUS_COLORS[report.status]}
+                      variant="light"
+                      size="sm"
+                    >
                       {report.status}
                     </Badge>
                     <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }}>
-                      {new Date(report.created_date).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit"
-                      })}
+                      {new Date(report.created_date).toLocaleDateString(
+                        undefined,
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        },
+                      )}
                     </Text>
                   </Group>
                 </Group>
@@ -178,14 +201,22 @@ export function ReportsPage() {
                   <Paper withBorder p="md" radius="md" bg="gray.0">
                     <Grid>
                       <Grid.Col span={{ base: 12, sm: 4 }}>
-                        <Text size="xs" c="dimmed" fw={700} tt="uppercase">Reason</Text>
+                        <Text size="xs" c="dimmed" fw={700} tt="uppercase">
+                          Reason
+                        </Text>
                         <Text fw={600} mt={4}>
                           {REASON_LABELS[report.reason] || report.reason}
                         </Text>
                       </Grid.Col>
                       <Grid.Col span={{ base: 12, sm: 8 }}>
-                        <Text size="xs" c="dimmed" fw={700} tt="uppercase">Description</Text>
-                        <Text size="sm" mt={4} style={{ whiteSpace: "pre-wrap" }}>
+                        <Text size="xs" c="dimmed" fw={700} tt="uppercase">
+                          Description
+                        </Text>
+                        <Text
+                          size="sm"
+                          mt={4}
+                          style={{ whiteSpace: "pre-wrap" }}
+                        >
                           {report.description}
                         </Text>
                       </Grid.Col>
@@ -193,11 +224,23 @@ export function ReportsPage() {
                   </Paper>
 
                   {report.admin_notes && (
-                    <Paper p="md" radius="md" withBorder style={{ borderStyle: "dashed" }} bg="blue.0">
-                      <Text size="xs" c="blue.7" fw={700} tt="uppercase" mb={4}>Admin Decision Notes</Text>
-                      <Text size="sm" c="blue.9">{report.admin_notes}</Text>
+                    <Paper
+                      p="md"
+                      radius="md"
+                      withBorder
+                      style={{ borderStyle: "dashed" }}
+                      bg="blue.0"
+                    >
+                      <Text size="xs" c="blue.7" fw={700} tt="uppercase" mb={4}>
+                        Admin Decision Notes
+                      </Text>
+                      <Text size="sm" c="blue.9">
+                        {report.admin_notes}
+                      </Text>
                       {report.reviewed_by_username && (
-                        <Text size="xs" c="blue.6" mt={8}>Reviewed by {report.reviewed_by_username}</Text>
+                        <Text size="xs" c="blue.6" mt={8}>
+                          Reviewed by {report.reviewed_by_username}
+                        </Text>
                       )}
                     </Paper>
                   )}
@@ -214,19 +257,20 @@ export function ReportsPage() {
                         Take Action
                       </Button>
                     )}
-                    {report.report_type === "post" && report.reported_post_id && (
-                      <Button
-                        variant="subtle"
-                        size="sm"
-                        color="gray"
-                        component="a"
-                        href={`/app/posts/${report.reported_post_id}`}
-                        target="_blank"
-                        leftSection={<IconExternalLink size={14} />}
-                      >
-                        View Listing
-                      </Button>
-                    )}
+                    {report.report_type === "post" &&
+                      report.reported_post_id && (
+                        <Button
+                          variant="subtle"
+                          size="sm"
+                          color="gray"
+                          component="a"
+                          href={`/posts/${report.reported_post_id}`}
+                          target="_blank"
+                          leftSection={<IconExternalLink size={14} />}
+                        >
+                          View Listing
+                        </Button>
+                      )}
                   </Group>
                 </Stack>
               </Accordion.Panel>
