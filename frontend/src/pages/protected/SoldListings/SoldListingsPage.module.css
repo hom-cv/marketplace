@@ -116,8 +116,8 @@
 }
 
 .badgePacking {
-  background: var(--color-secondary-light);
-  color: #b8860b;
+  background: var(--color-warning-light);
+  color: var(--color-warning);
 }
 
 .badgeInTransit {

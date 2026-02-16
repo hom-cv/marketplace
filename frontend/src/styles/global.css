@@ -33,6 +33,16 @@
   --color-success-light: #d3f9d8;
   --color-success-border: #8ce99a;
 
+  /* Warning colors (orange) */
+  --color-warning: #f57c00;
+  --color-warning-light: #fff3e0;
+  --color-warning-border: #ffb74d;
+
+  /* Accent colors (purple) */
+  --color-accent: #8e24aa;
+  --color-accent-light: #f3e5f5;
+  --color-accent-border: #ce93d8;
+
   /* Primary border (for info state) */
   --color-primary-border: #748ffc;
 

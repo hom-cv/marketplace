@@ -1,5 +1,5 @@
-import { Text, Paper, Group } from "@mantine/core";
 import { IconUser } from "@tabler/icons-react";
+import styles from "./UserCard.module.css";
 
 interface UserCardProps {
   username: string;
@@ -8,12 +8,12 @@ interface UserCardProps {
 
 export function UserCard({ username, label }: UserCardProps) {
   return (
-    <Paper withBorder p="xs" radius="sm">
-      <Group gap={4} mb={4}>
-        <IconUser size={12} color="var(--mantine-color-dimmed)" />
-        <Text size="xs" fw={600} c="dimmed">{label}</Text>
-      </Group>
-      <Text size="xs">@{username}</Text>
-    </Paper>
+    <div className={styles.card}>
+      <div className={styles.label}>
+        <IconUser size={12} className={styles.labelIcon} />
+        <span className={styles.labelText}>{label}</span>
+      </div>
+      <p className={styles.username}>@{username}</p>
+    </div>
   );
 }

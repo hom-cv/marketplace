@@ -1,7 +1,9 @@
-import { Text, Paper, Group, Badge, ActionIcon, CopyButton, Tooltip } from "@mantine/core";
+import { useState } from "react";
+import { Tooltip } from "@mantine/core";
 import { IconTruck, IconCopy } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { CARRIER_LABELS, CARRIER_COLORS } from "@/constants/shipping";
+import { CARRIER_LABELS } from "@/constants/shipping";
+import styles from "./TrackingInfoCard.module.css";
 
 interface TrackingInfoCardProps {
   trackingNumber: string;
@@ -9,30 +11,37 @@ interface TrackingInfoCardProps {
 }
 
 export function TrackingInfoCard({ trackingNumber, carrier }: TrackingInfoCardProps) {
+  const [copied, setCopied] = useState(false);
   const carrierKey = carrier?.toLowerCase() || "";
   const { t } = useTranslation("common");
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(trackingNumber);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <Paper withBorder p="xs" radius="sm">
-      <Group gap={4} mb={4}>
-        <IconTruck size={12} color="var(--mantine-color-dimmed)" />
-        <Text size="xs" fw={600} c="dimmed">{t("tracking.title")}</Text>
-      </Group>
-      <Group gap="xs">
-        <Badge size="xs" variant="filled" color={CARRIER_COLORS[carrierKey] || "blue"}>
+    <div className={styles.card}>
+      <div className={styles.label}>
+        <IconTruck size={12} className={styles.labelIcon} />
+        <span className={styles.labelText}>{t("tracking.title")}</span>
+      </div>
+      <div className={styles.trackingRow}>
+        <span className={styles.badge}>
           {CARRIER_LABELS[carrierKey] || carrier}
-        </Badge>
-        <Text size="xs" ff="monospace">{trackingNumber}</Text>
-        <CopyButton value={trackingNumber}>
-          {({ copied, copy }) => (
-            <Tooltip label={copied ? t("tracking.copied") : t("tracking.copy")} withArrow>
-              <ActionIcon size="xs" variant="subtle" onClick={copy} color={copied ? "teal" : "gray"}>
-                <IconCopy size={12} />
-              </ActionIcon>
-            </Tooltip>
-          )}
-        </CopyButton>
-      </Group>
-    </Paper>
+        </span>
+        <span className={styles.trackingNumber}>{trackingNumber}</span>
+        <Tooltip label={copied ? t("tracking.copied") : t("tracking.copy")} withArrow>
+          <button
+            type="button"
+            className={`${styles.copyButton} ${copied ? styles.copyButtonCopied : ""}`}
+            onClick={handleCopy}
+          >
+            <IconCopy size={12} />
+          </button>
+        </Tooltip>
+      </div>
+    </div>
   );
 }
