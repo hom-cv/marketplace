@@ -10,7 +10,10 @@ interface TrackingInfoCardProps {
   carrier: string | null;
 }
 
-export function TrackingInfoCard({ trackingNumber, carrier }: TrackingInfoCardProps) {
+export function TrackingInfoCard({
+  trackingNumber,
+  carrier,
+}: TrackingInfoCardProps) {
   const [copied, setCopied] = useState(false);
   const carrierKey = carrier?.toLowerCase() || "";
   const { t } = useTranslation("common");
@@ -25,6 +28,7 @@ export function TrackingInfoCard({ trackingNumber, carrier }: TrackingInfoCardPr
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Clipboard access denied or failed
+      console.error("Failed to copy text:", err);
     }
   };
 
@@ -39,7 +43,10 @@ export function TrackingInfoCard({ trackingNumber, carrier }: TrackingInfoCardPr
           {CARRIER_LABELS[carrierKey] || carrier}
         </span>
         <span className={styles.trackingNumber}>{trackingNumber}</span>
-        <Tooltip label={copied ? t("tracking.copied") : t("tracking.copy")} withArrow>
+        <Tooltip
+          label={copied ? t("tracking.copied") : t("tracking.copy")}
+          withArrow
+        >
           <button
             type="button"
             className={`${styles.copyButton} ${copied ? styles.copyButtonCopied : ""}`}
