@@ -3,7 +3,7 @@
  */
 
 import { Menu, Avatar, UnstyledButton } from "@mantine/core";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   IconLogout,
@@ -27,7 +27,6 @@ interface UserMenuProps {
 
 export function UserMenu({ user, onLogout }: UserMenuProps) {
   const { t } = useTranslation("navigation");
-  const navigate = useNavigate();
 
   return (
     <Menu shadow="md" width={200} position="bottom-end">
@@ -44,13 +43,8 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
 
         <Menu.Item
           component={Link}
+          to={`/${user?.username ?? ""}`}
           leftSection={<IconUser size={14} />}
-          onClick={() =>
-            navigate({
-              to: "/$username",
-              params: { username: user?.username ?? "" },
-            })
-          }
         >
           {t("menu.profile")}
         </Menu.Item>

@@ -12,7 +12,7 @@ import {
   NavLink,
   Button,
 } from "@mantine/core";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   IconLogout,
@@ -45,7 +45,6 @@ export function MobileDrawer({
   onLogout,
 }: MobileDrawerProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const { t } = useTranslation("navigation");
 
   return (
@@ -140,16 +139,11 @@ export function MobileDrawer({
             </Text>
             <NavLink
               component={Link}
+              to={`/${user?.username ?? ""}`}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
               active={location.pathname === `/${user?.username}`}
-              onClick={() => {
-                navigate({
-                  to: "/$username",
-                  params: { username: user?.username ?? "" },
-                });
-                onClose();
-              }}
+              onClick={onClose}
             />
             <NavLink
               component={Link}
