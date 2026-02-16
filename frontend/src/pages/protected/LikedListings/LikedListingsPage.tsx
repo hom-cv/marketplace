@@ -1,19 +1,10 @@
 /**
- * Liked Listings Page - View all posts the user has liked
- * Styled to match ExplorePage layout
+ * Liked Listings Page - Flat design
  */
 
 import { useMemo, useRef, useCallback, useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import {
-  Loader,
-  Center,
-  Alert,
-  Text,
-  Stack,
-  Box,
-  Title,
-} from "@mantine/core";
+import { Loader, Box } from "@mantine/core";
 import { IconAlertCircle, IconHeart } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getLikedPosts } from "@/api/likes";
@@ -53,7 +44,6 @@ export function LikedListingsPage() {
 
   const totalCount = data?.pages[0]?.total ?? 0;
 
-  // Intersection Observer for infinite scroll
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries;
@@ -80,85 +70,80 @@ export function LikedListingsPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
-        {error instanceof Error ? error.message : t("errors.failedToLoad")}
-      </Alert>
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.errorCard}>
+            <IconAlertCircle size={20} className={styles.errorIcon} />
+            <p className={styles.errorText}>
+              {error instanceof Error ? error.message : t("errors.failedToLoad")}
+            </p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Stack gap="lg">
-      {/* Header */}
-      <Title order={2}>{t("likes.title")}</Title>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{t("likes.title")}</h1>
+          <p className={styles.resultsCount}>
+            {totalCount} {totalCount === 1 ? t("likes.oneItem") : t("likes.multipleItems")}
+          </p>
+        </div>
 
-      {/* Results Count */}
-      <Text size="sm" c="dimmed">
-        {totalCount} {totalCount === 1 ? t("likes.oneItem") : t("likes.multipleItems")}
-      </Text>
-
-      {/* Desktop Grid */}
-      <Box visibleFrom="sm">
         {posts.length === 0 ? (
-          <Center h={200}>
-            <Stack align="center" gap="xs">
-              <IconHeart size={48} color="gray" />
-              <Text c="dimmed">{t("likes.noLikes")}</Text>
-              <Text size="sm" c="dimmed">{t("likes.noLikesHint")}</Text>
-            </Stack>
-          </Center>
-        ) : (
-          <div className={styles.grid}>
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
-            ))}
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
+              <IconHeart size={32} />
+            </div>
+            <p className={styles.emptyTitle}>{t("likes.noLikes")}</p>
+            <p className={styles.emptyHint}>{t("likes.noLikesHint")}</p>
           </div>
-        )}
-      </Box>
-
-      {/* Mobile Feed */}
-      <Box hiddenFrom="sm">
-        {posts.length === 0 ? (
-          <Center h={200}>
-            <Stack align="center" gap="xs">
-              <IconHeart size={48} color="gray" />
-              <Text c="dimmed">{t("likes.noLikes")}</Text>
-            </Stack>
-          </Center>
         ) : (
-          <Stack gap={0}>
-            {posts.map((post) => (
-              <PostFeedItem key={post.id} post={post} />
-            ))}
-          </Stack>
+          <>
+            {/* Desktop Grid */}
+            <Box visibleFrom="sm">
+              <div className={styles.grid}>
+                {posts.map((post) => (
+                  <PostCard key={post.id} post={post} onReportClick={reportModal.openReport} />
+                ))}
+              </div>
+            </Box>
+
+            {/* Mobile Feed */}
+            <Box hiddenFrom="sm">
+              <div>
+                {posts.map((post) => (
+                  <PostFeedItem key={post.id} post={post} />
+                ))}
+              </div>
+            </Box>
+
+            {/* Infinite scroll sentinel and loading */}
+            <div ref={loadMoreRef} className={styles.scrollSentinel} />
+            {isFetchingNextPage && (
+              <div className={styles.loadingMore}>
+                <Loader size="sm" />
+              </div>
+            )}
+            {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
+              <p className={styles.endMessage}>{t("likes.noMore")}</p>
+            )}
+          </>
         )}
-      </Box>
+      </div>
 
-      {/* Infinite scroll sentinel and loading indicator */}
-      {posts.length > 0 && (
-        <>
-          <div ref={loadMoreRef} style={{ height: 1 }} />
-          {isFetchingNextPage && (
-            <Center py="xl">
-              <Loader size="sm" />
-            </Center>
-          )}
-          {!hasNextPage && posts.length >= ITEMS_PER_PAGE && (
-            <Text ta="center" c="dimmed" size="sm" py="md">
-              {t("likes.noMore")}
-            </Text>
-          )}
-        </>
-      )}
-
-      {/* Single shared ReportModal for all cards */}
+      {/* Report Modal */}
       {reportModal.target && (
         <ReportModal
           opened={reportModal.opened}
@@ -168,6 +153,6 @@ export function LikedListingsPage() {
           entityName={reportModal.target.entityName}
         />
       )}
-    </Stack>
+    </div>
   );
 }

@@ -1,15 +1,9 @@
+/**
+ * Dashboard page - Flat design
+ */
+
 import { useQuery } from "@tanstack/react-query";
-import {
-  Title,
-  Text,
-  SimpleGrid,
-  Card,
-  Group,
-  Stack,
-  Loader,
-  Center,
-  ThemeIcon,
-} from "@mantine/core";
+import { Loader } from "@mantine/core";
 import {
   IconPackage,
   IconShoppingBag,
@@ -19,6 +13,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { getPosts, getMyPosts } from "@/api/posts";
+import styles from "./DashboardPage.module.css";
 
 export function DashboardPage() {
   const { t } = useTranslation("dashboard");
@@ -35,9 +30,9 @@ export function DashboardPage() {
 
   if (loadingAll || loadingMy) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
@@ -46,67 +41,61 @@ export function DashboardPage() {
       title: t("stats.totalListings"),
       value: myPosts?.length || 0,
       icon: IconPackage,
-      color: "blue",
+      colorClass: styles.statIconBlue,
       link: "/app/my-listings",
     },
     {
       title: t("stats.marketplaceItems"),
       value: allPosts?.total || 0,
       icon: IconTrendingUp,
-      color: "green",
+      colorClass: styles.statIconGreen,
       link: "/app/explore",
     },
     {
       title: t("stats.totalPurchases"),
       value: 0,
       icon: IconShoppingBag,
-      color: "orange",
+      colorClass: styles.statIconOrange,
       link: "/app/purchases",
     },
     {
       title: t("stats.earnings"),
       value: 0,
       icon: IconReceipt,
-      color: "grape",
+      colorClass: styles.statIconPurple,
       link: "/app/sales",
     },
   ];
 
   return (
-    <Stack gap="xl">
-      <div>
-        <Title order={2} mb="xs">{t("title")}</Title>
-        <Text c="dimmed">{t("welcome")}! {t("welcomeMessage")}</Text>
-      </div>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{t("title")}</h1>
+          <p className={styles.subtitle}>
+            {t("welcome")}! {t("welcomeMessage")}
+          </p>
+        </div>
 
-      <SimpleGrid cols={{ base: 1, xs: 2, md: 4 }} spacing="lg">
-        {stats.map((stat) => (
-          <Link key={stat.title} to={stat.link} style={{ textDecoration: "none" }}>
-            <Card shadow="sm" padding="lg" radius="md" withBorder style={{ cursor: "pointer" }}>
-              <Group>
-                <ThemeIcon size="xl" radius="md" variant="light" color={stat.color}>
-                  <stat.icon size={24} />
-                </ThemeIcon>
-                <div>
-                  <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                    {stat.title}
-                  </Text>
-                  <Text size="xl" fw={700}>
-                    {stat.value}
-                  </Text>
-                </div>
-              </Group>
-            </Card>
-          </Link>
-        ))}
-      </SimpleGrid>
+        <div className={styles.statsGrid}>
+          {stats.map((stat) => (
+            <Link key={stat.title} to={stat.link} className={styles.statCard}>
+              <div className={`${styles.statIcon} ${stat.colorClass}`}>
+                <stat.icon size={24} />
+              </div>
+              <div className={styles.statContent}>
+                <p className={styles.statLabel}>{stat.title}</p>
+                <p className={styles.statValue}>{stat.value}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
 
-      <div>
-        <Title order={3} mb="md">{t("sections.quickActions")}</Title>
-        <Text c="dimmed" size="sm">
-          {t("sidebarHint")}
-        </Text>
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t("sections.quickActions")}</h2>
+          <p className={styles.sectionHint}>{t("sidebarHint")}</p>
+        </div>
       </div>
-    </Stack>
+    </div>
   );
 }

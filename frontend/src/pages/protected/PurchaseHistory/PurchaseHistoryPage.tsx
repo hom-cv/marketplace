@@ -1,33 +1,30 @@
+/**
+ * Purchase History Page - Flat design
+ */
+
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader } from "@mantine/core";
 import {
-  Title,
-  Text,
-  Stack,
-  Center,
-  Loader,
-  Alert,
-  Group,
-  Image,
-  Badge,
-  Button,
-  Stepper,
-  Accordion,
-  Paper,
-  Box,
-  SimpleGrid,
-} from "@mantine/core";
-import { IconShoppingBag, IconAlertCircle, IconPackage, IconTruck, IconCheck } from "@tabler/icons-react";
+  IconShoppingBag,
+  IconAlertCircle,
+  IconPackage,
+  IconTruck,
+  IconCheck,
+  IconChevronDown,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
-import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
 import { UserCard } from "@/components/UserCard";
-import { FULFILLMENT_LABELS, FULFILLMENT_COLORS } from "@/constants/shipping";
+import { FULFILLMENT_LABELS } from "@/constants/shipping";
+import styles from "./PurchaseHistoryPage.module.css";
 
 export function PurchaseHistoryPage() {
   const queryClient = useQueryClient();
   const { t } = useTranslation("common");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const { data: purchases, isLoading, error } = useQuery({
     queryKey: ["my-purchases"],
@@ -43,17 +40,24 @@ export function PurchaseHistoryPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title={t("status.error")} color="red">
-        {error instanceof Error ? error.message : t("errors.failedToLoad")}
-      </Alert>
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <div className={styles.errorCard}>
+            <IconAlertCircle size={20} className={styles.errorIcon} />
+            <p className={styles.errorText}>
+              {error instanceof Error ? error.message : t("errors.failedToLoad")}
+            </p>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -66,120 +70,179 @@ export function PurchaseHistoryPage() {
     }
   };
 
+  const getBadgeClass = (status: string | null) => {
+    switch (status) {
+      case "packing": return styles.badgePacking;
+      case "in_transit": return styles.badgeInTransit;
+      case "delivered": return styles.badgeDelivered;
+      default: return styles.badgePacking;
+    }
+  };
+
   const successfulPurchases = purchases?.filter((p) => p.status === "successful") || [];
 
+  const steps = [
+    { icon: IconPackage, label: t("purchases.packing") },
+    { icon: IconTruck, label: t("purchases.inTransit") },
+    { icon: IconCheck, label: t("purchases.delivered") },
+  ];
+
   return (
-    <Stack gap="lg">
-      <div>
-        <Title order={2} mb="xs">{t("purchases.title")}</Title>
-        <Text c="dimmed">{t("purchases.subtitle")}</Text>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{t("purchases.title")}</h1>
+          <p className={styles.subtitle}>{t("purchases.subtitle")}</p>
+        </div>
+
+        {successfulPurchases.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyCard}>
+              <div className={styles.emptyIcon}>
+                <IconShoppingBag size={28} />
+              </div>
+              <p className={styles.emptyTitle}>{t("purchases.noPurchases")}</p>
+              <p className={styles.emptyText}>{t("purchases.noPurchasesDesc")}</p>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.purchaseList}>
+            {successfulPurchases.map((purchase) => {
+              const currentStep = getFulfillmentStep(purchase.fulfillment_status);
+
+              return (
+                <div key={purchase.payment_id} className={styles.purchaseCard}>
+                  <div
+                    className={styles.purchaseHeader}
+                    onClick={() => setExpandedId(expandedId === purchase.payment_id ? null : purchase.payment_id)}
+                  >
+                    <img
+                      src={purchase.post.image_url || "https://placehold.co/56x56?text=No+Image"}
+                      alt={purchase.post.title}
+                      className={styles.purchaseImage}
+                    />
+                    <div className={styles.purchaseInfo}>
+                      <div className={styles.purchaseTopRow}>
+                        <p className={styles.purchaseTitle}>{purchase.post.title}</p>
+                        <span className={styles.purchasePrice}>
+                          ฿{(purchase.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                      <div className={styles.purchaseMeta}>
+                        <span className={`${styles.badge} ${getBadgeClass(purchase.fulfillment_status)}`}>
+                          {FULFILLMENT_LABELS[purchase.fulfillment_status || ""] || "Processing"}
+                        </span>
+                        <span className={styles.purchaseDate}>
+                          {new Date(purchase.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <IconChevronDown
+                      size={20}
+                      className={`${styles.expandIcon} ${expandedId === purchase.payment_id ? styles.expandIconOpen : ""}`}
+                    />
+                  </div>
+
+                  {expandedId === purchase.payment_id && (
+                    <div className={styles.purchaseContent}>
+                      <div className={styles.contentGrid}>
+                        <div>
+                          <div className={styles.infoCard}>
+                            <p className={styles.infoLabel}>{t("purchases.orderProgress")}</p>
+                            <div className={styles.stepper}>
+                              {steps.map((step, index) => {
+                                const StepIcon = step.icon;
+                                const isCompleted = index < currentStep;
+                                const isActive = index === currentStep;
+                                const isLast = index === steps.length - 1;
+
+                                return (
+                                  <div key={index} className={styles.step}>
+                                    <div className={styles.stepIndicator}>
+                                      <div
+                                        className={`${styles.stepIcon} ${
+                                          isCompleted ? styles.stepIconCompleted : isActive ? styles.stepIconActive : ""
+                                        }`}
+                                      >
+                                        <StepIcon size={14} />
+                                      </div>
+                                      {!isLast && (
+                                        <div
+                                          className={`${styles.stepLine} ${isCompleted ? styles.stepLineCompleted : ""}`}
+                                        />
+                                      )}
+                                    </div>
+                                    <div className={styles.stepContent}>
+                                      <p
+                                        className={`${styles.stepLabel} ${
+                                          isCompleted ? styles.stepLabelCompleted : isActive ? styles.stepLabelActive : ""
+                                        }`}
+                                      >
+                                        {step.label}
+                                      </p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {purchase.fulfillment_status === "in_transit" && (
+                            <button
+                              type="button"
+                              className={styles.confirmButton}
+                              onClick={() => confirmMutation.mutate(purchase.payment_id)}
+                              disabled={confirmMutation.isPending}
+                            >
+                              {confirmMutation.isPending ? (
+                                <Loader size="xs" color="white" />
+                              ) : (
+                                <>
+                                  <IconCheck size={16} />
+                                  {t("purchases.confirmDelivery")}
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+
+                        <div>
+                          {purchase.seller && (
+                            <UserCard username={purchase.seller.username} label={t("purchases.seller")} />
+                          )}
+
+                          {purchase.shipping_name && (
+                            <div style={{ marginTop: 12 }}>
+                              <ShippingAddressCard
+                                name={purchase.shipping_name}
+                                phone={purchase.shipping_phone}
+                                address={purchase.shipping_address}
+                                district={purchase.shipping_district}
+                                province={purchase.shipping_province}
+                                postalCode={purchase.shipping_postal_code}
+                                label={t("purchases.shippingTo")}
+                              />
+                            </div>
+                          )}
+
+                          {purchase.tracking_number && (
+                            <div style={{ marginTop: 12 }}>
+                              <TrackingInfoCard
+                                trackingNumber={purchase.tracking_number}
+                                carrier={purchase.shipping_carrier}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      {successfulPurchases.length === 0 ? (
-        <EmptyStateCard
-          icon={<IconShoppingBag size={24} />}
-          title={t("purchases.noPurchases")}
-          description={t("purchases.noPurchasesDesc")}
-        />
-      ) : (
-        <Accordion variant="separated" radius="md">
-          {successfulPurchases.map((purchase) => (
-            <Accordion.Item key={purchase.payment_id} value={String(purchase.payment_id)}>
-              <Accordion.Control>
-                <Group wrap="nowrap" gap="md">
-                  <Image
-                    src={purchase.post.image_url || "https://placehold.co/60x60?text=No+Image"}
-                    alt={purchase.post.title}
-                    w={50}
-                    h={50}
-                    radius="md"
-                    fit="cover"
-                  />
-                  <Box style={{ flex: 1, minWidth: 0 }}>
-                    <Group justify="space-between" wrap="nowrap" mb={2}>
-                      <Text fw={600} size="sm" lineClamp={1} style={{ flex: 1 }}>
-                        {purchase.post.title}
-                      </Text>
-                      <Text fw={700} size="sm" style={{ flexShrink: 0 }}>
-                        ฿{(purchase.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </Text>
-                    </Group>
-                    <Group gap={6}>
-                      <Badge
-                        size="xs"
-                        color={FULFILLMENT_COLORS[purchase.fulfillment_status || ""] || "gray"}
-                        variant="light"
-                      >
-                        {FULFILLMENT_LABELS[purchase.fulfillment_status || ""] || "Processing"}
-                      </Badge>
-                      <Text size="xs" c="dimmed">
-                        {new Date(purchase.created_at).toLocaleDateString()}
-                      </Text>
-                    </Group>
-                  </Box>
-                </Group>
-              </Accordion.Control>
-
-              <Accordion.Panel>
-                <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
-                  <Stack gap="sm">
-                    <Paper withBorder p="xs" radius="sm">
-                      <Text size="xs" fw={600} mb="xs" c="dimmed">{t("purchases.orderProgress")}</Text>
-                      <Stepper
-                        active={getFulfillmentStep(purchase.fulfillment_status)}
-                        size="xs"
-                        orientation="vertical"
-                      >
-                        <Stepper.Step icon={<IconPackage size={14} />} label={t("purchases.packing")} />
-                        <Stepper.Step icon={<IconTruck size={14} />} label={t("purchases.inTransit")} />
-                        <Stepper.Step icon={<IconCheck size={14} />} label={t("purchases.delivered")} />
-                      </Stepper>
-                    </Paper>
-
-                    {purchase.fulfillment_status === "in_transit" && (
-                      <Button
-                        size="xs"
-                        color="green"
-                        leftSection={<IconCheck size={14} />}
-                        onClick={() => confirmMutation.mutate(purchase.payment_id)}
-                        loading={confirmMutation.isPending}
-                        fullWidth
-                      >
-                        {t("purchases.confirmDelivery")}
-                      </Button>
-                    )}
-                  </Stack>
-
-                  <Stack gap="sm">
-                    {purchase.seller && (
-                      <UserCard username={purchase.seller.username} label={t("purchases.seller")} />
-                    )}
-
-                    {purchase.shipping_name && (
-                      <ShippingAddressCard
-                        name={purchase.shipping_name}
-                        phone={purchase.shipping_phone}
-                        address={purchase.shipping_address}
-                        district={purchase.shipping_district}
-                        province={purchase.shipping_province}
-                        postalCode={purchase.shipping_postal_code}
-                        label={t("purchases.shippingTo")}
-                      />
-                    )}
-
-                    {purchase.tracking_number && (
-                      <TrackingInfoCard
-                        trackingNumber={purchase.tracking_number}
-                        carrier={purchase.shipping_carrier}
-                      />
-                    )}
-                  </Stack>
-                </SimpleGrid>
-              </Accordion.Panel>
-            </Accordion.Item>
-          ))}
-        </Accordion>
-      )}
-    </Stack>
+    </div>
   );
 }
