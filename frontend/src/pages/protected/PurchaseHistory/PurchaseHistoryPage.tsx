@@ -17,6 +17,7 @@ import { AccordionCard } from "@/components/AccordionCard";
 import { Alert } from "@/components/Alert";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
+import { Stepper } from "@/components/Stepper";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
 import { UserCard } from "@/components/UserCard";
 import { FULFILLMENT_LABELS } from "@/constants/shipping";
@@ -140,42 +141,7 @@ export function PurchaseHistoryPage() {
                     <div>
                       <div className={styles.infoCard}>
                         <p className={styles.infoLabel}>{t("purchases.orderProgress")}</p>
-                        <div className={styles.stepper}>
-                          {steps.map((step, index) => {
-                            const StepIcon = step.icon;
-                            const isCompleted = index < currentStep;
-                            const isActive = index === currentStep;
-                            const isLast = index === steps.length - 1;
-
-                            return (
-                              <div key={index} className={styles.step}>
-                                <div className={styles.stepIndicator}>
-                                  <div
-                                    className={`${styles.stepIcon} ${
-                                      isCompleted ? styles.stepIconCompleted : isActive ? styles.stepIconActive : ""
-                                    }`}
-                                  >
-                                    <StepIcon size={14} />
-                                  </div>
-                                  {!isLast && (
-                                    <div
-                                      className={`${styles.stepLine} ${isCompleted ? styles.stepLineCompleted : ""}`}
-                                    />
-                                  )}
-                                </div>
-                                <div className={styles.stepContent}>
-                                  <p
-                                    className={`${styles.stepLabel} ${
-                                      isCompleted ? styles.stepLabelCompleted : isActive ? styles.stepLabelActive : ""
-                                    }`}
-                                  >
-                                    {step.label}
-                                  </p>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <Stepper steps={steps} currentStep={currentStep} vertical />
                       </div>
 
                       {purchase.fulfillment_status === "in_transit" && (
