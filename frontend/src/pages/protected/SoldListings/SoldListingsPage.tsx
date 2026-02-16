@@ -4,11 +4,20 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader } from "@mantine/core";
-import { IconReceipt, IconAlertCircle, IconTruck, IconChevronDown } from "@tabler/icons-react";
+import {
+  Loader,
+  Select,
+  TextInput,
+  Button,
+  Stack,
+  Group,
+} from "@mantine/core";
+import { IconReceipt, IconTruck, IconChevronDown } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getMySales, addTracking } from "@/api/payments";
+import { Alert } from "@/components/Alert";
 import { EarningsPreview } from "@/components/EarningsPreview";
+import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
 import { UserCard } from "@/components/UserCard";
@@ -20,7 +29,7 @@ export function SoldListingsPage() {
   const { t } = useTranslation("common");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [trackingInputs, setTrackingInputs] = useState<Record<number, string>>({});
-  const [carrierInputs, setCarrierInputs] = useState<Record<number, string>>({});
+  const [carrierInputs, setCarrierInputs] = useState<Record<number, string | null>>({});
 
   const { data: sales, isLoading, error } = useQuery({
     queryKey: ["my-sales"],
@@ -47,12 +56,9 @@ export function SoldListingsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
-          <div className={styles.errorCard}>
-            <IconAlertCircle size={20} className={styles.errorIcon} />
-            <p className={styles.errorText}>
-              {error instanceof Error ? error.message : t("errors.failedToLoad")}
-            </p>
-          </div>
+          <Alert variant="error" title={t("status.error")}>
+            {error instanceof Error ? error.message : t("errors.failedToLoad")}
+          </Alert>
         </div>
       </div>
     );
@@ -64,7 +70,7 @@ export function SoldListingsPage() {
     if (trackingNumber?.trim() && carrier) {
       trackingMutation.mutate({ paymentId, carrier, trackingNumber: trackingNumber.trim() });
       setTrackingInputs((prev) => ({ ...prev, [paymentId]: "" }));
-      setCarrierInputs((prev) => ({ ...prev, [paymentId]: "" }));
+      setCarrierInputs((prev) => ({ ...prev, [paymentId]: null }));
     }
   };
 
@@ -92,15 +98,11 @@ export function SoldListingsPage() {
         </div>
 
         {successfulSales.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyCard}>
-              <div className={styles.emptyIcon}>
-                <IconReceipt size={28} />
-              </div>
-              <p className={styles.emptyTitle}>{t("sales.noSales")}</p>
-              <p className={styles.emptyText}>{t("sales.noSalesDesc")}</p>
-            </div>
-          </div>
+          <EmptyStateCard
+            icon={<IconReceipt size={24} />}
+            title={t("sales.noSales")}
+            description={t("sales.noSalesDesc")}
+          />
         ) : (
           <div className={styles.saleList}>
             {successfulSales.map((sale) => (
@@ -144,7 +146,7 @@ export function SoldListingsPage() {
                 {expandedId === sale.payment_id && (
                   <div className={styles.saleContent}>
                     <div className={styles.contentGrid}>
-                      <div>
+                      <Stack gap="sm">
                         <div className={styles.infoCard}>
                           <p className={styles.infoLabel}>{t("sales.earnings")}</p>
                           <EarningsPreview
@@ -161,13 +163,11 @@ export function SoldListingsPage() {
                         </div>
 
                         {sale.buyer && (
-                          <div style={{ marginTop: 12 }}>
-                            <UserCard username={sale.buyer.username} label={t("sales.buyer")} />
-                          </div>
+                          <UserCard username={sale.buyer.username} label={t("sales.buyer")} />
                         )}
-                      </div>
+                      </Stack>
 
-                      <div>
+                      <Stack gap="sm">
                         {sale.shipping_name && (
                           <ShippingAddressCard
                             name={sale.shipping_name}
@@ -180,38 +180,35 @@ export function SoldListingsPage() {
                         )}
 
                         {sale.tracking_number ? (
-                          <div style={{ marginTop: 12 }}>
-                            <TrackingInfoCard
-                              trackingNumber={sale.tracking_number}
-                              carrier={sale.shipping_carrier}
-                            />
-                          </div>
+                          <TrackingInfoCard
+                            trackingNumber={sale.tracking_number}
+                            carrier={sale.shipping_carrier}
+                          />
                         ) : (
-                          <div className={styles.infoCard} style={{ marginTop: 12 }}>
+                          <div className={styles.infoCard}>
                             <p className={styles.infoLabel}>
                               <IconTruck size={12} />
                               {t("sales.addShipping")}
                             </p>
-                            <div className={styles.trackingForm}>
-                              <select
-                                className={styles.trackingSelect}
-                                value={carrierInputs[sale.payment_id] || ""}
-                                onChange={(e) => setCarrierInputs((prev) => ({
+                            <Stack gap="xs">
+                              <Select
+                                placeholder={t("sales.carrier")}
+                                size="xs"
+                                radius="xs"
+                                data={CARRIER_OPTIONS}
+                                value={carrierInputs[sale.payment_id] || null}
+                                onChange={(value) => setCarrierInputs((prev) => ({
                                   ...prev,
-                                  [sale.payment_id]: e.target.value,
+                                  [sale.payment_id]: value,
                                 }))}
                                 disabled={trackingMutation.isPending}
-                              >
-                                <option value="">{t("sales.carrier")}</option>
-                                {CARRIER_OPTIONS.map((opt) => (
-                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                              </select>
-                              <div className={styles.trackingRow}>
-                                <input
-                                  type="text"
-                                  className={styles.trackingInput}
+                              />
+                              <Group gap="xs">
+                                <TextInput
                                   placeholder={t("sales.trackingNumber")}
+                                  size="xs"
+                                  radius="xs"
+                                  className={styles.trackingInput}
                                   value={trackingInputs[sale.payment_id] || ""}
                                   onChange={(e) => setTrackingInputs((prev) => ({
                                     ...prev,
@@ -219,27 +216,20 @@ export function SoldListingsPage() {
                                   }))}
                                   disabled={trackingMutation.isPending}
                                 />
-                                <button
-                                  type="button"
-                                  className={styles.trackingButton}
+                                <Button
+                                  size="xs"
+                                  radius="xs"
                                   onClick={() => handleAddTracking(sale.payment_id)}
-                                  disabled={
-                                    trackingMutation.isPending ||
-                                    !trackingInputs[sale.payment_id]?.trim() ||
-                                    !carrierInputs[sale.payment_id]
-                                  }
+                                  loading={trackingMutation.isPending}
+                                  disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
                                 >
-                                  {trackingMutation.isPending ? (
-                                    <Loader size="xs" color="white" />
-                                  ) : (
-                                    t("sales.ship")
-                                  )}
-                                </button>
-                              </div>
-                            </div>
+                                  {t("sales.ship")}
+                                </Button>
+                              </Group>
+                            </Stack>
                           </div>
                         )}
-                      </div>
+                      </Stack>
                     </div>
                   </div>
                 )}

@@ -4,10 +4,9 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader } from "@mantine/core";
+import { Loader, Button, Stack } from "@mantine/core";
 import {
   IconShoppingBag,
-  IconAlertCircle,
   IconPackage,
   IconTruck,
   IconCheck,
@@ -15,6 +14,8 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
+import { Alert } from "@/components/Alert";
+import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
 import { UserCard } from "@/components/UserCard";
@@ -50,12 +51,9 @@ export function PurchaseHistoryPage() {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
-          <div className={styles.errorCard}>
-            <IconAlertCircle size={20} className={styles.errorIcon} />
-            <p className={styles.errorText}>
-              {error instanceof Error ? error.message : t("errors.failedToLoad")}
-            </p>
-          </div>
+          <Alert variant="error" title={t("status.error")}>
+            {error instanceof Error ? error.message : t("errors.failedToLoad")}
+          </Alert>
         </div>
       </div>
     );
@@ -96,15 +94,11 @@ export function PurchaseHistoryPage() {
         </div>
 
         {successfulPurchases.length === 0 ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyCard}>
-              <div className={styles.emptyIcon}>
-                <IconShoppingBag size={28} />
-              </div>
-              <p className={styles.emptyTitle}>{t("purchases.noPurchases")}</p>
-              <p className={styles.emptyText}>{t("purchases.noPurchasesDesc")}</p>
-            </div>
-          </div>
+          <EmptyStateCard
+            icon={<IconShoppingBag size={24} />}
+            title={t("purchases.noPurchases")}
+            description={t("purchases.noPurchasesDesc")}
+          />
         ) : (
           <div className={styles.purchaseList}>
             {successfulPurchases.map((purchase) => {
@@ -188,52 +182,45 @@ export function PurchaseHistoryPage() {
                           </div>
 
                           {purchase.fulfillment_status === "in_transit" && (
-                            <button
-                              type="button"
-                              className={styles.confirmButton}
+                            <Button
+                              size="xs"
+                              radius="xs"
+                              color="green"
+                              fullWidth
+                              leftSection={<IconCheck size={14} />}
                               onClick={() => confirmMutation.mutate(purchase.payment_id)}
-                              disabled={confirmMutation.isPending}
+                              loading={confirmMutation.isPending}
+                              className={styles.confirmButton}
                             >
-                              {confirmMutation.isPending ? (
-                                <Loader size="xs" color="white" />
-                              ) : (
-                                <>
-                                  <IconCheck size={16} />
-                                  {t("purchases.confirmDelivery")}
-                                </>
-                              )}
-                            </button>
+                              {t("purchases.confirmDelivery")}
+                            </Button>
                           )}
                         </div>
 
-                        <div>
+                        <Stack gap="sm">
                           {purchase.seller && (
                             <UserCard username={purchase.seller.username} label={t("purchases.seller")} />
                           )}
 
                           {purchase.shipping_name && (
-                            <div style={{ marginTop: 12 }}>
-                              <ShippingAddressCard
-                                name={purchase.shipping_name}
-                                phone={purchase.shipping_phone}
-                                address={purchase.shipping_address}
-                                district={purchase.shipping_district}
-                                province={purchase.shipping_province}
-                                postalCode={purchase.shipping_postal_code}
-                                label={t("purchases.shippingTo")}
-                              />
-                            </div>
+                            <ShippingAddressCard
+                              name={purchase.shipping_name}
+                              phone={purchase.shipping_phone}
+                              address={purchase.shipping_address}
+                              district={purchase.shipping_district}
+                              province={purchase.shipping_province}
+                              postalCode={purchase.shipping_postal_code}
+                              label={t("purchases.shippingTo")}
+                            />
                           )}
 
                           {purchase.tracking_number && (
-                            <div style={{ marginTop: 12 }}>
-                              <TrackingInfoCard
-                                trackingNumber={purchase.tracking_number}
-                                carrier={purchase.shipping_carrier}
-                              />
-                            </div>
+                            <TrackingInfoCard
+                              trackingNumber={purchase.tracking_number}
+                              carrier={purchase.shipping_carrier}
+                            />
                           )}
-                        </div>
+                        </Stack>
                       </div>
                     </div>
                   )}

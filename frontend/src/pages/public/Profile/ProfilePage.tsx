@@ -5,9 +5,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { Loader, Box } from "@mantine/core";
-import { IconAlertCircle, IconHeart, IconUser } from "@tabler/icons-react";
+import { IconHeart, IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getUserProfile, getUserPosts } from "@/api/users";
+import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import styles from "./ProfilePage.module.css";
@@ -48,17 +49,11 @@ export function ProfilePage() {
   if (profileError || !profile) {
     return (
       <div className={styles.errorContainer}>
-        <div className={styles.errorCard}>
-          <IconAlertCircle size={20} className={styles.errorIcon} />
-          <div className={styles.errorContent}>
-            <p className={styles.errorTitle}>{tCommon("status.error")}</p>
-            <p className={styles.errorMessage}>
-              {profileError instanceof Error
-                ? profileError.message
-                : t("errors.profileNotFound")}
-            </p>
-          </div>
-        </div>
+        <Alert variant="error" title={tCommon("status.error")}>
+          {profileError instanceof Error
+            ? profileError.message
+            : t("errors.profileNotFound")}
+        </Alert>
       </div>
     );
   }
@@ -107,12 +102,9 @@ export function ProfilePage() {
               <Loader />
             </div>
           ) : postsError ? (
-            <div className={styles.errorCard}>
-              <IconAlertCircle size={20} className={styles.errorIcon} />
-              <div className={styles.errorContent}>
-                <p className={styles.errorMessage}>{t("errors.failedToLoadPosts")}</p>
-              </div>
-            </div>
+            <Alert variant="error">
+              {t("errors.failedToLoadPosts")}
+            </Alert>
           ) : posts && posts.length > 0 ? (
             <>
               {/* Desktop Grid */}

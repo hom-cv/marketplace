@@ -5,9 +5,10 @@
 import { useMemo, useRef, useCallback, useEffect } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader, Box } from "@mantine/core";
-import { IconAlertCircle, IconHeart } from "@tabler/icons-react";
+import { IconHeart } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getLikedPosts } from "@/api/likes";
+import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { ReportModal } from "@/components/ReportModal";
@@ -80,12 +81,9 @@ export function LikedListingsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
-          <div className={styles.errorCard}>
-            <IconAlertCircle size={20} className={styles.errorIcon} />
-            <p className={styles.errorText}>
-              {error instanceof Error ? error.message : t("errors.failedToLoad")}
-            </p>
-          </div>
+          <Alert variant="error" title={t("status.error")}>
+            {error instanceof Error ? error.message : t("errors.failedToLoad")}
+          </Alert>
         </div>
       </div>
     );

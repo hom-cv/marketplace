@@ -100,28 +100,6 @@
   background: var(--color-primary-hover);
 }
 
-/* Error state */
-.errorCard {
-  background: var(--color-error-light);
-  border: 1px solid var(--color-error-border);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.errorIcon {
-  color: var(--color-error);
-  flex-shrink: 0;
-}
-
-.errorText {
-  font-size: 0.9rem;
-  color: var(--color-text);
-  margin: 0;
-}
-
 /* Loading */
 .loading {
   display: flex;

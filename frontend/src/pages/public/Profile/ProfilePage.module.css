@@ -177,38 +177,6 @@
   padding: 0 24px;
 }
 
-.errorCard {
-  background: var(--color-error-light);
-  border: 1px solid var(--color-error-border);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.errorIcon {
-  color: var(--color-error);
-  flex-shrink: 0;
-}
-
-.errorContent {
-  flex: 1;
-}
-
-.errorTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-error);
-  margin: 0 0 4px;
-}
-
-.errorMessage {
-  font-size: 0.85rem;
-  color: var(--color-text);
-  margin: 0;
-}
-
 /* Tablet - 3 columns */
 @media (max-width: 1100px) {
   .grid {

@@ -2,14 +2,14 @@
  * Profile edit page - Flat design
  */
 
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader } from "@mantine/core";
-import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
+import { Textarea, Switch, Button, Stack } from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { updateMyProfile } from "@/api/users";
 import { useAuthStore } from "@/stores/authStore";
 import { getErrorMessage } from "@/utils/error";
+import { Alert } from "@/components/Alert";
 import type { UpdateProfileRequest } from "@/api/types/user";
 import styles from "./ProfileEditPage.module.css";
 
@@ -21,8 +21,16 @@ export function ProfileEditPage() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
-  const [bio, setBio] = useState(user?.bio ?? "");
-  const [showFullName, setShowFullName] = useState(user?.show_full_name ?? true);
+  const form = useForm<UpdateProfileRequest>({
+    initialValues: {
+      bio: user?.bio ?? "",
+      show_full_name: user?.show_full_name ?? true,
+    },
+    validate: {
+      bio: (value) =>
+        value && value.length > 500 ? t("validation.bioTooLong") : null,
+    },
+  });
 
   const updateMutation = useMutation({
     mutationFn: updateMyProfile,
@@ -37,14 +45,7 @@ export function ProfileEditPage() {
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (bio.length > 500) return;
-
-    const values: UpdateProfileRequest = {
-      bio,
-      show_full_name: showFullName,
-    };
+  const handleSubmit = (values: UpdateProfileRequest) => {
     updateMutation.mutate(values);
   };
 
@@ -57,75 +58,47 @@ export function ProfileEditPage() {
         </div>
 
         {updateMutation.isError && (
-          <div className={`${styles.alert} ${styles.alertError}`}>
-            <IconAlertCircle size={18} className={`${styles.alertIcon} ${styles.alertIconError}`} />
-            <div className={styles.alertContent}>
-              <p className={`${styles.alertTitle} ${styles.alertTitleError}`}>
-                {tCommon("status.error")}
-              </p>
-              <p className={styles.alertMessage}>
-                {getErrorMessage(updateMutation.error, tCommon("errors.generic"))}
-              </p>
-            </div>
-          </div>
+          <Alert variant="error" title={tCommon("status.error")} margin="bottom">
+            {getErrorMessage(updateMutation.error, tCommon("errors.generic"))}
+          </Alert>
         )}
 
         {updateMutation.isSuccess && (
-          <div className={`${styles.alert} ${styles.alertSuccess}`}>
-            <IconCheck size={18} className={`${styles.alertIcon} ${styles.alertIconSuccess}`} />
-            <div className={styles.alertContent}>
-              <p className={`${styles.alertTitle} ${styles.alertTitleSuccess}`}>
-                {tCommon("status.success")}
-              </p>
-              <p className={styles.alertMessage}>
-                {t("messages.profileUpdated")}
-              </p>
-            </div>
-          </div>
+          <Alert variant="success" title={tCommon("status.success")} margin="bottom">
+            {t("messages.profileUpdated")}
+          </Alert>
         )}
 
         <div className={styles.card}>
-          <form className={styles.form} onSubmit={handleSubmit}>
-            <div className={styles.field}>
-              <label className={styles.fieldLabel}>{t("edit.bioLabel")}</label>
-              <p className={styles.fieldDescription}>{t("edit.bioDescription")}</p>
-              <textarea
-                className={styles.textarea}
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="lg">
+              <Textarea
+                label={t("edit.bioLabel")}
+                description={t("edit.bioDescription")}
                 placeholder={t("edit.bioPlaceholder")}
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                minRows={4}
+                maxRows={8}
                 maxLength={500}
+                radius="xs"
+                {...form.getInputProps("bio")}
               />
-              <span className={styles.charCount}>{bio.length}/500</span>
-            </div>
 
-            <div className={styles.switchField}>
-              <div className={styles.switchContent}>
-                <p className={styles.switchLabel}>{t("edit.showNameLabel")}</p>
-                <p className={styles.switchDescription}>{t("edit.showNameDescription")}</p>
-              </div>
-              <label className={styles.switch}>
-                <input
-                  type="checkbox"
-                  className={styles.switchInput}
-                  checked={showFullName}
-                  onChange={(e) => setShowFullName(e.target.checked)}
-                />
-                <span className={styles.switchSlider} />
-              </label>
-            </div>
+              <Switch
+                label={t("edit.showNameLabel")}
+                description={t("edit.showNameDescription")}
+                {...form.getInputProps("show_full_name", { type: "checkbox" })}
+              />
 
-            <button
-              type="submit"
-              className={styles.submitButton}
-              disabled={updateMutation.isPending || bio.length > 500}
-            >
-              {updateMutation.isPending ? (
-                <Loader size="sm" color="white" />
-              ) : (
-                tCommon("buttons.save")
-              )}
-            </button>
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                radius="xs"
+                loading={updateMutation.isPending}
+              >
+                {tCommon("buttons.save")}
+              </Button>
+            </Stack>
           </form>
         </div>
       </div>

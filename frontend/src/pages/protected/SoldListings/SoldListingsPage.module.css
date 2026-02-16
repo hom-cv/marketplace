@@ -30,49 +30,6 @@
   margin: 0;
 }
 
-/* Empty state */
-.emptyState {
-  display: flex;
-  justify-content: center;
-  padding: 48px 24px;
-}
-
-.emptyCard {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 48px 32px;
-  text-align: center;
-  max-width: 400px;
-  width: 100%;
-}
-
-.emptyIcon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  color: var(--color-text-muted);
-}
-
-.emptyTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 8px;
-}
-
-.emptyText {
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
-  margin: 0;
-}
-
 /* Sale items list */
 .saleList {
   display: flex;
@@ -227,60 +184,9 @@
   margin-bottom: 8px;
 }
 
-/* Tracking form */
-.trackingForm {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.trackingRow {
-  display: flex;
-  gap: 8px;
-}
-
-.trackingSelect,
+/* Tracking input */
 .trackingInput {
   flex: 1;
-  padding: 8px 12px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  color: var(--color-text);
-  transition: border-color 0.15s ease;
-}
-
-.trackingSelect:focus,
-.trackingInput:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.trackingInput::placeholder {
-  color: var(--color-text-muted);
-}
-
-.trackingButton {
-  padding: 8px 16px;
-  background: var(--color-primary);
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-  color: white;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  white-space: nowrap;
-}
-
-.trackingButton:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-}
-
-.trackingButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* Loading */
@@ -289,28 +195,6 @@
   justify-content: center;
   align-items: center;
   min-height: 300px;
-}
-
-/* Error state */
-.errorCard {
-  background: var(--color-error-light);
-  border: 1px solid var(--color-error-border);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.errorIcon {
-  color: var(--color-error);
-  flex-shrink: 0;
-}
-
-.errorText {
-  font-size: 0.9rem;
-  color: var(--color-text);
-  margin: 0;
 }
 
 /* Mobile */
