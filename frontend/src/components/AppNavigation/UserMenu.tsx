@@ -43,8 +43,14 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         <Menu.Label>@{user?.username}</Menu.Label>
 
         <Menu.Item
+          component={Link}
           leftSection={<IconUser size={14} />}
-          onClick={() => navigate({ to: "/$username", params: { username: user?.username ?? "" } })}
+          onClick={() =>
+            navigate({
+              to: "/$username",
+              params: { username: user?.username ?? "" },
+            })
+          }
         >
           {t("menu.profile")}
         </Menu.Item>
@@ -125,7 +131,11 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
 
         <Menu.Divider />
 
-        <Menu.Item color="red" leftSection={<IconLogout size={14} />} onClick={onLogout}>
+        <Menu.Item
+          color="red"
+          leftSection={<IconLogout size={14} />}
+          onClick={onLogout}
+        >
           {t("menu.logout")}
         </Menu.Item>
       </Menu.Dropdown>
