@@ -2,7 +2,16 @@
  * Mobile navigation drawer
  */
 
-import { Drawer, Stack, Group, Avatar, Divider, Text, NavLink, Button } from "@mantine/core";
+import {
+  Drawer,
+  Stack,
+  Group,
+  Avatar,
+  Divider,
+  Text,
+  NavLink,
+  Button,
+} from "@mantine/core";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
@@ -28,7 +37,13 @@ interface MobileDrawerProps {
   onLogout: () => void;
 }
 
-export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout }: MobileDrawerProps) {
+export function MobileDrawer({
+  opened,
+  onClose,
+  user,
+  isAuthenticated,
+  onLogout,
+}: MobileDrawerProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation("navigation");
@@ -45,7 +60,9 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
               <strong>
                 {user?.first_name} {user?.last_name}
               </strong>
-              <Text size="sm" c="dimmed">@{user?.username}</Text>
+              <Text size="sm" c="dimmed">
+                @{user?.username}
+              </Text>
             </div>
           </Group>
         )}
@@ -82,7 +99,15 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
               onClick={onClose}
             />
 
-            <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mt="md" mb="xs">
+            <Text
+              size="xs"
+              c="dimmed"
+              tt="uppercase"
+              fw={600}
+              px="md"
+              mt="md"
+              mb="xs"
+            >
               {t("sections.selling")}
             </Text>
             <NavLink
@@ -102,15 +127,27 @@ export function MobileDrawer({ opened, onClose, user, isAuthenticated, onLogout 
               onClick={onClose}
             />
 
-            <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mt="md" mb="xs">
+            <Text
+              size="xs"
+              c="dimmed"
+              tt="uppercase"
+              fw={600}
+              px="md"
+              mt="md"
+              mb="xs"
+            >
               {t("sections.account")}
             </Text>
             <NavLink
+              component={Link}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
               active={location.pathname === `/${user?.username}`}
               onClick={() => {
-                navigate({ to: "/$username", params: { username: user?.username ?? "" } });
+                navigate({
+                  to: "/$username",
+                  params: { username: user?.username ?? "" },
+                });
                 onClose();
               }}
             />
