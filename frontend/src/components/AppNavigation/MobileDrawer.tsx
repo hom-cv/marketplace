@@ -142,7 +142,7 @@ export function MobileDrawer({
               to={`/${user?.username ?? ""}`}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
-              active={user?.username ? location.pathname === `/${user.username}` : false}
+              active={location.pathname === `/${user?.username ?? ""}`}
               onClick={onClose}
             />
             <NavLink
