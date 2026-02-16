@@ -15,10 +15,17 @@ export function TrackingInfoCard({ trackingNumber, carrier }: TrackingInfoCardPr
   const carrierKey = carrier?.toLowerCase() || "";
   const { t } = useTranslation("common");
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(trackingNumber);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    if (!navigator.clipboard?.writeText) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(trackingNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied or failed
+    }
   };
 
   return (

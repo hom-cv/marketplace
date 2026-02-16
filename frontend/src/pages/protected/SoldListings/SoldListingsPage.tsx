@@ -12,9 +12,10 @@ import {
   Stack,
   Group,
 } from "@mantine/core";
-import { IconReceipt, IconTruck, IconChevronDown } from "@tabler/icons-react";
+import { IconReceipt, IconTruck } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getMySales, addTracking } from "@/api/payments";
+import { AccordionCard } from "@/components/AccordionCard";
 import { Alert } from "@/components/Alert";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
@@ -106,134 +107,129 @@ export function SoldListingsPage() {
         ) : (
           <div className={styles.saleList}>
             {successfulSales.map((sale) => (
-              <div key={sale.payment_id} className={styles.saleCard}>
-                <div
-                  className={styles.saleHeader}
-                  onClick={() => setExpandedId(expandedId === sale.payment_id ? null : sale.payment_id)}
-                >
-                  <img
-                    src={sale.post.image_url || "https://placehold.co/56x56?text=No+Image"}
-                    alt={sale.post.title}
-                    className={styles.saleImage}
-                  />
-                  <div className={styles.saleInfo}>
-                    <div className={styles.saleTopRow}>
-                      <p className={styles.saleTitle}>{sale.post.title}</p>
-                      <span className={styles.saleEarnings}>
-                        +฿{getSellerPayout(sale).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className={styles.saleMeta}>
-                      <span className={`${styles.badge} ${getBadgeClass(sale.fulfillment_status)}`}>
-                        {FULFILLMENT_LABELS[sale.fulfillment_status || ""] || "Processing"}
-                      </span>
-                      {sale.tracking_number && (
-                        <span className={`${styles.badge} ${styles.badgeShipped}`}>
-                          {t("sales.shipped")}
+              <AccordionCard
+                key={sale.payment_id}
+                isExpanded={expandedId === sale.payment_id}
+                onToggle={() => setExpandedId(expandedId === sale.payment_id ? null : sale.payment_id)}
+                ariaLabel={`${sale.post.title} - ${t("sales.toggleDetails")}`}
+                header={
+                  <div className={styles.saleHeader}>
+                    <img
+                      src={sale.post.image_url || "https://placehold.co/56x56?text=No+Image"}
+                      alt={sale.post.title}
+                      className={styles.saleImage}
+                    />
+                    <div className={styles.saleInfo}>
+                      <div className={styles.saleTopRow}>
+                        <p className={styles.saleTitle}>{sale.post.title}</p>
+                        <span className={styles.saleEarnings}>
+                          +฿{getSellerPayout(sale).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
-                      )}
-                      <span className={styles.saleDate}>
-                        {new Date(sale.created_at).toLocaleDateString()}
-                      </span>
+                      </div>
+                      <div className={styles.saleMeta}>
+                        <span className={`${styles.badge} ${getBadgeClass(sale.fulfillment_status)}`}>
+                          {FULFILLMENT_LABELS[sale.fulfillment_status || ""] || "Processing"}
+                        </span>
+                        {sale.tracking_number && (
+                          <span className={`${styles.badge} ${styles.badgeShipped}`}>
+                            {t("sales.shipped")}
+                          </span>
+                        )}
+                        <span className={styles.saleDate}>
+                          {new Date(sale.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <IconChevronDown
-                    size={20}
-                    className={`${styles.expandIcon} ${expandedId === sale.payment_id ? styles.expandIconOpen : ""}`}
-                  />
+                }
+              >
+                <div className={styles.contentGrid}>
+                  <Stack gap="sm">
+                    <div className={styles.infoCard}>
+                      <p className={styles.infoLabel}>{t("sales.earnings")}</p>
+                      <EarningsPreview
+                        breakdown={{
+                          itemPrice: (sale.item_price ?? 0) / 100,
+                          shippingCost: (sale.shipping_cost ?? 0) / 100,
+                          totalFees: (sale.total_fees ?? 0) / 100,
+                          sellerPayout: (sale.seller_payout ?? 0) / 100,
+                        }}
+                        title=""
+                        compact
+                        hideExplanation
+                      />
+                    </div>
+
+                    {sale.buyer && (
+                      <UserCard username={sale.buyer.username} label={t("sales.buyer")} />
+                    )}
+                  </Stack>
+
+                  <Stack gap="sm">
+                    {sale.shipping_name && (
+                      <ShippingAddressCard
+                        name={sale.shipping_name}
+                        phone={sale.shipping_phone}
+                        address={sale.shipping_address}
+                        district={sale.shipping_district}
+                        province={sale.shipping_province}
+                        postalCode={sale.shipping_postal_code}
+                      />
+                    )}
+
+                    {sale.tracking_number ? (
+                      <TrackingInfoCard
+                        trackingNumber={sale.tracking_number}
+                        carrier={sale.shipping_carrier}
+                      />
+                    ) : (
+                      <div className={styles.infoCard}>
+                        <p className={styles.infoLabel}>
+                          <IconTruck size={12} />
+                          {t("sales.addShipping")}
+                        </p>
+                        <Stack gap="xs">
+                          <Select
+                            placeholder={t("sales.carrier")}
+                            size="xs"
+                            radius="xs"
+                            data={CARRIER_OPTIONS}
+                            value={carrierInputs[sale.payment_id] || null}
+                            onChange={(value) => setCarrierInputs((prev) => ({
+                              ...prev,
+                              [sale.payment_id]: value,
+                            }))}
+                            disabled={trackingMutation.isPending}
+                          />
+                          <Group gap="xs">
+                            <TextInput
+                              placeholder={t("sales.trackingNumber")}
+                              size="xs"
+                              radius="xs"
+                              className={styles.trackingInput}
+                              value={trackingInputs[sale.payment_id] || ""}
+                              onChange={(e) => setTrackingInputs((prev) => ({
+                                ...prev,
+                                [sale.payment_id]: e.target.value,
+                              }))}
+                              disabled={trackingMutation.isPending}
+                            />
+                            <Button
+                              size="xs"
+                              radius="xs"
+                              onClick={() => handleAddTracking(sale.payment_id)}
+                              loading={trackingMutation.isPending}
+                              disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
+                            >
+                              {t("sales.ship")}
+                            </Button>
+                          </Group>
+                        </Stack>
+                      </div>
+                    )}
+                  </Stack>
                 </div>
-
-                {expandedId === sale.payment_id && (
-                  <div className={styles.saleContent}>
-                    <div className={styles.contentGrid}>
-                      <Stack gap="sm">
-                        <div className={styles.infoCard}>
-                          <p className={styles.infoLabel}>{t("sales.earnings")}</p>
-                          <EarningsPreview
-                            breakdown={{
-                              itemPrice: (sale.item_price ?? 0) / 100,
-                              shippingCost: (sale.shipping_cost ?? 0) / 100,
-                              totalFees: (sale.total_fees ?? 0) / 100,
-                              sellerPayout: (sale.seller_payout ?? 0) / 100,
-                            }}
-                            title=""
-                            compact
-                            hideExplanation
-                          />
-                        </div>
-
-                        {sale.buyer && (
-                          <UserCard username={sale.buyer.username} label={t("sales.buyer")} />
-                        )}
-                      </Stack>
-
-                      <Stack gap="sm">
-                        {sale.shipping_name && (
-                          <ShippingAddressCard
-                            name={sale.shipping_name}
-                            phone={sale.shipping_phone}
-                            address={sale.shipping_address}
-                            district={sale.shipping_district}
-                            province={sale.shipping_province}
-                            postalCode={sale.shipping_postal_code}
-                          />
-                        )}
-
-                        {sale.tracking_number ? (
-                          <TrackingInfoCard
-                            trackingNumber={sale.tracking_number}
-                            carrier={sale.shipping_carrier}
-                          />
-                        ) : (
-                          <div className={styles.infoCard}>
-                            <p className={styles.infoLabel}>
-                              <IconTruck size={12} />
-                              {t("sales.addShipping")}
-                            </p>
-                            <Stack gap="xs">
-                              <Select
-                                placeholder={t("sales.carrier")}
-                                size="xs"
-                                radius="xs"
-                                data={CARRIER_OPTIONS}
-                                value={carrierInputs[sale.payment_id] || null}
-                                onChange={(value) => setCarrierInputs((prev) => ({
-                                  ...prev,
-                                  [sale.payment_id]: value,
-                                }))}
-                                disabled={trackingMutation.isPending}
-                              />
-                              <Group gap="xs">
-                                <TextInput
-                                  placeholder={t("sales.trackingNumber")}
-                                  size="xs"
-                                  radius="xs"
-                                  className={styles.trackingInput}
-                                  value={trackingInputs[sale.payment_id] || ""}
-                                  onChange={(e) => setTrackingInputs((prev) => ({
-                                    ...prev,
-                                    [sale.payment_id]: e.target.value,
-                                  }))}
-                                  disabled={trackingMutation.isPending}
-                                />
-                                <Button
-                                  size="xs"
-                                  radius="xs"
-                                  onClick={() => handleAddTracking(sale.payment_id)}
-                                  loading={trackingMutation.isPending}
-                                  disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
-                                >
-                                  {t("sales.ship")}
-                                </Button>
-                              </Group>
-                            </Stack>
-                          </div>
-                        )}
-                      </Stack>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </AccordionCard>
             ))}
           </div>
         )}

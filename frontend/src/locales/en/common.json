@@ -209,7 +209,8 @@
     "delivered": "Delivered",
     "confirmDelivery": "Confirm Delivery",
     "shippingTo": "Shipping To",
-    "seller": "Seller"
+    "seller": "Seller",
+    "toggleDetails": "Toggle order details"
   },
   "sales": {
     "title": "Sold Listings",
@@ -222,7 +223,8 @@
     "carrier": "Carrier",
     "trackingNumber": "Tracking #",
     "ship": "Ship",
-    "shipped": "Shipped"
+    "shipped": "Shipped",
+    "toggleDetails": "Toggle sale details"
   },
   "seller": {
     "becomeSeller": "Become a Seller",

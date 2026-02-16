@@ -37,25 +37,11 @@
   gap: 12px;
 }
 
-/* Purchase card */
-.purchaseCard {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
+/* Purchase header content (inside AccordionCard) */
 .purchaseHeader {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.purchaseHeader:hover {
-  background: var(--color-bg-muted);
 }
 
 .purchaseImage {
@@ -135,22 +121,7 @@
   color: var(--color-text-muted);
 }
 
-.expandIcon {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}
-
-.expandIconOpen {
-  transform: rotate(180deg);
-}
-
-/* Expanded content */
-.purchaseContent {
-  padding: 0 16px 16px;
-  border-top: 1px solid var(--color-border);
-}
-
+/* Expanded content grid */
 .contentGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -284,10 +255,6 @@
 
   .title {
     font-size: 1.5rem;
-  }
-
-  .purchaseHeader {
-    padding: 12px;
   }
 
   .purchaseImage {
