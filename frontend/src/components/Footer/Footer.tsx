@@ -12,7 +12,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer style={{ marginTop: "auto", paddingBottom: "1.5rem" }}>
+    <Box component="footer" mt="auto" pb="1.5rem">
       <Container size="lg">
         <Divider mb="lg" />
         <Stack gap="md" hiddenFrom="sm">
