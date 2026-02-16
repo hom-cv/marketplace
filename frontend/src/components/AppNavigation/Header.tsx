@@ -2,11 +2,10 @@
  * Header bar component
  */
 
-import { Container, Group, Title, Button, Burger } from "@mantine/core";
+import { Container, Group, Button, Burger } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import type { UserInfo } from "./types";
 import styles from "./AppNavigation.module.css";
 
@@ -30,12 +29,11 @@ export function Header({
   return (
     <header className={styles.header}>
       <Container size="md" className={styles.headerContent}>
-        <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
-          <Title>tallad.co</Title>
+        <Link to="/" className={styles.logo}>
+          tallad.co
         </Link>
 
         <Group visibleFrom="xs">
-          <LanguageSwitcher />
           {isAuthenticated ? (
             <UserMenu user={user} onLogout={onLogout} />
           ) : (

@@ -71,7 +71,7 @@ export function VerifyEmailPage() {
   // Redirect verified users to /app
   useEffect(() => {
     if (user?.email_verified) {
-      navigate({ to: "/app" });
+      navigate({ to: "/explore" });
     }
   }, [user, navigate]);
 
@@ -90,7 +90,7 @@ export function VerifyEmailPage() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate({ to: authToken ? "/app" : "/login" });
+          navigate({ to: authToken ? "/explore" : "/login" });
           return 0;
         }
         return prev - 1;
@@ -101,7 +101,7 @@ export function VerifyEmailPage() {
   }, [mode, navigate, authToken]);
 
   const handleContinue = () => {
-    navigate({ to: authToken ? "/app" : "/login" });
+    navigate({ to: authToken ? "/explore" : "/login" });
   };
 
   const handleGoHome = () => {
@@ -113,7 +113,7 @@ export function VerifyEmailPage() {
     try {
       const result = await refetchUser();
       if (result.data?.email_verified) {
-        navigate({ to: "/app" });
+        navigate({ to: "/explore" });
       }
     } catch (error) {
       notifications.show({

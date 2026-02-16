@@ -1,5 +1,4 @@
 // Protected pages - requires authentication
-export { DashboardPage } from "./Dashboard";
 export { PurchaseHistoryPage } from "./PurchaseHistory";
 export { LikedListingsPage } from "./LikedListings";
 export { MyListingsPage } from "./MyListings";

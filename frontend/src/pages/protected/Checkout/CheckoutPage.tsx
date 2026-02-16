@@ -56,7 +56,7 @@ declare global {
 }
 
 export function CheckoutPage() {
-  const { postId } = useParams({ from: "/protected/app/checkout/$postId" });
+  const { postId } = useParams({ from: "/protected/checkout/$postId" });
   const navigate = useNavigate();
   const { t } = useTranslation("common");
   const [step, setStep] = useState(0);
@@ -220,7 +220,7 @@ export function CheckoutPage() {
         cardPaymentMutation.mutate({
           post_id: post.id,
           token: response.id,
-          return_uri: `${window.location.origin}/app/payment-return`,
+          return_uri: `${window.location.origin}/payment-return`,
           shipping: shippingForm.values,
         });
       }
@@ -232,7 +232,7 @@ export function CheckoutPage() {
     setError(null);
     promptPayMutation.mutate({
       post_id: post.id,
-      return_uri: `${window.location.origin}/app/payment-return`,
+      return_uri: `${window.location.origin}/payment-return`,
       shipping: shippingForm.values,
     });
   };
@@ -264,7 +264,7 @@ export function CheckoutPage() {
             variant="ghost"
             size="sm"
             leftIcon={<IconArrowLeft size={16} />}
-            onClick={() => navigate({ to: "/app/explore" })}
+            onClick={() => navigate({ to: "/explore" })}
           >
             {t("checkout.backToExplore")}
           </Button>

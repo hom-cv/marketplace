@@ -122,7 +122,7 @@ export function CreatePostPage() {
     mutationFn: createPost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      navigate({ to: "/app" });
+      navigate({ to: "/account/listings" });
     },
   });
 
@@ -230,7 +230,7 @@ export function CreatePostPage() {
             </Text>
             <Button
               component={Link}
-              to="/app/become-seller"
+              to="/account/become-seller"
               size="lg"
               leftSection={<IconBuildingStore size={18} />}
             >

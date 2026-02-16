@@ -30,7 +30,7 @@ interface PostCardProps {
 export function PostCard({
   post,
   onReportClick,
-  linkPrefix = "/app/posts",
+  linkPrefix = "/explore",
 }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);

@@ -14,9 +14,9 @@ import styles from "./AdminLayout.module.css";
 function SidebarContent() {
   return (
     <>
-      <Link to="/app" className={styles.backLink}>
+      <Link to="/explore" className={styles.backLink}>
         <IconArrowLeft size={16} />
-        Back to App
+        Back to Explore
       </Link>
 
       <div className={styles.navSection}>

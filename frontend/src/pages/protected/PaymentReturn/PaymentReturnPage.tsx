@@ -19,7 +19,7 @@ import styles from "./PaymentReturnPage.module.css";
 
 export function PaymentReturnPage() {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/protected/app/payment-return" });
+  const search = useSearch({ from: "/protected/payment-return" });
   const paymentId = search.payment_id ? parseInt(search.payment_id, 10) : null;
   const [pollCount, setPollCount] = useState(0);
   const { t } = useTranslation("common");
@@ -131,7 +131,7 @@ export function PaymentReturnPage() {
                 size="md"
                 fullWidth
                 leftIcon={<IconShoppingBag size={18} />}
-                onClick={() => navigate({ to: "/app/purchases" })}
+                onClick={() => navigate({ to: "/account/purchases" })}
               >
                 {t("paymentReturn.viewPurchases")}
               </Button>
@@ -140,7 +140,7 @@ export function PaymentReturnPage() {
                 size="md"
                 fullWidth
                 rightIcon={<IconArrowRight size={18} />}
-                onClick={() => navigate({ to: "/app/explore" })}
+                onClick={() => navigate({ to: "/explore" })}
               >
                 {t("paymentReturn.continueShopping")}
               </Button>
@@ -173,7 +173,7 @@ export function PaymentReturnPage() {
                 variant="primary"
                 size="md"
                 fullWidth
-                onClick={() => navigate({ to: "/app/explore" })}
+                onClick={() => navigate({ to: "/explore" })}
               >
                 {t("paymentReturn.returnToShop")}
               </Button>
