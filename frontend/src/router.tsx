@@ -102,7 +102,7 @@ const privacyRoute = createRoute({
 // Public profile route
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/$username",
+  path: "/profile/$username",
   component: ProfilePage,
 });
 
@@ -263,7 +263,6 @@ const routeTree = rootRoute.addChildren([
     ]),
   ]),
 
-  // Profile route comes last as it's a catch-all for /$username
   profileRoute,
 ]);
 

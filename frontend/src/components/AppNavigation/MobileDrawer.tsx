@@ -139,10 +139,10 @@ export function MobileDrawer({
             </Text>
             <NavLink
               component={Link}
-              to={`/${user?.username ?? ""}`}
+              to={`/profile/${user?.username ?? ""}`}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
-              active={location.pathname === `/${user?.username ?? ""}`}
+              active={location.pathname === `/profile/${user?.username}`}
               onClick={onClose}
             />
             <NavLink

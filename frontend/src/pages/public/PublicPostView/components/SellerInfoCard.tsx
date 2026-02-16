@@ -30,7 +30,7 @@ export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
 
   return (
     <Link
-      to="/$username"
+      to="/profile/$username"
       params={{ username: user.username }}
       className={styles.sellerCard}
     >
