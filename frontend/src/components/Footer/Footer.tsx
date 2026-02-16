@@ -2,7 +2,15 @@
  * Footer component with policy links and language switcher
  */
 
-import { Container, Group, Text, Anchor, Divider, Stack } from "@mantine/core";
+import {
+  Container,
+  Group,
+  Text,
+  Anchor,
+  Divider,
+  Stack,
+  Box,
+} from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -44,6 +52,6 @@ export function Footer() {
           </Text>
         </Group>
       </Container>
-    </footer>
+    </Box>
   );
 }
