@@ -26,7 +26,7 @@ import { PostFeedItem } from "@/components/PostFeedItem";
 import styles from "./ProfilePage.module.css";
 
 export function ProfilePage() {
-  const { username } = useParams({ strict: false });
+  const { username } = useParams();
   const { t } = useTranslation("profile");
   const { t: tCommon } = useTranslation("common");
 
