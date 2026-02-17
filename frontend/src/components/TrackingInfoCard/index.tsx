@@ -26,9 +26,9 @@ export function TrackingInfoCard({
       await navigator.clipboard.writeText(trackingNumber);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } catch (error) {
       // Clipboard access denied or failed
-      console.error("Failed to copy text:", err);
+      console.error("Failed to copy text:", error);
     }
   };
 

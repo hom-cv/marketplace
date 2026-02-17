@@ -1,25 +1,30 @@
 /**
- * Purchase History Page - Flat design
+ * Purchase History Page
  */
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader, Button, Stack } from "@mantine/core";
+import { Loader, Modal, Stack, Group, Text } from "@mantine/core";
 import {
   IconShoppingBag,
   IconPackage,
   IconTruck,
   IconCheck,
+  IconExternalLink,
+  IconReceipt,
+  IconHeadset,
+  IconClock,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import { getMyPurchases, confirmDelivery } from "@/api/payments";
+import type { PurchaseListItem } from "@/api/types/payment";
 import { AccordionCard } from "@/components/AccordionCard";
 import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
-import { ShippingAddressCard } from "@/components/ShippingAddressCard";
 import { Stepper } from "@/components/Stepper";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
-import { UserCard } from "@/components/UserCard";
 import { FULFILLMENT_LABELS } from "@/constants/shipping";
 import styles from "./PurchaseHistoryPage.module.css";
 
@@ -27,6 +32,7 @@ export function PurchaseHistoryPage() {
   const queryClient = useQueryClient();
   const { t } = useTranslation("common");
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [receiptModalData, setReceiptModalData] = useState<PurchaseListItem | null>(null);
 
   const { data: purchases, isLoading, error } = useQuery({
     queryKey: ["my-purchases"],
@@ -78,6 +84,10 @@ export function PurchaseHistoryPage() {
     }
   };
 
+  const formatPrice = (satang: number) => {
+    return (satang / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+  };
+
   const successfulPurchases = purchases?.filter((p) => p.status === "successful") || [];
 
   const steps = [
@@ -85,6 +95,88 @@ export function PurchaseHistoryPage() {
     { icon: IconTruck, label: t("purchases.inTransit") },
     { icon: IconCheck, label: t("purchases.delivered") },
   ];
+
+  const renderRightColumn = (purchase: PurchaseListItem) => {
+    const status = purchase.fulfillment_status;
+
+    return (
+      <Stack gap="xs">
+        {/* Link to listing - always shown */}
+        <Link to="/explore/$postId" params={{ postId: String(purchase.post.id) }} className={styles.linkButton}>
+          <IconExternalLink size={14} />
+          {t("purchases.viewListing")}
+        </Link>
+
+        {/* Show Receipt - always shown */}
+        <button
+          type="button"
+          className={styles.linkButton}
+          onClick={() => setReceiptModalData(purchase)}
+        >
+          <IconReceipt size={14} />
+          {t("purchases.showReceipt")}
+        </button>
+
+        {/* Status-specific content */}
+        {status === "packing" && (
+          <>
+            <div className={styles.awaitingCard}>
+              <IconClock size={14} className={styles.awaitingIcon} />
+              <span>{t("purchases.awaitingShipment")}</span>
+            </div>
+            <Button variant="ghost" size="sm" fullWidth leftIcon={<IconHeadset size={14} />}>
+              {t("purchases.contactSupport")}
+            </Button>
+          </>
+        )}
+
+        {status === "in_transit" && (
+          <>
+            {purchase.tracking_number && (
+              <TrackingInfoCard
+                trackingNumber={purchase.tracking_number}
+                carrier={purchase.shipping_carrier}
+              />
+            )}
+            <div className={styles.buttonRow}>
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<IconCheck size={14} />}
+                onClick={() => confirmMutation.mutate(purchase.payment_id)}
+                disabled={confirmMutation.isPending}
+              >
+                {t("purchases.confirmDelivery")}
+              </Button>
+              <Button variant="ghost" size="sm" leftIcon={<IconHeadset size={14} />}>
+                {t("purchases.contactSupport")}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {status === "delivered" && (
+          <>
+            {purchase.tracking_number && (
+              <TrackingInfoCard
+                trackingNumber={purchase.tracking_number}
+                carrier={purchase.shipping_carrier}
+              />
+            )}
+            <div className={styles.buttonRow}>
+              <div className={styles.deliveredBadge}>
+                <IconCheck size={14} />
+                <span>{t("purchases.delivered")}</span>
+              </div>
+              <Button variant="ghost" size="sm" leftIcon={<IconHeadset size={14} />}>
+                {t("purchases.contactSupport")}
+              </Button>
+            </div>
+          </>
+        )}
+      </Stack>
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -122,7 +214,7 @@ export function PurchaseHistoryPage() {
                         <div className={styles.purchaseTopRow}>
                           <p className={styles.purchaseTitle}>{purchase.post.title}</p>
                           <span className={styles.purchasePrice}>
-                            ฿{(purchase.amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            ฿{formatPrice(purchase.amount)}
                           </span>
                         </div>
                         <div className={styles.purchaseMeta}>
@@ -138,52 +230,16 @@ export function PurchaseHistoryPage() {
                   }
                 >
                   <div className={styles.contentGrid}>
-                    <div>
-                      <div className={styles.infoCard}>
-                        <p className={styles.infoLabel}>{t("purchases.orderProgress")}</p>
-                        <Stepper steps={steps} currentStep={currentStep} vertical />
-                      </div>
-
-                      {purchase.fulfillment_status === "in_transit" && (
-                        <Button
-                          size="xs"
-                          radius="xs"
-                          color="green"
-                          fullWidth
-                          leftSection={<IconCheck size={14} />}
-                          onClick={() => confirmMutation.mutate(purchase.payment_id)}
-                          loading={confirmMutation.isPending}
-                          className={styles.confirmButton}
-                        >
-                          {t("purchases.confirmDelivery")}
-                        </Button>
-                      )}
+                    {/* Left column - Stepper */}
+                    <div className={styles.stepperCard}>
+                      <p className={styles.cardLabel}>{t("purchases.orderProgress")}</p>
+                      <Stepper steps={steps} currentStep={currentStep} vertical />
                     </div>
 
-                    <Stack gap="sm">
-                      {purchase.seller && (
-                        <UserCard username={purchase.seller.username} label={t("purchases.seller")} />
-                      )}
-
-                      {purchase.shipping_name && (
-                        <ShippingAddressCard
-                          name={purchase.shipping_name}
-                          phone={purchase.shipping_phone}
-                          address={purchase.shipping_address}
-                          district={purchase.shipping_district}
-                          province={purchase.shipping_province}
-                          postalCode={purchase.shipping_postal_code}
-                          label={t("purchases.shippingTo")}
-                        />
-                      )}
-
-                      {purchase.tracking_number && (
-                        <TrackingInfoCard
-                          trackingNumber={purchase.tracking_number}
-                          carrier={purchase.shipping_carrier}
-                        />
-                      )}
-                    </Stack>
+                    {/* Right column - Status-specific content */}
+                    <div className={styles.actionsColumn}>
+                      {renderRightColumn(purchase)}
+                    </div>
                   </div>
                 </AccordionCard>
               );
@@ -191,6 +247,49 @@ export function PurchaseHistoryPage() {
           </div>
         )}
       </div>
+
+      {/* Receipt Modal */}
+      <Modal
+        opened={receiptModalData !== null}
+        onClose={() => setReceiptModalData(null)}
+        title={
+          <Group gap="xs">
+            <IconReceipt size={20} />
+            <Text fw={600}>{t("purchases.receipt")}</Text>
+          </Group>
+        }
+        size="sm"
+        centered
+      >
+        {receiptModalData && (
+          <Stack gap="md">
+            <div className={styles.receiptItem}>
+              <Text size="sm" c="dimmed">{t("purchases.item")}</Text>
+              <Text size="sm" fw={500}>{receiptModalData.post.title}</Text>
+            </div>
+            <div className={styles.receiptItem}>
+              <Text size="sm" c="dimmed">{t("purchases.date")}</Text>
+              <Text size="sm">{new Date(receiptModalData.created_at).toLocaleDateString()}</Text>
+            </div>
+            <div className={styles.receiptDivider} />
+            <div className={styles.receiptItem}>
+              <Text size="sm" c="dimmed">{t("checkout.itemPrice")}</Text>
+              <Text size="sm">฿{formatPrice(receiptModalData.item_price ?? 0)}</Text>
+            </div>
+            {(receiptModalData.shipping_cost ?? 0) > 0 && (
+              <div className={styles.receiptItem}>
+                <Text size="sm" c="dimmed">{t("checkout.shippingLabel")}</Text>
+                <Text size="sm">฿{formatPrice(receiptModalData.shipping_cost ?? 0)}</Text>
+              </div>
+            )}
+            <div className={styles.receiptDivider} />
+            <div className={styles.receiptItem}>
+              <Text size="sm" fw={600}>{t("checkout.total")}</Text>
+              <Text size="sm" fw={600}>฿{formatPrice(receiptModalData.amount)}</Text>
+            </div>
+          </Stack>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -210,7 +210,15 @@
     "confirmDelivery": "Confirm Delivery",
     "shippingTo": "Shipping To",
     "seller": "Seller",
-    "toggleDetails": "Toggle order details"
+    "toggleDetails": "Toggle order details",
+    "date": "Date",
+    "awaitingTracking": "Awaiting tracking info",
+    "awaitingShipment": "Awaiting shipment",
+    "viewListing": "View listing",
+    "showReceipt": "Show receipt",
+    "contactSupport": "Contact Support",
+    "receipt": "Receipt",
+    "item": "Item"
   },
   "sales": {
     "title": "Sold Listings",
@@ -224,7 +232,8 @@
     "trackingNumber": "Tracking #",
     "ship": "Ship",
     "shipped": "Shipped",
-    "toggleDetails": "Toggle sale details"
+    "toggleDetails": "Toggle sale details",
+    "date": "Date"
   },
   "seller": {
     "becomeSeller": "Become a Seller",

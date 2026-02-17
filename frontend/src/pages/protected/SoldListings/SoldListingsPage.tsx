@@ -1,5 +1,5 @@
 /**
- * Sold Listings Page - Flat design
+ * Sold Listings Page - Bento Grid Design
  */
 
 import { useState } from "react";
@@ -9,11 +9,10 @@ import {
   Select,
   TextInput,
   Button,
-  Stack,
-  Group,
 } from "@mantine/core";
-import { IconReceipt, IconTruck } from "@tabler/icons-react";
+import { IconReceipt, IconTruck, IconCheck, IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { Link } from "@tanstack/react-router";
 import { getMySales, addTracking } from "@/api/payments";
 import { AccordionCard } from "@/components/AccordionCard";
 import { Alert } from "@/components/Alert";
@@ -21,7 +20,6 @@ import { EarningsPreview } from "@/components/EarningsPreview";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
-import { UserCard } from "@/components/UserCard";
 import { CARRIER_OPTIONS, FULFILLMENT_LABELS } from "@/constants/shipping";
 import styles from "./SoldListingsPage.module.css";
 
@@ -143,29 +141,42 @@ export function SoldListingsPage() {
                   </div>
                 }
               >
-                <div className={styles.contentGrid}>
-                  <Stack gap="sm">
-                    <div className={styles.infoCard}>
-                      <p className={styles.infoLabel}>{t("sales.earnings")}</p>
-                      <EarningsPreview
-                        breakdown={{
-                          itemPrice: (sale.item_price ?? 0) / 100,
-                          shippingCost: (sale.shipping_cost ?? 0) / 100,
-                          totalFees: (sale.total_fees ?? 0) / 100,
-                          sellerPayout: (sale.seller_payout ?? 0) / 100,
-                        }}
-                        title=""
-                        compact
-                        hideExplanation
-                      />
-                    </div>
+                {/* Bento Grid Layout - 2 columns */}
+                <div className={styles.bentoGrid}>
+                  {/* Left Column: Earnings (spans 2 rows) */}
+                  <div className={`${styles.cell} ${styles.earningsCell}`}>
+                    <p className={styles.cellLabel}>{t("sales.earnings")}</p>
+                    <EarningsPreview
+                      breakdown={{
+                        itemPrice: (sale.item_price ?? 0) / 100,
+                        shippingCost: (sale.shipping_cost ?? 0) / 100,
+                        totalFees: (sale.total_fees ?? 0) / 100,
+                        sellerPayout: (sale.seller_payout ?? 0) / 100,
+                      }}
+                      title=""
+                      compact
+                      hideExplanation
+                    />
+                  </div>
 
+                  {/* Right Column: Stacked info */}
+                  <div className={styles.infoColumn}>
+                    {/* Buyer profile link */}
                     {sale.buyer && (
-                      <UserCard username={sale.buyer.username} label={t("sales.buyer")} />
+                      <Link
+                        to="/profile/$username"
+                        params={{ username: sale.buyer.username }}
+                        className={styles.buyerLink}
+                      >
+                        <IconUser size={14} />
+                        <span className={styles.buyerUsername}>@{sale.buyer.username}</span>
+                        <span className={styles.buyerDate}>
+                          {new Date(sale.created_at).toLocaleDateString()}
+                        </span>
+                      </Link>
                     )}
-                  </Stack>
 
-                  <Stack gap="sm">
+                    {/* Shipping Address */}
                     {sale.shipping_name && (
                       <ShippingAddressCard
                         name={sale.shipping_name}
@@ -177,57 +188,66 @@ export function SoldListingsPage() {
                       />
                     )}
 
-                    {sale.tracking_number ? (
+                    {/* Tracking Info (if shipped) */}
+                    {sale.tracking_number && (
                       <TrackingInfoCard
                         trackingNumber={sale.tracking_number}
                         carrier={sale.shipping_carrier}
                       />
-                    ) : (
-                      <div className={styles.infoCard}>
-                        <p className={styles.infoLabel}>
-                          <IconTruck size={12} />
-                          {t("sales.addShipping")}
-                        </p>
-                        <Stack gap="xs">
-                          <Select
-                            placeholder={t("sales.carrier")}
+                    )}
+                  </div>
+
+                  {/* Bottom Row: Add Tracking / Shipped Status */}
+                  {sale.tracking_number ? (
+                    <div className={styles.shippedBadge}>
+                      <IconCheck size={14} />
+                      <p className={styles.shippedText}>{t("sales.shipped")}</p>
+                    </div>
+                  ) : (
+                    <div className={styles.cell}>
+                      <p className={styles.cellLabel}>
+                        <IconTruck size={12} />
+                        {t("sales.addShipping")}
+                      </p>
+                      <div className={styles.trackingForm}>
+                        <Select
+                          placeholder={t("sales.carrier")}
+                          size="xs"
+                          radius="xs"
+                          data={CARRIER_OPTIONS}
+                          value={carrierInputs[sale.payment_id] || null}
+                          onChange={(value) => setCarrierInputs((prev) => ({
+                            ...prev,
+                            [sale.payment_id]: value,
+                          }))}
+                          disabled={trackingMutation.isPending}
+                        />
+                        <div className={styles.trackingRow}>
+                          <TextInput
+                            placeholder={t("sales.trackingNumber")}
                             size="xs"
                             radius="xs"
-                            data={CARRIER_OPTIONS}
-                            value={carrierInputs[sale.payment_id] || null}
-                            onChange={(value) => setCarrierInputs((prev) => ({
+                            className={styles.trackingInput}
+                            value={trackingInputs[sale.payment_id] || ""}
+                            onChange={(e) => setTrackingInputs((prev) => ({
                               ...prev,
-                              [sale.payment_id]: value,
+                              [sale.payment_id]: e.target.value,
                             }))}
                             disabled={trackingMutation.isPending}
                           />
-                          <Group gap="xs">
-                            <TextInput
-                              placeholder={t("sales.trackingNumber")}
-                              size="xs"
-                              radius="xs"
-                              className={styles.trackingInput}
-                              value={trackingInputs[sale.payment_id] || ""}
-                              onChange={(e) => setTrackingInputs((prev) => ({
-                                ...prev,
-                                [sale.payment_id]: e.target.value,
-                              }))}
-                              disabled={trackingMutation.isPending}
-                            />
-                            <Button
-                              size="xs"
-                              radius="xs"
-                              onClick={() => handleAddTracking(sale.payment_id)}
-                              loading={trackingMutation.isPending}
-                              disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
-                            >
-                              {t("sales.ship")}
-                            </Button>
-                          </Group>
-                        </Stack>
+                          <Button
+                            size="xs"
+                            radius="xs"
+                            onClick={() => handleAddTracking(sale.payment_id)}
+                            loading={trackingMutation.isPending}
+                            disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
+                          >
+                            {t("sales.ship")}
+                          </Button>
+                        </div>
                       </div>
-                    )}
-                  </Stack>
+                    </div>
+                  )}
                 </div>
               </AccordionCard>
             ))}

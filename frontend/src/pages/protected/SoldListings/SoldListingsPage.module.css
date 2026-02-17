@@ -1,4 +1,4 @@
-/* SoldListingsPage - Flat design sold listings */
+/* SoldListingsPage - Bento Grid Design */
 
 .page {
   min-height: 100vh;
@@ -127,35 +127,110 @@
   color: var(--color-text-muted);
 }
 
-/* Expanded content grid */
-.contentGrid {
+/* ===== BENTO GRID ===== */
+.bentoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
   padding-top: 16px;
 }
 
-/* Info card within sale */
-.infoCard {
+/* Cell base styling */
+.cell {
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 12px;
 }
 
-.infoLabel {
+.cellLabel {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 8px;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
 }
 
-/* Tracking input */
+/* Row 1: Earnings + Info */
+.earningsCell {
+  grid-row: span 2;
+}
+
+.infoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Buyer profile link */
+.buyerLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.buyerLink:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card);
+}
+
+.buyerUsername {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.buyerDate {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Shipped badge in cell */
+.shippedBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  background: var(--color-success-light);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.shippedText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-success);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* Tracking form in cell */
+.trackingForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trackingRow {
+  display: flex;
+  gap: 8px;
+}
+
 .trackingInput {
   flex: 1;
 }
@@ -168,14 +243,18 @@
   min-height: 300px;
 }
 
-/* Mobile */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .page {
     padding: 24px 24px 48px;
   }
 
-  .contentGrid {
+  .bentoGrid {
     grid-template-columns: 1fr;
+  }
+
+  .earningsCell {
+    grid-row: span 1;
   }
 }
 

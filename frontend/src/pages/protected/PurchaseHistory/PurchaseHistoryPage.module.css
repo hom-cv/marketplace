@@ -1,4 +1,4 @@
-/* PurchaseHistoryPage - Flat design purchase history */
+/* PurchaseHistoryPage - Flat design */
 
 .page {
   min-height: 100vh;
@@ -129,30 +129,103 @@
   padding-top: 16px;
 }
 
-/* Info card within purchase */
-.infoCard {
+/* Stepper card (left column) */
+.stepperCard {
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 12px;
 }
 
-.infoLabel {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.cardLabel {
   font-size: 0.7rem;
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 12px;
+  margin: 0 0 12px;
 }
 
+/* Actions column (right column) */
+.actionsColumn {
+  display: flex;
+  flex-direction: column;
+}
 
-/* Confirm button */
-.confirmButton {
-  margin-top: 12px;
+/* Link button style */
+.linkButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.linkButton:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card);
+}
+
+/* Awaiting shipment card */
+.awaitingCard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--color-warning);
+}
+
+.awaitingIcon {
+  flex-shrink: 0;
+}
+
+/* Button row for side-by-side buttons */
+.buttonRow {
+  display: flex;
+  gap: 8px;
+}
+
+.buttonRow > * {
+  flex: 1;
+}
+
+/* Delivered badge */
+.deliveredBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--color-success-light);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+/* Receipt modal */
+.receiptItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.receiptDivider {
+  height: 1px;
+  background: var(--color-border);
 }
 
 /* Loading */
@@ -171,6 +244,10 @@
 
   .contentGrid {
     grid-template-columns: 1fr;
+  }
+
+  .buttonRow {
+    flex-direction: column;
   }
 }
 
