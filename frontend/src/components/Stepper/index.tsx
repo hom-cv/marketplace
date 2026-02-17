@@ -19,16 +19,22 @@ export function Stepper({
 }: StepperProps) {
   return (
     <div
-      className={`${styles.stepper} ${vertical ? styles.stepperVertical : ""}`}
+      className={[styles.stepper, vertical && styles.stepperVertical]
+        .filter(Boolean)
+        .join(" ")}
     >
       {steps.map((step, index) => {
         const StepIcon = step.icon;
         const isCompleted = index < currentStep;
         const isActive = index === currentStep;
 
-        let stepClassName = styles.step;
-        if (isActive) stepClassName += ` ${styles.stepActive}`;
-        if (isCompleted) stepClassName += ` ${styles.stepCompleted}`;
+        const stepClassName = [
+          styles.step,
+          isActive && styles.stepActive,
+          isCompleted && styles.stepCompleted,
+        ]
+          .filter(Boolean)
+          .join(" ");
 
         return (
           <div key={index} className={stepClassName}>
