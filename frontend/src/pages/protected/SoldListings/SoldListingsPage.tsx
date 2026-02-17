@@ -8,7 +8,6 @@ import {
   Loader,
   Select,
   TextInput,
-  Button,
 } from "@mantine/core";
 import { IconReceipt, IconTruck, IconCheck, IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -16,6 +15,7 @@ import { Link } from "@tanstack/react-router";
 import { getMySales, addTracking } from "@/api/payments";
 import { AccordionCard } from "@/components/AccordionCard";
 import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
@@ -236,13 +236,11 @@ export function SoldListingsPage() {
                             disabled={trackingMutation.isPending}
                           />
                           <Button
-                            size="xs"
-                            radius="xs"
+                            size="sm"
                             onClick={() => handleAddTracking(sale.payment_id)}
-                            loading={trackingMutation.isPending}
-                            disabled={!trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
+                            disabled={trackingMutation.isPending || !trackingInputs[sale.payment_id]?.trim() || !carrierInputs[sale.payment_id]}
                           >
-                            {t("sales.ship")}
+                            {trackingMutation.isPending ? t("status.loading") : t("sales.ship")}
                           </Button>
                         </div>
                       </div>

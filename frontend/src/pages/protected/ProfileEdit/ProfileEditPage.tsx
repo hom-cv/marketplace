@@ -3,13 +3,14 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Textarea, Switch, Button, Stack } from "@mantine/core";
+import { Textarea, Switch, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { updateMyProfile } from "@/api/users";
 import { useAuthStore } from "@/stores/authStore";
 import { getErrorMessage } from "@/utils/error";
 import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import type { UpdateProfileRequest } from "@/api/types/user";
 import styles from "./ProfileEditPage.module.css";
 
@@ -93,10 +94,9 @@ export function ProfileEditPage() {
                 type="submit"
                 fullWidth
                 size="lg"
-                radius="xs"
-                loading={updateMutation.isPending}
+                disabled={updateMutation.isPending}
               >
-                {tCommon("buttons.save")}
+                {updateMutation.isPending ? tCommon("status.loading") : tCommon("buttons.save")}
               </Button>
             </Stack>
           </form>
