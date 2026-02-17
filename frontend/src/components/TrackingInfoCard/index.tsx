@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { Tooltip } from "@mantine/core";
+import { useClipboard } from "@mantine/hooks";
 import { IconTruck, IconCopy } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { CARRIER_LABELS } from "@/constants/shipping";
@@ -14,23 +14,9 @@ export function TrackingInfoCard({
   trackingNumber,
   carrier,
 }: TrackingInfoCardProps) {
-  const [copied, setCopied] = useState(false);
+  const clipboard = useClipboard({ timeout: 2000 });
   const carrierKey = carrier?.toLowerCase() || "";
   const { t } = useTranslation("common");
-
-  const handleCopy = async () => {
-    if (!navigator.clipboard?.writeText) {
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(trackingNumber);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      // Clipboard access denied or failed
-      console.error("Failed to copy text:", error);
-    }
-  };
 
   return (
     <div className={styles.card}>
@@ -44,13 +30,18 @@ export function TrackingInfoCard({
         </span>
         <span className={styles.trackingNumber}>{trackingNumber}</span>
         <Tooltip
-          label={copied ? t("tracking.copied") : t("tracking.copy")}
+          label={clipboard.copied ? t("tracking.copied") : t("tracking.copy")}
           withArrow
         >
           <button
             type="button"
-            className={`${styles.copyButton} ${copied ? styles.copyButtonCopied : ""}`}
-            onClick={handleCopy}
+            className={[
+              styles.copyButton,
+              clipboard.copied && styles.copyButtonCopied,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => clipboard.copy(trackingNumber)}
           >
             <IconCopy size={12} />
           </button>
