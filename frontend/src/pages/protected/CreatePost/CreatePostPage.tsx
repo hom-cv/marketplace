@@ -1,37 +1,13 @@
 /**
  * Create Post Page - Form to create a new marketplace listing
- * Split layout: Image preview on left, form on right
+ * Flat design matching site style
  */
 
 import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Container,
-  Title,
-  Text,
-  TextInput,
-  Textarea,
-  Select,
-  NumberInput,
-  Button,
-  Stack,
-  Alert,
-  Grid,
-  Box,
-  Image,
-  Group,
-  ActionIcon,
-  FileButton,
-  SimpleGrid,
-  Badge,
-  Paper,
-  ThemeIcon,
-  Collapse,
-} from "@mantine/core";
+import { FileButton } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import {
-  IconAlertCircle,
-  IconCheck,
   IconPlus,
   IconX,
   IconBuildingStore,
@@ -39,10 +15,13 @@ import {
   IconChevronDown,
   IconChevronUp,
 } from "@tabler/icons-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import { getErrorMessage } from "@/utils/error";
@@ -58,33 +37,38 @@ export function CreatePostPage() {
   const { t } = useTranslation("listings");
 
   // Category options with translations
-  const postTypeOptions = useMemo(() => [
-    { value: "SHIRT", label: t("categories.shirt") },
-    { value: "PANTS", label: t("categories.pants") },
-    { value: "JACKET", label: t("categories.jacket") },
-    { value: "SHOES", label: t("categories.shoes") },
-    { value: "ACCESSORIES", label: t("categories.accessories") },
-    { value: "OTHER", label: t("categories.other") },
-  ], [t]);
+  const postTypeOptions = useMemo(
+    () => [
+      { value: "SHIRT", label: t("categories.shirt") },
+      { value: "PANTS", label: t("categories.pants") },
+      { value: "JACKET", label: t("categories.jacket") },
+      { value: "SHOES", label: t("categories.shoes") },
+      { value: "ACCESSORIES", label: t("categories.accessories") },
+      { value: "OTHER", label: t("categories.other") },
+    ],
+    [t]
+  );
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<PostType | null>(null);
-  const [price, setPrice] = useState<number | string>("");
-  const [shippingCost, setShippingCost] = useState<number | string>(0);
+  const [price, setPrice] = useState<string>("");
+  const [shippingCost, setShippingCost] = useState<string>("0");
   const [size, setSize] = useState<string | null>(null);
   const [measurements, setMeasurements] = useState<Measurements>({});
   const [images, setImages] = useState<File[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [measurementsOpen, { toggle: toggleMeasurements }] = useDisclosure(false);
-  const [extraMeasurements, setExtraMeasurements] = useState<Array<{ label: string; value: string }>>([]);
+  const [measurementsOpen, { toggle: toggleMeasurements }] =
+    useDisclosure(false);
+  const [extraMeasurements, setExtraMeasurements] = useState<
+    Array<{ label: string; value: string }>
+  >([]);
 
   // Get available sizes based on selected category
   const sizeOptions = useMemo(() => {
     if (!type) return [];
     const sizes = getSizesForType(type);
     return sizes.map((s) => {
-      // For shoes, show EU prefix
       if (type === "SHOES") {
         return { value: s, label: `EU ${s}` };
       }
@@ -99,7 +83,7 @@ export function CreatePostPage() {
     setExtraMeasurements([]);
   }, [type]);
 
-  // Get measurement fields based on category (from centralized config)
+  // Get measurement fields based on category
   const measurementFields = useMemo(() => {
     if (!type) return [];
     return MEASUREMENT_FIELDS[type].map((field) => ({
@@ -137,8 +121,8 @@ export function CreatePostPage() {
     }
   };
 
-  const handleMeasurementChange = (key: string, value: number | string) => {
-    const numValue = typeof value === "string" ? parseFloat(value) : value;
+  const handleMeasurementChange = (key: string, value: string) => {
+    const numValue = parseFloat(value);
     setMeasurements((prev) => ({
       ...prev,
       [key]: isNaN(numValue) ? undefined : numValue,
@@ -149,7 +133,11 @@ export function CreatePostPage() {
     setExtraMeasurements((prev) => [...prev, { label: "", value: "" }]);
   };
 
-  const handleExtraMeasurementChange = (index: number, field: "label" | "value", newValue: string) => {
+  const handleExtraMeasurementChange = (
+    index: number,
+    field: "label" | "value",
+    newValue: string
+  ) => {
     setExtraMeasurements((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: newValue };
@@ -168,13 +156,19 @@ export function CreatePostPage() {
     e.preventDefault();
     setMeasurementError(null);
 
-    if (!title || !description || !type || !price || !size) return;
+    const priceNum = parseFloat(price);
+    if (!title || !description || !type || !priceNum || !size) return;
 
     const cleanMeasurements = Object.fromEntries(
-      Object.entries(measurements).filter(([, v]) => v !== undefined && v !== null)
+      Object.entries(measurements).filter(
+        ([, v]) => v !== undefined && v !== null
+      )
     ) as Measurements;
 
-    const allMeasurements = { ...cleanMeasurements } as Record<string, number | undefined>;
+    const allMeasurements = { ...cleanMeasurements } as Record<
+      string,
+      number | undefined
+    >;
     const seenKeys = new Set(Object.keys(cleanMeasurements));
 
     for (const extra of extraMeasurements) {
@@ -184,7 +178,6 @@ export function CreatePostPage() {
 
         if (!key || isNaN(numValue)) continue;
 
-        // Check for duplicate keys
         if (seenKeys.has(key)) {
           setMeasurementError(
             t("create.form.duplicateMeasurement", { label: extra.label.trim() })
@@ -197,331 +190,422 @@ export function CreatePostPage() {
       }
     }
 
-    const finalMeasurements = Object.keys(allMeasurements).length > 0 ? allMeasurements as Measurements : undefined;
+    const finalMeasurements =
+      Object.keys(allMeasurements).length > 0
+        ? (allMeasurements as Measurements)
+        : undefined;
 
     mutation.mutate({
       title,
       description,
       type,
-      price: typeof price === "string" ? parseFloat(price) : price,
-      shipping_cost: typeof shippingCost === "string" ? parseFloat(shippingCost) : shippingCost,
+      price: priceNum,
+      shipping_cost: parseFloat(shippingCost) || 0,
       size,
       measurements: finalMeasurements,
       images: images.length > 0 ? images : undefined,
     });
   };
 
-  const isValid = title && description && type && price && size;
+  const isValid =
+    title && description && type && parseFloat(price) > 0 && size;
 
   // Check if user is a verified seller
   if (!user?.is_seller) {
     return (
-      <Container size="sm" py="xl">
-        <Paper shadow="sm" p="xl" radius="md">
-          <Stack align="center" gap="lg">
-            <ThemeIcon size={64} radius="xl" color="orange" variant="light">
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <Card padding="lg" className={styles.notSellerCard}>
+            <div className={styles.notSellerIcon}>
               <IconBuildingStore size={32} />
-            </ThemeIcon>
-            <Title order={2} ta="center">
+            </div>
+            <h2 className={styles.notSellerTitle}>
               {t("seller.verificationRequired")}
-            </Title>
-            <Text c="dimmed" ta="center" maw={400}>
+            </h2>
+            <p className={styles.notSellerText}>
               {t("seller.verificationMessage")}
-            </Text>
+            </p>
             <Button
-              component={Link}
-              to="/account/become-seller"
+              variant="primary"
               size="lg"
-              leftSection={<IconBuildingStore size={18} />}
+              leftIcon={<IconBuildingStore size={18} />}
+              onClick={() => navigate({ to: "/account/become-seller" })}
             >
               {t("seller.becomeSeller")}
             </Button>
-          </Stack>
-        </Paper>
-      </Container>
+          </Card>
+        </div>
+      </div>
     );
   }
 
-  const ImagePreviewSection = () => (
-    <Box className={styles.imageSection}>
-      {/* Main Image Display */}
-      <Box className={styles.mainImageWrapper}>
-        {images.length > 0 ? (
-          <Image
-            src={imagePreviews[selectedImageIndex]}
-            alt="Preview"
-            className={styles.mainImage}
-            fit="contain"
-            radius="md"
-          />
-        ) : (
-          <ImagePlaceholder text={t("images.noImages")} />
-        )}
-      </Box>
-
-      {/* Thumbnail Carousel */}
-      <Group gap="xs" mt="md" wrap="nowrap" className={styles.thumbnailRow}>
-        {images.map((_, index) => (
-          <Box
-            key={index}
-            className={`${styles.thumbnail} ${index === selectedImageIndex ? styles.thumbnailActive : ""}`}
-            onClick={() => setSelectedImageIndex(index)}
-          >
-            <Image
-              src={imagePreviews[index]}
-              alt={`Thumbnail ${index + 1}`}
-              fit="cover"
-              radius="sm"
-            />
-            {index === 0 && (
-              <Badge
-                className={styles.coverBadge}
-                size="xs"
-                color="blue"
-              >
-                {t("images.cover")}
-              </Badge>
-            )}
-            <ActionIcon
-              className={styles.thumbnailRemove}
-              size="xs"
-              variant="transparent"
-              color="red"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRemoveImage(index);
-              }}
-            >
-              <IconX size={10} />
-            </ActionIcon>
-          </Box>
-        ))}
-
-        {/* Add Image Button */}
-        <FileButton onChange={(files) => files && handleAddImages(files)} accept="image/*" multiple>
-          {(props) => (
-            <Box {...props} className={styles.addImageButton}>
-              <IconPlus size={20} />
-            </Box>
-          )}
-        </FileButton>
-      </Group>
-    </Box>
-  );
-
   return (
-    <Container size="lg" my={40}>
-      <Title order={2} mb="xs">
-        {t("create.title")}
-      </Title>
-      <Text c="dimmed" mb="xl">
-        {t("create.subtitle")}
-      </Text>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        {/* Header */}
+        <div className={styles.header}>
+          <h1 className={styles.title}>{t("create.title")}</h1>
+          <p className={styles.subtitle}>{t("create.subtitle")}</p>
+        </div>
 
-      {mutation.error && (
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="lg">
-          {getErrorMessage(mutation.error, t("create.error"))}
-        </Alert>
-      )}
+        {/* Alerts */}
+        {mutation.error && (
+          <Alert variant="error" title="Error" margin="bottom">
+            {getErrorMessage(mutation.error, t("create.error"))}
+          </Alert>
+        )}
 
-      {measurementError && (
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red" mb="lg">
-          {measurementError}
-        </Alert>
-      )}
+        {measurementError && (
+          <Alert variant="error" title="Error" margin="bottom">
+            {measurementError}
+          </Alert>
+        )}
 
-      {mutation.isSuccess && (
-        <Alert icon={<IconCheck size={16} />} title="Success" color="green" mb="lg">
-          {t("create.success")}
-        </Alert>
-      )}
+        {mutation.isSuccess && (
+          <Alert variant="success" title="Success" margin="bottom">
+            {t("create.success")}
+          </Alert>
+        )}
 
-      <form onSubmit={handleSubmit}>
-        <Grid gutter="xl">
-          {/* Left: Image Preview */}
-          <Grid.Col span={{ base: 12, md: 5 }}>
-            <ImagePreviewSection />
-          </Grid.Col>
+        <form onSubmit={handleSubmit}>
+          <div className={styles.layout}>
+            {/* Left: Image Preview */}
+            <div className={styles.imageSection}>
+              <div className={styles.mainImageWrapper}>
+                {images.length > 0 ? (
+                  <img
+                    src={imagePreviews[selectedImageIndex]}
+                    alt="Preview"
+                    className={styles.mainImage}
+                  />
+                ) : (
+                  <ImagePlaceholder text={t("images.noImages")} />
+                )}
+              </div>
 
-          {/* Right: Form */}
-          <Grid.Col span={{ base: 12, md: 7 }}>
-            <Stack gap="md">
-              <TextInput
-                label={t("create.form.titleLabel")}
-                placeholder={t("create.form.titlePlaceholder")}
-                required
-                value={title}
-                onChange={(e) => setTitle(e.currentTarget.value)}
-                maxLength={200}
-              />
-
-              <Textarea
-                label={t("create.form.description")}
-                placeholder={t("create.form.descriptionPlaceholder")}
-                required
-                minRows={4}
-                value={description}
-                onChange={(e) => setDescription(e.currentTarget.value)}
-                maxLength={5000}
-              />
-
-              <SimpleGrid cols={2}>
-                <Select
-                  label={t("create.form.category")}
-                  placeholder={t("create.form.categoryPlaceholder")}
-                  required
-                  data={postTypeOptions}
-                  value={type}
-                  onChange={(value) => setType(value as PostType)}
-                />
-
-                <Select
-                  label={t("create.form.size")}
-                  placeholder={t("create.form.sizePlaceholder")}
-                  required
-                  data={sizeOptions}
-                  value={size}
-                  onChange={setSize}
-                  disabled={!type}
-                />
-              </SimpleGrid>
-
-              <SimpleGrid cols={2}>
-                <NumberInput
-                  label={t("create.form.price")}
-                  placeholder="0.00"
-                  required
-                  min={0.01}
-                  max={1000000}
-                  decimalScale={2}
-                  fixedDecimalScale
-                  value={price}
-                  onChange={setPrice}
-                />
-
-                <NumberInput
-                  label={t("create.form.shippingCost")}
-                  description={t("create.form.shippingDescription")}
-                  placeholder="0.00"
-                  min={0}
-                  max={10000}
-                  decimalScale={2}
-                  fixedDecimalScale
-                  value={shippingCost}
-                  onChange={setShippingCost}
-                />
-              </SimpleGrid>
-
-              {/* Optional Measurements Section */}
-              {measurementFields.length > 0 && (
-                <Box>
-                  <Button
-                    variant="subtle"
-                    color="gray"
-                    size="sm"
-                    leftSection={<IconRuler size={16} />}
-                    rightSection={measurementsOpen ? <IconChevronUp size={16} /> : <IconChevronDown size={16} />}
-                    onClick={toggleMeasurements}
+              <div className={styles.thumbnailRow}>
+                {images.map((_, index) => (
+                  <div
+                    key={index}
+                    className={[
+                      styles.thumbnail,
+                      index === selectedImageIndex && styles.thumbnailActive,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={() => setSelectedImageIndex(index)}
                   >
-                    {t("create.form.addMeasurements")}
-                  </Button>
-                  <Collapse in={measurementsOpen}>
-                    <Paper p="md" mt="sm" withBorder radius="md">
-                      <Text size="sm" c="dimmed" mb="md">
-                        {t("create.form.measurementsDescription")}
-                      </Text>
+                    <img
+                      src={imagePreviews[index]}
+                      alt={`Thumbnail ${index + 1}`}
+                    />
+                    {index === 0 && (
+                      <span className={styles.coverBadge}>
+                        {t("images.cover")}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.thumbnailRemove}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveImage(index);
+                      }}
+                    >
+                      <IconX size={10} />
+                    </button>
+                  </div>
+                ))}
 
+                <FileButton
+                  onChange={(files) => files && handleAddImages(files)}
+                  accept="image/*"
+                  multiple
+                >
+                  {(props) => (
+                    <button
+                      type="button"
+                      {...props}
+                      className={styles.addImageButton}
+                    >
+                      <IconPlus size={20} />
+                    </button>
+                  )}
+                </FileButton>
+              </div>
+            </div>
 
+            {/* Right: Form */}
+            <div className={styles.formSection}>
+              <div className={styles.formCard}>
+                <div className={styles.formRow}>
+                  {/* Title */}
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      {t("create.form.titleLabel")}
+                      <span className={styles.fieldRequired}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={styles.fieldInput}
+                      placeholder={t("create.form.titlePlaceholder")}
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      maxLength={200}
+                    />
+                  </div>
 
-                      {/* Standard Measurements */}
-                      <SimpleGrid cols={{ base: 2, sm: 4 }}>
-                        {measurementFields.map((field) => (
-                          <NumberInput
-                            key={field.key}
-                            label={field.label}
-                            placeholder="cm"
-                            size="sm"
-                            min={0}
-                            decimalScale={1}
-                            value={(measurements as Record<string, number | undefined>)[field.key] ?? ""}
-                            onChange={(value) => handleMeasurementChange(field.key, value)}
-                          />
-                        ))}
-                      </SimpleGrid>
+                  {/* Description */}
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.fieldLabel}>
+                      {t("create.form.description")}
+                      <span className={styles.fieldRequired}>*</span>
+                    </label>
+                    <textarea
+                      className={`${styles.fieldInput} ${styles.fieldTextarea}`}
+                      placeholder={t("create.form.descriptionPlaceholder")}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      maxLength={5000}
+                    />
+                  </div>
 
-                      {/* Extra Measurements */}
-                      {extraMeasurements.length > 0 && (
-                        <Box mt="md">
-                          <Text size="sm" fw={500} mb="xs">{t("create.form.extraMeasurements")}</Text>
-                          <Stack gap="xs">
-                            {extraMeasurements.map((extra, index) => (
-                              <Group key={index} gap="xs">
-                                <TextInput
-                                  placeholder={t("create.form.measurementLabel")}
-                                  size="sm"
-                                  style={{ flex: 1 }}
-                                  value={extra.label}
-                                  onChange={(e) => handleExtraMeasurementChange(index, "label", e.currentTarget.value)}
-                                />
-                                <NumberInput
-                                  placeholder="cm"
-                                  size="sm"
-                                  style={{ width: 100 }}
-                                  min={0}
-                                  decimalScale={1}
-                                  value={extra.value}
-                                  onChange={(v) => handleExtraMeasurementChange(index, "value", String(v))}
-                                />
-                                <ActionIcon
-                                  variant="subtle"
-                                  color="red"
-                                  size="sm"
-                                  onClick={() => handleRemoveExtraMeasurement(index)}
-                                >
-                                  <IconX size={14} />
-                                </ActionIcon>
-                              </Group>
-                            ))}
-                          </Stack>
-                        </Box>
-                      )}
-
-                      {/* Add Extra Measurement Button */}
-                      <Button
-                        variant="subtle"
-                        size="xs"
-                        leftSection={<IconPlus size={14} />}
-                        mt="md"
-                        onClick={handleAddExtraMeasurement}
+                  {/* Category & Size */}
+                  <div className={styles.formGrid}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>
+                        {t("create.form.category")}
+                        <span className={styles.fieldRequired}>*</span>
+                      </label>
+                      <select
+                        className={`${styles.fieldInput} ${styles.fieldSelect}`}
+                        value={type || ""}
+                        onChange={(e) => setType(e.target.value as PostType)}
                       >
-                        {t("create.form.addExtraMeasurement")}
-                      </Button>
-                    </Paper>
-                  </Collapse>
-                </Box>
-              )}
+                        <option value="">
+                          {t("create.form.categoryPlaceholder")}
+                        </option>
+                        {postTypeOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-              {price && typeof price === "number" && price > 0 && (
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>
+                        {t("create.form.size")}
+                        <span className={styles.fieldRequired}>*</span>
+                      </label>
+                      <select
+                        className={`${styles.fieldInput} ${styles.fieldSelect}`}
+                        value={size || ""}
+                        onChange={(e) => setSize(e.target.value || null)}
+                        disabled={!type}
+                      >
+                        <option value="">
+                          {t("create.form.sizePlaceholder")}
+                        </option>
+                        {sizeOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Price & Shipping */}
+                  <div className={styles.formGrid}>
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>
+                        {t("create.form.price")}
+                        <span className={styles.fieldRequired}>*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className={styles.fieldInput}
+                        placeholder="0.00"
+                        min="0.01"
+                        max="1000000"
+                        step="0.01"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                      />
+                    </div>
+
+                    <div className={styles.fieldGroup}>
+                      <label className={styles.fieldLabel}>
+                        {t("create.form.shippingCost")}
+                      </label>
+                      <input
+                        type="number"
+                        className={styles.fieldInput}
+                        placeholder="0.00"
+                        min="0"
+                        max="10000"
+                        step="0.01"
+                        value={shippingCost}
+                        onChange={(e) => setShippingCost(e.target.value)}
+                      />
+                      <span className={styles.fieldDescription}>
+                        {t("create.form.shippingDescription")}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Optional Measurements Section */}
+                  {measurementFields.length > 0 && (
+                    <div>
+                      <button
+                        type="button"
+                        className={styles.measurementsToggle}
+                        onClick={toggleMeasurements}
+                      >
+                        <IconRuler size={16} />
+                        {t("create.form.addMeasurements")}
+                        {measurementsOpen ? (
+                          <IconChevronUp size={16} />
+                        ) : (
+                          <IconChevronDown size={16} />
+                        )}
+                      </button>
+
+                      {measurementsOpen && (
+                        <div className={styles.measurementsContent}>
+                          <p className={styles.measurementsDescription}>
+                            {t("create.form.measurementsDescription")}
+                          </p>
+
+                          <div className={styles.measurementsGrid}>
+                            {measurementFields.map((field) => (
+                              <div
+                                key={field.key}
+                                className={styles.measurementField}
+                              >
+                                <label className={styles.measurementLabel}>
+                                  {field.label}
+                                </label>
+                                <input
+                                  type="number"
+                                  className={styles.measurementInput}
+                                  placeholder="cm"
+                                  min="0"
+                                  step="0.1"
+                                  value={
+                                    (
+                                      measurements as Record<
+                                        string,
+                                        number | undefined
+                                      >
+                                    )[field.key] ?? ""
+                                  }
+                                  onChange={(e) =>
+                                    handleMeasurementChange(
+                                      field.key,
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Extra Measurements */}
+                          {extraMeasurements.length > 0 && (
+                            <div className={styles.extraMeasurements}>
+                              <p className={styles.extraMeasurementsLabel}>
+                                {t("create.form.extraMeasurements")}
+                              </p>
+                              {extraMeasurements.map((extra, index) => (
+                                <div
+                                  key={index}
+                                  className={styles.extraMeasurementRow}
+                                >
+                                  <input
+                                    type="text"
+                                    className={styles.extraMeasurementLabel}
+                                    placeholder={t(
+                                      "create.form.measurementLabel"
+                                    )}
+                                    value={extra.label}
+                                    onChange={(e) =>
+                                      handleExtraMeasurementChange(
+                                        index,
+                                        "label",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <input
+                                    type="number"
+                                    className={styles.extraMeasurementValue}
+                                    placeholder="cm"
+                                    min="0"
+                                    step="0.1"
+                                    value={extra.value}
+                                    onChange={(e) =>
+                                      handleExtraMeasurementChange(
+                                        index,
+                                        "value",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <button
+                                    type="button"
+                                    className={styles.extraMeasurementRemove}
+                                    onClick={() =>
+                                      handleRemoveExtraMeasurement(index)
+                                    }
+                                  >
+                                    <IconX size={14} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            className={styles.addMeasurementButton}
+                            onClick={handleAddExtraMeasurement}
+                          >
+                            <IconPlus size={14} />
+                            {t("create.form.addExtraMeasurement")}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Earnings Preview */}
+              {parseFloat(price) > 0 && (
                 <EarningsPreview
-                  itemPrice={price}
-                  shippingCost={typeof shippingCost === "number" ? shippingCost : 0}
+                  itemPrice={parseFloat(price)}
+                  shippingCost={parseFloat(shippingCost) || 0}
                 />
               )}
 
+              {/* Submit Button */}
               <Button
                 type="submit"
-                fullWidth
+                variant="primary"
                 size="lg"
-                mt="md"
-                loading={mutation.isPending}
-                disabled={!isValid}
+                fullWidth
+                disabled={!isValid || mutation.isPending}
               >
-                {t("create.form.submit")}
+                {mutation.isPending
+                  ? t("create.form.submitting")
+                  : t("create.form.submit")}
               </Button>
-            </Stack>
-          </Grid.Col>
-        </Grid>
-      </form>
-    </Container>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
