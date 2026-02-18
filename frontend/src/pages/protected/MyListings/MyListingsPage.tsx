@@ -1,25 +1,21 @@
+/**
+ * My Listings page - Flat design
+ */
+
 import { useQuery } from "@tanstack/react-query";
-import {
-  Title,
-  Text,
-  Stack,
-  Loader,
-  Center,
-  Alert,
-  Button,
-  Card,
-  ThemeIcon,
-} from "@mantine/core";
-import { IconAlertCircle, IconPlus, IconPackage } from "@tabler/icons-react";
+import { Loader } from "@mantine/core";
+import { IconPlus, IconPackage } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { getMyPosts } from "@/api/posts";
+import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import styles from "./MyListingsPage.module.css";
 
 export function MyListingsPage() {
   const { t } = useTranslation("listings");
   const { t: tNav } = useTranslation("navigation");
+  const { t: tCommon } = useTranslation("common");
 
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ["posts", "me"],
@@ -28,53 +24,54 @@ export function MyListingsPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-        {error instanceof Error ? error.message : t("myListings.failedToLoad")}
-      </Alert>
+      <div className={styles.page}>
+        <div className={styles.container}>
+          <Alert variant="error" title={tCommon("status.error")}>
+            {error instanceof Error ? error.message : t("myListings.failedToLoad")}
+          </Alert>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Stack gap="lg">
-      <div>
-        <Title order={2} mb="xs">{t("myListings.title")}</Title>
-        <Text c="dimmed">{t("myListings.subtitle")}</Text>
-      </div>
-
-      {!posts || posts.length === 0 ? (
-        <Center py="xl">
-          <Card padding="xl" radius="md" withBorder ta="center" maw={400}>
-            <Stack align="center" gap="md">
-              <ThemeIcon size="xl" radius="xl" variant="light" color="gray">
-                <IconPackage size={24} />
-              </ThemeIcon>
-              <div>
-                <Text fw={500}>{t("myListings.noListings")}</Text>
-                <Text size="sm" c="dimmed" mb="md">
-                  {t("myListings.createFirst")}
-                </Text>
-                <Link to="/account/listings/new">
-                  <Button leftSection={<IconPlus size={16} />}>{tNav("menu.createListing")}</Button>
-                </Link>
-              </div>
-            </Stack>
-          </Card>
-        </Center>
-      ) : (
-        <div className={styles.grid}>
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{t("myListings.title")}</h1>
+          <p className={styles.subtitle}>{t("myListings.subtitle")}</p>
         </div>
-      )}
-    </Stack>
+
+        {!posts || posts.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyCard}>
+              <div className={styles.emptyIcon}>
+                <IconPackage size={28} />
+              </div>
+              <p className={styles.emptyTitle}>{t("myListings.noListings")}</p>
+              <p className={styles.emptyText}>{t("myListings.createFirst")}</p>
+              <Link to="/account/listings/new" className={styles.emptyButton}>
+                <IconPlus size={18} />
+                {tNav("menu.createListing")}
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.grid}>
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

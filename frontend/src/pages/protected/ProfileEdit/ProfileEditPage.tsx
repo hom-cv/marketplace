@@ -1,25 +1,18 @@
 /**
- * Profile edit page for updating bio and privacy settings
+ * Profile edit page - Flat design
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Container,
-  Title,
-  Text,
-  Stack,
-  Textarea,
-  Switch,
-  Button,
-  Alert,
-} from "@mantine/core";
+import { Textarea, Switch, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconAlertCircle, IconCheck } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { updateMyProfile } from "@/api/users";
 import { useAuthStore } from "@/stores/authStore";
 import { getErrorMessage } from "@/utils/error";
+import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import type { UpdateProfileRequest } from "@/api/types/user";
+import styles from "./ProfileEditPage.module.css";
 
 export function ProfileEditPage() {
   const queryClient = useQueryClient();
@@ -58,55 +51,57 @@ export function ProfileEditPage() {
   };
 
   return (
-    <Container size="lg" my={40}>
-      <Title order={2} mb="xs">
-        {t("edit.title")}
-      </Title>
-      <Text c="dimmed" mb="xl">
-        {t("edit.subtitle")}
-      </Text>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>{t("edit.title")}</h1>
+          <p className={styles.subtitle}>{t("edit.subtitle")}</p>
+        </div>
 
-      {updateMutation.isError && (
-        <Alert icon={<IconAlertCircle size={16} />} title={tCommon("status.error")} color="red" mb="lg">
-          {getErrorMessage(updateMutation.error, tCommon("errors.generic"))}
-        </Alert>
-      )}
+        {updateMutation.isError && (
+          <Alert variant="error" title={tCommon("status.error")} margin="bottom">
+            {getErrorMessage(updateMutation.error, tCommon("errors.generic"))}
+          </Alert>
+        )}
 
-      {updateMutation.isSuccess && (
-        <Alert icon={<IconCheck size={16} />} title={tCommon("status.success")} color="green" mb="lg">
-          {t("messages.profileUpdated")}
-        </Alert>
-      )}
+        {updateMutation.isSuccess && (
+          <Alert variant="success" title={tCommon("status.success")} margin="bottom">
+            {t("messages.profileUpdated")}
+          </Alert>
+        )}
 
-      <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Stack gap="md">
-          <Textarea
-            label={t("edit.bioLabel")}
-            description={t("edit.bioDescription")}
-            placeholder={t("edit.bioPlaceholder")}
-            minRows={4}
-            maxRows={8}
-            maxLength={500}
-            {...form.getInputProps("bio")}
-          />
+        <div className={styles.card}>
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="lg">
+              <Textarea
+                label={t("edit.bioLabel")}
+                description={t("edit.bioDescription")}
+                placeholder={t("edit.bioPlaceholder")}
+                minRows={4}
+                maxRows={8}
+                maxLength={500}
+                radius="xs"
+                {...form.getInputProps("bio")}
+              />
 
-          <Switch
-            label={t("edit.showNameLabel")}
-            description={t("edit.showNameDescription")}
-            {...form.getInputProps("show_full_name", { type: "checkbox" })}
-          />
+              <Switch
+                label={t("edit.showNameLabel")}
+                description={t("edit.showNameDescription")}
+                {...form.getInputProps("show_full_name", { type: "checkbox" })}
+              />
 
-          <Button
-            type="submit"
-            fullWidth
-            size="lg"
-            mt="md"
-            loading={updateMutation.isPending}
-          >
-            {tCommon("buttons.save")}
-          </Button>
-        </Stack>
-      </form>
-    </Container>
+              <Button
+                type="submit"
+                fullWidth
+                size="lg"
+                disabled={updateMutation.isPending}
+              >
+                {updateMutation.isPending ? tCommon("status.loading") : tCommon("buttons.save")}
+              </Button>
+            </Stack>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }

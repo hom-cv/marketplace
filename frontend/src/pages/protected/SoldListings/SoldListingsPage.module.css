@@ -1,0 +1,278 @@
+/* SoldListingsPage - Bento Grid Design */
+
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 32px 48px 48px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Header */
+.header {
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Sale items list */
+.saleList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Sale header content (inside AccordionCard) */
+.saleHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.saleImage {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  background: var(--color-bg-muted);
+  flex-shrink: 0;
+}
+
+.saleInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.saleTopRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.saleTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saleEarnings {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.saleMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.badgePacking {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.badgeInTransit {
+  background: rgba(36, 67, 255, 0.1);
+  color: var(--color-primary);
+}
+
+.badgeDelivered {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.badgeShipped {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.saleDate {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* ===== BENTO GRID ===== */
+.bentoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 8px;
+  padding-top: 16px;
+}
+
+/* Cell base styling */
+.cell {
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.cellLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+}
+
+/* Row 1: Earnings + Info */
+.earningsCell {
+  grid-row: span 2;
+}
+
+.infoColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Buyer profile link */
+.buyerLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.buyerLink:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-bg-card);
+}
+
+.buyerUsername {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.buyerDate {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Shipped badge in cell */
+.shippedBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  background: var(--color-success-light);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.shippedText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-success);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
+/* Tracking form in cell */
+.trackingForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trackingRow {
+  display: flex;
+  gap: 8px;
+}
+
+.trackingInput {
+  flex: 1;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 24px 48px;
+  }
+
+  .bentoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .earningsCell {
+    grid-row: span 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 20px 16px 32px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .saleImage {
+    width: 48px;
+    height: 48px;
+  }
+
+  .trackingRow {
+    flex-direction: column;
+  }
+}

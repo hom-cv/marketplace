@@ -1,26 +1,14 @@
 /**
- * Public user profile page
+ * Public user profile page - Flat design
  */
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import {
-  Container,
-  Title,
-  Text,
-  Stack,
-  Loader,
-  Center,
-  Alert,
-  Avatar,
-  Group,
-  Badge,
-  Paper,
-  Box,
-} from "@mantine/core";
-import { IconAlertCircle, IconHeart, IconUser } from "@tabler/icons-react";
+import { Loader, Box } from "@mantine/core";
+import { IconHeart, IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getUserProfile, getUserPosts } from "@/api/users";
+import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import styles from "./ProfilePage.module.css";
@@ -52,21 +40,21 @@ export function ProfilePage() {
 
   if (profileLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (profileError || !profile) {
     return (
-      <Container size="md" py="xl">
-        <Alert icon={<IconAlertCircle size={16} />} title={tCommon("status.error")} color="red">
+      <div className={styles.errorContainer}>
+        <Alert variant="error" title={tCommon("status.error")}>
           {profileError instanceof Error
             ? profileError.message
             : t("errors.profileNotFound")}
         </Alert>
-      </Container>
+      </div>
     );
   }
 
@@ -76,55 +64,47 @@ export function ProfilePage() {
       : null;
 
   return (
-    <Container size="lg" py="xl">
-      <Stack gap="xl">
-        {/* Profile Header */}
-        <Paper shadow="sm" p="xl" radius="md" withBorder>
-          <Group align="flex-start" gap="lg">
-            <Avatar size={100} radius="xl" color="blue">
-              <IconUser size={60} />
-            </Avatar>
-            <Stack gap="xs" style={{ flex: 1 }}>
-              <Group gap="sm">
-                <Title order={2}>@{profile.username}</Title>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        {/* Profile Card */}
+        <div className={styles.profileCard}>
+          <div className={styles.profileContent}>
+            <div className={styles.avatar}>
+              <IconUser size={48} />
+            </div>
+            <div className={styles.profileInfo}>
+              <div className={styles.usernameRow}>
+                <h1 className={styles.username}>@{profile.username}</h1>
                 {profile.is_seller && (
-                  <Badge color="green" variant="filled">
-                    {t("badges.seller")}
-                  </Badge>
+                  <span className={styles.badge}>{t("badges.seller")}</span>
                 )}
-              </Group>
+              </div>
               {displayName && (
-                <Text size="lg" c="dimmed">
-                  {displayName}
-                </Text>
+                <p className={styles.displayName}>{displayName}</p>
               )}
-              {profile.bio && (
-                <Text size="md" mt="xs">
-                  {profile.bio}
-                </Text>
-              )}
-              <Group gap="lg" mt="md">
-                <Group gap={4}>
-                  <IconHeart size={20} color="var(--mantine-color-red-6)" />
-                  <Text fw={600}>{profile.total_likes}</Text>
-                  <Text c="dimmed">{t("stats.totalLikes")}</Text>
-                </Group>
-              </Group>
-            </Stack>
-          </Group>
-        </Paper>
+              {profile.bio && <p className={styles.bio}>{profile.bio}</p>}
+              <div className={styles.stats}>
+                <div className={styles.stat}>
+                  <IconHeart size={18} className={styles.statIcon} />
+                  <span className={styles.statValue}>{profile.total_likes}</span>
+                  <span className={styles.statLabel}>{t("stats.totalLikes")}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Listings Section */}
-        <div>
-          <Title order={3} mb="md">
-            {t("sections.listings")}
-          </Title>
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t("sections.listings")}</h2>
           {postsLoading ? (
-            <Center h={200}>
+            <div className={styles.loading}>
               <Loader />
-            </Center>
+            </div>
           ) : postsError ? (
-            <Alert color="red">{t("errors.failedToLoadPosts")}</Alert>
+            <Alert variant="error">
+              {t("errors.failedToLoadPosts")}
+            </Alert>
           ) : posts && posts.length > 0 ? (
             <>
               {/* Desktop Grid */}
@@ -138,20 +118,20 @@ export function ProfilePage() {
 
               {/* Mobile Feed */}
               <Box hiddenFrom="sm">
-                <Stack gap={0}>
+                <div>
                   {posts.map((post) => (
                     <PostFeedItem key={post.id} post={post} />
                   ))}
-                </Stack>
+                </div>
               </Box>
             </>
           ) : (
-            <Paper p="xl" withBorder ta="center">
-              <Text c="dimmed">{t("empty.noListings")}</Text>
-            </Paper>
+            <div className={styles.emptyState}>
+              <p className={styles.emptyText}>{t("empty.noListings")}</p>
+            </div>
           )}
         </div>
-      </Stack>
-    </Container>
+      </div>
+    </div>
   );
 }

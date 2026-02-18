@@ -209,7 +209,16 @@
     "delivered": "จัดส่งแล้ว",
     "confirmDelivery": "ยืนยันการรับสินค้า",
     "shippingTo": "จัดส่งถึง",
-    "seller": "ผู้ขาย"
+    "seller": "ผู้ขาย",
+    "toggleDetails": "แสดง/ซ่อนรายละเอียดคำสั่งซื้อ",
+    "date": "วันที่",
+    "awaitingTracking": "รอข้อมูลการติดตาม",
+    "awaitingShipment": "รอการจัดส่ง",
+    "viewListing": "ดูรายการสินค้า",
+    "showReceipt": "แสดงใบเสร็จ",
+    "contactSupport": "ติดต่อฝ่ายสนับสนุน",
+    "receipt": "ใบเสร็จ",
+    "item": "สินค้า"
   },
   "sales": {
     "title": "สินค้าที่ขายแล้ว",
@@ -222,7 +231,9 @@
     "carrier": "ผู้ให้บริการขนส่ง",
     "trackingNumber": "หมายเลขติดตาม",
     "ship": "จัดส่ง",
-    "shipped": "จัดส่งแล้ว"
+    "shipped": "จัดส่งแล้ว",
+    "toggleDetails": "แสดง/ซ่อนรายละเอียดการขาย",
+    "date": "วันที่"
   },
   "seller": {
     "becomeSeller": "เป็นผู้ขาย",

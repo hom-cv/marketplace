@@ -8,7 +8,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { IconArrowLeft } from "@tabler/icons-react";
+import { IconArrowLeft, IconMapPin, IconCreditCard } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import {
   createCardPayment,
@@ -20,8 +20,8 @@ import { getPost } from "@/api/posts";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
+import { Stepper } from "@/components/Stepper";
 import {
-  CheckoutStepper,
   ShippingForm,
   PaymentForm,
   OrderSummary,
@@ -308,7 +308,15 @@ export function CheckoutPage() {
             {/* Checkout forms */}
             {!hasPaymentResponse && (
               <>
-                <CheckoutStepper currentStep={step} />
+                <div className={styles.stepperWrapper}>
+                  <Stepper
+                    steps={[
+                      { label: t("checkout.shipping"), icon: IconMapPin },
+                      { label: t("checkout.payment"), icon: IconCreditCard },
+                    ]}
+                    currentStep={step}
+                  />
+                </div>
 
                 {step === 0 && (
                   <ShippingForm form={shippingForm} onSubmit={handleNextStep} />
