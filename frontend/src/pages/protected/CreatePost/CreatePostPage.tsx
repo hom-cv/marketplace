@@ -15,7 +15,7 @@ import {
   IconChevronDown,
   IconChevronUp,
 } from "@tabler/icons-react";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
 import { useAuthStore } from "@/stores/authStore";
@@ -225,14 +225,15 @@ export function CreatePostPage() {
             <p className={styles.notSellerText}>
               {t("seller.verificationMessage")}
             </p>
-            <Button
-              variant="primary"
-              size="lg"
-              leftIcon={<IconBuildingStore size={18} />}
-              onClick={() => navigate({ to: "/account/become-seller" })}
-            >
-              {t("seller.becomeSeller")}
-            </Button>
+            <Link to="/account/become-seller" className={styles.becomeSellerLink}>
+              <Button
+                variant="primary"
+                size="lg"
+                leftIcon={<IconBuildingStore size={18} />}
+              >
+                {t("seller.becomeSeller")}
+              </Button>
+            </Link>
           </Card>
         </div>
       </div>
@@ -284,9 +285,9 @@ export function CreatePostPage() {
               </div>
 
               <div className={styles.thumbnailRow}>
-                {images.map((_, index) => (
+                {imagePreviews.map((previewUrl, index) => (
                   <div
-                    key={index}
+                    key={previewUrl}
                     className={[
                       styles.thumbnail,
                       index === selectedImageIndex && styles.thumbnailActive,
@@ -296,7 +297,7 @@ export function CreatePostPage() {
                     onClick={() => setSelectedImageIndex(index)}
                   >
                     <img
-                      src={imagePreviews[index]}
+                      src={previewUrl}
                       alt={`Thumbnail ${index + 1}`}
                     />
                     {index === 0 && (
@@ -380,9 +381,11 @@ export function CreatePostPage() {
                       <select
                         className={`${styles.fieldInput} ${styles.fieldSelect}`}
                         value={type || ""}
-                        onChange={(e) => setType(e.target.value as PostType)}
+                        onChange={(e) =>
+                          setType(e.target.value ? (e.target.value as PostType) : null)
+                        }
                       >
-                        <option value="">
+                        <option value="" disabled>
                           {t("create.form.categoryPlaceholder")}
                         </option>
                         {postTypeOptions.map((opt) => (
@@ -404,7 +407,7 @@ export function CreatePostPage() {
                         onChange={(e) => setSize(e.target.value || null)}
                         disabled={!type}
                       >
-                        <option value="">
+                        <option value="" disabled>
                           {t("create.form.sizePlaceholder")}
                         </option>
                         {sizeOptions.map((opt) => (
@@ -520,12 +523,12 @@ export function CreatePostPage() {
                               </p>
                               {extraMeasurements.map((extra, index) => (
                                 <div
-                                  key={index}
+                                  key={`extra-${extra.label}-${index}`}
                                   className={styles.extraMeasurementRow}
                                 >
                                   <input
                                     type="text"
-                                    className={styles.extraMeasurementLabel}
+                                    className={`${styles.measurementInput} ${styles.extraMeasurementLabelInput}`}
                                     placeholder={t(
                                       "create.form.measurementLabel"
                                     )}
@@ -540,7 +543,7 @@ export function CreatePostPage() {
                                   />
                                   <input
                                     type="number"
-                                    className={styles.extraMeasurementValue}
+                                    className={`${styles.measurementInput} ${styles.extraMeasurementValueInput}`}
                                     placeholder="cm"
                                     min="0"
                                     step="0.1"
