@@ -20,7 +20,8 @@
       "measurementLabel": "ชื่อการวัด",
       "addExtraMeasurement": "เพิ่มขนาดอื่น",
       "duplicateMeasurement": "ซ้ำกัน: \"{{label}}\" มีอยู่แล้ว",
-      "submit": "สร้างรายการ"
+      "submit": "สร้างรายการ",
+      "submitting": "กำลังสร้าง..."
     },
     "success": "สร้างรายการเรียบร้อยแล้ว!",
     "error": "ไม่สามารถสร้างรายการได้"

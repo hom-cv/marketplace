@@ -523,7 +523,7 @@ export function CreatePostPage() {
                               </p>
                               {extraMeasurements.map((extra, index) => (
                                 <div
-                                  key={`extra-${extra.label}-${index}`}
+                                  key={index}
                                   className={styles.extraMeasurementRow}
                                 >
                                   <input

@@ -20,7 +20,8 @@
       "measurementLabel": "Measurement name",
       "addExtraMeasurement": "Add another measurement",
       "duplicateMeasurement": "Duplicate measurement: \"{{label}}\" already exists",
-      "submit": "Create Listing"
+      "submit": "Create Listing",
+      "submitting": "Creating..."
     },
     "success": "Listing created successfully!",
     "error": "Failed to create listing"
