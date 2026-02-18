@@ -20,6 +20,11 @@
       "measurementLabel": "ชื่อการวัด",
       "addExtraMeasurement": "เพิ่มขนาดอื่น",
       "duplicateMeasurement": "ซ้ำกัน: \"{{label}}\" มีอยู่แล้ว",
+      "titleRequired": "กรุณาระบุชื่อสินค้า",
+      "descriptionRequired": "กรุณาระบุรายละเอียด",
+      "categoryRequired": "กรุณาเลือกหมวดหมู่",
+      "priceRequired": "ราคาต้องมากกว่า 0",
+      "sizeRequired": "กรุณาเลือกไซส์",
       "submit": "สร้างรายการ",
       "submitting": "กำลังสร้าง..."
     },

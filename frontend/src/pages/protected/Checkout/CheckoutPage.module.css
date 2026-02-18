@@ -37,51 +37,6 @@
   margin-bottom: 24px;
 }
 
-/* Form fields */
-.formGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.formRow {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.fieldLabel {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text);
-  margin-bottom: 6px;
-}
-
-.fieldInput {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  color: var(--color-text);
-  transition: border-color 0.15s ease;
-}
-
-.fieldInput::placeholder {
-  color: var(--color-text-muted);
-}
-
-.fieldInput:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.fieldError {
-  border-color: var(--color-error);
-}
-
 .errorText {
   font-size: 0.75rem;
   color: var(--color-error);
@@ -390,10 +345,6 @@
   .title {
     font-size: 1.5rem;
     margin-top: 16px;
-  }
-
-  .formGrid {
-    grid-template-columns: 1fr;
   }
 
   .paymentTabs {

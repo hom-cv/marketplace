@@ -5,7 +5,14 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FileButton } from "@mantine/core";
+import {
+  FileButton,
+  TextInput,
+  Textarea,
+  Select,
+  NumberInput,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconPlus,
@@ -30,6 +37,15 @@ import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
 import styles from "./CreatePostPage.module.css";
 
+interface CreatePostFormValues {
+  title: string;
+  description: string;
+  type: PostType | null;
+  price: number | "";
+  shippingCost: number | "";
+  size: string | null;
+}
+
 export function CreatePostPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -46,51 +62,69 @@ export function CreatePostPage() {
       { value: "ACCESSORIES", label: t("categories.accessories") },
       { value: "OTHER", label: t("categories.other") },
     ],
-    [t]
+    [t],
   );
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState<PostType | null>(null);
-  const [price, setPrice] = useState<string>("");
-  const [shippingCost, setShippingCost] = useState<string>("0");
-  const [size, setSize] = useState<string | null>(null);
+  // Form state using Mantine useForm
+  const form = useForm<CreatePostFormValues>({
+    initialValues: {
+      title: "",
+      description: "",
+      type: null,
+      price: "",
+      shippingCost: 0,
+      size: null,
+    },
+    validate: {
+      title: (value) =>
+        value.trim().length < 1 ? t("create.form.titleRequired") : null,
+      description: (value) =>
+        value.trim().length < 1 ? t("create.form.descriptionRequired") : null,
+      type: (value) => (!value ? t("create.form.categoryRequired") : null),
+      price: (value) =>
+        !value || value <= 0 ? t("create.form.priceRequired") : null,
+      size: (value, values) =>
+        values.type && !value ? t("create.form.sizeRequired") : null,
+    },
+  });
+
   const [measurements, setMeasurements] = useState<Measurements>({});
   const [images, setImages] = useState<File[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [measurementsOpen, { toggle: toggleMeasurements }] =
     useDisclosure(false);
   const [extraMeasurements, setExtraMeasurements] = useState<
-    Array<{ label: string; value: string }>
+    Array<{ id: string; label: string; value: string }>
   >([]);
 
   // Get available sizes based on selected category
   const sizeOptions = useMemo(() => {
-    if (!type) return [];
-    const sizes = getSizesForType(type);
+    if (!form.values.type) return [];
+    const sizes = getSizesForType(form.values.type);
     return sizes.map((s) => {
-      if (type === "SHOES") {
+      if (form.values.type === "SHOES") {
         return { value: s, label: `EU ${s}` };
       }
       return { value: s, label: s };
     });
-  }, [type]);
+  }, [form.values.type]);
 
   // Reset size when type changes
   useEffect(() => {
-    setSize(null);
+    form.setFieldValue("size", null);
     setMeasurements({});
     setExtraMeasurements([]);
-  }, [type]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.values.type]);
 
   // Get measurement fields based on category
   const measurementFields = useMemo(() => {
-    if (!type) return [];
-    return MEASUREMENT_FIELDS[type].map((field) => ({
+    if (!form.values.type) return [];
+    return MEASUREMENT_FIELDS[form.values.type].map((field) => ({
       key: field.key,
       label: t(`measurements.${field.translationKey}`),
     }));
-  }, [type, t]);
+  }, [form.values.type, t]);
 
   const imagePreviews = useMemo(() => {
     return images.map((file) => URL.createObjectURL(file));
@@ -130,13 +164,16 @@ export function CreatePostPage() {
   };
 
   const handleAddExtraMeasurement = () => {
-    setExtraMeasurements((prev) => [...prev, { label: "", value: "" }]);
+    setExtraMeasurements((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), label: "", value: "" },
+    ]);
   };
 
   const handleExtraMeasurementChange = (
     index: number,
     field: "label" | "value",
-    newValue: string
+    newValue: string,
   ) => {
     setExtraMeasurements((prev) => {
       const updated = [...prev];
@@ -152,17 +189,13 @@ export function CreatePostPage() {
   // Validation for duplicate measurement labels
   const [measurementError, setMeasurementError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (values: CreatePostFormValues) => {
     setMeasurementError(null);
-
-    const priceNum = parseFloat(price);
-    if (!title || !description || !type || !priceNum || !size) return;
 
     const cleanMeasurements = Object.fromEntries(
       Object.entries(measurements).filter(
-        ([, v]) => v !== undefined && v !== null
-      )
+        ([, v]) => v !== undefined && v !== null,
+      ),
     ) as Measurements;
 
     const allMeasurements = { ...cleanMeasurements } as Record<
@@ -180,7 +213,9 @@ export function CreatePostPage() {
 
         if (seenKeys.has(key)) {
           setMeasurementError(
-            t("create.form.duplicateMeasurement", { label: extra.label.trim() })
+            t("create.form.duplicateMeasurement", {
+              label: extra.label.trim(),
+            }),
           );
           return;
         }
@@ -196,19 +231,16 @@ export function CreatePostPage() {
         : undefined;
 
     mutation.mutate({
-      title,
-      description,
-      type,
-      price: priceNum,
-      shipping_cost: parseFloat(shippingCost) || 0,
-      size,
+      title: values.title,
+      description: values.description,
+      type: values.type!,
+      price: values.price as number,
+      shipping_cost: (values.shippingCost as number) || 0,
+      size: values.size!,
       measurements: finalMeasurements,
       images: images.length > 0 ? images : undefined,
     });
   };
-
-  const isValid =
-    title && description && type && parseFloat(price) > 0 && size;
 
   // Check if user is a verified seller
   if (!user?.is_seller) {
@@ -225,7 +257,10 @@ export function CreatePostPage() {
             <p className={styles.notSellerText}>
               {t("seller.verificationMessage")}
             </p>
-            <Link to="/account/become-seller" className={styles.becomeSellerLink}>
+            <Link
+              to="/account/become-seller"
+              className={styles.becomeSellerLink}
+            >
               <Button
                 variant="primary"
                 size="lg"
@@ -268,7 +303,7 @@ export function CreatePostPage() {
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={form.onSubmit(handleSubmit)}>
           <div className={styles.layout}>
             {/* Left: Image Preview */}
             <div className={styles.imageSection}>
@@ -296,10 +331,7 @@ export function CreatePostPage() {
                       .join(" ")}
                     onClick={() => setSelectedImageIndex(index)}
                   >
-                    <img
-                      src={previewUrl}
-                      alt={`Thumbnail ${index + 1}`}
-                    />
+                    <img src={previewUrl} alt={`Thumbnail ${index + 1}`} />
                     {index === 0 && (
                       <span className={styles.coverBadge}>
                         {t("images.cover")}
@@ -339,120 +371,74 @@ export function CreatePostPage() {
             {/* Right: Form */}
             <div className={styles.formSection}>
               <div className={styles.formCard}>
-                <div className={styles.formRow}>
+                <div className={styles.formFields}>
                   {/* Title */}
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>
-                      {t("create.form.titleLabel")}
-                      <span className={styles.fieldRequired}>*</span>
-                    </label>
-                    <input
-                      type="text"
-                      className={styles.fieldInput}
-                      placeholder={t("create.form.titlePlaceholder")}
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      maxLength={200}
-                    />
-                  </div>
+                  <TextInput
+                    label={t("create.form.titleLabel")}
+                    placeholder={t("create.form.titlePlaceholder")}
+                    maxLength={200}
+                    required
+                    radius="xs"
+                    {...form.getInputProps("title")}
+                  />
 
                   {/* Description */}
-                  <div className={styles.fieldGroup}>
-                    <label className={styles.fieldLabel}>
-                      {t("create.form.description")}
-                      <span className={styles.fieldRequired}>*</span>
-                    </label>
-                    <textarea
-                      className={`${styles.fieldInput} ${styles.fieldTextarea}`}
-                      placeholder={t("create.form.descriptionPlaceholder")}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      maxLength={5000}
-                    />
-                  </div>
+                  <Textarea
+                    label={t("create.form.description")}
+                    placeholder={t("create.form.descriptionPlaceholder")}
+                    maxLength={5000}
+                    minRows={4}
+                    required
+                    radius="xs"
+                    {...form.getInputProps("description")}
+                  />
 
                   {/* Category & Size */}
                   <div className={styles.formGrid}>
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>
-                        {t("create.form.category")}
-                        <span className={styles.fieldRequired}>*</span>
-                      </label>
-                      <select
-                        className={`${styles.fieldInput} ${styles.fieldSelect}`}
-                        value={type || ""}
-                        onChange={(e) =>
-                          setType(e.target.value ? (e.target.value as PostType) : null)
-                        }
-                      >
-                        <option value="" disabled>
-                          {t("create.form.categoryPlaceholder")}
-                        </option>
-                        {postTypeOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <Select
+                      label={t("create.form.category")}
+                      placeholder={t("create.form.categoryPlaceholder")}
+                      data={postTypeOptions}
+                      required
+                      radius="xs"
+                      {...form.getInputProps("type")}
+                    />
 
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>
-                        {t("create.form.size")}
-                        <span className={styles.fieldRequired}>*</span>
-                      </label>
-                      <select
-                        className={`${styles.fieldInput} ${styles.fieldSelect}`}
-                        value={size || ""}
-                        onChange={(e) => setSize(e.target.value || null)}
-                        disabled={!type}
-                      >
-                        <option value="" disabled>
-                          {t("create.form.sizePlaceholder")}
-                        </option>
-                        {sizeOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <Select
+                      label={t("create.form.size")}
+                      placeholder={t("create.form.sizePlaceholder")}
+                      data={sizeOptions}
+                      disabled={!form.values.type}
+                      required
+                      radius="xs"
+                      {...form.getInputProps("size")}
+                    />
                   </div>
 
                   {/* Price & Shipping */}
                   <div className={styles.formGrid}>
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>
-                        {t("create.form.price")}
-                        <span className={styles.fieldRequired}>*</span>
-                      </label>
-                      <input
-                        type="number"
-                        className={styles.fieldInput}
-                        placeholder="0.00"
-                        min="0.01"
-                        max="1000000"
-                        step="0.01"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                      />
-                    </div>
+                    <NumberInput
+                      label={t("create.form.price")}
+                      placeholder="0.00"
+                      min={0.01}
+                      max={1000000}
+                      decimalScale={2}
+                      required
+                      radius="xs"
+                      {...form.getInputProps("price")}
+                    />
 
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.fieldLabel}>
-                        {t("create.form.shippingCost")}
-                      </label>
-                      <input
-                        type="number"
-                        className={styles.fieldInput}
+                    <div>
+                      <NumberInput
+                        label={t("create.form.shippingCost")}
                         placeholder="0.00"
-                        min="0"
-                        max="10000"
-                        step="0.01"
-                        value={shippingCost}
-                        onChange={(e) => setShippingCost(e.target.value)}
+                        min={0}
+                        max={10000}
+                        decimalScale={2}
+                        radius="xs"
+                        {...form.getInputProps("shippingCost")}
                       />
-                      <span className={styles.fieldDescription}>
+                      <span className={styles.fieldHint}>
                         {t("create.form.shippingDescription")}
                       </span>
                     </div>
@@ -460,7 +446,7 @@ export function CreatePostPage() {
 
                   {/* Optional Measurements Section */}
                   {measurementFields.length > 0 && (
-                    <div>
+                    <div className={styles.measurementsSection}>
                       <button
                         type="button"
                         className={styles.measurementsToggle}
@@ -507,7 +493,7 @@ export function CreatePostPage() {
                                   onChange={(e) =>
                                     handleMeasurementChange(
                                       field.key,
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                 />
@@ -523,21 +509,21 @@ export function CreatePostPage() {
                               </p>
                               {extraMeasurements.map((extra, index) => (
                                 <div
-                                  key={index}
+                                  key={extra.id}
                                   className={styles.extraMeasurementRow}
                                 >
                                   <input
                                     type="text"
                                     className={`${styles.measurementInput} ${styles.extraMeasurementLabelInput}`}
                                     placeholder={t(
-                                      "create.form.measurementLabel"
+                                      "create.form.measurementLabel",
                                     )}
                                     value={extra.label}
                                     onChange={(e) =>
                                       handleExtraMeasurementChange(
                                         index,
                                         "label",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                   />
@@ -552,7 +538,7 @@ export function CreatePostPage() {
                                       handleExtraMeasurementChange(
                                         index,
                                         "value",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                   />
@@ -586,12 +572,13 @@ export function CreatePostPage() {
               </div>
 
               {/* Earnings Preview */}
-              {parseFloat(price) > 0 && (
-                <EarningsPreview
-                  itemPrice={parseFloat(price)}
-                  shippingCost={parseFloat(shippingCost) || 0}
-                />
-              )}
+              {typeof form.values.price === "number" &&
+                form.values.price > 0 && (
+                  <EarningsPreview
+                    itemPrice={form.values.price}
+                    shippingCost={(form.values.shippingCost as number) || 0}
+                  />
+                )}
 
               {/* Submit Button */}
               <Button
@@ -599,7 +586,7 @@ export function CreatePostPage() {
                 variant="primary"
                 size="lg"
                 fullWidth
-                disabled={!isValid || mutation.isPending}
+                disabled={!form.isValid() || mutation.isPending}
               >
                 {mutation.isPending
                   ? t("create.form.submitting")

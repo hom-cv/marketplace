@@ -20,6 +20,11 @@
       "measurementLabel": "Measurement name",
       "addExtraMeasurement": "Add another measurement",
       "duplicateMeasurement": "Duplicate measurement: \"{{label}}\" already exists",
+      "titleRequired": "Title is required",
+      "descriptionRequired": "Description is required",
+      "categoryRequired": "Category is required",
+      "priceRequired": "Price must be greater than 0",
+      "sizeRequired": "Size is required",
       "submit": "Create Listing",
       "submitting": "Creating..."
     },

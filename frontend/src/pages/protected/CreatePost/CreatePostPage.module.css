@@ -161,6 +161,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0; /* Prevent grid blowout */
 }
 
 .formCard {
@@ -168,105 +169,37 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 24px;
+  overflow: hidden; /* Prevent content overflow */
 }
 
+/* Form fields container */
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Two column grid for category/size and price/shipping */
 .formGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  align-items: start;
 }
 
-.formRow {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Field styles */
-.fieldGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-.fieldLabel {
+/* Field hint text */
+.fieldHint {
   display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text);
-  margin-bottom: 6px;
-}
-
-.fieldRequired {
-  color: var(--color-error);
-  margin-left: 2px;
-}
-
-.fieldDescription {
   font-size: 0.75rem;
   color: var(--color-text-muted);
   margin-top: 4px;
 }
 
-.fieldInput {
-  width: 100%;
-  padding: 12px 14px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  color: var(--color-text);
-  transition: border-color 0.15s ease;
-}
-
-.fieldInput::placeholder {
-  color: var(--color-text-muted);
-}
-
-.fieldInput:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.fieldInput:disabled {
-  background: var(--color-bg-muted);
-  color: var(--color-text-muted);
-  cursor: not-allowed;
-}
-
-.fieldTextarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.fieldSelect {
-  appearance: none;
-  padding-right: 36px;
-  cursor: pointer;
-}
-
-/* Select arrow using mask-image for theme-friendly coloring */
-.fieldGroup:has(.fieldSelect) {
-  position: relative;
-}
-
-.fieldGroup:has(.fieldSelect)::after {
-  content: "";
-  position: absolute;
-  right: 12px;
-  bottom: 14px;
-  width: 12px;
-  height: 12px;
-  background-color: var(--color-text-secondary);
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  mask-repeat: no-repeat;
-  mask-position: center;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  pointer-events: none;
-}
-
 /* Measurements section */
+.measurementsSection {
+  margin-top: 8px;
+}
+
 .measurementsToggle {
   display: inline-flex;
   align-items: center;
@@ -301,15 +234,17 @@
   margin: 0 0 16px;
 }
 
+/* Measurements grid - 2 columns to prevent horizontal overflow */
 .measurementsGrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
 .measurementField {
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Prevent overflow */
 }
 
 .measurementLabel {
@@ -320,12 +255,14 @@
 }
 
 .measurementInput {
+  width: 100%;
   padding: 8px 10px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
   color: var(--color-text);
+  box-sizing: border-box;
 }
 
 .measurementInput:focus {
@@ -355,15 +292,17 @@
 
 .extraMeasurementLabelInput {
   flex: 1;
+  min-width: 0; /* Prevent overflow */
 }
 
 .extraMeasurementValueInput {
-  width: 100px;
+  width: 80px;
+  flex-shrink: 0;
 }
 
 .extraMeasurementRemove {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,6 +311,7 @@
   border-radius: var(--radius-sm);
   color: var(--color-text-muted);
   cursor: pointer;
+  flex-shrink: 0;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
@@ -458,10 +398,6 @@
   .thumbnailRow {
     justify-content: center;
   }
-
-  .measurementsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 
 @media (max-width: 640px) {
@@ -478,6 +414,18 @@
   }
 
   .measurementsGrid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
+  }
+
+  .extraMeasurementRow {
+    flex-wrap: wrap;
+  }
+
+  .extraMeasurementLabelInput {
+    flex: 1 1 100%;
+  }
+
+  .extraMeasurementValueInput {
+    flex: 1;
   }
 }

@@ -5,6 +5,7 @@ import type { UseFormReturnType } from "@mantine/form";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import formStyles from "@/styles/forms.module.css";
 import styles from "../CheckoutPage.module.css";
 
 type PaymentMethod = "card" | "promptpay";
@@ -70,7 +71,7 @@ export function PaymentForm({
 
       {/* Card form */}
       {paymentMethod === "card" && (
-        <div className={styles.formRow}>
+        <div className={formStyles.formRow}>
           <TextInput
             label={t("checkout.cardholderName")}
             placeholder={t("checkout.nameOnCard")}
