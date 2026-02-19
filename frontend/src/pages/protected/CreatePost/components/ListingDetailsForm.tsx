@@ -1,0 +1,109 @@
+/**
+ * ListingDetailsForm - Form fields with editorial section labels
+ * Typography-forward design with generous spacing
+ */
+
+import { TextInput, Textarea, Select, NumberInput } from "@mantine/core";
+import type { UseFormReturnType } from "@mantine/form";
+import { useTranslation } from "react-i18next";
+import type { CreatePostFormValues, SelectOption } from "../hooks/useCreatePostForm";
+import styles from "./ListingDetailsForm.module.css";
+
+interface ListingDetailsFormProps {
+  form: UseFormReturnType<CreatePostFormValues>;
+  postTypeOptions: SelectOption[];
+  sizeOptions: SelectOption[];
+}
+
+export function ListingDetailsForm({
+  form,
+  postTypeOptions,
+  sizeOptions,
+}: ListingDetailsFormProps) {
+  const { t } = useTranslation("listings");
+
+  return (
+    <div className={styles.container}>
+      {/* Item Info Section */}
+      <div className={styles.section}>
+        <h3 className={styles.sectionLabel}>{t("create.sections.itemInfo")}</h3>
+        <div className={styles.fields}>
+          <TextInput
+            label={t("create.form.titleLabel")}
+            placeholder={t("create.form.titlePlaceholder")}
+            maxLength={200}
+            required
+            radius="xs"
+            {...form.getInputProps("title")}
+          />
+          <Textarea
+            label={t("create.form.description")}
+            placeholder={t("create.form.descriptionPlaceholder")}
+            maxLength={5000}
+            minRows={4}
+            required
+            radius="xs"
+            {...form.getInputProps("description")}
+          />
+        </div>
+      </div>
+
+      {/* Classification Section */}
+      <div className={styles.section}>
+        <h3 className={styles.sectionLabel}>{t("create.sections.classification")}</h3>
+        <div className={styles.fieldRow}>
+          <Select
+            label={t("create.form.category")}
+            placeholder={t("create.form.categoryPlaceholder")}
+            data={postTypeOptions}
+            required
+            radius="xs"
+            {...form.getInputProps("type")}
+          />
+          <Select
+            label={t("create.form.size")}
+            placeholder={t("create.form.sizePlaceholder")}
+            data={sizeOptions}
+            disabled={!form.values.type}
+            required
+            radius="xs"
+            {...form.getInputProps("size")}
+          />
+        </div>
+      </div>
+
+      {/* Pricing Section */}
+      <div className={styles.section}>
+        <h3 className={styles.sectionLabel}>{t("create.sections.pricing")}</h3>
+        <div className={styles.fieldRow}>
+          <NumberInput
+            label={t("create.form.price")}
+            placeholder="0.00"
+            min={0.01}
+            max={1000000}
+            decimalScale={2}
+            required
+            radius="xs"
+            rightSection={<span className={styles.unit}>฿</span>}
+            {...form.getInputProps("price")}
+          />
+          <div className={styles.fieldWithHint}>
+            <NumberInput
+              label={t("create.form.shippingCost")}
+              placeholder="0.00"
+              min={0}
+              max={10000}
+              decimalScale={2}
+              radius="xs"
+              rightSection={<span className={styles.unit}>฿</span>}
+              {...form.getInputProps("shippingCost")}
+            />
+            <span className={styles.fieldHint}>
+              {t("create.form.shippingDescription")}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

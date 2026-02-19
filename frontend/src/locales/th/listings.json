@@ -2,6 +2,11 @@
   "create": {
     "title": "สร้างรายการ",
     "subtitle": "ลงสินค้าของคุณในมาร์เก็ตเพลส",
+    "sections": {
+      "itemInfo": "ข้อมูลสินค้า",
+      "classification": "หมวดหมู่",
+      "pricing": "ราคา"
+    },
     "form": {
       "titleLabel": "ชื่อสินค้า",
       "titlePlaceholder": "เช่น, แจ็คเก็ตยีนส์ Levi's วินเทจ",
@@ -11,10 +16,11 @@
       "categoryPlaceholder": "เลือกประเภท",
       "size": "ไซส์",
       "sizePlaceholder": "เลือกไซส์",
-      "price": "ราคา (฿)",
-      "shippingCost": "ค่าจัดส่ง (฿)",
+      "price": "ราคา",
+      "shippingCost": "ค่าจัดส่ง",
       "shippingDescription": "ตั้งค่าเป็น 0 สำหรับจัดส่งฟรี",
-      "addMeasurements": "เพิ่มขนาด (ไม่บังคับ)",
+      "addMeasurements": "ขนาด",
+      "optional": "ไม่บังคับ",
       "measurementsDescription": "เพิ่มขนาดที่แน่นอนเพื่อช่วยให้ผู้ซื้อหาไซส์ที่เหมาะสม",
       "extraMeasurements": "ขนาดเพิ่มเติม",
       "measurementLabel": "ชื่อการวัด",
@@ -25,8 +31,9 @@
       "categoryRequired": "กรุณาเลือกหมวดหมู่",
       "priceRequired": "ราคาต้องมากกว่า 0",
       "sizeRequired": "กรุณาเลือกไซส์",
-      "submit": "สร้างรายการ",
-      "submitting": "กำลังสร้าง..."
+      "submit": "เผยแพร่รายการ",
+      "submitting": "กำลังเผยแพร่...",
+      "publishHint": "รายการของคุณจะปรากฏให้ผู้ซื้อทุกคนเห็นทันที"
     },
     "success": "สร้างรายการเรียบร้อยแล้ว!",
     "error": "ไม่สามารถสร้างรายการได้"
@@ -59,7 +66,10 @@
   "images": {
     "noImages": "ยังไม่ได้อัปโหลดรูปภาพ",
     "noImagesAvailable": "ไม่มีรูปภาพ",
-    "cover": "หน้าปก"
+    "cover": "หน้าปก",
+    "dragOrClick": "ลากรูปภาพมาที่นี่หรือคลิกเพื่อเลือก",
+    "maxImages": "สูงสุด {{max}} รูป",
+    "dropHere": "วางรูปภาพที่นี่"
   },
   "seller": {
     "verificationRequired": "ต้องยืนยันตัวตนผู้ขาย",

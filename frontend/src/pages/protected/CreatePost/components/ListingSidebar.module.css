@@ -1,0 +1,40 @@
+/* ListingSidebar - Sticky earnings and submit */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.earningsCard {
+  /* EarningsPreview has its own card styling */
+}
+
+/* Submit Button Enhancement */
+.submitButton {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Helper Text */
+.helperText {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .container {
+    gap: 12px;
+  }
+}

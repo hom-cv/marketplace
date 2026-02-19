@@ -1,431 +1,119 @@
-/* CreatePostPage - Flat design matching site style */
+/* CreatePostPage - Editorial magazine-inspired layout */
 
 .page {
   min-height: 100vh;
   background: var(--color-bg);
-  padding: 24px 48px 48px;
+  padding: 32px 48px 64px;
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
-/* Header */
+/* Editorial Header */
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
+  letter-spacing: -0.03em;
   color: var(--color-text);
   margin: 0 0 8px;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
 }
 
 .subtitle {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--color-text-muted);
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
-/* Two-column layout */
+/* Asymmetric Two-Column Layout */
 .layout {
   display: grid;
-  grid-template-columns: 400px 1fr;
-  gap: 32px;
+  grid-template-columns: 420px 1fr;
+  gap: 40px;
   align-items: start;
 }
 
-/* Image section (sticky sidebar) */
-.imageSection {
+/* Left Column: Image */
+.imageColumn {
   position: sticky;
-  top: 24px;
+  top: 32px;
 }
 
-.mainImageWrapper {
-  aspect-ratio: 1;
-  background-color: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.mainImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.thumbnailRow {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.thumbnail {
-  position: relative;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  overflow: visible;
-  border: 2px solid transparent;
-  flex-shrink: 0;
-  transition: border-color 0.15s ease;
-  width: 72px;
-  height: 72px;
-}
-
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-}
-
-.thumbnail:hover {
-  border-color: var(--color-border-hover);
-}
-
-.thumbnailActive {
-  border-color: var(--color-primary);
-}
-
-.thumbnailRemove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  background: var(--color-error);
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.thumbnail:hover .thumbnailRemove {
-  opacity: 1;
-}
-
-.coverBadge {
-  position: absolute;
-  bottom: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  background: var(--color-primary);
-  color: white;
-  font-size: 0.65rem;
-  font-weight: 500;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.addImageButton {
-  width: 72px;
-  height: 72px;
-  border: 2px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-  color: var(--color-text-muted);
-  background: none;
-}
-
-.addImageButton:hover {
-  border-color: var(--color-primary);
-  background-color: var(--color-bg-card);
-  color: var(--color-primary);
-}
-
-/* Form section */
-.formSection {
+/* Right Column: Details */
+.detailsColumn {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  min-width: 0; /* Prevent grid blowout */
+  gap: 24px;
+  min-width: 0;
 }
 
+/* Form Card */
 .formCard {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: 24px;
-  overflow: hidden; /* Prevent content overflow */
+  padding: 28px;
 }
 
-/* Form fields container */
-.formFields {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* Sidebar */
+.sidebar {
+  /* Keeps publish button visible after form */
 }
 
-/* Two column grid for category/size and price/shipping */
-.formGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-/* Field hint text */
-.fieldHint {
-  display: block;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 4px;
-}
-
-/* Measurements section */
-.measurementsSection {
-  margin-top: 8px;
-}
-
-.measurementsToggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.measurementsToggle:hover {
-  border-color: var(--color-border-hover);
-  color: var(--color-text);
-}
-
-.measurementsContent {
-  margin-top: 16px;
-  padding: 16px;
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
-
-.measurementsDescription {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  margin: 0 0 16px;
-}
-
-/* Measurements grid - 2 columns to prevent horizontal overflow */
-.measurementsGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-}
-
-.measurementField {
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* Prevent overflow */
-}
-
-.measurementLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  margin-bottom: 4px;
-}
-
-.measurementInput {
-  width: 100%;
-  padding: 8px 10px;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  color: var(--color-text);
-  box-sizing: border-box;
-}
-
-.measurementInput:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-/* Extra measurements */
-.extraMeasurements {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
-}
-
-.extraMeasurementsLabel {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  margin: 0 0 8px;
-}
-
-.extraMeasurementRow {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.extraMeasurementLabelInput {
-  flex: 1;
-  min-width: 0; /* Prevent overflow */
-}
-
-.extraMeasurementValueInput {
-  width: 80px;
-  flex-shrink: 0;
-}
-
-.extraMeasurementRemove {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.extraMeasurementRemove:hover {
-  border-color: var(--color-error);
-  color: var(--color-error);
-}
-
-.addMeasurementButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background: none;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  cursor: pointer;
-  margin-top: 8px;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-
-.addMeasurementButton:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-/* Not seller state */
-.notSellerCard {
-  max-width: 480px;
-  margin: 60px auto;
-  text-align: center;
-}
-
-.notSellerIcon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 24px;
-  background: var(--color-warning-light);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-warning);
-}
-
-.notSellerTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 8px;
-}
-
-.notSellerText {
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-  margin: 0 0 24px;
-  line-height: 1.5;
-}
-
-.becomeSellerLink {
-  text-decoration: none;
-}
-
-/* Mobile responsive */
+/* Tablet Responsive (< 900px) */
 @media (max-width: 900px) {
-  .layout {
-    grid-template-columns: 1fr;
-    gap: 24px;
+  .page {
+    padding: 24px 24px 48px;
   }
 
-  .imageSection {
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .imageColumn {
+    position: relative;
+    top: 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .sidebar {
     position: relative;
     top: 0;
   }
 
-  .mainImageWrapper {
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
-  .thumbnailRow {
-    justify-content: center;
+  .title {
+    font-size: 2rem;
   }
 }
 
+/* Mobile Responsive (< 640px) */
 @media (max-width: 640px) {
   .page {
-    padding: 16px 16px 32px;
+    padding: 16px 16px 40px;
+  }
+
+  .header {
+    margin-bottom: 28px;
   }
 
   .title {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
   }
 
-  .formGrid {
-    grid-template-columns: 1fr;
+  .subtitle {
+    font-size: 0.9rem;
   }
 
-  .measurementsGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .extraMeasurementRow {
-    flex-wrap: wrap;
-  }
-
-  .extraMeasurementLabelInput {
-    flex: 1 1 100%;
-  }
-
-  .extraMeasurementValueInput {
-    flex: 1;
+  .formCard {
+    padding: 20px;
   }
 }

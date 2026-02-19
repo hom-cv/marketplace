@@ -1,0 +1,64 @@
+/* ListingDetailsForm - Editorial form styling */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Section styling */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sectionLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Field layouts */
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.fieldWithHint {
+  display: flex;
+  flex-direction: column;
+}
+
+.fieldHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* Unit suffix styling (matches MeasurementsSection) */
+.unit {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding-right: 4px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .fieldRow {
+    grid-template-columns: 1fr;
+  }
+}
