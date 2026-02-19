@@ -13,12 +13,14 @@ interface ListingDetailsFormProps {
   form: UseFormReturnType<CreatePostFormValues>;
   postTypeOptions: SelectOption[];
   sizeOptions: SelectOption[];
+  onTypeChange: (value: string | null) => void;
 }
 
 export function ListingDetailsForm({
   form,
   postTypeOptions,
   sizeOptions,
+  onTypeChange,
 }: ListingDetailsFormProps) {
   const { t } = useTranslation("listings");
 
@@ -58,7 +60,9 @@ export function ListingDetailsForm({
             data={postTypeOptions}
             required
             radius="xs"
-            {...form.getInputProps("type")}
+            value={form.values.type}
+            onChange={onTypeChange}
+            error={form.errors.type}
           />
           <Select
             label={t("create.form.size")}

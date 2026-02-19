@@ -25,9 +25,11 @@ export function CreatePostPage() {
     form,
     postTypeOptions,
     sizeOptions,
+    handleTypeChange,
     images,
     imagePreviews,
     selectedImageIndex,
+    maxImages,
     handleAddImages,
     handleRemoveImage,
     handleSelectImage,
@@ -89,6 +91,7 @@ export function CreatePostPage() {
                 images={images}
                 imagePreviews={imagePreviews}
                 selectedImageIndex={selectedImageIndex}
+                maxImages={maxImages}
                 onAddImages={handleAddImages}
                 onRemoveImage={handleRemoveImage}
                 onSelectImage={handleSelectImage}
@@ -103,6 +106,7 @@ export function CreatePostPage() {
                   form={form}
                   postTypeOptions={postTypeOptions}
                   sizeOptions={sizeOptions}
+                  onTypeChange={handleTypeChange}
                 />
               </div>
 

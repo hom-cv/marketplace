@@ -13,6 +13,9 @@ import { createPost } from "@/api/posts";
 import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
 
+/** Maximum number of images allowed per listing */
+export const MAX_IMAGES = 5;
+
 export interface CreatePostFormValues {
   title: string;
   description: string;
@@ -53,7 +56,7 @@ export function useCreatePostForm() {
       { value: "ACCESSORIES", label: t("categories.accessories") },
       { value: "OTHER", label: t("categories.other") },
     ],
-    [t]
+    [t],
   );
 
   // Form state using Mantine useForm
@@ -85,9 +88,13 @@ export function useCreatePostForm() {
 
   // Measurements state
   const [measurements, setMeasurements] = useState<Measurements>({});
-  const [measurementsOpen, { toggle: toggleMeasurements, open: openMeasurements }] =
-    useDisclosure(false);
-  const [extraMeasurements, setExtraMeasurements] = useState<ExtraMeasurement[]>([]);
+  const [
+    measurementsOpen,
+    { toggle: toggleMeasurements, open: openMeasurements },
+  ] = useDisclosure(false);
+  const [extraMeasurements, setExtraMeasurements] = useState<
+    ExtraMeasurement[]
+  >([]);
   const [measurementError, setMeasurementError] = useState<string | null>(null);
 
   // Get available sizes based on selected category
@@ -102,13 +109,16 @@ export function useCreatePostForm() {
     });
   }, [form.values.type]);
 
-  // Reset size when type changes
-  useEffect(() => {
-    form.setFieldValue("size", null);
-    setMeasurements({});
-    setExtraMeasurements([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form.values.type]);
+  // Handle category type change - resets dependent fields
+  const handleTypeChange = useCallback(
+    (value: string | null) => {
+      form.setFieldValue("type", value as PostType | null);
+      form.setFieldValue("size", null);
+      setMeasurements({});
+      setExtraMeasurements([]);
+    },
+    [form],
+  );
 
   // Get measurement fields based on category
   const measurementFields = useMemo<MeasurementField[]>(() => {
@@ -141,18 +151,21 @@ export function useCreatePostForm() {
 
   // Image handlers
   const handleAddImages = useCallback((files: File[]) => {
-    setImages((prev) => [...prev, ...files].slice(0, 5)); // Max 5 images
+    setImages((prev) => [...prev, ...files].slice(0, MAX_IMAGES));
   }, []);
 
-  const handleRemoveImage = useCallback((index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-    setSelectedImageIndex((currentIndex) => {
-      if (currentIndex >= images.length - 1) {
-        return Math.max(0, images.length - 2);
-      }
-      return currentIndex;
-    });
-  }, [images.length]);
+  const handleRemoveImage = useCallback(
+    (index: number) => {
+      setImages((prev) => prev.filter((_, i) => i !== index));
+      setSelectedImageIndex((currentIndex) => {
+        if (currentIndex >= images.length - 1) {
+          return Math.max(0, images.length - 2);
+        }
+        return currentIndex;
+      });
+    },
+    [images.length],
+  );
 
   const handleSelectImage = useCallback((index: number) => {
     setSelectedImageIndex(index);
@@ -182,7 +195,7 @@ export function useCreatePostForm() {
         return updated;
       });
     },
-    []
+    [],
   );
 
   const handleRemoveExtraMeasurement = useCallback((index: number) => {
@@ -196,8 +209,8 @@ export function useCreatePostForm() {
 
       const cleanMeasurements = Object.fromEntries(
         Object.entries(measurements).filter(
-          ([, v]) => v !== undefined && v !== null
-        )
+          ([, v]) => v !== undefined && v !== null,
+        ),
       ) as Measurements;
 
       const allMeasurements = { ...cleanMeasurements } as Record<
@@ -217,7 +230,7 @@ export function useCreatePostForm() {
             setMeasurementError(
               t("create.form.duplicateMeasurement", {
                 label: extra.label.trim(),
-              })
+              }),
             );
             return;
           }
@@ -243,7 +256,7 @@ export function useCreatePostForm() {
         images: images.length > 0 ? images : undefined,
       });
     },
-    [measurements, extraMeasurements, images, mutation, t]
+    [measurements, extraMeasurements, images, mutation, t],
   );
 
   return {
@@ -251,11 +264,13 @@ export function useCreatePostForm() {
     form,
     postTypeOptions,
     sizeOptions,
+    handleTypeChange,
 
     // Images
     images,
     imagePreviews,
     selectedImageIndex,
+    maxImages: MAX_IMAGES,
     handleAddImages,
     handleRemoveImage,
     handleSelectImage,

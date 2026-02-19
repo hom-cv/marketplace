@@ -13,6 +13,7 @@ interface ImageUploadSectionProps {
   images: File[];
   imagePreviews: string[];
   selectedImageIndex: number;
+  maxImages: number;
   onAddImages: (files: File[]) => void;
   onRemoveImage: (index: number) => void;
   onSelectImage: (index: number) => void;
@@ -22,6 +23,7 @@ export function ImageUploadSection({
   images,
   imagePreviews,
   selectedImageIndex,
+  maxImages,
   onAddImages,
   onRemoveImage,
   onSelectImage,
@@ -94,7 +96,7 @@ export function ImageUploadSection({
                   {t("images.dragOrClick")}
                 </span>
                 <span className={styles.uploadHint}>
-                  {t("images.maxImages", { max: 5 })}
+                  {t("images.maxImages", { max: maxImages })}
                 </span>
               </button>
             )}
@@ -135,7 +137,7 @@ export function ImageUploadSection({
           </div>
         ))}
 
-        {images.length < 5 && (
+        {images.length < maxImages && (
           <FileButton
             onChange={(files) => files && onAddImages(files)}
             accept="image/*"
