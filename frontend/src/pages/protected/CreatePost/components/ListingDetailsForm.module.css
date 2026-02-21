@@ -49,13 +49,6 @@
   margin-top: 4px;
 }
 
-/* Unit suffix styling (matches MeasurementsSection) */
-.unit {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  padding-right: 4px;
-}
-
 /* Responsive */
 @media (max-width: 640px) {
   .fieldRow {

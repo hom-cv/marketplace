@@ -7,6 +7,7 @@ import { TextInput, Textarea, Select, NumberInput } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import type { CreatePostFormValues, SelectOption } from "../hooks/useCreatePostForm";
+import formStyles from "@/styles/forms.module.css";
 import styles from "./ListingDetailsForm.module.css";
 
 interface ListingDetailsFormProps {
@@ -88,7 +89,7 @@ export function ListingDetailsForm({
             decimalScale={2}
             required
             radius="xs"
-            rightSection={<span className={styles.unit}>฿</span>}
+            rightSection={<span className={formStyles.unit}>฿</span>}
             {...form.getInputProps("price")}
           />
           <div className={styles.fieldWithHint}>
@@ -99,7 +100,7 @@ export function ListingDetailsForm({
               max={10000}
               decimalScale={2}
               radius="xs"
-              rightSection={<span className={styles.unit}>฿</span>}
+              rightSection={<span className={formStyles.unit}>฿</span>}
               {...form.getInputProps("shippingCost")}
             />
             <span className={styles.fieldHint}>

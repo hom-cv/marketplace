@@ -62,11 +62,6 @@
   padding: 28px;
 }
 
-/* Sidebar */
-.sidebar {
-  /* Keeps publish button visible after form */
-}
-
 /* Tablet Responsive (< 900px) */
 @media (max-width: 900px) {
   .page {
@@ -83,11 +78,6 @@
     top: 0;
     max-width: 480px;
     margin: 0 auto;
-  }
-
-  .sidebar {
-    position: relative;
-    top: 0;
   }
 
   .title {

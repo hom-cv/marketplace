@@ -6,10 +6,6 @@
   gap: 16px;
 }
 
-.earningsCard {
-  /* EarningsPreview has its own card styling */
-}
-
 /* Submit Button Enhancement */
 .submitButton {
   transition: transform 0.15s ease, box-shadow 0.15s ease;

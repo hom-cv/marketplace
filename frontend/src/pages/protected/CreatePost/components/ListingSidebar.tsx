@@ -29,12 +29,10 @@ export function ListingSidebar({
     <div className={styles.container}>
       {/* Earnings Preview */}
       {showEarnings && (
-        <div className={styles.earningsCard}>
-          <EarningsPreview
-            itemPrice={price}
-            shippingCost={(shippingCost as number) || 0}
-          />
-        </div>
+        <EarningsPreview
+          itemPrice={price}
+          shippingCost={typeof shippingCost === "number" ? shippingCost : 0}
+        />
       )}
 
       {/* Submit Button */}

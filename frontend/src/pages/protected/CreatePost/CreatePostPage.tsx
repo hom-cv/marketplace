@@ -124,14 +124,12 @@ export function CreatePostPage() {
               />
 
               {/* Sidebar with earnings + publish */}
-              <div className={styles.sidebar}>
-                <ListingSidebar
-                  price={form.values.price}
-                  shippingCost={form.values.shippingCost}
-                  isPending={isPending}
-                  isFormValid={form.isValid()}
-                />
-              </div>
+              <ListingSidebar
+                price={form.values.price}
+                shippingCost={form.values.shippingCost}
+                isPending={isPending}
+                isFormValid={form.isValid()}
+              />
             </div>
           </div>
         </form>

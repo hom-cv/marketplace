@@ -50,6 +50,13 @@
   border-color: var(--color-error);
 }
 
+/* Unit suffix styling (shared across form components) */
+.unit {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding-right: 4px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 640px) {
   .formGrid {

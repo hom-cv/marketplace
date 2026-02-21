@@ -77,6 +77,16 @@ export function ImageUploadSection({
     [onAddImages]
   );
 
+  const handleFilesSelected = useCallback(
+    (files: File[] | null) => {
+      if (files) {
+        const safeFiles = filterSafeImages(files);
+        if (safeFiles.length > 0) onAddImages(safeFiles);
+      }
+    },
+    [onAddImages],
+  );
+
   const hasImages = images.length > 0;
 
   return (
@@ -97,12 +107,7 @@ export function ImageUploadSection({
           />
         ) : (
           <FileButton
-            onChange={(files) => {
-              if (files) {
-                const safeFiles = filterSafeImages(files);
-                if (safeFiles.length > 0) onAddImages(safeFiles);
-              }
-            }}
+            onChange={handleFilesSelected}
             accept={ACCEPT_IMAGES}
             multiple
           >
@@ -158,12 +163,7 @@ export function ImageUploadSection({
 
         {images.length < maxImages && (
           <FileButton
-            onChange={(files) => {
-              if (files) {
-                const safeFiles = filterSafeImages(files);
-                if (safeFiles.length > 0) onAddImages(safeFiles);
-              }
-            }}
+            onChange={handleFilesSelected}
             accept={ACCEPT_IMAGES}
             multiple
           >

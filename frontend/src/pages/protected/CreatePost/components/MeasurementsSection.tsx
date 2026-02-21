@@ -14,6 +14,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { Measurements } from "@/api/types/post";
 import type { MeasurementField, ExtraMeasurement } from "../hooks/useCreatePostForm";
+import formStyles from "@/styles/forms.module.css";
 import styles from "./MeasurementsSection.module.css";
 
 interface MeasurementsSectionProps {
@@ -82,7 +83,7 @@ export function MeasurementsSection({
                 step={0.1}
                 decimalScale={1}
                 radius="xs"
-                rightSection={<span className={styles.unit}>cm</span>}
+                rightSection={<span className={formStyles.unit}>cm</span>}
                 value={
                   (measurements as Record<string, number | undefined>)[
                     field.key
@@ -118,7 +119,7 @@ export function MeasurementsSection({
                     step={0.1}
                     decimalScale={1}
                     radius="xs"
-                    rightSection={<span className={styles.unit}>cm</span>}
+                    rightSection={<span className={formStyles.unit}>cm</span>}
                     value={extra.value === "" ? "" : parseFloat(extra.value)}
                     onChange={(val) =>
                       onExtraMeasurementChange(index, "value", val?.toString() ?? "")

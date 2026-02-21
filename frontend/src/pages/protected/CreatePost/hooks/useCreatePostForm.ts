@@ -133,8 +133,9 @@ export function useCreatePostForm() {
   }, [images]);
 
   useEffect(() => {
+    const urls = imagePreviews;
     return () => {
-      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+      urls.forEach((url) => URL.revokeObjectURL(url));
     };
   }, [imagePreviews]);
 
@@ -152,29 +153,20 @@ export function useCreatePostForm() {
     setImages((prev) => [...prev, ...files].slice(0, MAX_IMAGES));
   }, []);
 
-  const handleRemoveImage = useCallback(
-    (index: number) => {
-      setImages((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveImage = useCallback((index: number) => {
+    setImages((prev) => {
+      const filtered = prev.filter((_, i) => i !== index);
       setSelectedImageIndex((currentIndex) => {
-        const newLength = images.length - 1;
-
-        if (newLength === 0) {
-          // No images left
-          return 0;
-        } else if (index < currentIndex) {
-          // Removed image before selected: decrement to keep showing same image
-          return currentIndex - 1;
-        } else if (index === currentIndex) {
-          // Removed the selected image: stay at same index, bounded to new length
+        const newLength = filtered.length;
+        if (newLength === 0) return 0;
+        if (index < currentIndex) return currentIndex - 1;
+        if (index === currentIndex)
           return Math.min(currentIndex, newLength - 1);
-        } else {
-          // Removed image after selected: keep same index
-          return currentIndex;
-        }
+        return currentIndex;
       });
-    },
-    [images.length],
-  );
+      return filtered;
+    });
+  }, []);
 
   const handleSelectImage = useCallback((index: number) => {
     setSelectedImageIndex(index);
