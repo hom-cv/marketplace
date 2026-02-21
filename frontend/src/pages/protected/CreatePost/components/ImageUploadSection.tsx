@@ -9,6 +9,22 @@ import { IconPlus, IconX, IconPhoto, IconUpload } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import styles from "./ImageUploadSection.module.css";
 
+/** Allowed image MIME types (excludes SVG to prevent XSS) */
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+];
+
+/** Accept attribute for file input (excludes SVG) */
+const ACCEPT_IMAGES = ".jpg,.jpeg,.png,.gif,.webp";
+
+/** Filter files to only allow safe image types */
+function filterSafeImages(files: File[]): File[] {
+  return files.filter((file) => ALLOWED_IMAGE_TYPES.includes(file.type));
+}
+
 interface ImageUploadSectionProps {
   images: File[];
   imagePreviews: string[];
@@ -53,9 +69,7 @@ export function ImageUploadSection({
       e.stopPropagation();
       setIsDragging(false);
 
-      const files = Array.from(e.dataTransfer.files).filter((file) =>
-        file.type.startsWith("image/")
-      );
+      const files = filterSafeImages(Array.from(e.dataTransfer.files));
       if (files.length > 0) {
         onAddImages(files);
       }
@@ -83,8 +97,13 @@ export function ImageUploadSection({
           />
         ) : (
           <FileButton
-            onChange={(files) => files && onAddImages(files)}
-            accept="image/*"
+            onChange={(files) => {
+              if (files) {
+                const safeFiles = filterSafeImages(files);
+                if (safeFiles.length > 0) onAddImages(safeFiles);
+              }
+            }}
+            accept={ACCEPT_IMAGES}
             multiple
           >
             {(props) => (
@@ -139,8 +158,13 @@ export function ImageUploadSection({
 
         {images.length < maxImages && (
           <FileButton
-            onChange={(files) => files && onAddImages(files)}
-            accept="image/*"
+            onChange={(files) => {
+              if (files) {
+                const safeFiles = filterSafeImages(files);
+                if (safeFiles.length > 0) onAddImages(safeFiles);
+              }
+            }}
+            accept={ACCEPT_IMAGES}
             multiple
           >
             {(props) => (

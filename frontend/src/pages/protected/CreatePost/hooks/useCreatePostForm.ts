@@ -156,10 +156,21 @@ export function useCreatePostForm() {
     (index: number) => {
       setImages((prev) => prev.filter((_, i) => i !== index));
       setSelectedImageIndex((currentIndex) => {
-        if (currentIndex >= images.length - 1) {
-          return Math.max(0, images.length - 2);
+        const newLength = images.length - 1;
+
+        if (newLength === 0) {
+          // No images left
+          return 0;
+        } else if (index < currentIndex) {
+          // Removed image before selected: decrement to keep showing same image
+          return currentIndex - 1;
+        } else if (index === currentIndex) {
+          // Removed the selected image: stay at same index, bounded to new length
+          return Math.min(currentIndex, newLength - 1);
+        } else {
+          // Removed image after selected: keep same index
+          return currentIndex;
         }
-        return currentIndex;
       });
     },
     [images.length],
