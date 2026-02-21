@@ -88,10 +88,8 @@ export function useCreatePostForm() {
 
   // Measurements state
   const [measurements, setMeasurements] = useState<Measurements>({});
-  const [
-    measurementsOpen,
-    { toggle: toggleMeasurements, open: openMeasurements },
-  ] = useDisclosure(false);
+  const [measurementsOpen, { toggle: toggleMeasurements }] =
+    useDisclosure(false);
   const [extraMeasurements, setExtraMeasurements] = useState<
     ExtraMeasurement[]
   >([]);
@@ -280,7 +278,6 @@ export function useCreatePostForm() {
     measurementFields,
     measurementsOpen,
     toggleMeasurements,
-    openMeasurements,
     extraMeasurements,
     measurementError,
     handleMeasurementChange,
