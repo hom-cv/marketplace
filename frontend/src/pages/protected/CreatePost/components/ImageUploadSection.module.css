@@ -1,11 +1,5 @@
 /* ImageUploadSection - Hero image with filmstrip */
 
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 /* Hero Image Area */
 .heroArea {
   position: relative;

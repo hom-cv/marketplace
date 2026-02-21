@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState, useCallback } from "react";
-import { FileButton } from "@mantine/core";
+import { FileButton, Stack } from "@mantine/core";
 import { IconPlus, IconX, IconPhoto, IconUpload } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import styles from "./ImageUploadSection.module.css";
@@ -90,7 +90,7 @@ export function ImageUploadSection({
   const hasImages = images.length > 0;
 
   return (
-    <div className={styles.container}>
+    <Stack gap={12}>
       {/* Hero Image Area */}
       <div
         ref={dropZoneRef}
@@ -175,6 +175,6 @@ export function ImageUploadSection({
           </FileButton>
         )}
       </div>
-    </div>
+    </Stack>
   );
 }

@@ -3,7 +3,7 @@
  * Full-width with grid layout and custom measurement support
  */
 
-import { NumberInput, TextInput } from "@mantine/core";
+import { NumberInput, TextInput, Collapse, SimpleGrid, Paper } from "@mantine/core";
 import {
   IconRuler,
   IconChevronDown,
@@ -52,7 +52,7 @@ export function MeasurementsSection({
   }
 
   return (
-    <div className={styles.container}>
+    <Paper radius="xs" withBorder className={styles.container}>
       <button type="button" className={styles.toggle} onClick={onToggle}>
         <IconRuler size={18} strokeWidth={1.5} />
         <span className={styles.toggleText}>
@@ -66,14 +66,14 @@ export function MeasurementsSection({
         )}
       </button>
 
-      <div className={`${styles.content} ${isOpen ? styles.contentOpen : ""}`}>
+      <Collapse in={isOpen}>
         <div className={styles.contentInner}>
           <p className={styles.description}>
             {t("create.form.measurementsDescription")}
           </p>
 
           {/* Standard Measurements Grid */}
-          <div className={styles.grid}>
+          <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
             {measurementFields.map((field) => (
               <NumberInput
                 key={field.key}
@@ -94,7 +94,7 @@ export function MeasurementsSection({
                 }
               />
             ))}
-          </div>
+          </SimpleGrid>
 
           {/* Extra Measurements */}
           {extraMeasurements.length > 0 && (
@@ -148,7 +148,7 @@ export function MeasurementsSection({
             {t("create.form.addExtraMeasurement")}
           </button>
         </div>
-      </div>
-    </div>
+      </Collapse>
+    </Paper>
   );
 }

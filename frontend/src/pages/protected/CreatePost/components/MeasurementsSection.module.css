@@ -1,9 +1,6 @@
 /* MeasurementsSection - Expandable panel with grid */
 
 .container {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -47,23 +44,7 @@
   color: var(--color-text-muted);
 }
 
-/* Expandable Content */
-.content {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.2s ease-out;
-}
-
-.contentOpen {
-  grid-template-rows: 1fr;
-}
-
 .contentInner {
-  overflow: hidden;
-  padding: 0 20px;
-}
-
-.contentOpen .contentInner {
   padding: 0 20px 20px;
 }
 
@@ -73,13 +54,6 @@
   margin: 0 0 20px;
   padding-top: 4px;
   border-top: 1px solid var(--color-border);
-}
-
-/* Measurements Grid */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
 }
 
 /* Extra Measurements */
@@ -158,27 +132,13 @@
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 640px) {
   .toggle {
     padding: 14px 16px;
   }
 
   .contentInner {
-    padding: 0 16px;
-  }
-
-  .contentOpen .contentInner {
     padding: 0 16px 16px;
-  }
-
-  .grid {
-    grid-template-columns: 1fr;
   }
 
   .extraRow {

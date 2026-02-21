@@ -1,11 +1,5 @@
 /* ListingSidebar - Sticky earnings and submit */
 
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
 /* Submit Button Enhancement */
 .submitButton {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -28,9 +22,3 @@
   line-height: 1.4;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-  .container {
-    gap: 12px;
-  }
-}

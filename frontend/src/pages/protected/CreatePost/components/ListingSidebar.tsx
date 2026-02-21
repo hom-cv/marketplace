@@ -3,6 +3,7 @@
  * Sticky sidebar on desktop with premium publish button
  */
 
+import { Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/Button";
 import { EarningsPreview } from "@/components/EarningsPreview";
@@ -26,7 +27,7 @@ export function ListingSidebar({
   const showEarnings = typeof price === "number" && price > 0;
 
   return (
-    <div className={styles.container}>
+    <Stack gap="md">
       {/* Earnings Preview */}
       {showEarnings && (
         <EarningsPreview
@@ -51,6 +52,6 @@ export function ListingSidebar({
       <p className={styles.helperText}>
         {t("create.form.publishHint")}
       </p>
-    </div>
+    </Stack>
   );
 }

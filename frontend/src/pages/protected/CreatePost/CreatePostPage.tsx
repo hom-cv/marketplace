@@ -3,6 +3,7 @@
  * Magazine-inspired layout with asymmetric two-column design
  */
 
+import { Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
@@ -99,7 +100,7 @@ export function CreatePostPage() {
             </div>
 
             {/* Right Column: Details + Sidebar */}
-            <div className={styles.detailsColumn}>
+            <Stack gap={24} className={styles.detailsColumn}>
               {/* Form Card */}
               <div className={styles.formCard}>
                 <ListingDetailsForm
@@ -130,7 +131,7 @@ export function CreatePostPage() {
                 isPending={isPending}
                 isFormValid={form.isValid()}
               />
-            </div>
+            </Stack>
           </div>
         </form>
       </div>

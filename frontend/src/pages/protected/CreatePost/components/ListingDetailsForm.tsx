@@ -3,7 +3,7 @@
  * Typography-forward design with generous spacing
  */
 
-import { TextInput, Textarea, Select, NumberInput } from "@mantine/core";
+import { TextInput, Textarea, Select, NumberInput, Stack, SimpleGrid } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import type { CreatePostFormValues, SelectOption } from "../hooks/useCreatePostForm";
@@ -26,11 +26,11 @@ export function ListingDetailsForm({
   const { t } = useTranslation("listings");
 
   return (
-    <div className={styles.container}>
+    <Stack gap={28}>
       {/* Item Info Section */}
       <div className={styles.section}>
         <h3 className={styles.sectionLabel}>{t("create.sections.itemInfo")}</h3>
-        <div className={styles.fields}>
+        <Stack gap="md">
           <TextInput
             label={t("create.form.titleLabel")}
             placeholder={t("create.form.titlePlaceholder")}
@@ -48,13 +48,13 @@ export function ListingDetailsForm({
             radius="xs"
             {...form.getInputProps("description")}
           />
-        </div>
+        </Stack>
       </div>
 
       {/* Classification Section */}
       <div className={styles.section}>
         <h3 className={styles.sectionLabel}>{t("create.sections.classification")}</h3>
-        <div className={styles.fieldRow}>
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Select
             label={t("create.form.category")}
             placeholder={t("create.form.categoryPlaceholder")}
@@ -74,13 +74,13 @@ export function ListingDetailsForm({
             radius="xs"
             {...form.getInputProps("size")}
           />
-        </div>
+        </SimpleGrid>
       </div>
 
       {/* Pricing Section */}
       <div className={styles.section}>
         <h3 className={styles.sectionLabel}>{t("create.sections.pricing")}</h3>
-        <div className={styles.fieldRow}>
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <NumberInput
             label={t("create.form.price")}
             placeholder="0.00"
@@ -107,8 +107,8 @@ export function ListingDetailsForm({
               {t("create.form.shippingDescription")}
             </span>
           </div>
-        </div>
+        </SimpleGrid>
       </div>
-    </div>
+    </Stack>
   );
 }
