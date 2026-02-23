@@ -7,6 +7,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
@@ -149,24 +150,38 @@ export function useCreatePostForm() {
   });
 
   // Image handlers
-  const handleAddImages = useCallback((files: File[]) => {
-    setImages((prev) => [...prev, ...files].slice(0, MAX_IMAGES));
-  }, []);
+  const handleAddImages = useCallback(
+    (files: File[]) => {
+      const available = MAX_IMAGES - images.length;
+      const accepted = files.slice(0, Math.max(0, available));
+      const rejected = files.length - accepted.length;
+
+      if (accepted.length > 0) {
+        setImages((prev) => [...prev, ...accepted]);
+      }
+
+      if (rejected > 0) {
+        notifications.show({
+          message: t("images.limitExceeded", {
+            max: MAX_IMAGES,
+            rejected,
+          }),
+          color: "orange",
+        });
+      }
+    },
+    [images.length, t],
+  );
 
   const handleRemoveImage = useCallback((index: number) => {
-    setImages((prev) => {
-      const filtered = prev.filter((_, i) => i !== index);
-      setSelectedImageIndex((currentIndex) => {
-        const newLength = filtered.length;
-        if (newLength === 0) return 0;
-        if (index < currentIndex) return currentIndex - 1;
-        if (index === currentIndex)
-          return Math.min(currentIndex, newLength - 1);
-        return currentIndex;
-      });
-      return filtered;
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setSelectedImageIndex((prev) => {
+      if (images.length - 1 === 0) return 0;
+      if (index < prev) return prev - 1;
+      if (index === prev) return Math.min(prev, images.length - 2);
+      return prev;
     });
-  }, []);
+  }, [images.length]);
 
   const handleSelectImage = useCallback((index: number) => {
     setSelectedImageIndex(index);

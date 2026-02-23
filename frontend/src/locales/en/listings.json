@@ -69,7 +69,8 @@
     "cover": "Cover",
     "dragOrClick": "Drag images here or click to browse",
     "maxImages": "Up to {{max}} images",
-    "dropHere": "Drop images here"
+    "dropHere": "Drop images here",
+    "limitExceeded": "Image limit reached (max {{max}}). {{rejected}} image(s) not added."
   },
   "seller": {
     "verificationRequired": "Seller Verification Required",
