@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import styles from "./PostFeedItem.module.css";
 
 interface PostFeedItemProps {
   post: Post;
@@ -57,7 +58,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   };
 
   return (
-    <Box mb="lg" onClick={handleClick} style={{ cursor: "pointer" }}>
+    <Box mb="lg" onClick={handleClick} className={styles.container}>
       {/* Full-width Image */}
       {post.image_url ? (
         <Image
@@ -84,6 +85,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
               })}
             </Text>
             <LikeButton
+              key={`${post.id}-${post.is_liked}-${post.like_count}`}
               postId={post.id}
               initialLiked={post.is_liked}
               initialCount={post.like_count}

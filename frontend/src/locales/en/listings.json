@@ -1,7 +1,7 @@
 {
   "create": {
     "title": "Create Listing",
-    "subtitle": "List your item on the marketplace",
+    "subtitle": "List your item on Tallad",
     "sections": {
       "itemInfo": "Item Info",
       "classification": "Classification",
@@ -74,7 +74,7 @@
   },
   "seller": {
     "verificationRequired": "Seller Verification Required",
-    "verificationMessage": "You need to be a verified seller to create listings. Complete seller verification to start selling on the marketplace.",
+    "verificationMessage": "You need to be a verified seller to create listings. Complete seller verification to start selling on Tallad.",
     "becomeSeller": "Become a Seller",
     "info": "Seller"
   },
@@ -97,7 +97,7 @@
   },
   "myListings": {
     "title": "My Listings",
-    "subtitle": "Manage your marketplace listings",
+    "subtitle": "Manage your listings on Tallad",
     "noListings": "You haven't created any listings yet",
     "createFirst": "Create your first listing",
     "failedToLoad": "Failed to load your listings"

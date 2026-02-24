@@ -13,8 +13,8 @@ def create_app() -> FastAPI:
     settings = get_settings()
 
     app_ = FastAPI(
-        title="AppName",  # TODO: Name application
-        description="API for AppName",  # TODO: Name application
+        title="Tallad",
+        description="API for Tallad",
         version="0.1.0-alpha",
     )
 
@@ -33,7 +33,7 @@ def create_app() -> FastAPI:
         A simple endpoint to check the application's health.
         Returns a 200 OK status if the application is running.
         """
-        return {"status": "ok", "service": "AppName"}
+        return {"status": "ok", "service": "Tallad"}
 
     init_routers(app=app_)
 
