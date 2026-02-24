@@ -173,7 +173,7 @@ def _verify_webhook_signature(
 ) -> bool:
     """Verify Omise webhook HMAC-SHA256 signature."""
     decoded_secret = base64.b64decode(secret)
-    signed_payload = timestamp.encode() + body
+    signed_payload = timestamp.encode() + b"." + body
     computed = hmac.new(decoded_secret, signed_payload, hashlib.sha256).hexdigest()
     # Support dual signatures during key rotation (comma-separated)
     signatures = [s.strip() for s in signature_header.split(",")]
@@ -202,18 +202,26 @@ async def omise_webhook(
     """
     body = await request.body()
 
-    # Verify signature if webhook secret is configured
-    if settings.OMISE_WEBHOOK_SECRET:
-        signature = request.headers.get("Omise-Signature", "")
-        timestamp = request.headers.get("Omise-Signature-Timestamp", "")
-        if not signature or not timestamp:
-            logger.warning("Webhook missing signature headers")
-            return WebhookResponse(status="error", message="Missing signature")
-        if not _verify_webhook_signature(
-            body, signature, timestamp, settings.OMISE_WEBHOOK_SECRET
-        ):
-            logger.warning("Webhook signature verification failed")
-            return WebhookResponse(status="error", message="Invalid signature")
+    # Reject webhooks if secret is not configured
+    if not settings.OMISE_WEBHOOK_SECRET:
+        logger.error("OMISE_WEBHOOK_SECRET is not configured — rejecting webhook")
+        return WebhookResponse(status="error", message="Webhook verification not configured")
+
+    signature = request.headers.get("Omise-Signature", "")
+    timestamp = request.headers.get("Omise-Signature-Timestamp", "")
+    if not signature or not timestamp:
+        missing = []
+        if not signature:
+            missing.append("Omise-Signature")
+        if not timestamp:
+            missing.append("Omise-Signature-Timestamp")
+        logger.warning(f"Webhook missing headers: {', '.join(missing)}")
+        return WebhookResponse(status="error", message=f"Missing header(s): {', '.join(missing)}")
+    if not _verify_webhook_signature(
+        body, signature, timestamp, settings.OMISE_WEBHOOK_SECRET
+    ):
+        logger.warning("Webhook signature verification failed")
+        return WebhookResponse(status="error", message="Invalid signature")
 
     try:
         webhook_event = WebhookEvent.model_validate_json(body)
