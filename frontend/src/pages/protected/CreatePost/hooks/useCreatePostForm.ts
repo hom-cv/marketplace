@@ -3,7 +3,7 @@
  * Handles form state, image management, measurements, and submission
  */
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "@mantine/form";
 import { useDisclosure } from "@mantine/hooks";
@@ -88,6 +88,7 @@ export function useCreatePostForm() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Measurements state
+  const extraIdCounter = useRef(0);
   const [measurements, setMeasurements] = useState<Measurements>({});
   const [measurementsOpen, { toggle: toggleMeasurements }] =
     useDisclosure(false);
@@ -199,7 +200,7 @@ export function useCreatePostForm() {
   const handleAddExtraMeasurement = useCallback(() => {
     setExtraMeasurements((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), label: "", value: "" },
+      { id: String(++extraIdCounter.current), label: "", value: "" },
     ]);
   }, []);
 
