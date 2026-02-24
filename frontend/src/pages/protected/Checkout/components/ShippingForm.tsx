@@ -5,7 +5,7 @@ import type { UseFormReturnType } from "@mantine/form";
 import type { ShippingAddress } from "@/api/types/payment";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
-import styles from "../CheckoutPage.module.css";
+import formStyles from "@/styles/forms.module.css";
 
 interface ShippingFormProps {
   form: UseFormReturnType<ShippingAddress>;
@@ -23,7 +23,7 @@ export function ShippingForm({ form, onSubmit }: ShippingFormProps) {
           onSubmit();
         }}
       >
-        <div className={styles.formRow}>
+        <div className={formStyles.formRow}>
           <TextInput
             label={t("checkout.recipientName")}
             placeholder={t("checkout.namePlaceholder")}

@@ -1,0 +1,156 @@
+/* MeasurementsSection - Expandable panel with grid */
+
+.container {
+  overflow: hidden;
+}
+
+/* Toggle Button */
+.toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.toggle:hover {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.toggleText {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.optionalBadge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  background: var(--color-bg-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.toggleIcon {
+  margin-left: auto;
+  color: var(--color-text-muted);
+}
+
+.contentInner {
+  padding: 0 20px 20px;
+}
+
+.description {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0 0 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Extra Measurements */
+.extras {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+.extrasLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 12px;
+}
+
+.extraRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: flex-end;
+}
+
+.extraLabelInput {
+  flex: 1;
+  min-width: 0;
+}
+
+.extraValueInput {
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.removeButton {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.removeButton:hover {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+/* Add Button */
+.addButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-top: 12px;
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.addButton:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .toggle {
+    padding: 14px 16px;
+  }
+
+  .contentInner {
+    padding: 0 16px 16px;
+  }
+
+  .extraRow {
+    flex-wrap: wrap;
+  }
+
+  .extraLabelInput {
+    flex: 1 1 100%;
+  }
+
+  .extraValueInput {
+    flex: 1;
+    width: auto;
+  }
+}

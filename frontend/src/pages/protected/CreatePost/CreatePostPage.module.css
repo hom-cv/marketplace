@@ -1,89 +1,106 @@
-/* CreatePostPage styles */
+/* CreatePostPage - Editorial magazine-inspired layout */
 
-.imageSection {
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 32px 48px 64px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Editorial Header */
+.header {
+  margin-bottom: 40px;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  margin: 0 0 8px;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+/* Asymmetric Two-Column Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+
+/* Left Column: Image */
+.imageColumn {
   position: sticky;
-  top: 24px;
+  top: 32px;
 }
 
-.mainImageWrapper {
-  aspect-ratio: 1;
-  background-color: var(--mantine-color-gray-1);
-  border-radius: var(--mantine-radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+/* Right Column: Details */
+.detailsColumn {
+  min-width: 0;
 }
 
-.mainImage {
-  width: 100%;
-  height: 100%;
+/* Form Card */
+.formCard {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 28px;
 }
 
-.thumbnailRow {
-  overflow-x: auto;
-  padding-bottom: 4px;
+/* Tablet Responsive (< 900px) */
+@media (max-width: 900px) {
+  .page {
+    padding: 24px 24px 48px;
+  }
+
+  .layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+
+  .imageColumn {
+    position: relative;
+    top: 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
 }
 
-.thumbnail {
-  position: relative;
-  cursor: pointer;
-  border-radius: var(--mantine-radius-sm);
-  overflow: visible;
-  border: 2px solid transparent;
-  flex-shrink: 0;
-  transition: border-color 0.15s ease;
-  width: 80px;
-  height: 80px;
-}
+/* Mobile Responsive (< 640px) */
+@media (max-width: 640px) {
+  .page {
+    padding: 16px 16px 40px;
+  }
 
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--mantine-radius-sm);
-}
+  .header {
+    margin-bottom: 28px;
+  }
 
-.thumbnail:hover {
-  border-color: var(--mantine-color-gray-4);
-}
+  .title {
+    font-size: 1.75rem;
+  }
 
-.thumbnailActive {
-  border-color: var(--mantine-color-blue-6);
-}
+  .subtitle {
+    font-size: 0.9rem;
+  }
 
-.thumbnailRemove {
-  position: absolute !important;
-  top: 2px;
-  right: 2px;
-  z-index: 10;
-}
-
-.addImageButton {
-  width: 80px;
-  height: 80px;
-  border: 2px dashed var(--mantine-color-gray-4);
-  border-radius: var(--mantine-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-  color: var(--mantine-color-gray-5);
-}
-
-.addImageButton:hover {
-  border-color: var(--mantine-color-blue-5);
-  background-color: var(--mantine-color-blue-0);
-  color: var(--mantine-color-blue-5);
-}
-
-.coverBadge {
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  min-width: 48px;
+  .formCard {
+    padding: 20px;
+  }
 }

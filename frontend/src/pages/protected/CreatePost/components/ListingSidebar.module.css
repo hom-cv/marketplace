@@ -1,0 +1,24 @@
+/* ListingSidebar - Sticky earnings and submit */
+
+/* Submit Button Enhancement */
+.submitButton {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Helper Text */
+.helperText {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+

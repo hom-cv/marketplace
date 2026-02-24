@@ -2,6 +2,11 @@
   "create": {
     "title": "Create Listing",
     "subtitle": "List your item on the marketplace",
+    "sections": {
+      "itemInfo": "Item Info",
+      "classification": "Classification",
+      "pricing": "Pricing"
+    },
     "form": {
       "titleLabel": "Title",
       "titlePlaceholder": "e.g., Vintage Levi's Denim Jacket",
@@ -15,12 +20,20 @@
       "shippingCost": "Shipping Cost (฿)",
       "shippingDescription": "Set to 0 for free shipping",
       "addMeasurements": "Add Measurements (Optional)",
+      "optional": "Optional",
       "measurementsDescription": "Add exact measurements to help buyers find the right fit",
-      "extraMeasurements": "Extra Measurements",
+      "extraMeasurements": "Custom Measurements",
       "measurementLabel": "Measurement name",
-      "addExtraMeasurement": "Add another measurement",
+      "addExtraMeasurement": "Add custom measurement",
       "duplicateMeasurement": "Duplicate measurement: \"{{label}}\" already exists",
-      "submit": "Create Listing"
+      "titleRequired": "Title is required",
+      "descriptionRequired": "Description is required",
+      "categoryRequired": "Category is required",
+      "priceRequired": "Price must be greater than 0",
+      "sizeRequired": "Size is required",
+      "submit": "Publish Listing",
+      "submitting": "Publishing...",
+      "publishHint": "Your listing will be visible to all buyers immediately"
     },
     "success": "Listing created successfully!",
     "error": "Failed to create listing"
@@ -53,7 +66,11 @@
   "images": {
     "noImages": "No images uploaded",
     "noImagesAvailable": "No images available",
-    "cover": "Cover"
+    "cover": "Cover",
+    "dragOrClick": "Drag images here or click to browse",
+    "maxImages": "Up to {{max}} images",
+    "dropHere": "Drop images here",
+    "limitExceeded": "Image limit reached (max {{max}}). {{rejected}} image(s) not added."
   },
   "seller": {
     "verificationRequired": "Seller Verification Required",
