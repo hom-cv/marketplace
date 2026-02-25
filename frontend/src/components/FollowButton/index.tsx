@@ -25,6 +25,7 @@ export function FollowButton({
   const isAuthenticated = useIsAuthenticated();
 
   const [isFollowed, setIsFollowed] = useState(initialFollowed);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     setIsFollowed(initialFollowed);
@@ -86,9 +87,15 @@ export function FollowButton({
         .filter(Boolean)
         .join(" ")}
       onClick={handleClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       disabled={isLoading}
     >
-      {isFollowed ? t("follow.following") : t("follow.follow")}
+      {isFollowed
+        ? isHovered
+          ? t("follow.unfollow")
+          : t("follow.following")
+        : t("follow.follow")}
     </button>
   );
 }

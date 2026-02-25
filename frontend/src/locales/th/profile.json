@@ -9,6 +9,7 @@
   "follow": {
     "follow": "ติดตาม",
     "following": "กำลังติดตาม",
+    "unfollow": "เลิกติดตาม",
     "followAction": "ติดตามผู้ใช้"
   },
   "sections": {

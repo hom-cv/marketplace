@@ -9,6 +9,7 @@
   "follow": {
     "follow": "Follow",
     "following": "Following",
+    "unfollow": "Unfollow",
     "followAction": "follow users"
   },
   "sections": {
