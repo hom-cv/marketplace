@@ -91,7 +91,7 @@ class EmailService:
 
         return self.send_email(
             to_email=email,
-            subject="Verify your email address - marketplace",
+            subject="Verify your email address - Tallad",
             html_content=html_content,
         )
 

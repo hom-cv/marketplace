@@ -57,6 +57,7 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
           )}
         </div>
         <LikeButton
+          key={`${post.id}-${post.is_liked}-${post.like_count}`}
           postId={post.id}
           initialLiked={post.is_liked}
           initialCount={post.like_count}

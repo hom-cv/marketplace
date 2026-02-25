@@ -141,6 +141,7 @@ export function PostCard({
         <Group justify="space-between" align="center">
           <Text size="xs" c="var(--color-text-muted)">@{post.user.username}</Text>
           <LikeButton
+            key={`${post.id}-${post.is_liked}-${post.like_count}`}
             postId={post.id}
             initialLiked={post.is_liked}
             initialCount={post.like_count}

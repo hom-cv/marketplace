@@ -26,6 +26,7 @@ import { getReports } from "@/api/admin";
 import type { Report, ReportStatus, ReportType } from "@/api/types/admin";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ReviewReportModal } from "./components/ReviewReportModal";
+import styles from "./ReportsPage.module.css";
 
 const STATUS_COLORS: Record<ReportStatus, string> = {
   pending: "orange",
@@ -94,7 +95,7 @@ export function ReportsPage() {
         <Text c="dimmed">Review and manage user and listing reports.</Text>
       </div>
 
-      <Paper withBorder p="md" radius="md" shadow="sm">
+      <Paper withBorder p="md" radius="md">
         <Group justify="space-between">
           <Group>
             <Select
@@ -149,7 +150,7 @@ export function ReportsPage() {
             <Accordion.Item
               key={report.id}
               value={String(report.id)}
-              style={{ backgroundColor: "white" }}
+              className={styles.accordionItem}
             >
               <Accordion.Control>
                 <Group justify="space-between" wrap="nowrap" pr="md">
@@ -181,7 +182,7 @@ export function ReportsPage() {
                     >
                       {report.status}
                     </Badge>
-                    <Text size="xs" c="dimmed" style={{ whiteSpace: "nowrap" }}>
+                    <Text size="xs" c="dimmed" className={styles.noWrap}>
                       {new Date(report.created_date).toLocaleDateString(
                         undefined,
                         {
@@ -215,7 +216,7 @@ export function ReportsPage() {
                         <Text
                           size="sm"
                           mt={4}
-                          style={{ whiteSpace: "pre-wrap" }}
+                          className={styles.preWrap}
                         >
                           {report.description}
                         </Text>
@@ -228,7 +229,7 @@ export function ReportsPage() {
                       p="md"
                       radius="md"
                       withBorder
-                      style={{ borderStyle: "dashed" }}
+                      className={styles.dashedBorder}
                       bg="blue.0"
                     >
                       <Text size="xs" c="blue.7" fw={700} tt="uppercase" mb={4}>

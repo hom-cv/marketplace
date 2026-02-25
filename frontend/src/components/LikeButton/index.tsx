@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Tooltip } from "@mantine/core";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,11 +28,6 @@ export function LikeButton({
 
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
-
-  useEffect(() => {
-    setIsLiked(initialLiked);
-    setLikeCount(initialCount);
-  }, [initialLiked, initialCount]);
 
   const likeMutation = useMutation({
     mutationFn: () => likePost(postId),

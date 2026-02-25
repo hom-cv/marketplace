@@ -4,7 +4,7 @@
  * Flat design matching homepage/auth/explore pages
  */
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
@@ -21,7 +21,8 @@ export function PaymentReturnPage() {
   const navigate = useNavigate();
   const search = useSearch({ from: "/protected/payment-return" });
   const paymentId = search.payment_id ? parseInt(search.payment_id, 10) : null;
-  const [pollCount, setPollCount] = useState(0);
+  const pollCount = useRef(0);
+  const [showTakingLong, setShowTakingLong] = useState(false);
   const { t } = useTranslation("common");
 
   // Fetch payment status
@@ -37,23 +38,21 @@ export function PaymentReturnPage() {
       // Stop polling if payment is complete or after 20 attempts (60 seconds)
       const status = query.state.data?.status;
       if (!status) return 3000; // Keep polling if no data yet
+      if (status === "pending") {
+        pollCount.current += 1;
+        if (pollCount.current >= 15) setShowTakingLong(true);
+      }
       if (
         status === "successful" ||
         status === "failed" ||
         status === "expired" ||
-        pollCount >= 20
+        pollCount.current >= 20
       ) {
         return false;
       }
       return 3000; // Poll every 3 seconds
     },
   });
-
-  useEffect(() => {
-    if (paymentStatus?.status === "pending") {
-      setPollCount((prev) => prev + 1);
-    }
-  }, [paymentStatus]);
 
   const isSuccess = paymentStatus?.status === "successful";
   const isFailed =
@@ -191,7 +190,7 @@ export function PaymentReturnPage() {
             <p className={styles.message}>
               {t("paymentReturn.processingMessage")}
             </p>
-            {pollCount >= 15 && (
+            {showTakingLong && (
               <p className={styles.takingLong}>
                 {t("paymentReturn.takingLong")}
               </p>

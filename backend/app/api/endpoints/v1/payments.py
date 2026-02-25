@@ -1,7 +1,12 @@
+import base64
+import hashlib
+import hmac
 import logging
+import time
 from typing import Annotated
 
 from app.core.security import get_current_user
+from app.core.settings import AnnotatedSettings
 from app.models import User
 from app.schemas.payment import (
     AddTrackingRequest,
@@ -15,7 +20,7 @@ from app.schemas.payment import (
 )
 from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Request, status
 from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -164,14 +169,30 @@ async def get_payment_status(
     )
 
 
+WEBHOOK_TOLERANCE_SECONDS = 300  # 5 minutes
+
+
+def _verify_webhook_signature(
+    body: bytes, signature_header: str, timestamp: str, secret: str
+) -> bool:
+    """Verify Omise webhook HMAC-SHA256 signature."""
+    decoded_secret = base64.b64decode(secret)
+    signed_payload = timestamp.encode() + b"." + body
+    computed = hmac.new(decoded_secret, signed_payload, hashlib.sha256).hexdigest()
+    # Support dual signatures during key rotation (comma-separated)
+    signatures = [s.strip() for s in signature_header.split(",")]
+    return any(hmac.compare_digest(computed, sig) for sig in signatures)
+
+
 @router.post(
     "/webhook",
     status_code=status.HTTP_200_OK,
     response_model=WebhookResponse,
 )
 async def omise_webhook(
+    request: Request,
     payment_service: AnnotatedPaymentService,
-    webhook_event: WebhookEvent,
+    settings: AnnotatedSettings,
 ) -> WebhookResponse:
     """
     Handle Omise webhook events.
@@ -183,8 +204,39 @@ async def omise_webhook(
 
     Configure this URL in the Omise dashboard under Webhooks.
     """
+    body = await request.body()
+
+    # Reject webhooks if secret is not configured
+    if not settings.OMISE_WEBHOOK_SECRET:
+        logger.error("OMISE_WEBHOOK_SECRET is not configured — rejecting webhook")
+        return WebhookResponse(status="error", message="Internal server error")
+
+    signature = request.headers.get("Omise-Signature")
+    timestamp = request.headers.get("Omise-Signature-Timestamp")
+    if not signature:
+        logger.warning("Webhook missing header: Omise-Signature")
+        return WebhookResponse(status="error", message="Missing header: Omise-Signature")
+    if not timestamp:
+        logger.warning("Webhook missing header: Omise-Signature-Timestamp")
+        return WebhookResponse(status="error", message="Missing header: Omise-Signature-Timestamp")
+
     try:
-        # Convert validated model data to dict for service layer
+        ts = int(timestamp)
+    except ValueError:
+        logger.warning(f"Webhook timestamp is not a valid integer: {timestamp}")
+        return WebhookResponse(status="error", message="Invalid timestamp")
+    if abs(time.time() - ts) > WEBHOOK_TOLERANCE_SECONDS:
+        logger.warning("Webhook timestamp outside tolerance window")
+        return WebhookResponse(status="error", message="Timestamp out of range")
+
+    if not _verify_webhook_signature(
+        body, signature, timestamp, settings.OMISE_WEBHOOK_SECRET
+    ):
+        logger.warning("Webhook signature verification failed")
+        return WebhookResponse(status="error", message="Invalid signature")
+
+    try:
+        webhook_event = WebhookEvent.model_validate_json(body)
         event_data = webhook_event.data.model_dump(exclude_none=True)
 
         await payment_service.process_webhook(
@@ -197,5 +249,5 @@ async def omise_webhook(
         logger.error(f"Webhook validation error: {e}")
         return WebhookResponse(status="error", message="Invalid webhook payload")
     except Exception as e:
-        logger.error(f"Webhook error: {e}")
-        return WebhookResponse(status="error", message=str(e))
+        logger.error(f"Webhook processing error: {e}")
+        return WebhookResponse(status="error", message="Internal error")

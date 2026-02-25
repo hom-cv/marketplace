@@ -1,0 +1,15 @@
+.accordionItem {
+  background-color: var(--color-bg-card);
+}
+
+.noWrap {
+  white-space: nowrap;
+}
+
+.preWrap {
+  white-space: pre-wrap;
+}
+
+.dashedBorder {
+  border-style: dashed;
+}

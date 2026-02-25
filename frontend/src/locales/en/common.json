@@ -1,5 +1,5 @@
 {
-  "appName": "Marketplace",
+  "appName": "Tallad",
   "buttons": {
     "submit": "Submit",
     "cancel": "Cancel",
@@ -34,7 +34,7 @@
     "forbidden": "Forbidden",
     "failedToLoad": "Failed to load"
   },
-  "welcome": "Welcome to Marketplace",
+  "welcome": "Welcome to Tallad",
   "app": {
     "listings": "Listings",
     "noListingsMatch": "No listings match your filters",
@@ -63,7 +63,7 @@
     "likeAction": "like listings",
     "title": "Liked Listings",
     "noLikes": "No liked listings yet",
-    "noLikesHint": "Browse the marketplace and like items you're interested in",
+    "noLikesHint": "Browse Tallad and like items you're interested in",
     "noMore": "You've seen all your liked listings",
     "oneItem": "listing",
     "multipleItems": "listings"
@@ -202,7 +202,7 @@
     "title": "Purchase History",
     "subtitle": "Track your orders and confirm deliveries.",
     "noPurchases": "No purchases yet",
-    "noPurchasesDesc": "When you buy items from the marketplace, they'll appear here.",
+    "noPurchasesDesc": "When you buy items from Tallad, they'll appear here.",
     "orderProgress": "Order Progress",
     "packing": "Packing",
     "inTransit": "In Transit",
@@ -289,7 +289,7 @@
   "landing": {
     "hero": {
       "title": "Discover Unique Fashion",
-      "subtitle": "Join the community-driven marketplace for unique fashion. Buy, sell, and discover items that tell a story."
+      "subtitle": "Join Tallad — the community-driven platform for unique fashion. Buy, sell, and discover items that tell a story."
     },
     "features": {
       "sectionLabel": "Our Promise",
@@ -309,7 +309,7 @@
     },
     "explore": {
       "sectionLabel": "Browse Items",
-      "sectionTitle": "Explore the Marketplace"
+      "sectionTitle": "Explore Tallad"
     }
   }
 }

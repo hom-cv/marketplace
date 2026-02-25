@@ -154,7 +154,7 @@
     }
   },
   "signup": {
-    "policyAcceptance": "การสร้างบัญชีแสดงว่าข้าพเจ้ายอมรับ<termsLink>ข้อกำหนดการใช้บริการ</termsLink>ของ marketplace สำหรับนโยบายความเป็นส่วนตัว <privacyLink>คลิกที่นี่</privacyLink>"
+    "policyAcceptance": "การสร้างบัญชีแสดงว่าข้าพเจ้ายอมรับ<termsLink>ข้อกำหนดการใช้บริการ</termsLink>ของ Tallad สำหรับนโยบายความเป็นส่วนตัว <privacyLink>คลิกที่นี่</privacyLink>"
   },
   "checkout": {
     "refundNotice": "การดำเนินการชำระเงินแสดงว่าคุณรับทราบว่าคุณได้อ่านและเข้าใจ<refundLink>นโยบายการคืนเงิน</refundLink>ของเรา",
