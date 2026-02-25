@@ -6,18 +6,17 @@ import {
   SimpleGrid,
   Paper,
   Group,
-  Center,
   Loader,
-  Alert,
   ThemeIcon,
 } from "@mantine/core";
 import {
   IconFlag,
   IconUserOff,
   IconPackageOff,
-  IconAlertCircle,
 } from "@tabler/icons-react";
 import { getAdminStats } from "@/api/admin";
+import { Alert } from "@/components/Alert";
+import styles from "./AdminDashboardPage.module.css";
 
 interface StatCardProps {
   title: string;
@@ -54,15 +53,15 @@ export function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+      <Alert variant="error" title="Error">
         {error instanceof Error ? error.message : "Failed to load admin stats"}
       </Alert>
     );

@@ -8,9 +8,7 @@ import {
   Button,
   Group,
   Select,
-  Center,
   Loader,
-  Alert,
   Accordion,
   Paper,
   Grid,
@@ -18,12 +16,12 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconFlag,
-  IconAlertCircle,
   IconCheck,
   IconExternalLink,
 } from "@tabler/icons-react";
 import { getReports } from "@/api/admin";
 import type { Report, ReportStatus, ReportType } from "@/api/types/admin";
+import { Alert } from "@/components/Alert";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ReviewReportModal } from "./components/ReviewReportModal";
 import styles from "./ReportsPage.module.css";
@@ -70,15 +68,15 @@ export function ReportsPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+      <Alert variant="error" title="Error">
         {error instanceof Error ? error.message : "Failed to load reports"}
       </Alert>
     );

@@ -29,7 +29,7 @@ class PricingService:
             post_crud_dep (PostCRUD): Post CRUD operations.
         """
         self.db = db
-        self.settings = settings
+        self._settings = settings
         self._post_crud = post_crud_dep
 
     def calculate_order_total(
@@ -54,12 +54,12 @@ class PricingService:
         base_amount = item_price + shipping_cost
 
         # Platform fee calculation
-        platform_fee_percent = Decimal(str(self.settings.PLATFORM_FEE_PERCENT))
+        platform_fee_percent = Decimal(str(self._settings.PLATFORM_FEE_PERCENT))
         platform_fee_base = (base_amount * platform_fee_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
 
-        vat_percent = Decimal(str(self.settings.VAT_PERCENT))
+        vat_percent = Decimal(str(self._settings.VAT_PERCENT))
         platform_vat = (platform_fee_base * vat_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
@@ -67,14 +67,14 @@ class PricingService:
 
         # Processing fee calculation (includes VAT)
         if payment_method == PaymentMethodType.PROMPTPAY:
-            base_rate = Decimal(str(self.settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
+            base_rate = Decimal(str(self._settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
         else:
-            base_rate = Decimal(str(self.settings.CARD_PROCESSING_FEE_PERCENT))
+            base_rate = Decimal(str(self._settings.CARD_PROCESSING_FEE_PERCENT))
 
         processing_fee_base = (base_amount * (base_rate / 100)).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
-        processing_vat_percent = Decimal(str(self.settings.PROCESSING_FEE_VAT_PERCENT))
+        processing_vat_percent = Decimal(str(self._settings.PROCESSING_FEE_VAT_PERCENT))
         processing_vat = (processing_fee_base * processing_vat_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
