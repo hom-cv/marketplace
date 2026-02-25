@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import logging
+import time
 from typing import Annotated
 
 from app.core.security import get_current_user
@@ -168,6 +169,9 @@ async def get_payment_status(
     )
 
 
+WEBHOOK_TOLERANCE_SECONDS = 300  # 5 minutes
+
+
 def _verify_webhook_signature(
     body: bytes, signature_header: str, timestamp: str, secret: str
 ) -> bool:
@@ -210,13 +214,22 @@ async def omise_webhook(
     signature = request.headers.get("Omise-Signature", "")
     timestamp = request.headers.get("Omise-Signature-Timestamp", "")
     if not signature or not timestamp:
-        missing = []
-        if not signature:
-            missing.append("Omise-Signature")
-        if not timestamp:
-            missing.append("Omise-Signature-Timestamp")
+        missing = [
+            name for name, val in [("Omise-Signature", signature), ("Omise-Signature-Timestamp", timestamp)]
+            if not val
+        ]
         logger.warning(f"Webhook missing headers: {', '.join(missing)}")
         return WebhookResponse(status="error", message=f"Missing header(s): {', '.join(missing)}")
+
+    try:
+        ts = int(timestamp)
+    except ValueError:
+        logger.warning(f"Webhook timestamp is not a valid integer: {timestamp}")
+        return WebhookResponse(status="error", message="Invalid timestamp")
+    if abs(time.time() - ts) > WEBHOOK_TOLERANCE_SECONDS:
+        logger.warning("Webhook timestamp outside tolerance window")
+        return WebhookResponse(status="error", message="Timestamp out of range")
+
     if not _verify_webhook_signature(
         body, signature, timestamp, settings.OMISE_WEBHOOK_SECRET
     ):
