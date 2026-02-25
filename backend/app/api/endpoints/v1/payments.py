@@ -209,7 +209,7 @@ async def omise_webhook(
     # Reject webhooks if secret is not configured
     if not settings.OMISE_WEBHOOK_SECRET:
         logger.error("OMISE_WEBHOOK_SECRET is not configured — rejecting webhook")
-        return WebhookResponse(status="error", message="Webhook verification not configured")
+        return WebhookResponse(status="error", message="Internal server error")
 
     signature = request.headers.get("Omise-Signature")
     timestamp = request.headers.get("Omise-Signature-Timestamp")
