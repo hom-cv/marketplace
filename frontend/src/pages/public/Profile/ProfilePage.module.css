@@ -23,7 +23,7 @@
 .profileContent {
   display: flex;
   gap: 24px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 /* Left: avatar */
@@ -40,7 +40,7 @@
   color: var(--color-text-muted);
 }
 
-/* Right: info column */
+/* Right: info + follow */
 .profileInfo {
   flex: 1;
   min-width: 0;
@@ -48,11 +48,13 @@
   flex-direction: column;
 }
 
-.usernameRow {
+/* Top row: username + badge + stats all inline */
+.topRow {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-bottom: 4px;
+  flex-wrap: wrap;
 }
 
 .username {
@@ -78,30 +80,16 @@
   letter-spacing: 0.02em;
 }
 
-.displayName {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  margin: 0 0 8px;
-}
-
-.bio {
-  font-size: 0.9rem;
-  color: var(--color-text);
-  margin: 0 0 16px;
-  line-height: 1.5;
-}
-
-/* Stats row */
-.stats {
+.statContainer {
   display: flex;
-  gap: 24px;
-  margin-bottom: 4px;
+  margin-left: auto;
+  gap: 1rem;
 }
 
 .stat {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 5px;
 }
 
 .statValue {
@@ -115,7 +103,28 @@
   color: var(--color-text-muted);
 }
 
-/* Follow button area */
+.displayName {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 8px;
+}
+
+.bio {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Mobile stats row (shown only on mobile, after bio) */
+.mobileStats {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 12px;
+}
+
+/* Follow button - pinned to bottom of right column */
 .followAction {
   margin-top: auto;
   padding-top: 16px;
@@ -190,23 +199,8 @@
     text-align: center;
   }
 
-  .profileInfo {
-    align-items: center;
-  }
-
-  .usernameRow {
+  .topRow {
     justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .stats {
-    justify-content: center;
-  }
-
-  .followAction {
-    margin-top: 0;
-    padding-top: 12px;
-    width: 100%;
   }
 
   .grid {
