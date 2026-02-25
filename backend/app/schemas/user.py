@@ -98,12 +98,18 @@ class PublicUserProfileSchema(BaseModel):
     bio: str | None = None
     is_seller: bool = False
     total_likes: int = 0
+    follower_count: int = 0
+    is_followed: bool = False
 
     model_config = {"from_attributes": True}
 
     @classmethod
     def from_user(
-        cls, user: Any, total_likes: int
+        cls,
+        user: Any,
+        total_likes: int,
+        follower_count: int = 0,
+        is_followed: bool = False,
     ) -> "PublicUserProfileSchema":
         """Create public profile from User model."""
         return cls(
@@ -114,4 +120,6 @@ class PublicUserProfileSchema(BaseModel):
             bio=user.bio,
             is_seller=user.is_seller,
             total_likes=total_likes,
+            follower_count=follower_count,
+            is_followed=is_followed,
         )

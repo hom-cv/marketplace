@@ -18,6 +18,7 @@ from httpx import ASGITransport, AsyncClient
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user
 from app.core.settings import get_settings
+from app.crud.follow import FollowCRUD, get_follow_crud
 from app.crud.like import LikeCRUD, get_like_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
@@ -75,6 +76,8 @@ def create_mock_user(
     mock_user.seller_profile = None
     mock_user.bio = bio
     mock_user.show_full_name = show_full_name
+    mock_user.is_deleted = False
+    mock_user.deleted_at = None
     return mock_user
 
 
@@ -140,6 +143,16 @@ def create_mock_like_crud() -> MagicMock:
     return mock_crud
 
 
+def create_mock_follow_crud() -> MagicMock:
+    """Create a mock FollowCRUD with async methods."""
+    mock_crud = MagicMock(spec=FollowCRUD)
+    mock_crud.follow_user = AsyncMock(return_value=None)
+    mock_crud.unfollow_user = AsyncMock(return_value=False)
+    mock_crud.is_following = AsyncMock(return_value=False)
+    mock_crud.get_follower_count = AsyncMock(return_value=0)
+    return mock_crud
+
+
 def create_mock_email_service() -> MagicMock:
     """Create a mock EmailService."""
     mock_service = MagicMock(spec=EmailService)
@@ -185,6 +198,12 @@ def mock_payment_crud() -> MagicMock:
 def mock_like_crud() -> MagicMock:
     """Fixture for mock LikeCRUD."""
     return create_mock_like_crud()
+
+
+@pytest.fixture
+def mock_follow_crud() -> MagicMock:
+    """Fixture for mock FollowCRUD."""
+    return create_mock_follow_crud()
 
 
 @pytest.fixture
@@ -238,6 +257,7 @@ async def async_client(
     mock_post_crud: MagicMock,
     mock_payment_crud: MagicMock,
     mock_like_crud: MagicMock,
+    mock_follow_crud: MagicMock,
     mock_email_service: MagicMock,
     mock_settings: MagicMock,
     mock_user: MagicMock,
@@ -254,6 +274,7 @@ async def async_client(
     app.dependency_overrides[get_post_crud] = lambda: mock_post_crud
     app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
     app.dependency_overrides[get_like_crud] = lambda: mock_like_crud
+    app.dependency_overrides[get_follow_crud] = lambda: mock_follow_crud
 
     # Override external services
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service
@@ -282,6 +303,7 @@ async def unauthenticated_client(
     mock_post_crud: MagicMock,
     mock_payment_crud: MagicMock,
     mock_like_crud: MagicMock,
+    mock_follow_crud: MagicMock,
     mock_email_service: MagicMock,
     mock_settings: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
@@ -293,6 +315,7 @@ async def unauthenticated_client(
     app.dependency_overrides[get_post_crud] = lambda: mock_post_crud
     app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
     app.dependency_overrides[get_like_crud] = lambda: mock_like_crud
+    app.dependency_overrides[get_follow_crud] = lambda: mock_follow_crud
 
     # Override external services
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service

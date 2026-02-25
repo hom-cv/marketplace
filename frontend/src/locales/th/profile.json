@@ -3,7 +3,13 @@
     "seller": "ผู้ขายยืนยันแล้ว"
   },
   "stats": {
-    "totalLikes": "ถูกใจทั้งหมด"
+    "totalLikes": "ถูกใจทั้งหมด",
+    "followers": "ผู้ติดตาม"
+  },
+  "follow": {
+    "follow": "ติดตาม",
+    "following": "กำลังติดตาม",
+    "followAction": "ติดตามผู้ใช้"
   },
   "sections": {
     "listings": "รายการสินค้า"

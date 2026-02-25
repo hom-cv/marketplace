@@ -1,6 +1,7 @@
 from app.constants.invite import InviteStatus
 from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models._base import Base
+from app.models.follow import Follow
 from app.models.invite import SellerInvite
 from app.models.like import Like
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
@@ -14,6 +15,7 @@ from app.models.user_role import RoleType, UserRole, UserToUserRole
 
 __all__ = [
     "Base",
+    "Follow",
     "InviteStatus",
     "Like",
     "Payment",
