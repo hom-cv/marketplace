@@ -9,9 +9,7 @@ import {
   Button,
   Group,
   Switch,
-  Center,
   Loader,
-  Alert,
   Modal,
   Textarea,
   NumberInput,
@@ -19,13 +17,14 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import {
   IconUserOff,
-  IconAlertCircle,
   IconPlus,
   IconCheck,
 } from "@tabler/icons-react";
 import { getUserBans, banUser, liftUserBan } from "@/api/admin";
 import type { BanUserRequest } from "@/api/types/admin";
+import { Alert } from "@/components/Alert";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import styles from "./UserBansPage.module.css";
 
 export function UserBansPage() {
   const queryClient = useQueryClient();
@@ -60,15 +59,15 @@ export function UserBansPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+      <Alert variant="error" title="Error">
         {error instanceof Error ? error.message : "Failed to load user bans"}
       </Alert>
     );

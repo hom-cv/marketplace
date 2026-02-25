@@ -19,19 +19,6 @@ class PostType(str, Enum):
     OTHER = "OTHER"
 
 
-class LetterSize(str, Enum):
-    """Letter-based clothing sizes for shirts, jackets, and tops."""
-
-    XS = "XS"
-    S = "S"
-    M = "M"
-    L = "L"
-    XL = "XL"
-    XXL = "XXL"
-    XXXL = "XXXL"
-    ONE_SIZE = "ONE_SIZE"
-
-
 # Measurement schemas for category-specific validation
 class TopMeasurements(BaseModel):
     """Measurements for shirts, jackets, and tops (all in cm)."""
@@ -190,8 +177,7 @@ class PostResponseSchema(BaseModel):
     like_count: int = 0
     is_liked: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class PaginatedPostsResponse(BaseModel):

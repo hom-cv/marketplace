@@ -1,3 +1,10 @@
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
 .accordionItem {
   background-color: var(--color-bg-card);
 }

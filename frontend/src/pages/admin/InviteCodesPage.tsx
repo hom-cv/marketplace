@@ -10,9 +10,7 @@ import {
   Group,
   Select,
   NumberInput,
-  Center,
   Loader,
-  Alert,
   Paper,
   CopyButton,
   ActionIcon,
@@ -20,14 +18,15 @@ import {
 } from "@mantine/core";
 import {
   IconPlus,
-  IconAlertCircle,
   IconCopy,
   IconCheck,
   IconX,
 } from "@tabler/icons-react";
 import { getInvites, generateInvites, revokeInvite } from "@/api/admin";
 import type { InviteStatus } from "@/api/types/admin";
+import { Alert } from "@/components/Alert";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import styles from "./InviteCodesPage.module.css";
 
 const STATUS_COLORS: Record<InviteStatus, string> = {
   active: "green",
@@ -61,15 +60,15 @@ export function InviteCodesPage() {
 
   if (isLoading) {
     return (
-      <Center h={300}>
+      <div className={styles.loading}>
         <Loader size="lg" />
-      </Center>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
+      <Alert variant="error" title="Error">
         {error instanceof Error ? error.message : "Failed to load invite codes"}
       </Alert>
     );
