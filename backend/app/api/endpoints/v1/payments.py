@@ -211,15 +211,14 @@ async def omise_webhook(
         logger.error("OMISE_WEBHOOK_SECRET is not configured — rejecting webhook")
         return WebhookResponse(status="error", message="Webhook verification not configured")
 
-    signature = request.headers.get("Omise-Signature", "")
-    timestamp = request.headers.get("Omise-Signature-Timestamp", "")
-    if not signature or not timestamp:
-        missing = [
-            name for name, val in [("Omise-Signature", signature), ("Omise-Signature-Timestamp", timestamp)]
-            if not val
-        ]
-        logger.warning(f"Webhook missing headers: {', '.join(missing)}")
-        return WebhookResponse(status="error", message=f"Missing header(s): {', '.join(missing)}")
+    signature = request.headers.get("Omise-Signature")
+    timestamp = request.headers.get("Omise-Signature-Timestamp")
+    if not signature:
+        logger.warning("Webhook missing header: Omise-Signature")
+        return WebhookResponse(status="error", message="Missing header: Omise-Signature")
+    if not timestamp:
+        logger.warning("Webhook missing header: Omise-Signature-Timestamp")
+        return WebhookResponse(status="error", message="Missing header: Omise-Signature-Timestamp")
 
     try:
         ts = int(timestamp)
