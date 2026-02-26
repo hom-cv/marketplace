@@ -2,12 +2,17 @@
 
 import asyncio
 import json
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token, get_current_user
+from app.crud.conversation import conversation_crud
+from app.crud.message import message_crud
+from app.crud.post import post_crud
+from app.crud.user import user_crud
 from app.db.utils import get_async_db
 from app.models import User
 from app.schemas.conversation import (
@@ -20,6 +25,8 @@ from app.schemas.conversation import (
 )
 from app.services.message_service import AnnotatedMessageService, MessageService
 from app.services.ws_manager import manager
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -90,8 +97,6 @@ async def send_message(
     ).model_dump(mode="json")
 
     # Get conversation to find the other participant
-    from app.crud.conversation import conversation_crud
-
     db_session = message_service.db
     conv = await conversation_crud.get_by_id(
         db_session, conversation_id=conversation_id
@@ -131,7 +136,14 @@ async def websocket_endpoint(
         await websocket.close(code=4001, reason="Invalid token")
         return
 
+    user = await user_crud.get_by_id_with_relations(db=db, id=user_id)
+    if not user or user.is_deleted or not user.is_active:
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
     await manager.connect(user_id, websocket)
+
+    service = MessageService(db, conversation_crud, message_crud, post_crud)
 
     try:
         while True:
@@ -165,15 +177,6 @@ async def websocket_endpoint(
                     continue
 
                 try:
-                    # Import here to create fresh service with the WS db session
-                    from app.crud.conversation import conversation_crud
-                    from app.crud.message import message_crud
-                    from app.crud.post import post_crud
-
-                    service = MessageService(
-                        db, conversation_crud, message_crud, post_crud
-                    )
-
                     message = await service.send_message(
                         conversation_id=conversation_id,
                         sender_id=user_id,
@@ -199,9 +202,10 @@ async def websocket_endpoint(
                         await manager.send_to_user(other_user_id, ws_data)
                         await manager.send_to_user(user_id, ws_data)
 
-                except Exception as e:
+                except Exception:
+                    logger.exception("Error processing WebSocket message for user %s", user_id)
                     await websocket.send_text(
-                        json.dumps({"type": "error", "error": str(e)})
+                        json.dumps({"type": "error", "error": "Failed to send message"})
                     )
 
             elif data.get("type") == "ping":
