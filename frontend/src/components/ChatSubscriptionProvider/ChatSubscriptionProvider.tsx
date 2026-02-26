@@ -1,27 +1,33 @@
 /**
- * Invisible component that manages the WebSocket chat subscription.
- * Renders nothing - just runs the hook at app root level.
+ * Provider that manages the WebSocket chat subscription
+ * and exposes the WS ref via React Context.
  */
 
-import { useEffect } from "react";
+import type { ReactNode } from "react";
 import { useIsAuthenticated } from "@/stores/authStore";
-import { useChatSubscription, setGlobalWsRef } from "@/hooks/useChatSubscription";
+import {
+  useChatSubscription,
+  ChatWebSocketContext,
+} from "@/hooks/useChatSubscription";
 
-export function ChatSubscriptionProvider() {
-  const isAuthenticated = useIsAuthenticated();
-
-  // Only connect when authenticated
-  if (!isAuthenticated) return null;
-
-  return <ChatSubscriptionInner />;
+interface Props {
+  children: ReactNode;
 }
 
-function ChatSubscriptionInner() {
+export function ChatSubscriptionProvider({ children }: Props) {
+  const isAuthenticated = useIsAuthenticated();
+
+  if (!isAuthenticated) return <>{children}</>;
+
+  return <ChatSubscriptionInner>{children}</ChatSubscriptionInner>;
+}
+
+function ChatSubscriptionInner({ children }: Props) {
   const wsRef = useChatSubscription();
 
-  useEffect(() => {
-    setGlobalWsRef(wsRef);
-  }, [wsRef]);
-
-  return null;
+  return (
+    <ChatWebSocketContext.Provider value={wsRef}>
+      {children}
+    </ChatWebSocketContext.Provider>
+  );
 }

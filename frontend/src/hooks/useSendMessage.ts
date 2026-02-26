@@ -6,7 +6,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageRest } from "@/api/chat";
 import { useAuthStore } from "@/stores/authStore";
-import { getGlobalWsRef } from "@/hooks/useChatSubscription";
+import { useChatWebSocket } from "@/hooks/useChatSubscription";
 import type { ConversationDetail, ChatMessage } from "@/api/types/chat";
 
 interface SendMessageParams {
@@ -17,10 +17,11 @@ interface SendMessageParams {
 export function useSendMessage() {
   const queryClient = useQueryClient();
   const currentUserId = useAuthStore((state) => state.user?.id);
+  const wsRef = useChatWebSocket();
 
   return useMutation({
     mutationFn: async ({ conversationId, content }: SendMessageParams) => {
-      const ws = getGlobalWsRef();
+      const ws = wsRef.current;
 
       // Try WebSocket first
       if (ws && ws.readyState === WebSocket.OPEN) {

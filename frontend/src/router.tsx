@@ -53,14 +53,15 @@ import styles from "./router.module.css";
 
 const rootRoute = createRootRoute({
   component: () => (
-    <div className={styles.rootLayout}>
-      <AppNavigation />
-      <ChatSubscriptionProvider />
-      <main className={styles.mainContent}>
-        <Outlet />
-      </main>
-      <Footer />
-    </div>
+    <ChatSubscriptionProvider>
+      <div className={styles.rootLayout}>
+        <AppNavigation />
+        <main className={styles.mainContent}>
+          <Outlet />
+        </main>
+        <Footer />
+      </div>
+    </ChatSubscriptionProvider>
   ),
 });
 

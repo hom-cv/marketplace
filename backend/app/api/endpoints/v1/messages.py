@@ -20,7 +20,6 @@ from app.schemas.conversation import (
     ConversationResponseSchema,
     MessageCreateSchema,
     MessageResponseSchema,
-    WebSocketMessageSchema,
 )
 from app.services.message_service import AnnotatedMessageService, MessageService
 from app.services.ws_manager import manager
@@ -82,30 +81,11 @@ async def send_message(
     conversation_id: Annotated[int, Path()],
 ) -> MessageResponseSchema:
     """Send a message in a conversation via REST. Also pushes via WebSocket."""
-    message = await message_service.send_message(
+    return await message_service.send_message(
         conversation_id=conversation_id,
         sender_id=current_user.id,
         content=body.content,
     )
-
-    # Push to both participants via WebSocket
-    ws_data = WebSocketMessageSchema(
-        type="new_message",
-        conversation_id=conversation_id,
-        message=message,
-    ).model_dump(mode="json")
-
-    # Get conversation to find the other participant
-    db_session = message_service.db
-    conv = await conversation_crud.get_by_id(
-        db_session, conversation_id=conversation_id
-    )
-    if conv:
-        other_user_id = MessageService.get_other_user_id(conv, current_user.id)
-        await manager.send_to_user(other_user_id, ws_data)
-        await manager.send_to_user(current_user.id, ws_data)
-
-    return message
 
 
 @router.websocket("/ws")
@@ -138,7 +118,9 @@ async def websocket_endpoint(
 
     await manager.connect(user_id, websocket)
 
-    service = MessageService(db, conversation_crud, message_crud, post_crud, user_crud)
+    service = MessageService(
+        db, conversation_crud, message_crud, post_crud, user_crud, ws_manager=manager
+    )
 
     try:
         while True:
@@ -172,26 +154,11 @@ async def websocket_endpoint(
                     continue
 
                 try:
-                    message = await service.send_message(
+                    await service.send_message(
                         conversation_id=conversation_id,
                         sender_id=user_id,
                         content=content,
                     )
-
-                    ws_data = WebSocketMessageSchema(
-                        type="new_message",
-                        conversation_id=conversation_id,
-                        message=message,
-                    ).model_dump(mode="json")
-
-                    # Get conversation to find recipient
-                    conv = await conversation_crud.get_by_id(
-                        db, conversation_id=conversation_id
-                    )
-                    if conv:
-                        other_user_id = MessageService.get_other_user_id(conv, user_id)
-                        await manager.send_to_user(other_user_id, ws_data)
-                        await manager.send_to_user(user_id, ws_data)
 
                 except Exception:
                     logger.exception("Error processing WebSocket message for user %s", user_id)

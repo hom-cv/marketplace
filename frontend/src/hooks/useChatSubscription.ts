@@ -7,11 +7,20 @@
  * Pattern from TkDodo: https://tkdodo.eu/blog/using-web-sockets-with-react-query
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, createContext, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { getWebSocketUrl } from "@/api/chat";
 import type { WebSocketMessage, ConversationDetail } from "@/api/types/chat";
+
+const defaultWsRef: React.RefObject<WebSocket | null> = { current: null };
+
+export const ChatWebSocketContext =
+  createContext<React.RefObject<WebSocket | null>>(defaultWsRef);
+
+export function useChatWebSocket() {
+  return useContext(ChatWebSocketContext);
+}
 
 /** Delay in milliseconds before attempting to reconnect a dropped WebSocket. */
 const RECONNECT_DELAY_MS = 3000;
@@ -105,15 +114,4 @@ export function useChatSubscription() {
 
   // Expose ws ref for send operations
   return wsRef;
-}
-
-// Store the ws ref globally so useSendMessage can access it
-let globalWsRef: React.RefObject<WebSocket | null> | null = null;
-
-export function setGlobalWsRef(ref: React.RefObject<WebSocket | null>) {
-  globalWsRef = ref;
-}
-
-export function getGlobalWsRef(): WebSocket | null {
-  return globalWsRef?.current ?? null;
 }

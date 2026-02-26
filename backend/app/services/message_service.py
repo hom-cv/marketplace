@@ -20,7 +20,9 @@ from app.schemas.conversation import (
     ConversationPostSchema,
     ConversationResponseSchema,
     MessageResponseSchema,
+    WebSocketMessageSchema,
 )
+from app.services.ws_manager import ConnectionManager, manager as _ws_manager
 
 
 class MessageService:
@@ -33,12 +35,14 @@ class MessageService:
         message_crud: MessageCRUD,
         post_crud: PostCRUD,
         user_crud: UserCRUD | None = None,
+        ws_manager: ConnectionManager | None = None,
     ) -> None:
         self.db = db
         self._conversation_crud = conversation_crud
         self._message_crud = message_crud
         self._post_crud = post_crud
         self._user_crud = user_crud
+        self._ws_manager = ws_manager
 
     async def get_or_create_conversation(
         self, *, user_id: int, post_id: int
@@ -149,9 +153,16 @@ class MessageService:
     async def send_message(
         self, *, conversation_id: int, sender_id: int, content: str
     ) -> MessageResponseSchema:
-        """Send a message in a conversation."""
-        if not await self._conversation_crud.is_participant(
-            self.db, conversation_id=conversation_id, user_id=sender_id
+        """Send a message in a conversation and broadcast via WebSocket."""
+        conversation = await self._conversation_crud.get_by_id(
+            self.db, conversation_id=conversation_id
+        )
+        if not conversation:
+            raise not_found_error("Conversation not found")
+
+        if (
+            conversation.initiator_id != sender_id
+            and conversation.recipient_id != sender_id
         ):
             raise forbidden_error("You are not a participant in this conversation")
 
@@ -167,7 +178,20 @@ class MessageService:
             self.db, conversation_id=conversation_id
         )
 
-        return MessageResponseSchema.model_validate(message)
+        msg_schema = MessageResponseSchema.model_validate(message)
+
+        # Broadcast to both participants via WebSocket
+        if self._ws_manager is not None:
+            ws_data = WebSocketMessageSchema(
+                type="new_message",
+                conversation_id=conversation_id,
+                message=msg_schema,
+            ).model_dump(mode="json")
+            other_user_id = self.get_other_user_id(conversation, sender_id)
+            await self._ws_manager.send_to_user(other_user_id, ws_data)
+            await self._ws_manager.send_to_user(sender_id, ws_data)
+
+        return msg_schema
 
     async def _get_user(self, user_id: int) -> User:
         """Get user by ID via UserCRUD."""
@@ -229,7 +253,9 @@ def _get_message_service(
     db: AsyncSession = Depends(get_async_db),
 ) -> MessageService:
     """Factory function to create MessageService instance."""
-    return MessageService(db, conversation_crud, message_crud, post_crud, user_crud)
+    return MessageService(
+        db, conversation_crud, message_crud, post_crud, user_crud, ws_manager=_ws_manager
+    )
 
 
 AnnotatedMessageService = Annotated[MessageService, Depends(_get_message_service)]
