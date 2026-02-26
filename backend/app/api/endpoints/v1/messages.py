@@ -6,7 +6,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.message import MAX_MESSAGE_LENGTH
 from app.core.security import decode_access_token, get_current_user
@@ -14,7 +13,7 @@ from app.crud.conversation import conversation_crud
 from app.crud.message import message_crud
 from app.crud.post import post_crud
 from app.crud.user import user_crud
-from app.db.utils import get_async_db
+from app.db.session import build_async_session
 from app.models import User
 from app.schemas.conversation import (
     ConversationCreateSchema,
@@ -94,7 +93,6 @@ async def send_message(
 async def websocket_endpoint(
     websocket: WebSocket,
     token: str = Query(...),
-    db: AsyncSession = Depends(get_async_db),
 ):
     """
     WebSocket endpoint for real-time chat.
@@ -102,27 +100,28 @@ async def websocket_endpoint(
     Authenticates via query param token.
     Receives messages as JSON: {type: "message", conversation_id: int, content: str}
     """
-    # Authenticate
-    payload = decode_access_token(token)
-    if payload is None:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
+    # Authenticate with a short-lived session
+    session_factory = build_async_session()
+    auth_db = session_factory()
+    try:
+        payload = decode_access_token(token)
+        if payload is None:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
 
-    user_id = payload.get("user_id")
-    if not user_id:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
+        user_id = payload.get("user_id")
+        if not user_id:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
 
-    user = await user_crud.get_by_id_with_relations(db=db, id=user_id)
-    if not user or user.is_deleted or not user.is_active:
-        await websocket.close(code=4001, reason="Invalid token")
-        return
+        user = await user_crud.get_by_id_with_relations(db=auth_db, id=user_id)
+        if not user or user.is_deleted or not user.is_active:
+            await websocket.close(code=4001, reason="Invalid token")
+            return
+    finally:
+        await auth_db.close()
 
     await manager.connect(user_id, websocket)
-
-    service = MessageService(
-        db, conversation_crud, message_crud, post_crud, user_crud, ws_manager=manager
-    )
 
     try:
         while True:
@@ -155,7 +154,11 @@ async def websocket_endpoint(
                     )
                     continue
 
+                db = session_factory()
                 try:
+                    service = MessageService(
+                        db, conversation_crud, message_crud, post_crud, user_crud, ws_manager=manager
+                    )
                     await service.send_message(
                         conversation_id=conversation_id,
                         sender_id=user_id,
@@ -170,6 +173,8 @@ async def websocket_endpoint(
                     await websocket.send_text(
                         json.dumps({"type": "error", "error": "Failed to send message"})
                     )
+                finally:
+                    await db.close()
 
             elif data.get("type") == "ping":
                 await websocket.send_text(json.dumps({"type": "pong"}))
