@@ -11,7 +11,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { getWebSocketUrl } from "@/api/chat";
-import type { WebSocketMessage, ConversationDetail, ChatMessage } from "@/api/types/chat";
+import type { WebSocketMessage, ConversationDetail } from "@/api/types/chat";
 
 const RECONNECT_DELAY = 3000;
 
@@ -19,7 +19,7 @@ export function useChatSubscription() {
   const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {

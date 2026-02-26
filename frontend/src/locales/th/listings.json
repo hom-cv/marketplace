@@ -93,7 +93,8 @@
     "purchaseAction": "ซื้อสินค้านี้",
     "itemSold": "สินค้านี้ถูกขายแล้ว",
     "shipping": "ค่าจัดส่ง",
-    "freeShipping": "จัดส่งฟรี"
+    "freeShipping": "จัดส่งฟรี",
+    "viewListing": "ดูสินค้า"
   },
   "myListings": {
     "title": "สินค้าของฉัน",

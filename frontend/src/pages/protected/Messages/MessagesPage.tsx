@@ -85,7 +85,8 @@ export function MessagesPage() {
               return (
                 <Link
                   key={conv.id}
-                  to={`/messages/${conv.id}`}
+                  to="/messages/$conversationId"
+                  params={{ conversationId: String(conv.id) }}
                   className={styles.conversationItem}
                 >
                   <div className={styles.postThumbnail}>

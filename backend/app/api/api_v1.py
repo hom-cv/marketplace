@@ -1,4 +1,4 @@
-from app.api.endpoints.v1 import admin, auth, follows, invites, likes, payments, posts, reports, seller, users
+from app.api.endpoints.v1 import admin, auth, follows, invites, likes, messages, payments, posts, reports, seller, users
 from fastapi import APIRouter
 
 api_router = APIRouter(prefix="/api/v1")
@@ -13,3 +13,4 @@ api_router.include_router(invites.router)
 api_router.include_router(reports.router)
 api_router.include_router(admin.router)
 api_router.include_router(users.router)
+api_router.include_router(messages.router)

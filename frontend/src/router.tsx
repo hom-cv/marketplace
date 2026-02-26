@@ -34,7 +34,11 @@ import {
   PaymentReturnPage,
   CheckoutPage,
   ProfileEditPage,
+  MessagesPage,
+  ChatViewPage,
 } from "@/pages/protected";
+
+import { ChatSubscriptionProvider } from "@/components/ChatSubscriptionProvider";
 
 // Admin pages
 import {
@@ -51,6 +55,7 @@ const rootRoute = createRootRoute({
   component: () => (
     <div className={styles.rootLayout}>
       <AppNavigation />
+      <ChatSubscriptionProvider />
       <main className={styles.mainContent}>
         <Outlet />
       </main>
@@ -187,6 +192,18 @@ const accountBecomeSellerRoute = createRoute({
   component: BecomeSellerPage,
 });
 
+const messagesRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/messages",
+  component: MessagesPage,
+});
+
+const chatViewRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/messages/$conversationId",
+  component: ChatViewPage,
+});
+
 // Admin protected route wrapper - ensures user is admin
 const adminProtectedLayout = createRoute({
   getParentRoute: () => protectedLayout,
@@ -252,6 +269,8 @@ const routeTree = rootRoute.addChildren([
     accountSalesRoute,
     accountSettingsRoute,
     accountBecomeSellerRoute,
+    messagesRoute,
+    chatViewRoute,
     adminProtectedLayout.addChildren([
       adminLayout.addChildren([
         adminDashboardRoute,

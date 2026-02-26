@@ -84,7 +84,7 @@ export function useSendMessage() {
       }
     },
 
-    onSettled: (_data, _error, { conversationId }) => {
+    onSettled: (_data, _error, _vars) => {
       // If we used REST fallback and got a real message back, the cache
       // will be updated. For WS path, the subscription handles it.
       // Invalidate conversation list for last_message update.

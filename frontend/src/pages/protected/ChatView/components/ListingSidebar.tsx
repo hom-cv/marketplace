@@ -120,7 +120,8 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
 
         {/* View listing link */}
         <Link
-          to={`/explore/${post.id}`}
+          to="/explore/$postId"
+          params={{ postId: String(post.id) }}
           className={styles.viewListingLink}
         >
           {t("view.viewListing")}
