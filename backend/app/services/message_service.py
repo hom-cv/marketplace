@@ -110,15 +110,13 @@ class MessageService:
         limit: int = 50,
     ) -> ConversationDetailSchema:
         """Get conversation detail with paginated messages."""
-        conversation = await self._conversation_crud.get_by_id(
+        conversation = await self._conversation_crud.get_by_id_with_relations(
             self.db, conversation_id=conversation_id
         )
         if not conversation:
             raise not_found_error("Conversation not found")
 
-        if not await self._conversation_crud.is_participant(
-            self.db, conversation_id=conversation_id, user_id=user_id
-        ):
+        if conversation.initiator_id != user_id and conversation.recipient_id != user_id:
             raise forbidden_error("You are not a participant in this conversation")
 
         messages = await self._message_crud.get_messages(
@@ -131,19 +129,15 @@ class MessageService:
             self.db, conversation_id=conversation_id
         )
 
-        post = await self._post_crud.get_by_id(self.db, id=conversation.post_id)
-        initiator = await self._get_user(conversation.initiator_id)
-        recipient = await self._get_user(conversation.recipient_id)
-
         return ConversationDetailSchema(
             id=conversation.id,
             initiator=ConversationParticipantSchema(
-                id=initiator.id, username=initiator.username
+                id=conversation.initiator.id, username=conversation.initiator.username
             ),
             recipient=ConversationParticipantSchema(
-                id=recipient.id, username=recipient.username
+                id=conversation.recipient.id, username=conversation.recipient.username
             ),
-            post=self._build_post_schema(post),
+            post=self._build_post_schema(conversation.post),
             messages=[
                 MessageResponseSchema.model_validate(m) for m in messages
             ],

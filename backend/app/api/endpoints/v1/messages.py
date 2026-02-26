@@ -5,6 +5,7 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
+from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.message import MAX_MESSAGE_LENGTH
@@ -160,7 +161,10 @@ async def websocket_endpoint(
                         sender_id=user_id,
                         content=content,
                     )
-
+                except HTTPException as exc:
+                    await websocket.send_text(
+                        json.dumps({"type": "error", "error": exc.detail})
+                    )
                 except Exception:
                     logger.exception("Error processing WebSocket message for user %s", user_id)
                     await websocket.send_text(

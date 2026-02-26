@@ -59,6 +59,22 @@ class ConversationCRUD:
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_by_id_with_relations(
+        self, db: AsyncSession, *, conversation_id: int
+    ) -> Conversation | None:
+        """Get a conversation by ID with initiator, recipient, and post loaded."""
+        query = (
+            select(Conversation)
+            .options(
+                selectinload(Conversation.initiator),
+                selectinload(Conversation.recipient),
+                selectinload(Conversation.post),
+            )
+            .where(Conversation.id == conversation_id)
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
     async def get_user_conversations(
         self, db: AsyncSession, *, user_id: int
     ) -> list[Conversation]:

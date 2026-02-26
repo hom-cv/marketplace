@@ -59,8 +59,8 @@ export function useChatSubscription() {
           // Refresh conversation list (for last_message preview + reorder)
           queryClient.invalidateQueries({ queryKey: ["conversations"] });
         }
-      } catch {
-        // Ignore malformed messages
+      } catch (err) {
+        console.warn("Failed to parse WebSocket message:", err);
       }
     },
     [queryClient]
