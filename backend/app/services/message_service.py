@@ -34,8 +34,8 @@ class MessageService:
         conversation_crud: ConversationCRUD,
         message_crud: MessageCRUD,
         post_crud: PostCRUD,
-        user_crud: UserCRUD | None = None,
-        ws_manager: ConnectionManager | None = None,
+        user_crud: UserCRUD,
+        ws_manager: ConnectionManager,
     ) -> None:
         self.db = db
         self._conversation_crud = conversation_crud
