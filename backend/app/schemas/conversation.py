@@ -4,13 +4,15 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+from app.constants.message import MAX_MESSAGE_LENGTH
+
 
 class ConversationCreateSchema(BaseModel):
     post_id: int
 
 
 class MessageCreateSchema(BaseModel):
-    content: str = Field(min_length=1, max_length=5000)
+    content: str = Field(min_length=1, max_length=MAX_MESSAGE_LENGTH)
 
 
 class MessageResponseSchema(BaseModel):

@@ -85,11 +85,11 @@ export function useSendMessage() {
       }
     },
 
-    onSettled: (_data, _error, _vars) => {
-      // If we used REST fallback and got a real message back, the cache
-      // will be updated. For WS path, the subscription handles it.
+    onSettled: (_data, _error, vars) => {
       // Invalidate conversation list for last_message update.
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      // Replace the optimistic temp message with real server state.
+      queryClient.invalidateQueries({ queryKey: ["conversation", vars.conversationId] });
     },
   });
 }
