@@ -39,6 +39,7 @@ export function useChatSubscription() {
         if (data.type === "new_message" && data.conversation_id && data.message) {
           const message = data.message;
           const conversationId = data.conversation_id;
+          const currentUserId = useAuthStore.getState().user?.id;
 
           // Append message to active conversation cache (if open)
           queryClient.setQueryData<ConversationDetail>(
@@ -48,6 +49,19 @@ export function useChatSubscription() {
               // Deduplicate by message ID
               const exists = old.messages.some((m) => m.id === message.id);
               if (exists) return old;
+
+              // If the message is from the current user, it's an ack for an
+              // optimistic update. Replace the temporary (negative-ID) message
+              // instead of appending a duplicate.
+              if (currentUserId && message.sender_id === currentUserId) {
+                const optimisticIdx = old.messages.findIndex((m) => m.id < 0);
+                if (optimisticIdx !== -1) {
+                  const updated = [...old.messages];
+                  updated[optimisticIdx] = message;
+                  return { ...old, messages: updated };
+                }
+              }
+
               return {
                 ...old,
                 messages: [...old.messages, message],
