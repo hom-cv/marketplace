@@ -1,5 +1,6 @@
 """Message and conversation API endpoints."""
 
+import asyncio
 import json
 import logging
 from typing import Annotated
@@ -7,7 +8,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
 from fastapi.exceptions import HTTPException
 
-from app.constants.message import MAX_MESSAGE_LENGTH
+from app.constants.message import (
+    MAX_MESSAGE_LENGTH,
+    WS_AUTH_TIMEOUT_SECONDS,
+    WS_RATE_LIMIT_MAX_TOKENS,
+    WS_RATE_LIMIT_REFILL_SECONDS,
+)
 from app.core.security import decode_access_token, get_current_user
 from app.crud.conversation import conversation_crud
 from app.crud.message import message_crud
@@ -23,7 +29,7 @@ from app.schemas.conversation import (
     MessageResponseSchema,
 )
 from app.services.message_service import AnnotatedMessageService, MessageService
-from app.services.ws_manager import manager
+from app.services.ws_manager import RateLimiter, manager
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +109,15 @@ async def websocket_endpoint(
 
     session_factory = build_async_session()
 
-    # Wait for auth message as the first message
+    # Wait for auth message as the first message (with timeout)
     try:
-        raw = await websocket.receive_text()
+        raw = await asyncio.wait_for(
+            websocket.receive_text(), timeout=WS_AUTH_TIMEOUT_SECONDS
+        )
         data = json.loads(raw)
+    except asyncio.TimeoutError:
+        await websocket.close(code=4001, reason="Auth timeout")
+        return
     except (json.JSONDecodeError, WebSocketDisconnect):
         await websocket.close(code=4001, reason="Invalid auth message")
         return
@@ -140,6 +151,8 @@ async def websocket_endpoint(
     await websocket.send_text(json.dumps({"type": "auth", "status": "ok"}))
     await manager.connect(user_id, websocket)
 
+    rate_limiter = RateLimiter(WS_RATE_LIMIT_MAX_TOKENS, WS_RATE_LIMIT_REFILL_SECONDS)
+
     try:
         while True:
             raw = await websocket.receive_text()
@@ -152,6 +165,11 @@ async def websocket_endpoint(
                 continue
 
             if data.get("type") == "message":
+                if not rate_limiter.consume():
+                    await websocket.send_text(
+                        json.dumps({"type": "error", "error": "Rate limited. Please slow down."})
+                    )
+                    continue
                 conversation_id = data.get("conversation_id")
                 content = data.get("content", "").strip()
 

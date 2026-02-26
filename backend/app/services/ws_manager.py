@@ -3,12 +3,35 @@
 import asyncio
 import json
 import logging
+import time
 
 from fastapi import WebSocket
 
 from app.db.redis import get_redis
 
 logger = logging.getLogger(__name__)
+
+
+class RateLimiter:
+    """Token bucket rate limiter for per-connection message throttling."""
+
+    def __init__(self, max_tokens: int, refill_seconds: float) -> None:
+        self._max_tokens = max_tokens
+        self._tokens = float(max_tokens)
+        self._refill_rate = max_tokens / refill_seconds
+        self._last_refill = time.monotonic()
+
+    def consume(self) -> bool:
+        """Try to consume one token. Returns True if allowed, False if rate limited."""
+        now = time.monotonic()
+        elapsed = now - self._last_refill
+        self._tokens = min(self._max_tokens, self._tokens + elapsed * self._refill_rate)
+        self._last_refill = now
+
+        if self._tokens >= 1.0:
+            self._tokens -= 1.0
+            return True
+        return False
 
 
 class ConnectionManager:
