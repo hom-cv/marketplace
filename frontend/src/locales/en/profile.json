@@ -3,7 +3,14 @@
     "seller": "Verified Seller"
   },
   "stats": {
-    "totalLikes": "total likes"
+    "totalLikes": "total likes",
+    "followers": "followers"
+  },
+  "follow": {
+    "follow": "Follow",
+    "following": "Following",
+    "unfollow": "Unfollow",
+    "followAction": "follow users"
   },
   "sections": {
     "listings": "Listings"

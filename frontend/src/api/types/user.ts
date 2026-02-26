@@ -24,6 +24,8 @@ export interface PublicUserProfile {
   bio: string | null;
   is_seller: boolean;
   total_likes: number;
+  follower_count: number;
+  is_followed: boolean;
 }
 
 export interface UpdateProfileRequest {

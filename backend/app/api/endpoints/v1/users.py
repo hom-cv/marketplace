@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.user import AnnotatedValidUserByUsername
 from app.core.security import get_current_user, get_current_user_optional
+from app.crud.follow import AnnotatedFollowCRUD
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.crud.user import AnnotatedUserCRUD
@@ -30,7 +31,9 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def get_user_profile(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     like_crud: AnnotatedLikeCRUD,
+    follow_crud: AnnotatedFollowCRUD,
     user: AnnotatedValidUserByUsername,
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PublicUserProfileSchema:
     """
     Get a user's public profile by username.
@@ -41,12 +44,25 @@ async def get_user_profile(
     - Bio
     - Total likes across all their posts
     - Seller status
+    - Follower count
+    - Whether the current user is following this profile (if authenticated)
     """
     # Get total likes for this user's posts
     total_likes = await like_crud.get_total_likes_for_user(db, user_id=user.id)
 
-    # Determine if name should be shown based on user's privacy setting
-    return PublicUserProfileSchema.from_user(user, total_likes)
+    # Get follower count
+    follower_count = await follow_crud.get_follower_count(db, user_id=user.id)
+
+    # Check if current user is following this profile
+    is_followed = False
+    if current_user and current_user.id != user.id:
+        is_followed = await follow_crud.is_following(
+            db, follower_id=current_user.id, following_id=user.id
+        )
+
+    return PublicUserProfileSchema.from_user(
+        user, total_likes, follower_count=follower_count, is_followed=is_followed
+    )
 
 
 @router.get(
