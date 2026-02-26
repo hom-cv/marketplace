@@ -40,8 +40,8 @@ export async function sendMessageRest(
   );
 }
 
-export function getWebSocketUrl(token: string): string {
+export function getWebSocketUrl(): string {
   // Convert HTTP base URL to WebSocket URL
   const wsBase = API_BASE_URL.replace(/^http/, "ws");
-  return `${wsBase}/messages/ws?token=${encodeURIComponent(token)}`;
+  return `${wsBase}/messages/ws`;
 }

@@ -75,9 +75,24 @@ export function useChatSubscription() {
       wsRef.current = null;
     }
 
-    const ws = new WebSocket(getWebSocketUrl(token));
+    const ws = new WebSocket(getWebSocketUrl());
 
-    ws.onmessage = handleMessage;
+    ws.onmessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        // Handle auth acknowledgement
+        if (data.type === "auth" && data.status === "ok") {
+          wsRef.current = ws;
+          // On reconnect, invalidate all chat queries to catch missed messages
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          queryClient.invalidateQueries({ queryKey: ["conversation"] });
+          return;
+        }
+      } catch {
+        // fall through to normal handler
+      }
+      handleMessage(event);
+    };
 
     ws.onclose = () => {
       wsRef.current = null;
@@ -88,16 +103,13 @@ export function useChatSubscription() {
     };
 
     ws.onopen = () => {
-      // On reconnect, invalidate all chat queries to catch missed messages
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["conversation"] });
+      // Send auth token as first message (not in URL)
+      ws.send(JSON.stringify({ type: "auth", token }));
     };
 
     ws.onerror = () => {
       // Will trigger onclose → reconnect
     };
-
-    wsRef.current = ws;
   }, [token, handleMessage, queryClient]);
 
   useEffect(() => {

@@ -26,9 +26,7 @@ class ConnectionManager:
         self._subscriptions: dict[int, asyncio.Task] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket) -> None:
-        """Accept WebSocket connection and start Redis subscription."""
-        await websocket.accept()
-
+        """Register an already-accepted WebSocket and start Redis subscription."""
         # Close existing connection if any (e.g., user opened new tab)
         await self._cleanup(user_id)
 

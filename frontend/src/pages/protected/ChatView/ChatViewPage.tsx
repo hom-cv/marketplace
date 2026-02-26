@@ -92,6 +92,7 @@ export function ChatViewPage() {
           return {
             ...old,
             messages: [...older.messages, ...old.messages],
+            total_messages: older.total_messages,
           };
         }
       );

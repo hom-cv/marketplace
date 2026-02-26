@@ -92,16 +92,32 @@ async def send_message(
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: str = Query(...),
 ):
     """
     WebSocket endpoint for real-time chat.
 
-    Authenticates via query param token.
-    Receives messages as JSON: {type: "message", conversation_id: int, content: str}
+    Authentication: Send {type: "auth", token: "..."} as the first message.
+    Messages: {type: "message", conversation_id: int, content: str}
     """
-    # Authenticate with a short-lived session
+    await websocket.accept()
+
     session_factory = build_async_session()
+
+    # Wait for auth message as the first message
+    try:
+        raw = await websocket.receive_text()
+        data = json.loads(raw)
+    except (json.JSONDecodeError, WebSocketDisconnect):
+        await websocket.close(code=4001, reason="Invalid auth message")
+        return
+
+    if data.get("type") != "auth" or not data.get("token"):
+        await websocket.close(code=4001, reason="First message must be auth")
+        return
+
+    token = data["token"]
+
+    # Authenticate with a short-lived session
     auth_db = session_factory()
     try:
         payload = decode_access_token(token)
@@ -121,6 +137,7 @@ async def websocket_endpoint(
     finally:
         await auth_db.close()
 
+    await websocket.send_text(json.dumps({"type": "auth", "status": "ok"}))
     await manager.connect(user_id, websocket)
 
     try:
