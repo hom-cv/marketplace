@@ -13,7 +13,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { getWebSocketUrl } from "@/api/chat";
 import type { WebSocketMessage, ConversationDetail } from "@/api/types/chat";
 
-const RECONNECT_DELAY = 3000;
+/** Delay in milliseconds before attempting to reconnect a dropped WebSocket. */
+const RECONNECT_DELAY_MS = 3000;
 
 export function useChatSubscription() {
   const queryClient = useQueryClient();
@@ -73,7 +74,7 @@ export function useChatSubscription() {
       wsRef.current = null;
       // Reconnect after delay if we still have a token
       if (useAuthStore.getState().token) {
-        reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY);
+        reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
       }
     };
 

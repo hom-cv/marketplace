@@ -1,6 +1,5 @@
 """Message and conversation API endpoints."""
 
-import asyncio
 import json
 import logging
 from typing import Annotated
@@ -102,11 +101,7 @@ async def send_message(
         db_session, conversation_id=conversation_id
     )
     if conv:
-        other_user_id = (
-            conv.recipient_id
-            if conv.initiator_id == current_user.id
-            else conv.initiator_id
-        )
+        other_user_id = MessageService.get_other_user_id(conv, current_user.id)
         await manager.send_to_user(other_user_id, ws_data)
         await manager.send_to_user(current_user.id, ws_data)
 
@@ -143,7 +138,7 @@ async def websocket_endpoint(
 
     await manager.connect(user_id, websocket)
 
-    service = MessageService(db, conversation_crud, message_crud, post_crud)
+    service = MessageService(db, conversation_crud, message_crud, post_crud, user_crud)
 
     try:
         while True:
@@ -194,11 +189,7 @@ async def websocket_endpoint(
                         db, conversation_id=conversation_id
                     )
                     if conv:
-                        other_user_id = (
-                            conv.recipient_id
-                            if conv.initiator_id == user_id
-                            else conv.initiator_id
-                        )
+                        other_user_id = MessageService.get_other_user_id(conv, user_id)
                         await manager.send_to_user(other_user_id, ws_data)
                         await manager.send_to_user(user_id, ws_data)
 

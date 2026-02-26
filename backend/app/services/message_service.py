@@ -9,9 +9,9 @@ from app.core.exceptions import bad_request_error, forbidden_error, not_found_er
 from app.crud.conversation import ConversationCRUD, get_conversation_crud
 from app.crud.message import MessageCRUD, get_message_crud
 from app.crud.post import PostCRUD, get_post_crud
+from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.models.conversation import Conversation
-from app.models.message import Message
 from app.models.post import Post
 from app.models.user import User
 from app.schemas.conversation import (
@@ -32,11 +32,13 @@ class MessageService:
         conversation_crud: ConversationCRUD,
         message_crud: MessageCRUD,
         post_crud: PostCRUD,
+        user_crud: UserCRUD | None = None,
     ) -> None:
         self.db = db
         self._conversation_crud = conversation_crud
         self._message_crud = message_crud
         self._post_crud = post_crud
+        self._user_crud = user_crud
 
     async def get_or_create_conversation(
         self, *, user_id: int, post_id: int
@@ -119,11 +121,7 @@ class MessageService:
             recipient=ConversationParticipantSchema(
                 id=recipient.id, username=recipient.username
             ),
-            post=ConversationPostSchema(
-                id=post.id if post else 0,
-                title=post.title if post else "Deleted post",
-                image_url=post.image_url if post else None,
-            ),
+            post=self._build_post_schema(post),
             messages=[
                 MessageResponseSchema.model_validate(m) for m in messages
             ],
@@ -154,16 +152,27 @@ class MessageService:
         return MessageResponseSchema.model_validate(message)
 
     async def _get_user(self, user_id: int) -> User:
-        """Get user by ID using raw query."""
-        from sqlalchemy import select
-
-        result = await self.db.execute(
-            select(User).where(User.id == user_id)
-        )
-        user = result.scalar_one_or_none()
+        """Get user by ID via UserCRUD."""
+        user = await self._user_crud.get_by_id(self.db, user_id)
         if not user:
             raise not_found_error("User not found")
         return user
+
+    @staticmethod
+    def get_other_user_id(conversation: Conversation, user_id: int) -> int:
+        """Return the ID of the other participant in a conversation."""
+        if conversation.initiator_id == user_id:
+            return conversation.recipient_id
+        return conversation.initiator_id
+
+    @staticmethod
+    def _build_post_schema(post: Post | None) -> ConversationPostSchema:
+        """Build a ConversationPostSchema, handling deleted/missing posts."""
+        return ConversationPostSchema(
+            id=post.id if post else 0,
+            title=post.title if post else "Deleted post",
+            image_url=post.image_url if post else None,
+        )
 
     async def _build_conversation_response(
         self, conversation: Conversation, post: Post | None = None
@@ -186,11 +195,7 @@ class MessageService:
             recipient=ConversationParticipantSchema(
                 id=recipient.id, username=recipient.username
             ),
-            post=ConversationPostSchema(
-                id=post.id if post else 0,
-                title=post.title if post else "Deleted post",
-                image_url=post.image_url if post else None,
-            ),
+            post=self._build_post_schema(post),
             last_message=MessageResponseSchema.model_validate(last_message)
             if last_message
             else None,
@@ -202,10 +207,11 @@ def _get_message_service(
     conversation_crud: Annotated[ConversationCRUD, Depends(get_conversation_crud)],
     message_crud: Annotated[MessageCRUD, Depends(get_message_crud)],
     post_crud: Annotated[PostCRUD, Depends(get_post_crud)],
+    user_crud: Annotated[UserCRUD, Depends(get_user_crud)],
     db: AsyncSession = Depends(get_async_db),
 ) -> MessageService:
     """Factory function to create MessageService instance."""
-    return MessageService(db, conversation_crud, message_crud, post_crud)
+    return MessageService(db, conversation_crud, message_crud, post_crud, user_crud)
 
 
 AnnotatedMessageService = Annotated[MessageService, Depends(_get_message_service)]

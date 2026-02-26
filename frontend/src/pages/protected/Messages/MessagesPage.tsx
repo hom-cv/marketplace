@@ -13,7 +13,7 @@ import { Alert } from "@/components/Alert";
 import type { Conversation } from "@/api/types/chat";
 import styles from "./MessagesPage.module.css";
 
-function formatTime(dateStr: string): string {
+function formatTime(dateStr: string, t: (key: string) => string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
@@ -22,7 +22,7 @@ function formatTime(dateStr: string): string {
   if (days === 0) {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
-  if (days === 1) return "Yesterday";
+  if (days === 1) return t("yesterday");
   if (days < 7) return date.toLocaleDateString([], { weekday: "short" });
   return date.toLocaleDateString([], { month: "short", day: "numeric" });
 }
@@ -105,8 +105,8 @@ export function MessagesPage() {
                       <span className={styles.username}>@{otherUser.username}</span>
                       <span className={styles.time}>
                         {conv.last_message
-                          ? formatTime(conv.last_message.created_date)
-                          : formatTime(conv.created_date)}
+                          ? formatTime(conv.last_message.created_date, t)
+                          : formatTime(conv.created_date, t)}
                       </span>
                     </div>
                     <div className={styles.postTitle}>{conv.post.title}</div>

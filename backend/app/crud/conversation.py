@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -97,7 +97,6 @@ class ConversationCRUD:
         result = await db.execute(query)
         conv = result.scalar_one_or_none()
         if conv:
-            from sqlalchemy import func
             conv.last_modified_date = func.now()
             await db.commit()
 
