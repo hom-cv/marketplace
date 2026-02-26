@@ -1,9 +1,17 @@
 """Conversation model for listing-linked chat."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from sqlalchemy import BigInteger, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models._base import Base
+
+if TYPE_CHECKING:
+    from app.models.post import Post
+    from app.models.user import User
 
 
 class Conversation(Base):
@@ -34,6 +42,10 @@ class Conversation(Base):
         nullable=False,
         index=True,
     )
+
+    initiator: Mapped[User] = relationship(foreign_keys=[initiator_id], lazy="raise")
+    recipient: Mapped[User] = relationship(foreign_keys=[recipient_id], lazy="raise")
+    post: Mapped[Post] = relationship(foreign_keys=[post_id], lazy="raise")
 
     __table_args__ = (
         UniqueConstraint(

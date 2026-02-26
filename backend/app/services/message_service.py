@@ -73,10 +73,28 @@ class MessageService:
             self.db, user_id=user_id
         )
 
+        conv_ids = [c.id for c in conversations]
+        last_messages = await self._message_crud.get_last_messages_batch(
+            self.db, conversation_ids=conv_ids
+        )
+
         results = []
         for conv in conversations:
-            response = await self._build_conversation_response(conv)
-            results.append(response)
+            last_msg = last_messages.get(conv.id)
+            results.append(ConversationResponseSchema(
+                id=conv.id,
+                initiator=ConversationParticipantSchema(
+                    id=conv.initiator.id, username=conv.initiator.username
+                ),
+                recipient=ConversationParticipantSchema(
+                    id=conv.recipient.id, username=conv.recipient.username
+                ),
+                post=self._build_post_schema(conv.post),
+                last_message=MessageResponseSchema.model_validate(last_msg)
+                if last_msg
+                else None,
+                created_date=conv.created_date,
+            ))
         return results
 
     async def get_conversation_messages(

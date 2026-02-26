@@ -70,6 +70,26 @@ class MessageCRUD:
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_last_messages_batch(
+        self, db: AsyncSession, *, conversation_ids: list[int]
+    ) -> dict[int, Message]:
+        """Get last message for each conversation in a single query."""
+        if not conversation_ids:
+            return {}
+        subq = (
+            select(
+                Message.conversation_id,
+                func.max(Message.id).label("max_id"),
+            )
+            .where(Message.conversation_id.in_(conversation_ids))
+            .group_by(Message.conversation_id)
+            .subquery()
+        )
+        query = select(Message).join(subq, Message.id == subq.c.max_id)
+        result = await db.execute(query)
+        messages = result.scalars().all()
+        return {m.conversation_id: m for m in messages}
+
     async def count_messages(
         self, db: AsyncSession, *, conversation_id: int
     ) -> int:

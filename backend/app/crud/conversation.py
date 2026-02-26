@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlalchemy import func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.models.conversation import Conversation
 
@@ -64,6 +65,11 @@ class ConversationCRUD:
         """Get all conversations for a user, ordered by last modified."""
         query = (
             select(Conversation)
+            .options(
+                selectinload(Conversation.initiator),
+                selectinload(Conversation.recipient),
+                selectinload(Conversation.post),
+            )
             .where(
                 or_(
                     Conversation.initiator_id == user_id,
