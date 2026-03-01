@@ -160,6 +160,9 @@ class MessageService:
         ):
             raise forbidden_error("You are not a participant in this conversation")
 
+        # TODO: Refactor chat CRUDs to use flush() instead of commit(),
+        # then issue a single db.commit() here for transaction atomicity.
+        # Currently create() and touch() each commit independently.
         message = await self._message_crud.create(
             self.db,
             conversation_id=conversation_id,
