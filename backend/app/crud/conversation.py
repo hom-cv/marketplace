@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import func, or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -115,12 +115,13 @@ class ConversationCRUD:
         self, db: AsyncSession, *, conversation_id: int
     ) -> None:
         """Update last_modified_date to now (for sorting)."""
-        query = select(Conversation).where(Conversation.id == conversation_id)
-        result = await db.execute(query)
-        conv = result.scalar_one_or_none()
-        if conv:
-            conv.last_modified_date = func.now()
-            await db.commit()
+        stmt = (
+            update(Conversation)
+            .where(Conversation.id == conversation_id)
+            .values(last_modified_date=func.now())
+        )
+        await db.execute(stmt)
+        await db.commit()
 
 
 conversation_crud = ConversationCRUD()
