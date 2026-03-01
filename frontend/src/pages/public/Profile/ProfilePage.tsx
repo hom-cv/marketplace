@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { Loader, Box, Space } from "@mantine/core";
+import { Loader, Box } from "@mantine/core";
 import { IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getUserProfile, getUserPosts } from "@/api/users";

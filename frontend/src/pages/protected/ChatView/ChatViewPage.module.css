@@ -1,0 +1,87 @@
+/* ChatViewPage - Fixed viewport, two-column layout */
+
+.page {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-bg);
+  display: flex;
+  z-index: 10;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Left: chat column */
+.chatColumn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Right: listing sidebar */
+.listingSidebar {
+  width: 380px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  overflow: hidden;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+/* Error */
+.errorContainer {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 0 24px;
+}
+
+/* Messages area - only scrollable region */
+.messagesArea {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  padding: 16px 24px;
+}
+
+/* Load older button */
+.loadOlderButton {
+  align-self: center;
+  padding: 8px 16px;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.loadOlderButton:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Mobile: hide sidebar, full-width chat */
+@media (max-width: 768px) {
+  .listingSidebar {
+    display: none;
+  }
+
+  .messagesArea {
+    padding: 12px 16px;
+  }
+}

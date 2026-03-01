@@ -16,6 +16,7 @@ import {
   IconUser,
   IconSettings,
   IconShield,
+  IconMessage,
 } from "@tabler/icons-react";
 import { getInitials, type UserInfo } from "./types";
 import styles from "./AppNavigation.module.css";
@@ -47,6 +48,14 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           leftSection={<IconUser size={14} />}
         >
           {t("menu.profile")}
+        </Menu.Item>
+
+        <Menu.Item
+          leftSection={<IconMessage size={14} />}
+          component={Link}
+          to="/messages"
+        >
+          {t("menu.messages")}
         </Menu.Item>
 
         <Menu.Item

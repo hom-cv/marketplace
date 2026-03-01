@@ -12,7 +12,8 @@
     "logout": "ออกจากระบบ",
     "adminDashboard": "แดชบอร์ดผู้ดูแล",
     "profile": "โปรไฟล์",
-    "editProfile": "แก้ไขโปรไฟล์"
+    "editProfile": "แก้ไขโปรไฟล์",
+    "messages": "ข้อความ"
   },
   "sections": {
     "dashboard": "แดชบอร์ด",
