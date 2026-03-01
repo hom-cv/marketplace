@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     SENDGRID_API_KEY: str
     SENDGRID_FROM_EMAIL: str
 
+    REDIS_URL: str = "redis://localhost:6379"
+
     BASE_URL: str
 
     # Omise configuration
