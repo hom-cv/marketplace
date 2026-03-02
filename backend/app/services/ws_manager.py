@@ -7,6 +7,7 @@ import time
 
 from fastapi import WebSocket
 
+from app.constants.message import WS_RATE_LIMIT_MAX_TOKENS, WS_RATE_LIMIT_REFILL_SECONDS
 from app.db.redis import get_redis
 
 logger = logging.getLogger(__name__)
@@ -45,24 +46,33 @@ class ConnectionManager:
     """
 
     def __init__(self) -> None:
-        self._connections: dict[int, WebSocket] = {}
+        self._connections: dict[int, set[WebSocket]] = {}
         self._subscriptions: dict[int, asyncio.Task] = {}
+        self._rate_limiters: dict[int, RateLimiter] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket) -> None:
         """Register an already-accepted WebSocket and start Redis subscription."""
-        # Close existing connection if any (e.g., user opened new tab)
-        await self._cleanup(user_id)
+        if user_id not in self._connections:
+            self._connections[user_id] = set()
+            self._rate_limiters[user_id] = RateLimiter(
+                WS_RATE_LIMIT_MAX_TOKENS, WS_RATE_LIMIT_REFILL_SECONDS
+            )
+            self._subscriptions[user_id] = asyncio.create_task(
+                self._listen(user_id)
+            )
+        self._connections[user_id].add(websocket)
 
-        self._connections[user_id] = websocket
+    async def disconnect(self, user_id: int, websocket: WebSocket) -> None:
+        """Remove connection and clean up subscription when no connections remain."""
+        conns = self._connections.get(user_id)
+        if conns is not None:
+            conns.discard(websocket)
+            if not conns:
+                await self._cleanup(user_id)
 
-        # Start Redis subscription listener
-        self._subscriptions[user_id] = asyncio.create_task(
-            self._listen(user_id)
-        )
-
-    async def disconnect(self, user_id: int) -> None:
-        """Remove connection and clean up subscription."""
-        await self._cleanup(user_id)
+    def get_rate_limiter(self, user_id: int) -> RateLimiter | None:
+        """Get the shared rate limiter for a user."""
+        return self._rate_limiters.get(user_id)
 
     async def send_to_user(self, user_id: int, data: dict) -> None:
         """Publish message to Redis channel for the target user."""
@@ -81,15 +91,13 @@ class ConnectionManager:
 
             async for raw_message in pubsub.listen():
                 if raw_message["type"] == "message":
-                    ws = self._connections.get(user_id)
-                    if ws:
+                    for ws in list(self._connections.get(user_id, ())):
                         try:
                             await ws.send_text(raw_message["data"])
                         except Exception:
                             logger.debug(
                                 "Failed to send WS message to user %s", user_id
                             )
-                            break
         except asyncio.CancelledError:
             pass
         except Exception:
@@ -102,8 +110,9 @@ class ConnectionManager:
                 pass
 
     async def _cleanup(self, user_id: int) -> None:
-        """Clean up connection and subscription for a user."""
+        """Clean up connection, rate limiter, and subscription for a user."""
         self._connections.pop(user_id, None)
+        self._rate_limiters.pop(user_id, None)
         task = self._subscriptions.pop(user_id, None)
         if task:
             task.cancel()

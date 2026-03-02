@@ -6,10 +6,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
 
-from app.constants.message import (
-    WS_RATE_LIMIT_MAX_TOKENS,
-    WS_RATE_LIMIT_REFILL_SECONDS,
-)
 from app.core.security import get_current_user
 from app.crud.conversation import conversation_crud
 from app.crud.message import message_crud
@@ -25,7 +21,7 @@ from app.schemas.conversation import (
     MessageResponseSchema,
 )
 from app.services.message_service import AnnotatedMessageService
-from app.services.ws_manager import RateLimiter, manager
+from app.services.ws_manager import manager
 from app.services.ws_service import WebSocketService
 
 logger = logging.getLogger(__name__)
@@ -119,7 +115,7 @@ async def websocket_endpoint(
         return
 
     await manager.connect(user_id, websocket)
-    rate_limiter = RateLimiter(WS_RATE_LIMIT_MAX_TOKENS, WS_RATE_LIMIT_REFILL_SECONDS)
+    rate_limiter = manager.get_rate_limiter(user_id)
 
     try:
         while True:
@@ -146,4 +142,4 @@ async def websocket_endpoint(
     except WebSocketDisconnect:
         pass
     finally:
-        await manager.disconnect(user_id)
+        await manager.disconnect(user_id, websocket)
