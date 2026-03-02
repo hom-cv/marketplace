@@ -4,9 +4,7 @@ import json
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
-
-from app.core.security import get_current_user
+from app.core.security import decode_access_token, get_current_user
 from app.crud.conversation import conversation_crud
 from app.crud.message import message_crud
 from app.crud.post import post_crud
@@ -23,6 +21,7 @@ from app.schemas.conversation import (
 from app.services.message_service import AnnotatedMessageService
 from app.services.ws_manager import manager
 from app.services.ws_service import WebSocketService
+from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
 
@@ -95,9 +94,21 @@ async def websocket_endpoint(
     """
     WebSocket endpoint for real-time chat.
 
-    Authentication: Send {type: "auth", token: "..."} as the first message.
+    Connect to ws://host/api/v1/messages/ws?token=<jwt>
     Messages: {type: "message", conversation_id: int, content: str}
     """
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=4001, reason="Missing token")
+        return
+
+    payload = decode_access_token(token)
+    if not payload or not payload.get("user_id"):
+        await websocket.close(code=4001, reason="Invalid token")
+        return
+
+    user_id: int = payload["user_id"]
+
     await websocket.accept()
 
     ws_service = WebSocketService(
@@ -110,8 +121,7 @@ async def websocket_endpoint(
         ws_manager=manager,
     )
 
-    user_id = await ws_service.authenticate()
-    if user_id is None:
+    if not await ws_service.validate_user(user_id):
         return
 
     await manager.connect(user_id, websocket)
@@ -131,7 +141,12 @@ async def websocket_endpoint(
             if data.get("type") == "message":
                 if not rate_limiter.consume():
                     await websocket.send_text(
-                        json.dumps({"type": "error", "error": "Rate limited. Please slow down."})
+                        json.dumps(
+                            {
+                                "type": "error",
+                                "error": "Rate limited. Please slow down.",
+                            }
+                        )
                     )
                     continue
                 await ws_service.handle_message(data, user_id)

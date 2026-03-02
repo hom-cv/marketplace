@@ -1,15 +1,13 @@
 """WebSocket service for authentication and message handling."""
 
-import asyncio
 import json
 import logging
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.constants.message import MAX_MESSAGE_LENGTH, WS_AUTH_TIMEOUT_SECONDS
-from app.core.security import decode_access_token
+from app.constants.message import MAX_MESSAGE_LENGTH
 from app.crud.conversation import ConversationCRUD
 from app.crud.message import MessageCRUD
 from app.crud.post import PostCRUD
@@ -41,47 +39,19 @@ class WebSocketService:
         self._post_crud = post_crud
         self._ws_manager = ws_manager
 
-    async def authenticate(self) -> int | None:
-        """Perform the auth handshake. Returns user_id on success, None on failure."""
-        try:
-            raw = await asyncio.wait_for(
-                self._ws.receive_text(), timeout=WS_AUTH_TIMEOUT_SECONDS
-            )
-            data = json.loads(raw)
-        except asyncio.TimeoutError:
-            await self._ws.close(code=4001, reason="Auth timeout")
-            return None
-        except (json.JSONDecodeError, WebSocketDisconnect):
-            await self._ws.close(code=4001, reason="Invalid auth message")
-            return None
-
-        if data.get("type") != "auth" or not data.get("token"):
-            await self._ws.close(code=4001, reason="First message must be auth")
-            return None
-
-        token = data["token"]
-
+    async def validate_user(self, user_id: int) -> bool:
+        """Validate user exists and is active. Sends auth ok or closes. Returns True on success."""
         db = self._session_factory()
         try:
-            payload = decode_access_token(token)
-            if payload is None:
-                await self._ws.close(code=4001, reason="Invalid token")
-                return None
-
-            user_id = payload.get("user_id")
-            if not user_id:
-                await self._ws.close(code=4001, reason="Invalid token")
-                return None
-
             user = await self._user_crud.get_by_id_with_relations(db=db, id=user_id)
             if not user or user.is_deleted or not user.is_active:
                 await self._ws.close(code=4001, reason="Invalid token")
-                return None
+                return False
         finally:
             await db.close()
 
         await self._ws.send_text(json.dumps({"type": "auth", "status": "ok"}))
-        return user_id
+        return True
 
     async def handle_message(self, data: dict, user_id: int) -> None:
         """Validate and process an incoming chat message."""
