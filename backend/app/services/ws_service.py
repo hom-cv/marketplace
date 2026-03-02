@@ -113,6 +113,7 @@ class WebSocketService:
                 sender_id=user_id,
                 content=content,
             )
+            await db.commit()
         except HTTPException as exc:
             await self._send_error(exc.detail)
         except Exception:
