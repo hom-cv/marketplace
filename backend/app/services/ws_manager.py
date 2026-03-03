@@ -93,10 +93,18 @@ class ConnectionManager:
                 if raw_message["type"] == "message":
                     conns = list(self._connections.get(user_id, ()))
                     if conns:
-                        await asyncio.gather(
+                        results = await asyncio.gather(
                             *(ws.send_text(raw_message["data"]) for ws in conns),
                             return_exceptions=True,
                         )
+                        for ws, result in zip(conns, results):
+                            if isinstance(result, Exception):
+                                logger.warning(
+                                    "Send failed for user %s, removing stale connection: %s",
+                                    user_id,
+                                    result,
+                                )
+                                await self.disconnect(user_id, ws)
         except asyncio.CancelledError:
             pass
         except Exception:
