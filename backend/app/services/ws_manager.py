@@ -91,13 +91,12 @@ class ConnectionManager:
 
             async for raw_message in pubsub.listen():
                 if raw_message["type"] == "message":
-                    for ws in list(self._connections.get(user_id, ())):
-                        try:
-                            await ws.send_text(raw_message["data"])
-                        except Exception:
-                            logger.debug(
-                                "Failed to send WS message to user %s", user_id
-                            )
+                    conns = list(self._connections.get(user_id, ()))
+                    if conns:
+                        await asyncio.gather(
+                            *(ws.send_text(raw_message["data"]) for ws in conns),
+                            return_exceptions=True,
+                        )
         except asyncio.CancelledError:
             pass
         except Exception:

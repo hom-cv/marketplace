@@ -4,6 +4,7 @@ import json
 import logging
 from typing import Annotated
 
+from app.core.jwt import create_ws_ticket
 from app.core.security import decode_access_token, get_current_user
 from app.crud.conversation import conversation_crud
 from app.crud.message import message_crud
@@ -87,6 +88,14 @@ async def send_message(
     )
 
 
+@router.post("/ws/ticket")
+async def create_ws_ticket_endpoint(
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> dict:
+    """Exchange an access token for a short-lived WebSocket ticket."""
+    return {"ticket": create_ws_ticket(current_user.id)}
+
+
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
@@ -94,17 +103,17 @@ async def websocket_endpoint(
     """
     WebSocket endpoint for real-time chat.
 
-    Connect to ws://host/api/v1/messages/ws?token=<jwt>
+    Connect via: POST /ws/ticket -> get ticket -> ws://host/api/v1/messages/ws?ticket=<ticket>
     Messages: {type: "message", conversation_id: int, content: str}
     """
-    token = websocket.query_params.get("token")
-    if not token:
-        await websocket.close(code=4001, reason="Missing token")
+    ticket = websocket.query_params.get("ticket")
+    if not ticket:
+        await websocket.close(code=4001, reason="Missing ticket")
         return
 
-    payload = decode_access_token(token)
-    if not payload or not payload.get("user_id"):
-        await websocket.close(code=4001, reason="Invalid token")
+    payload = decode_access_token(ticket)
+    if not payload or payload.get("sub") != "ws_ticket" or not payload.get("user_id"):
+        await websocket.close(code=4001, reason="Invalid ticket")
         return
 
     user_id: int = payload["user_id"]
