@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import forbidden_error, not_found_error, unauthorized_error
 from app.core.settings import Settings, get_settings
+from app.crud.ban import ban_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
 from app.models.user import User
@@ -72,8 +73,13 @@ async def get_current_user(
         user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
         if not user:
             raise not_found_error("User not found")
-        if user.is_deleted or not user.is_active:
-            raise unauthorized_error("Account is inactive or has been removed")
+        if user.is_deleted:
+            raise unauthorized_error("Account has been removed")
+        if not user.is_active:
+            raise unauthorized_error("Account is not active")
+        active_ban = await ban_crud.get_active_user_ban(db, user_id=user.id)
+        if active_ban:
+            raise unauthorized_error("Account has been banned")
     else:
         raise unauthorized_error("Could not validate credentials. (Invalid token)")
 
@@ -117,7 +123,10 @@ async def get_current_user_optional(
 
         if token_data.user_id:
             user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
-            if user and (user.is_deleted or not user.is_active):
+            if not user or user.is_deleted or not user.is_active:
+                return None
+            active_ban = await ban_crud.get_active_user_ban(db, user_id=user.id)
+            if active_ban:
                 return None
             return user
     except jwt.PyJWTError:

@@ -8,6 +8,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.constants.message import MAX_MESSAGE_LENGTH
+from app.crud.ban import ban_crud
 from app.crud.conversation import ConversationCRUD
 from app.crud.message import MessageCRUD
 from app.crud.post import PostCRUD
@@ -40,12 +41,16 @@ class WebSocketService:
         self._ws_manager = ws_manager
 
     async def validate_user(self, user_id: int) -> bool:
-        """Validate user exists and is active. Sends auth ok or closes. Returns True on success."""
+        """Validate user exists, is active, and is not banned. Sends auth ok or closes."""
         db = self._session_factory()
         try:
             user = await self._user_crud.get_by_id_with_relations(db=db, id=user_id)
             if not user or user.is_deleted or not user.is_active:
                 await self._ws.close(code=4001, reason="Invalid token")
+                return False
+            active_ban = await ban_crud.get_active_user_ban(db, user_id=user_id)
+            if active_ban:
+                await self._ws.close(code=4003, reason="Account banned")
                 return False
         finally:
             await db.close()
