@@ -2,6 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import jwt
 
+from app.constants.message import WS_TICKET_EXPIRES_SECONDS
 from app.core.settings import Settings, get_settings
 
 settings: Settings = get_settings()
@@ -55,6 +56,17 @@ def create_email_verification_token(user_id: int) -> str:
         "user_id": user_id,
         "exp": expire,
         "sub": "email_verification",
+    }
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
+
+
+def create_ws_ticket(user_id: int) -> str:
+    """Create a short-lived ticket for WebSocket authentication."""
+    expire = datetime.now(UTC) + timedelta(seconds=WS_TICKET_EXPIRES_SECONDS)
+    to_encode = {
+        "user_id": user_id,
+        "exp": expire,
+        "sub": "ws_ticket",
     }
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=ALGORITHM)
 
