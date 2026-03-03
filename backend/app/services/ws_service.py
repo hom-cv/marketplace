@@ -83,10 +83,11 @@ class WebSocketService:
                 sender_id=user_id,
                 content=content,
             )
-            await db.commit()
         except HTTPException as exc:
+            await db.rollback()
             await self._send_error(exc.detail)
         except Exception:
+            await db.rollback()
             logger.exception(
                 "Error processing WebSocket message for user %s", user_id
             )

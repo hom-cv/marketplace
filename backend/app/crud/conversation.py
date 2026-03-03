@@ -121,7 +121,6 @@ class ConversationCRUD:
             .values(last_modified_date=func.now())
         )
         await db.execute(stmt)
-        await db.commit()
 
 
 conversation_crud = ConversationCRUD()

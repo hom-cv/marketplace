@@ -82,10 +82,8 @@ class MessageService:
             self.db, conversation_ids=conv_ids
         )
 
-        results = []
-        for conv in conversations:
-            last_msg = last_messages.get(conv.id)
-            results.append(ConversationResponseSchema(
+        return [
+            ConversationResponseSchema(
                 id=conv.id,
                 initiator=ConversationParticipantSchema(
                     id=conv.initiator.id, username=conv.initiator.username
@@ -95,11 +93,12 @@ class MessageService:
                 ),
                 post=self._build_post_schema(conv.post),
                 last_message=MessageResponseSchema.model_validate(last_msg)
-                if last_msg
+                if (last_msg := last_messages.get(conv.id))
                 else None,
                 created_date=conv.created_date,
-            ))
-        return results
+            )
+            for conv in conversations
+        ]
 
     async def get_conversation_messages(
         self,
@@ -160,9 +159,6 @@ class MessageService:
         ):
             raise forbidden_error("You are not a participant in this conversation")
 
-        # TODO: Refactor chat CRUDs to use flush() instead of commit(),
-        # then issue a single db.commit() here for transaction atomicity.
-        # Currently create() and touch() each commit independently.
         message = await self._message_crud.create(
             self.db,
             conversation_id=conversation_id,
@@ -174,6 +170,8 @@ class MessageService:
         await self._conversation_crud.touch(
             self.db, conversation_id=conversation_id
         )
+
+        await self.db.commit()
 
         msg_schema = MessageResponseSchema.model_validate(message)
 
