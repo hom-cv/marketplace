@@ -61,6 +61,9 @@ async def get_current_user(
         if payload is None:
             raise unauthorized_error("Could not validate credentials. (Invalid token)")
 
+        if payload.get("sub") != "access":
+            raise unauthorized_error("Could not validate credentials. (Invalid token)")
+
         token_data = AccessTokenSchema(**payload)
     except jwt.PyJWTError as pyjwt_error:
         raise unauthorized_error("Could not validate credentials.") from pyjwt_error
@@ -69,6 +72,8 @@ async def get_current_user(
         user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
         if not user:
             raise not_found_error("User not found")
+        if user.is_deleted or not user.is_active:
+            raise unauthorized_error("Account is inactive or has been removed")
     else:
         raise unauthorized_error("Could not validate credentials. (Invalid token)")
 
@@ -105,10 +110,15 @@ async def get_current_user_optional(
         if payload is None:
             return None
 
+        if payload.get("sub") != "access":
+            return None
+
         token_data = AccessTokenSchema(**payload)
 
         if token_data.user_id:
             user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
+            if user and (user.is_deleted or not user.is_active):
+                return None
             return user
     except jwt.PyJWTError:
         return None

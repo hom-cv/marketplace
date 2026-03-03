@@ -66,6 +66,7 @@ class MessageService:
             recipient_id=post.user_id,
             post_id=post_id,
         )
+        await self.db.commit()
 
         return await self._build_conversation_response(conversation, post)
 

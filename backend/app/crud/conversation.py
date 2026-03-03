@@ -40,7 +40,7 @@ class ConversationCRUD:
             )
         )
         await db.execute(stmt)
-        await db.commit()
+        await db.flush()
 
         # Always SELECT to get the row (whether just inserted or already existed)
         query = select(Conversation).where(

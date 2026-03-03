@@ -6,6 +6,7 @@ import logging
 
 from fastapi import WebSocket
 
+from app.constants.message import MAX_WS_CONNECTIONS_PER_USER
 from app.db.redis import get_redis
 
 logger = logging.getLogger(__name__)
@@ -25,14 +26,24 @@ class ConnectionManager:
         self._connections: dict[int, set[WebSocket]] = {}
         self._subscriptions: dict[int, asyncio.Task] = {}
 
-    async def connect(self, user_id: int, websocket: WebSocket) -> None:
-        """Register an already-accepted WebSocket and start Redis subscription."""
+    async def connect(self, user_id: int, websocket: WebSocket) -> bool:
+        """Register an already-accepted WebSocket and start Redis subscription.
+
+        Returns True if the connection was accepted, False if rejected
+        (e.g. too many connections).
+        """
         if user_id not in self._connections:
             self._connections[user_id] = set()
             self._subscriptions[user_id] = asyncio.create_task(
                 self._listen(user_id)
             )
+
+        if len(self._connections[user_id]) >= MAX_WS_CONNECTIONS_PER_USER:
+            await websocket.close(code=4008, reason="Too many connections")
+            return False
+
         self._connections[user_id].add(websocket)
+        return True
 
     async def disconnect(self, user_id: int, websocket: WebSocket) -> None:
         """Remove connection and clean up subscription when no connections remain."""

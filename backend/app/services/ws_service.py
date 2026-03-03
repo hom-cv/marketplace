@@ -100,7 +100,8 @@ class WebSocketService:
         if not await self.validate_user(user_id):
             return
 
-        await self._ws_manager.connect(user_id, self._ws)
+        if not await self._ws_manager.connect(user_id, self._ws):
+            return
 
         try:
             while True:
