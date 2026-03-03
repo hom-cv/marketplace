@@ -38,7 +38,7 @@ export function useChatSubscription() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const connectingRef = useRef(false);
-  const connectRef = useRef<() => void>();
+  const connectRef = useRef<(() => void) | undefined>(undefined);
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
