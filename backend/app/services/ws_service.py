@@ -101,7 +101,6 @@ class WebSocketService:
             return
 
         await self._ws_manager.connect(user_id, self._ws)
-        rate_limiter = self._ws_manager.get_rate_limiter(user_id)
 
         try:
             while True:
@@ -115,9 +114,6 @@ class WebSocketService:
                 msg_type = data.get("type")
 
                 if msg_type == "message":
-                    if not rate_limiter.consume():
-                        await self._send_error("Rate limited. Please slow down.")
-                        continue
                     await self.handle_message(data, user_id)
 
                 elif msg_type == "ping":

@@ -3,36 +3,12 @@
 import asyncio
 import json
 import logging
-import time
 
 from fastapi import WebSocket
 
-from app.constants.message import WS_RATE_LIMIT_MAX_TOKENS, WS_RATE_LIMIT_REFILL_SECONDS
 from app.db.redis import get_redis
 
 logger = logging.getLogger(__name__)
-
-
-class RateLimiter:
-    """Token bucket rate limiter for per-connection message throttling."""
-
-    def __init__(self, max_tokens: int, refill_seconds: float) -> None:
-        self._max_tokens = max_tokens
-        self._tokens = float(max_tokens)
-        self._refill_rate = max_tokens / refill_seconds
-        self._last_refill = time.monotonic()
-
-    def consume(self) -> bool:
-        """Try to consume one token. Returns True if allowed, False if rate limited."""
-        now = time.monotonic()
-        elapsed = now - self._last_refill
-        self._tokens = min(self._max_tokens, self._tokens + elapsed * self._refill_rate)
-        self._last_refill = now
-
-        if self._tokens >= 1.0:
-            self._tokens -= 1.0
-            return True
-        return False
 
 
 class ConnectionManager:
@@ -48,15 +24,11 @@ class ConnectionManager:
     def __init__(self) -> None:
         self._connections: dict[int, set[WebSocket]] = {}
         self._subscriptions: dict[int, asyncio.Task] = {}
-        self._rate_limiters: dict[int, RateLimiter] = {}
 
     async def connect(self, user_id: int, websocket: WebSocket) -> None:
         """Register an already-accepted WebSocket and start Redis subscription."""
         if user_id not in self._connections:
             self._connections[user_id] = set()
-            self._rate_limiters[user_id] = RateLimiter(
-                WS_RATE_LIMIT_MAX_TOKENS, WS_RATE_LIMIT_REFILL_SECONDS
-            )
             self._subscriptions[user_id] = asyncio.create_task(
                 self._listen(user_id)
             )
@@ -69,10 +41,6 @@ class ConnectionManager:
             conns.discard(websocket)
             if not conns:
                 await self._cleanup(user_id)
-
-    def get_rate_limiter(self, user_id: int) -> RateLimiter | None:
-        """Get the shared rate limiter for a user."""
-        return self._rate_limiters.get(user_id)
 
     async def send_to_user(self, user_id: int, data: dict) -> None:
         """Publish message to Redis channel for the target user."""
@@ -117,9 +85,8 @@ class ConnectionManager:
                 pass
 
     async def _cleanup(self, user_id: int) -> None:
-        """Clean up connection, rate limiter, and subscription for a user."""
+        """Clean up connection and subscription for a user."""
         self._connections.pop(user_id, None)
-        self._rate_limiters.pop(user_id, None)
         task = self._subscriptions.pop(user_id, None)
         if task:
             task.cancel()
