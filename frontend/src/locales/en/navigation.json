@@ -12,7 +12,8 @@
     "logout": "Logout",
     "adminDashboard": "Admin Dashboard",
     "profile": "Profile",
-    "editProfile": "Edit Profile"
+    "editProfile": "Edit Profile",
+    "messages": "Messages"
   },
   "sections": {
     "dashboard": "Dashboard",

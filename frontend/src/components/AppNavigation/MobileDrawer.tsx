@@ -26,6 +26,7 @@ import {
   IconUser,
   IconSettings,
   IconShield,
+  IconMessage,
 } from "@tabler/icons-react";
 import { getInitials, type UserInfo } from "./types";
 
@@ -79,6 +80,14 @@ export function MobileDrawer({
               label={t("menu.explore")}
               leftSection={<IconSearch size={18} />}
               active={location.pathname === "/explore"}
+              onClick={onClose}
+            />
+            <NavLink
+              component={Link}
+              to="/messages"
+              label={t("menu.messages")}
+              leftSection={<IconMessage size={18} />}
+              active={location.pathname.startsWith("/messages")}
               onClick={onClose}
             />
             <NavLink

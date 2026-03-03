@@ -27,7 +27,14 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(errorData.detail || `HTTP ${response.status}`);
+    const message = errorData.detail || `HTTP ${response.status}`;
+
+    // Auto-logout on 401 from any endpoint
+    if (response.status === 401) {
+      useAuthStore.getState().logout();
+    }
+
+    throw new Error(message);
   }
 
   // Handle 204 No Content or non-JSON responses

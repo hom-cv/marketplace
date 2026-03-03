@@ -93,7 +93,8 @@
     "purchaseAction": "purchase this item",
     "itemSold": "This item has been sold",
     "shipping": "shipping",
-    "freeShipping": "Free shipping"
+    "freeShipping": "Free shipping",
+    "viewListing": "View Listing"
   },
   "myListings": {
     "title": "My Listings",

@@ -8,3 +8,5 @@ export { BecomeSellerPage } from "./BecomeSeller";
 export { PaymentReturnPage } from "./PaymentReturn";
 export { CheckoutPage } from "./Checkout";
 export { ProfileEditPage } from "./ProfileEdit";
+export { MessagesPage } from "./Messages";
+export { ChatViewPage } from "./ChatView";
