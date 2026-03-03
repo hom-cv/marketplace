@@ -1,6 +1,5 @@
 """Message and conversation API endpoints."""
 
-import json
 import logging
 from typing import Annotated
 
@@ -22,7 +21,7 @@ from app.schemas.conversation import (
 from app.services.message_service import AnnotatedMessageService
 from app.services.ws_manager import manager
 from app.services.ws_service import WebSocketService
-from fastapi import APIRouter, Depends, Path, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, Path, Query, WebSocket
 
 logger = logging.getLogger(__name__)
 
@@ -130,40 +129,4 @@ async def websocket_endpoint(
         ws_manager=manager,
     )
 
-    if not await ws_service.validate_user(user_id):
-        return
-
-    await manager.connect(user_id, websocket)
-    rate_limiter = manager.get_rate_limiter(user_id)
-
-    try:
-        while True:
-            raw = await websocket.receive_text()
-            try:
-                data = json.loads(raw)
-            except json.JSONDecodeError:
-                await websocket.send_text(
-                    json.dumps({"type": "error", "error": "Invalid JSON"})
-                )
-                continue
-
-            if data.get("type") == "message":
-                if not rate_limiter.consume():
-                    await websocket.send_text(
-                        json.dumps(
-                            {
-                                "type": "error",
-                                "error": "Rate limited. Please slow down.",
-                            }
-                        )
-                    )
-                    continue
-                await ws_service.handle_message(data, user_id)
-
-            elif data.get("type") == "ping":
-                await websocket.send_text(json.dumps({"type": "pong"}))
-
-    except WebSocketDisconnect:
-        pass
-    finally:
-        await manager.disconnect(user_id, websocket)
+    await ws_service.run(user_id)

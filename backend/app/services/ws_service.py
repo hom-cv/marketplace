@@ -3,7 +3,7 @@
 import json
 import logging
 
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -93,6 +93,39 @@ class WebSocketService:
             await self._send_error("Failed to send message")
         finally:
             await db.close()
+
+    async def run(self, user_id: int) -> None:
+        """Full connection lifecycle: validate, register, loop, clean up."""
+        if not await self.validate_user(user_id):
+            return
+
+        await self._ws_manager.connect(user_id, self._ws)
+        rate_limiter = self._ws_manager.get_rate_limiter(user_id)
+
+        try:
+            while True:
+                raw = await self._ws.receive_text()
+                try:
+                    data = json.loads(raw)
+                except json.JSONDecodeError:
+                    await self._send_error("Invalid JSON")
+                    continue
+
+                msg_type = data.get("type")
+
+                if msg_type == "message":
+                    if not rate_limiter.consume():
+                        await self._send_error("Rate limited. Please slow down.")
+                        continue
+                    await self.handle_message(data, user_id)
+
+                elif msg_type == "ping":
+                    await self._ws.send_text(json.dumps({"type": "pong"}))
+
+        except WebSocketDisconnect:
+            pass
+        finally:
+            await self._ws_manager.disconnect(user_id, self._ws)
 
     async def _send_error(self, error: str) -> None:
         """Send an error frame to the client."""
