@@ -10,7 +10,7 @@
 import { useEffect, useRef, useCallback, createContext, useContext } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
-import { getWebSocketUrl } from "@/api/chat";
+import { getWsTicket, getWebSocketUrl } from "@/api/chat";
 import type { WebSocketMessage, ConversationDetail } from "@/api/types/chat";
 
 const defaultWsRef: React.RefObject<WebSocket | null> = { current: null };
@@ -25,11 +25,20 @@ export function useChatWebSocket() {
 /** Delay in milliseconds before attempting to reconnect a dropped WebSocket. */
 const RECONNECT_DELAY_MS = 3000;
 
+/** Close codes that indicate permanent failure — do not reconnect. */
+const PERMANENT_CLOSE_CODES = new Set([
+  4001, // Invalid / expired ticket
+  4003, // Account banned
+  4008, // Too many connections
+]);
+
 export function useChatSubscription() {
   const queryClient = useQueryClient();
   const token = useAuthStore((state) => state.token);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const connectingRef = useRef(false);
+  const connectRef = useRef<() => void>();
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
@@ -80,8 +89,9 @@ export function useChatSubscription() {
     [queryClient]
   );
 
-  const connect = useCallback(() => {
-    if (!token) return;
+  const connect = useCallback(async () => {
+    if (!useAuthStore.getState().token || connectingRef.current) return;
+    connectingRef.current = true;
 
     // Clean up existing connection
     if (wsRef.current) {
@@ -89,7 +99,20 @@ export function useChatSubscription() {
       wsRef.current = null;
     }
 
-    const ws = new WebSocket(getWebSocketUrl());
+    let ticket: string;
+    try {
+      ticket = await getWsTicket();
+    } catch {
+      // Ticket fetch failed (401 triggers auto-logout via apiRequest).
+      // For other errors, retry after delay.
+      connectingRef.current = false;
+      if (useAuthStore.getState().token) {
+        reconnectTimerRef.current = setTimeout(() => connectRef.current?.(), RECONNECT_DELAY_MS);
+      }
+      return;
+    }
+
+    const ws = new WebSocket(getWebSocketUrl(ticket));
 
     ws.onmessage = (event: MessageEvent) => {
       try {
@@ -108,26 +131,42 @@ export function useChatSubscription() {
       handleMessage(event);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event: CloseEvent) => {
       wsRef.current = null;
-      // Reconnect after delay if we still have a token
-      if (useAuthStore.getState().token) {
-        reconnectTimerRef.current = setTimeout(connect, RECONNECT_DELAY_MS);
-      }
-    };
+      connectingRef.current = false;
 
-    ws.onopen = () => {
-      // Send auth token as first message (not in URL)
-      ws.send(JSON.stringify({ type: "auth", token }));
+      // Auth-related close codes — clear session
+      if (event.code === 4001 || event.code === 4003) {
+        useAuthStore.getState().logout();
+        return;
+      }
+
+      // Don't reconnect on permanent failures
+      if (PERMANENT_CLOSE_CODES.has(event.code)) {
+        return;
+      }
+
+      // Transient failure — reconnect if still logged in
+      if (useAuthStore.getState().token) {
+        reconnectTimerRef.current = setTimeout(() => connectRef.current?.(), RECONNECT_DELAY_MS);
+      }
     };
 
     ws.onerror = () => {
       // Will trigger onclose → reconnect
     };
-  }, [token, handleMessage, queryClient]);
+
+    connectingRef.current = false;
+  }, [handleMessage, queryClient]);
 
   useEffect(() => {
-    connect();
+    connectRef.current = connect;
+  }, [connect]);
+
+  useEffect(() => {
+    if (token) {
+      connect();
+    }
 
     return () => {
       clearTimeout(reconnectTimerRef.current);
@@ -136,7 +175,7 @@ export function useChatSubscription() {
         wsRef.current = null;
       }
     };
-  }, [connect]);
+  }, [token, connect]);
 
   // Expose ws ref for send operations
   return wsRef;

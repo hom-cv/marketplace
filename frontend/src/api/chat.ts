@@ -40,8 +40,14 @@ export async function sendMessageRest(
   );
 }
 
-export function getWebSocketUrl(): string {
-  // Convert HTTP base URL to WebSocket URL
+export async function getWsTicket(): Promise<string> {
+  const data = await apiRequest<{ ticket: string }>("/messages/ws/ticket", {
+    method: "POST",
+  });
+  return data.ticket;
+}
+
+export function getWebSocketUrl(ticket: string): string {
   const wsBase = API_BASE_URL.replace(/^http/, "ws");
-  return `${wsBase}/messages/ws`;
+  return `${wsBase}/messages/ws?ticket=${encodeURIComponent(ticket)}`;
 }
