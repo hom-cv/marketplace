@@ -1,80 +1,4 @@
-/* PurchaseHistoryPage - Flat design */
-
-.page {
-  min-height: 100vh;
-  background: var(--color-bg);
-  padding: 32px 48px 48px;
-}
-
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-/* Header */
-.header {
-  margin-bottom: 32px;
-}
-
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 8px;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* Purchase items list */
-.purchaseList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Purchase header content (inside AccordionCard) */
-.purchaseHeader {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.purchaseImage {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  background: var(--color-bg-muted);
-  flex-shrink: 0;
-}
-
-.purchaseInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.purchaseTopRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.purchaseTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* PurchaseHistoryPage - Page-specific styles */
 
 .purchasePrice {
   font-size: 0.9rem;
@@ -83,50 +7,12 @@
   flex-shrink: 0;
 }
 
-.purchaseMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.badgePacking {
-  background: var(--color-warning-light);
-  color: var(--color-warning);
-}
-
-.badgeInTransit {
-  background: rgba(36, 67, 255, 0.1);
-  color: var(--color-primary);
-}
-
-.badgeDelivered {
-  background: var(--color-success-light);
-  color: var(--color-success);
-}
-
-.purchaseDate {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-/* Expanded content grid */
+/* Content grid */
 .contentGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding-top: 16px;
+  gap: 12px;
+  padding-top: 12px;
 }
 
 /* Stepper card (left column) */
@@ -191,7 +77,7 @@
   flex-shrink: 0;
 }
 
-/* Button row for side-by-side buttons */
+/* Button row */
 .buttonRow {
   display: flex;
   gap: 8px;
@@ -228,40 +114,13 @@
   background: var(--color-border);
 }
 
-/* Loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-/* Mobile */
+/* Mobile responsive */
 @media (max-width: 768px) {
-  .page {
-    padding: 24px 24px 48px;
-  }
-
   .contentGrid {
     grid-template-columns: 1fr;
   }
 
   .buttonRow {
     flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .page {
-    padding: 20px 16px 32px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .purchaseImage {
-    width: 48px;
-    height: 48px;
   }
 }
