@@ -1,4 +1,4 @@
-/* SoldListingsPage - Bento Grid Design */
+/* SoldListingsPage - Messages list style */
 
 .page {
   min-height: 100vh;
@@ -7,47 +7,72 @@
 }
 
 .container {
-  max-width: 900px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
-/* Header */
-.header {
-  margin-bottom: 32px;
-}
-
 .title {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--color-text);
-  margin: 0 0 8px;
-  letter-spacing: -0.02em;
+  margin: 0 0 24px;
 }
 
-.subtitle {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  margin: 0;
+/* Loading */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
 }
 
-/* Sale items list */
+/* Sale list - single bordered container like messages */
 .saleList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  overflow: hidden;
 }
 
-/* Sale header content (inside AccordionCard) */
-.saleHeader {
+/* Each sale item row */
+.saleItem {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.saleItem:last-child {
+  border-bottom: none;
+}
+
+/* Clickable header row */
+.saleRow {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  padding: 16px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.saleRow:hover {
+  background: var(--color-bg-muted);
+}
+
+.saleRow:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
 }
 
 .saleImage {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
   object-fit: cover;
   background: var(--color-bg-muted);
   flex-shrink: 0;
@@ -56,14 +81,14 @@
 .saleInfo {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .saleTopRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
 }
 
 .saleTitle {
@@ -87,15 +112,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -116,24 +140,32 @@
   color: var(--color-success);
 }
 
-.badgeShipped {
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-muted);
-}
-
 .saleDate {
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
 
-/* ===== BENTO GRID ===== */
-.bentoGrid {
+.expandIcon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.expandIconOpen {
+  transform: rotate(180deg);
+}
+
+/* Expanded content */
+.expandedContent {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.detailGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto auto auto;
   gap: 8px;
-  padding-top: 16px;
+  padding-top: 12px;
 }
 
 /* Cell base styling */
@@ -156,7 +188,6 @@
   margin: 0 0 8px;
 }
 
-/* Row 1: Earnings + Info */
 .earningsCell {
   grid-row: span 2;
 }
@@ -198,7 +229,7 @@
   color: var(--color-text-muted);
 }
 
-/* Shipped badge in cell */
+/* Shipped badge */
 .shippedBadge {
   display: flex;
   align-items: center;
@@ -219,7 +250,7 @@
   margin: 0;
 }
 
-/* Tracking form in cell */
+/* Tracking form */
 .trackingForm {
   display: flex;
   flex-direction: column;
@@ -235,21 +266,17 @@
   flex: 1;
 }
 
-/* Loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 300px;
-}
-
-/* ===== RESPONSIVE ===== */
+/* Mobile responsive */
 @media (max-width: 768px) {
   .page {
-    padding: 24px 24px 48px;
+    padding: 24px 16px 32px;
   }
 
-  .bentoGrid {
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .detailGrid {
     grid-template-columns: 1fr;
   }
 
@@ -259,19 +286,6 @@
 }
 
 @media (max-width: 480px) {
-  .page {
-    padding: 20px 16px 32px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .saleImage {
-    width: 48px;
-    height: 48px;
-  }
-
   .trackingRow {
     flex-direction: column;
   }
