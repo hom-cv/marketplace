@@ -19,7 +19,9 @@ import { EarningsPreview } from "@/components/EarningsPreview";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
-import { CARRIER_OPTIONS, FULFILLMENT_LABELS } from "@/constants/shipping";
+import { FulfillmentBadge } from "@/components/FulfillmentBadge";
+import { CARRIER_OPTIONS } from "@/constants/shipping";
+import shared from "@/styles/listPage.module.css";
 import styles from "./SoldListingsPage.module.css";
 
 export function SoldListingsPage() {
@@ -44,8 +46,8 @@ export function SoldListingsPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.page}>
-        <div className={styles.loading}>
+      <div className={shared.page}>
+        <div className={shared.loading}>
           <Loader size="lg" />
         </div>
       </div>
@@ -54,8 +56,8 @@ export function SoldListingsPage() {
 
   if (error) {
     return (
-      <div className={styles.page}>
-        <div className={styles.container}>
+      <div className={shared.page}>
+        <div className={shared.container}>
           <Alert variant="error" title={t("status.error")}>
             {error instanceof Error ? error.message : t("errors.failedToLoad")}
           </Alert>
@@ -78,21 +80,12 @@ export function SoldListingsPage() {
     return (sale.seller_payout ?? 0) / 100;
   };
 
-  const getBadgeClass = (status: string | null) => {
-    switch (status) {
-      case "packing": return styles.badgePacking;
-      case "in_transit": return styles.badgeInTransit;
-      case "delivered": return styles.badgeDelivered;
-      default: return styles.badgePacking;
-    }
-  };
-
   const successfulSales = sales?.filter((s) => s.status === "successful") || [];
 
   return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        <h1 className={styles.title}>{t("sales.title")}</h1>
+    <div className={shared.page}>
+      <div className={shared.container}>
+        <h1 className={shared.title}>{t("sales.title")}</h1>
 
         {successfulSales.length === 0 ? (
           <EmptyStateCard
@@ -101,14 +94,14 @@ export function SoldListingsPage() {
             description={t("sales.noSalesDesc")}
           />
         ) : (
-          <div className={styles.saleList}>
+          <div className={shared.list}>
             {successfulSales.map((sale) => {
               const isExpanded = expandedId === sale.payment_id;
               return (
-                <div key={sale.payment_id} className={styles.saleItem}>
+                <div key={sale.payment_id} className={shared.item}>
                   <button
                     type="button"
-                    className={styles.saleRow}
+                    className={shared.row}
                     onClick={() => setExpandedId(isExpanded ? null : sale.payment_id)}
                     aria-expanded={isExpanded}
                     aria-label={`${sale.post.title} - ${t("sales.toggleDetails")}`}
@@ -116,33 +109,31 @@ export function SoldListingsPage() {
                     <img
                       src={sale.post.image_url || "https://placehold.co/48x48?text=No+Image"}
                       alt={sale.post.title}
-                      className={styles.saleImage}
+                      className={shared.thumbnail}
                     />
-                    <div className={styles.saleInfo}>
-                      <div className={styles.saleTopRow}>
-                        <span className={styles.saleTitle}>{sale.post.title}</span>
+                    <div className={shared.info}>
+                      <div className={shared.topRow}>
+                        <span className={shared.itemTitle}>{sale.post.title}</span>
                         <span className={styles.saleEarnings}>
                           +฿{getSellerPayout(sale).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </span>
                       </div>
-                      <div className={styles.saleMeta}>
-                        <span className={`${styles.badge} ${getBadgeClass(sale.fulfillment_status)}`}>
-                          {FULFILLMENT_LABELS[sale.fulfillment_status || ""] || "Processing"}
-                        </span>
-                        <span className={styles.saleDate}>
+                      <div className={shared.meta}>
+                        <FulfillmentBadge status={sale.fulfillment_status} />
+                        <span className={shared.date}>
                           {new Date(sale.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                     <IconChevronDown
                       size={18}
-                      className={`${styles.expandIcon} ${isExpanded ? styles.expandIconOpen : ""}`}
+                      className={`${shared.expandIcon} ${isExpanded ? shared.expandIconOpen : ""}`}
                       aria-hidden="true"
                     />
                   </button>
 
                   {isExpanded && (
-                    <div className={styles.expandedContent}>
+                    <div className={shared.expandedContent}>
                       <div className={styles.detailGrid}>
                         {/* Left Column: Earnings (spans 2 rows) */}
                         <div className={`${styles.cell} ${styles.earningsCell}`}>

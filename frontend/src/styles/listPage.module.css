@@ -1,0 +1,148 @@
+/* Shared list page styles — used by Messages, Sales, Purchases */
+
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  padding: 32px 48px 48px;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 24px;
+}
+
+/* Loading */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+/* Bordered list container */
+.list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  overflow: hidden;
+}
+
+/* Item separator */
+.item {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+/* Clickable button row */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.row:hover {
+  background: var(--color-bg-muted);
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Thumbnail */
+.thumbnail {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+  background: var(--color-bg-muted);
+  flex-shrink: 0;
+}
+
+/* Info area */
+.info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Top row — title + value */
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+/* Item title — truncated */
+.itemTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta row */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Date text */
+.date {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+/* Expand icon */
+.expandIcon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.expandIconOpen {
+  transform: rotate(180deg);
+}
+
+/* Expanded content */
+.expandedContent {
+  padding: 0 16px 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .page {
+    padding: 24px 16px 32px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+}

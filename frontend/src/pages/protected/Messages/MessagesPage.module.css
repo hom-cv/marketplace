@@ -1,30 +1,4 @@
-/* MessagesPage - Conversation list */
-
-.page {
-  min-height: 100vh;
-  background: var(--color-bg);
-  padding: 32px 48px 48px;
-}
-
-.container {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 24px;
-}
-
-/* Loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-}
+/* MessagesPage - Conversation list (page-specific styles) */
 
 /* Empty state */
 .emptyState {
@@ -57,16 +31,7 @@
   text-decoration: underline;
 }
 
-/* Conversation list */
-.conversationList {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-card);
-  overflow: hidden;
-}
-
+/* Conversation item — fixed height link row */
 .conversationItem {
   display: flex;
   align-items: center;
@@ -87,7 +52,7 @@
   background: var(--color-bg-muted);
 }
 
-/* Post thumbnail */
+/* Post thumbnail — with placeholder icon support */
 .postThumbnail {
   width: 48px;
   height: 48px;
@@ -153,15 +118,4 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-/* Mobile responsive */
-@media (max-width: 768px) {
-  .page {
-    padding: 24px 16px 32px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
 }

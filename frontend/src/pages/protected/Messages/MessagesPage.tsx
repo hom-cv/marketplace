@@ -11,6 +11,7 @@ import { getConversations } from "@/api/chat";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import type { Conversation } from "@/api/types/chat";
+import shared from "@/styles/listPage.module.css";
 import styles from "./MessagesPage.module.css";
 
 function formatTime(dateStr: string, t: (key: string) => string): string {
@@ -42,8 +43,8 @@ export function MessagesPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.page}>
-        <div className={styles.loading}>
+      <div className={shared.page}>
+        <div className={shared.loading}>
           <Loader size="lg" />
         </div>
       </div>
@@ -52,8 +53,8 @@ export function MessagesPage() {
 
   if (error) {
     return (
-      <div className={styles.page}>
-        <div className={styles.container}>
+      <div className={shared.page}>
+        <div className={shared.container}>
           <Alert variant="error">
             {error instanceof Error ? error.message : t("failedToLoad")}
           </Alert>
@@ -66,9 +67,9 @@ export function MessagesPage() {
     conv.initiator.id === currentUser?.id ? conv.recipient : conv.initiator;
 
   return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        <h1 className={styles.title}>{t("title")}</h1>
+    <div className={shared.page}>
+      <div className={shared.container}>
+        <h1 className={shared.title}>{t("title")}</h1>
 
         {!conversations || conversations.length === 0 ? (
           <div className={styles.emptyState}>
@@ -79,7 +80,7 @@ export function MessagesPage() {
             </Link>
           </div>
         ) : (
-          <div className={styles.conversationList}>
+          <div className={shared.list}>
             {conversations.map((conv) => {
               const otherUser = getOtherUser(conv);
               return (

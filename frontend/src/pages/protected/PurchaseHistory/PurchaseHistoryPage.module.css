@@ -1,105 +1,4 @@
-/* PurchaseHistoryPage - Messages list style */
-
-.page {
-  min-height: 100vh;
-  background: var(--color-bg);
-  padding: 32px 48px 48px;
-}
-
-.container {
-  max-width: 700px;
-  margin: 0 auto;
-}
-
-.title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0 0 24px;
-}
-
-/* Loading */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-}
-
-/* Purchase list - single bordered container like messages */
-.purchaseList {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-card);
-  overflow: hidden;
-}
-
-/* Each purchase item row */
-.purchaseItem {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.purchaseItem:last-child {
-  border-bottom: none;
-}
-
-/* Clickable header row */
-.purchaseRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  width: 100%;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition: background-color 0.15s ease;
-}
-
-.purchaseRow:hover {
-  background: var(--color-bg-muted);
-}
-
-.purchaseRow:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
-}
-
-.purchaseImage {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-border);
-  object-fit: cover;
-  background: var(--color-bg-muted);
-  flex-shrink: 0;
-}
-
-.purchaseInfo {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.purchaseTopRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2px;
-}
-
-.purchaseTitle {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-text);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* PurchaseHistoryPage - Page-specific styles */
 
 .purchasePrice {
   font-size: 0.9rem;
@@ -108,60 +7,7 @@
   flex-shrink: 0;
 }
 
-.purchaseMeta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-}
-
-.badgePacking {
-  background: var(--color-warning-light);
-  color: var(--color-warning);
-}
-
-.badgeInTransit {
-  background: rgba(36, 67, 255, 0.1);
-  color: var(--color-primary);
-}
-
-.badgeDelivered {
-  background: var(--color-success-light);
-  color: var(--color-success);
-}
-
-.purchaseDate {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.expandIcon {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
-}
-
-.expandIconOpen {
-  transform: rotate(180deg);
-}
-
-/* Expanded content */
-.expandedContent {
-  padding: 0 16px 16px;
-  border-top: 1px solid var(--color-border);
-}
-
+/* Content grid */
 .contentGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -270,14 +116,6 @@
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .page {
-    padding: 24px 16px 32px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
   .contentGrid {
     grid-template-columns: 1fr;
   }

@@ -25,7 +25,8 @@ import { Button } from "@/components/Button";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { Stepper } from "@/components/Stepper";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
-import { FULFILLMENT_LABELS } from "@/constants/shipping";
+import { FulfillmentBadge } from "@/components/FulfillmentBadge";
+import shared from "@/styles/listPage.module.css";
 import styles from "./PurchaseHistoryPage.module.css";
 
 export function PurchaseHistoryPage() {
@@ -48,8 +49,8 @@ export function PurchaseHistoryPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.page}>
-        <div className={styles.loading}>
+      <div className={shared.page}>
+        <div className={shared.loading}>
           <Loader size="lg" />
         </div>
       </div>
@@ -58,8 +59,8 @@ export function PurchaseHistoryPage() {
 
   if (error) {
     return (
-      <div className={styles.page}>
-        <div className={styles.container}>
+      <div className={shared.page}>
+        <div className={shared.container}>
           <Alert variant="error" title={t("status.error")}>
             {error instanceof Error ? error.message : t("errors.failedToLoad")}
           </Alert>
@@ -74,15 +75,6 @@ export function PurchaseHistoryPage() {
       case "in_transit": return 1;
       case "delivered": return 2;
       default: return 0;
-    }
-  };
-
-  const getBadgeClass = (status: string | null) => {
-    switch (status) {
-      case "packing": return styles.badgePacking;
-      case "in_transit": return styles.badgeInTransit;
-      case "delivered": return styles.badgeDelivered;
-      default: return styles.badgePacking;
     }
   };
 
@@ -178,9 +170,9 @@ export function PurchaseHistoryPage() {
   };
 
   return (
-    <div className={styles.page}>
-      <div className={styles.container}>
-        <h1 className={styles.title}>{t("purchases.title")}</h1>
+    <div className={shared.page}>
+      <div className={shared.container}>
+        <h1 className={shared.title}>{t("purchases.title")}</h1>
 
         {successfulPurchases.length === 0 ? (
           <EmptyStateCard
@@ -189,16 +181,16 @@ export function PurchaseHistoryPage() {
             description={t("purchases.noPurchasesDesc")}
           />
         ) : (
-          <div className={styles.purchaseList}>
+          <div className={shared.list}>
             {successfulPurchases.map((purchase) => {
               const isExpanded = expandedId === purchase.payment_id;
               const currentStep = getFulfillmentStep(purchase.fulfillment_status);
 
               return (
-                <div key={purchase.payment_id} className={styles.purchaseItem}>
+                <div key={purchase.payment_id} className={shared.item}>
                   <button
                     type="button"
-                    className={styles.purchaseRow}
+                    className={shared.row}
                     onClick={() => setExpandedId(isExpanded ? null : purchase.payment_id)}
                     aria-expanded={isExpanded}
                     aria-label={`${purchase.post.title} - ${t("purchases.toggleDetails")}`}
@@ -206,33 +198,31 @@ export function PurchaseHistoryPage() {
                     <img
                       src={purchase.post.image_url || "https://placehold.co/48x48?text=No+Image"}
                       alt={purchase.post.title}
-                      className={styles.purchaseImage}
+                      className={shared.thumbnail}
                     />
-                    <div className={styles.purchaseInfo}>
-                      <div className={styles.purchaseTopRow}>
-                        <span className={styles.purchaseTitle}>{purchase.post.title}</span>
+                    <div className={shared.info}>
+                      <div className={shared.topRow}>
+                        <span className={shared.itemTitle}>{purchase.post.title}</span>
                         <span className={styles.purchasePrice}>
                           ฿{formatPrice(purchase.amount)}
                         </span>
                       </div>
-                      <div className={styles.purchaseMeta}>
-                        <span className={`${styles.badge} ${getBadgeClass(purchase.fulfillment_status)}`}>
-                          {FULFILLMENT_LABELS[purchase.fulfillment_status || ""] || "Processing"}
-                        </span>
-                        <span className={styles.purchaseDate}>
+                      <div className={shared.meta}>
+                        <FulfillmentBadge status={purchase.fulfillment_status} />
+                        <span className={shared.date}>
                           {new Date(purchase.created_at).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                     <IconChevronDown
                       size={18}
-                      className={`${styles.expandIcon} ${isExpanded ? styles.expandIconOpen : ""}`}
+                      className={`${shared.expandIcon} ${isExpanded ? shared.expandIconOpen : ""}`}
                       aria-hidden="true"
                     />
                   </button>
 
                   {isExpanded && (
-                    <div className={styles.expandedContent}>
+                    <div className={shared.expandedContent}>
                       <div className={styles.contentGrid}>
                         <div className={styles.stepperCard}>
                           <p className={styles.cardLabel}>{t("purchases.orderProgress")}</p>
