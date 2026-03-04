@@ -1,9 +1,12 @@
-"""Admin API endpoints for bans and dashboard."""
+"""Admin API endpoints for bans, dashboard, and flagged messages."""
 
 from pydantic import BaseModel
 from fastapi import APIRouter, Query, status
 
+from app.core.exceptions import not_found_error
 from app.core.security import AnnotatedAdminUser
+from app.constants.message_flag import MessageFlagStatus
+from app.crud.message_flag import AnnotatedMessageFlagCRUD
 from app.schemas.ban import (
     BanPostRequest,
     BanUserRequest,
@@ -12,6 +15,7 @@ from app.schemas.ban import (
     UserBanListResponse,
     UserBanResponse,
 )
+from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
 from app.services.moderation_service import AnnotatedModerationService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -23,6 +27,7 @@ class AdminStatsResponse(BaseModel):
     pending_reports: int
     active_user_bans: int
     active_post_bans: int
+    pending_flags: int
 
 @router.get(
     "/stats",
@@ -38,7 +43,7 @@ async def get_admin_stats(
 
     **Admin only.** Returns counts of pending reports and active bans.
     """
-    pending_reports, active_user_bans, active_post_bans = (
+    pending_reports, active_user_bans, active_post_bans, pending_flags = (
         await moderation_service.get_admin_stats()
     )
 
@@ -46,6 +51,7 @@ async def get_admin_stats(
         pending_reports=pending_reports,
         active_user_bans=active_user_bans,
         active_post_bans=active_post_bans,
+        pending_flags=pending_flags,
     )
 
 
@@ -180,3 +186,90 @@ async def list_post_bans(
         skip=skip,
         limit=limit,
     )
+
+
+def _flag_to_response(flag) -> MessageFlagResponse:
+    """Convert a MessageFlag model to response schema."""
+    return MessageFlagResponse(
+        id=flag.id,
+        message_id=flag.message_id,
+        conversation_id=flag.conversation_id,
+        sender_id=flag.sender_id,
+        sender_username=flag.sender.username if flag.sender else "",
+        message_content=flag.message.content if flag.message else "",
+        matched_patterns=flag.matched_patterns.split(",") if flag.matched_patterns else [],
+        status=flag.status.value,
+        created_date=flag.created_date,
+        reviewed_by_username=flag.reviewed_by.username if flag.reviewed_by else None,
+        reviewed_at=flag.reviewed_at,
+    )
+
+
+@router.get(
+    "/flagged-messages",
+    status_code=status.HTTP_200_OK,
+    response_model=MessageFlagListResponse,
+)
+async def list_flagged_messages(
+    admin_user: AnnotatedAdminUser,
+    flag_crud: AnnotatedMessageFlagCRUD,
+    moderation_service: AnnotatedModerationService,
+    flag_status: str | None = Query(None, description="Filter by status: PENDING or DISMISSED"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> MessageFlagListResponse:
+    """
+    List flagged messages.
+
+    **Admin only.** Returns paginated list of messages flagged for off-site transaction patterns.
+    """
+    status_enum = None
+    if flag_status:
+        try:
+            status_enum = MessageFlagStatus[flag_status.upper()]
+        except KeyError:
+            from app.core.exceptions import bad_request_error
+            raise bad_request_error(f"Invalid flag status: {flag_status}")
+
+    flags, total = await flag_crud.get_all(
+        moderation_service.db,
+        status=status_enum,
+        skip=skip,
+        limit=limit,
+    )
+
+    return MessageFlagListResponse(
+        items=[_flag_to_response(f) for f in flags],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.patch(
+    "/flagged-messages/{flag_id}/dismiss",
+    status_code=status.HTTP_200_OK,
+    response_model=MessageFlagResponse,
+)
+async def dismiss_flagged_message(
+    admin_user: AnnotatedAdminUser,
+    flag_crud: AnnotatedMessageFlagCRUD,
+    moderation_service: AnnotatedModerationService,
+    flag_id: int,
+) -> MessageFlagResponse:
+    """
+    Dismiss a flagged message.
+
+    **Admin only.** Marks a flag as dismissed after review.
+    """
+    flag = await flag_crud.get_by_id(moderation_service.db, flag_id=flag_id)
+    if not flag:
+        raise not_found_error("Flagged message not found")
+
+    flag = await flag_crud.dismiss(
+        moderation_service.db,
+        flag=flag,
+        reviewed_by_user_id=admin_user.id,
+    )
+
+    return _flag_to_response(flag)

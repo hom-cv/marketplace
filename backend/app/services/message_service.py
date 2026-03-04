@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import bad_request_error, forbidden_error, not_found_error
 from app.crud.conversation import ConversationCRUD, get_conversation_crud
 from app.crud.message import MessageCRUD, get_message_crud
+from app.crud.message_flag import MessageFlagCRUD, get_message_flag_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
@@ -22,6 +23,7 @@ from app.schemas.conversation import (
     MessageResponseSchema,
     WebSocketMessageSchema,
 )
+from app.services.message_scanner import scan_message
 from app.services.ws_manager import ConnectionManager, manager as _ws_manager
 
 
@@ -36,6 +38,7 @@ class MessageService:
         post_crud: PostCRUD,
         user_crud: UserCRUD,
         ws_manager: ConnectionManager,
+        message_flag_crud: MessageFlagCRUD | None = None,
     ) -> None:
         self.db = db
         self._conversation_crud = conversation_crud
@@ -43,6 +46,7 @@ class MessageService:
         self._post_crud = post_crud
         self._user_crud = user_crud
         self._ws_manager = ws_manager
+        self._message_flag_crud = message_flag_crud
 
     async def get_or_create_conversation(
         self, *, user_id: int, post_id: int
@@ -172,6 +176,18 @@ class MessageService:
             self.db, conversation_id=conversation_id
         )
 
+        # Silent flagging — never blocks the message
+        if self._message_flag_crud is not None:
+            matched = scan_message(content)
+            if matched:
+                await self._message_flag_crud.create(
+                    self.db,
+                    message_id=message.id,
+                    conversation_id=conversation_id,
+                    sender_id=sender_id,
+                    matched_patterns=",".join(matched),
+                )
+
         await self.db.commit()
 
         msg_schema = MessageResponseSchema.model_validate(message)
@@ -244,13 +260,15 @@ class MessageService:
 def _get_message_service(
     conversation_crud: Annotated[ConversationCRUD, Depends(get_conversation_crud)],
     message_crud: Annotated[MessageCRUD, Depends(get_message_crud)],
+    message_flag_crud: Annotated[MessageFlagCRUD, Depends(get_message_flag_crud)],
     post_crud: Annotated[PostCRUD, Depends(get_post_crud)],
     user_crud: Annotated[UserCRUD, Depends(get_user_crud)],
     db: AsyncSession = Depends(get_async_db),
 ) -> MessageService:
     """Factory function to create MessageService instance."""
     return MessageService(
-        db, conversation_crud, message_crud, post_crud, user_crud, ws_manager=_ws_manager
+        db, conversation_crud, message_crud, post_crud, user_crud,
+        ws_manager=_ws_manager, message_flag_crud=message_flag_crud,
     )
 
 

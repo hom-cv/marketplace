@@ -13,7 +13,9 @@ from app.crud.post import post_crud
 from app.crud.report import report_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
+from app.constants.message_flag import MessageFlagStatus
 from app.constants.report import ReportReason, ReportStatus, ReportType
+from app.models.message_flag import MessageFlag
 from app.models.user import User
 from app.schemas.ban import (
     PostBanListResponse,
@@ -165,11 +167,11 @@ class ModerationService:
         logger.info(f"Admin {admin_user.id} reviewed report #{report_id} as {status}")
         return self._report_to_response(report)
 
-    async def get_admin_stats(self) -> tuple[int, int, int]:
+    async def get_admin_stats(self) -> tuple[int, int, int, int]:
         """Get all admin stats in a single query.
-        
+
         Returns:
-            Tuple of (pending_reports, active_user_bans, active_post_bans).
+            Tuple of (pending_reports, active_user_bans, active_post_bans, pending_flags).
         """
 
         pending_reports = (
@@ -187,12 +189,17 @@ class ModerationService:
             .where(PostBan.is_active.is_(True))
             .scalar_subquery()
         )
+        pending_flags = (
+            select(func.count(MessageFlag.id))
+            .where(MessageFlag.status == MessageFlagStatus.PENDING)
+            .scalar_subquery()
+        )
 
-        query = select(pending_reports, active_user_bans, active_post_bans)
+        query = select(pending_reports, active_user_bans, active_post_bans, pending_flags)
         result = await self.db.execute(query)
         row = result.one()
 
-        return row[0] or 0, row[1] or 0, row[2] or 0
+        return row[0] or 0, row[1] or 0, row[2] or 0, row[3] or 0
 
     async def ban_user(
         self,
