@@ -17,7 +17,7 @@ from app.services.moderation_service import AnnotatedModerationService
 from fastapi import APIRouter, Query, status
 from pydantic import BaseModel
 
-from backend.app.models.message_flag import MessageFlag
+from app.models.message_flag import MessageFlag
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
