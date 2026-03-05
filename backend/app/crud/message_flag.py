@@ -62,7 +62,7 @@ class MessageFlagCRUD:
         result = await db.execute(query)
         total = await db.scalar(count_query)
 
-        return list(result.scalars().all()), total or 0
+        return result.scalars().all(), total or 0
 
     async def get_by_id(
         self,
@@ -71,7 +71,15 @@ class MessageFlagCRUD:
         flag_id: int,
     ) -> MessageFlag | None:
         """Get a message flag by ID."""
-        query = select(MessageFlag).where(MessageFlag.id == flag_id)
+        query = (
+            select(MessageFlag)
+            .options(
+                selectinload(MessageFlag.message),
+                selectinload(MessageFlag.sender),
+                selectinload(MessageFlag.reviewed_by),
+            )
+            .where(MessageFlag.id == flag_id)
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 

@@ -1,11 +1,8 @@
 """Admin API endpoints for bans, dashboard, and flagged messages."""
 
-from pydantic import BaseModel
-from fastapi import APIRouter, Query, status
-
-from app.core.exceptions import not_found_error
-from app.core.security import AnnotatedAdminUser
 from app.constants.message_flag import MessageFlagStatus
+from app.core.exceptions import bad_request_error, not_found_error
+from app.core.security import AnnotatedAdminUser
 from app.crud.message_flag import AnnotatedMessageFlagCRUD
 from app.schemas.ban import (
     BanPostRequest,
@@ -17,6 +14,8 @@ from app.schemas.ban import (
 )
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
 from app.services.moderation_service import AnnotatedModerationService
+from fastapi import APIRouter, Query, status
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -28,6 +27,7 @@ class AdminStatsResponse(BaseModel):
     active_user_bans: int
     active_post_bans: int
     pending_flags: int
+
 
 @router.get(
     "/stats",
@@ -43,9 +43,12 @@ async def get_admin_stats(
 
     **Admin only.** Returns counts of pending reports and active bans.
     """
-    pending_reports, active_user_bans, active_post_bans, pending_flags = (
-        await moderation_service.get_admin_stats()
-    )
+    (
+        pending_reports,
+        active_user_bans,
+        active_post_bans,
+        pending_flags,
+    ) = await moderation_service.get_admin_stats()
 
     return AdminStatsResponse(
         pending_reports=pending_reports,
@@ -120,6 +123,7 @@ async def list_user_bans(
         skip=skip,
         limit=limit,
     )
+
 
 @router.post(
     "/bans/posts",
@@ -197,7 +201,9 @@ def _flag_to_response(flag) -> MessageFlagResponse:
         sender_id=flag.sender_id,
         sender_username=flag.sender.username if flag.sender else "",
         message_content=flag.message.content if flag.message else "",
-        matched_patterns=flag.matched_patterns.split(",") if flag.matched_patterns else [],
+        matched_patterns=flag.matched_patterns.split(",")
+        if flag.matched_patterns
+        else [],
         status=flag.status.value,
         created_date=flag.created_date,
         reviewed_by_username=flag.reviewed_by.username if flag.reviewed_by else None,
@@ -214,7 +220,9 @@ async def list_flagged_messages(
     admin_user: AnnotatedAdminUser,
     flag_crud: AnnotatedMessageFlagCRUD,
     moderation_service: AnnotatedModerationService,
-    flag_status: str | None = Query(None, description="Filter by status: PENDING or DISMISSED"),
+    flag_status: str | None = Query(
+        None, description="Filter by status: PENDING or DISMISSED"
+    ),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
 ) -> MessageFlagListResponse:
@@ -228,7 +236,6 @@ async def list_flagged_messages(
         try:
             status_enum = MessageFlagStatus[flag_status.upper()]
         except KeyError:
-            from app.core.exceptions import bad_request_error
             raise bad_request_error(f"Invalid flag status: {flag_status}")
 
     flags, total = await flag_crud.get_all(
@@ -266,10 +273,11 @@ async def dismiss_flagged_message(
     if not flag:
         raise not_found_error("Flagged message not found")
 
-    flag = await flag_crud.dismiss(
+    await flag_crud.dismiss(
         moderation_service.db,
         flag=flag,
         reviewed_by_user_id=admin_user.id,
     )
 
+    flag = await flag_crud.get_by_id(moderation_service.db, flag_id=flag_id)
     return _flag_to_response(flag)
