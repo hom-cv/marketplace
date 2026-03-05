@@ -222,9 +222,7 @@ async def list_flagged_messages(
     admin_user: AnnotatedAdminUser,
     flag_crud: AnnotatedMessageFlagCRUD,
     moderation_service: AnnotatedModerationService,
-    flag_status: str | None = Query(
-        None, description="Filter by status: PENDING or DISMISSED"
-    ),
+    flag_status: MessageFlagStatus | None = Query(None, description="Filter by status"),
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
 ) -> MessageFlagListResponse:
@@ -233,16 +231,9 @@ async def list_flagged_messages(
 
     **Admin only.** Returns paginated list of messages flagged for off-site transaction patterns.
     """
-    status_enum = None
-    if flag_status:
-        try:
-            status_enum = MessageFlagStatus[flag_status.upper()]
-        except KeyError:
-            raise bad_request_error(f"Invalid flag status: {flag_status}")
-
     flags, total = await flag_crud.get_all(
         moderation_service.db,
-        status=status_enum,
+        status=flag_status,
         skip=skip,
         limit=limit,
     )
