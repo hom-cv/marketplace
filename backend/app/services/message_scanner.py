@@ -5,7 +5,7 @@ import re
 OFFSITE_PATTERNS: list[tuple[str, re.Pattern]] = [
     # Thai mobile: 06x/08x/09x, with optional separators
     ("phone_number", re.compile(
-        r"(?:0[689]\d[\s\-.]?\d{3}[\s\-.]?\d{4}|(?:\+66)[\s\-.]?\d[\s\-.]?\d{3}[\s\-.]?\d{4})",
+        r"(?:0[689]\d[\s\-.]?\d{3}[\s\-.]?\d{4}|(?:\+66)[\s\-.]?[689]\d[\s\-.]?\d{3}[\s\-.]?\d{4})",
         re.IGNORECASE,
     )),
     # Thai bank account format: xxx-x-xxxxx-x
