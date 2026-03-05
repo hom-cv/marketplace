@@ -201,8 +201,8 @@ def _flag_to_response(flag: MessageFlag) -> MessageFlagResponse:
         message_id=flag.message_id,
         conversation_id=flag.conversation_id,
         sender_id=flag.sender_id,
-        sender_username=flag.sender.username if flag.sender else "",
-        message_content=flag.message.content if flag.message else "",
+        sender_username=flag.sender.username,
+        message_content=flag.message.content,
         matched_patterns=flag.matched_patterns.split(",")
         if flag.matched_patterns
         else [],
