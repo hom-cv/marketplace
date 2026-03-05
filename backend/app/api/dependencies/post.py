@@ -2,13 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import Depends, Path
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.exceptions import not_found_error
-from app.crud.post import PostCRUD, get_post_crud, AnnotatedPostCRUD
+from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post
+from fastapi import Depends, Path
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_valid_post(
@@ -18,7 +17,7 @@ async def get_valid_post(
 ) -> Post:
     """
     Dependency to fetch and validate a post exists.
-    
+
     Raises:
         HTTPException: 404 if post not found or deleted.
     """
