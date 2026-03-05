@@ -17,6 +17,8 @@ from app.services.moderation_service import AnnotatedModerationService
 from fastapi import APIRouter, Query, status
 from pydantic import BaseModel
 
+from backend.app.models.message_flag import MessageFlag
+
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 
@@ -192,7 +194,7 @@ async def list_post_bans(
     )
 
 
-def _flag_to_response(flag: "MessageFlag") -> MessageFlagResponse:
+def _flag_to_response(flag: MessageFlag) -> MessageFlagResponse:
     """Convert a MessageFlag model to response schema."""
     return MessageFlagResponse(
         id=flag.id,
@@ -272,6 +274,9 @@ async def dismiss_flagged_message(
     flag = await flag_crud.get_by_id(moderation_service.db, flag_id=flag_id)
     if not flag:
         raise not_found_error("Flagged message not found")
+
+    if flag.status != MessageFlagStatus.PENDING:
+        raise bad_request_error("Flag has already been reviewed")
 
     flag = await flag_crud.dismiss(
         moderation_service.db,
