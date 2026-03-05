@@ -192,7 +192,7 @@ async def list_post_bans(
     )
 
 
-def _flag_to_response(flag) -> MessageFlagResponse:
+def _flag_to_response(flag: "MessageFlag") -> MessageFlagResponse:
     """Convert a MessageFlag model to response schema."""
     return MessageFlagResponse(
         id=flag.id,
