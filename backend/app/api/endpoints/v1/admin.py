@@ -273,11 +273,10 @@ async def dismiss_flagged_message(
     if not flag:
         raise not_found_error("Flagged message not found")
 
-    await flag_crud.dismiss(
+    flag = await flag_crud.dismiss(
         moderation_service.db,
         flag=flag,
         reviewed_by_user_id=admin_user.id,
     )
 
-    flag = await flag_crud.get_by_id(moderation_service.db, flag_id=flag_id)
     return _flag_to_response(flag)

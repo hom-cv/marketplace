@@ -40,8 +40,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_message_flags_conversation_id'), 'message_flags', ['conversation_id'], unique=False)
     op.create_index(op.f('ix_message_flags_created_date'), 'message_flags', ['created_date'], unique=False)
-    op.create_index(op.f('ix_message_flags_id'), 'message_flags', ['id'], unique=False)
-    op.create_index(op.f('ix_message_flags_message_id'), 'message_flags', ['message_id'], unique=False)
+op.create_index(op.f('ix_message_flags_message_id'), 'message_flags', ['message_id'], unique=False)
     op.create_index(op.f('ix_message_flags_sender_id'), 'message_flags', ['sender_id'], unique=False)
     op.create_index(op.f('ix_message_flags_status'), 'message_flags', ['status'], unique=False)
     # ### end Alembic commands ###
@@ -53,8 +52,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_message_flags_status'), table_name='message_flags')
     op.drop_index(op.f('ix_message_flags_sender_id'), table_name='message_flags')
     op.drop_index(op.f('ix_message_flags_message_id'), table_name='message_flags')
-    op.drop_index(op.f('ix_message_flags_id'), table_name='message_flags')
-    op.drop_index(op.f('ix_message_flags_created_date'), table_name='message_flags')
+op.drop_index(op.f('ix_message_flags_created_date'), table_name='message_flags')
     op.drop_index(op.f('ix_message_flags_conversation_id'), table_name='message_flags')
     op.drop_table('message_flags')
     # ### end Alembic commands ###
