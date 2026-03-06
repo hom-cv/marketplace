@@ -45,21 +45,24 @@ class MessageFlagCRUD:
         limit: int = 50,
     ) -> tuple[list[MessageFlag], int]:
         """Get all message flags with optional status filter."""
-        query = select(MessageFlag).options(
-            selectinload(MessageFlag.message),
-            selectinload(MessageFlag.sender),
-            selectinload(MessageFlag.reviewed_by),
-        )
-        count_query = select(func.count(MessageFlag.id))
-
+        base_query = select(MessageFlag)
         if status:
-            query = query.where(MessageFlag.status == status)
-            count_query = count_query.where(MessageFlag.status == status)
+            base_query = base_query.where(MessageFlag.status == status)
 
-        query = query.order_by(MessageFlag.created_date.desc())
-        query = query.offset(skip).limit(limit)
+        count_query = select(func.count()).select_from(base_query.subquery())
+        data_query = (
+            base_query
+            .options(
+                selectinload(MessageFlag.message),
+                selectinload(MessageFlag.sender),
+                selectinload(MessageFlag.reviewed_by),
+            )
+            .order_by(MessageFlag.created_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
 
-        result = await db.execute(query)
+        result = await db.execute(data_query)
         total = await db.scalar(count_query)
 
         return result.scalars().all(), total or 0

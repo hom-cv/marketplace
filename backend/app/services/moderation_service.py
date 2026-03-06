@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error, not_found_error
 from app.crud.ban import ban_crud
+from app.crud.message_flag import message_flag_crud
 from app.crud.post import post_crud
 from app.crud.report import report_crud
 from app.crud.user import user_crud
@@ -23,6 +24,7 @@ from app.schemas.ban import (
     UserBanListResponse,
     UserBanResponse,
 )
+from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
 from app.schemas.report import ReportListResponse, ReportResponse
 from app.constants.report import ReportStatus
 from app.models.post_ban import PostBan
@@ -356,6 +358,67 @@ class ModerationService:
         """Check if a post is currently banned."""
         ban = await ban_crud.get_active_post_ban(self.db, post_id=post_id)
         return ban is not None
+
+    async def get_flagged_messages(
+        self,
+        status: MessageFlagStatus | None = None,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> MessageFlagListResponse:
+        """Get all flagged messages with optional status filter."""
+        flags, total = await message_flag_crud.get_all(
+            self.db,
+            status=status,
+            skip=skip,
+            limit=limit,
+        )
+
+        return MessageFlagListResponse(
+            items=[self._flag_to_response(f) for f in flags],
+            total=total,
+            skip=skip,
+            limit=limit,
+        )
+
+    async def dismiss_flagged_message(
+        self,
+        admin_user: User,
+        flag_id: int,
+    ) -> MessageFlagResponse:
+        """Dismiss a flagged message after admin review."""
+        flag = await message_flag_crud.get_by_id(self.db, flag_id=flag_id)
+        if not flag:
+            raise not_found_error("Flagged message not found")
+
+        if flag.status != MessageFlagStatus.PENDING:
+            raise bad_request_error("Flag has already been reviewed")
+
+        flag = await message_flag_crud.dismiss(
+            self.db,
+            flag=flag,
+            reviewed_by_user_id=admin_user.id,
+        )
+
+        logger.info(f"Admin {admin_user.id} dismissed flag #{flag_id}")
+        return self._flag_to_response(flag)
+
+    def _flag_to_response(self, flag: MessageFlag) -> MessageFlagResponse:
+        """Convert a MessageFlag model to response schema."""
+        return MessageFlagResponse(
+            id=flag.id,
+            message_id=flag.message_id,
+            conversation_id=flag.conversation_id,
+            sender_id=flag.sender_id,
+            sender_username=flag.sender.username,
+            message_content=flag.message.content,
+            matched_patterns=flag.matched_patterns.split(",")
+            if flag.matched_patterns
+            else [],
+            status=flag.status.value,
+            created_date=flag.created_date,
+            reviewed_by_username=flag.reviewed_by.username if flag.reviewed_by else None,
+            reviewed_at=flag.reviewed_at,
+        )
 
     def _report_to_response(
         self,

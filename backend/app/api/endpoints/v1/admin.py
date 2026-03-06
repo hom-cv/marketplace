@@ -1,9 +1,7 @@
 """Admin API endpoints for bans, dashboard, and flagged messages."""
 
 from app.constants.message_flag import MessageFlagStatus
-from app.core.exceptions import bad_request_error, not_found_error
 from app.core.security import AnnotatedAdminUser
-from app.crud.message_flag import AnnotatedMessageFlagCRUD
 from app.schemas.ban import (
     BanPostRequest,
     BanUserRequest,
@@ -16,8 +14,6 @@ from app.schemas.message_flag import MessageFlagListResponse, MessageFlagRespons
 from app.services.moderation_service import AnnotatedModerationService
 from fastapi import APIRouter, Query, status
 from pydantic import BaseModel
-
-from app.models.message_flag import MessageFlag
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -194,25 +190,6 @@ async def list_post_bans(
     )
 
 
-def _flag_to_response(flag: MessageFlag) -> MessageFlagResponse:
-    """Convert a MessageFlag model to response schema."""
-    return MessageFlagResponse(
-        id=flag.id,
-        message_id=flag.message_id,
-        conversation_id=flag.conversation_id,
-        sender_id=flag.sender_id,
-        sender_username=flag.sender.username,
-        message_content=flag.message.content,
-        matched_patterns=flag.matched_patterns.split(",")
-        if flag.matched_patterns
-        else [],
-        status=flag.status.value,
-        created_date=flag.created_date,
-        reviewed_by_username=flag.reviewed_by.username if flag.reviewed_by else None,
-        reviewed_at=flag.reviewed_at,
-    )
-
-
 @router.get(
     "/flagged-messages",
     status_code=status.HTTP_200_OK,
@@ -220,7 +197,6 @@ def _flag_to_response(flag: MessageFlag) -> MessageFlagResponse:
 )
 async def list_flagged_messages(
     admin_user: AnnotatedAdminUser,
-    flag_crud: AnnotatedMessageFlagCRUD,
     moderation_service: AnnotatedModerationService,
     flag_status: MessageFlagStatus | None = Query(None, description="Filter by status"),
     skip: int = Query(0, ge=0),
@@ -231,16 +207,8 @@ async def list_flagged_messages(
 
     **Admin only.** Returns paginated list of messages flagged for off-site transaction patterns.
     """
-    flags, total = await flag_crud.get_all(
-        moderation_service.db,
+    return await moderation_service.get_flagged_messages(
         status=flag_status,
-        skip=skip,
-        limit=limit,
-    )
-
-    return MessageFlagListResponse(
-        items=[_flag_to_response(f) for f in flags],
-        total=total,
         skip=skip,
         limit=limit,
     )
@@ -253,7 +221,6 @@ async def list_flagged_messages(
 )
 async def dismiss_flagged_message(
     admin_user: AnnotatedAdminUser,
-    flag_crud: AnnotatedMessageFlagCRUD,
     moderation_service: AnnotatedModerationService,
     flag_id: int,
 ) -> MessageFlagResponse:
@@ -262,17 +229,7 @@ async def dismiss_flagged_message(
 
     **Admin only.** Marks a flag as dismissed after review.
     """
-    flag = await flag_crud.get_by_id(moderation_service.db, flag_id=flag_id)
-    if not flag:
-        raise not_found_error("Flagged message not found")
-
-    if flag.status != MessageFlagStatus.PENDING:
-        raise bad_request_error("Flag has already been reviewed")
-
-    flag = await flag_crud.dismiss(
-        moderation_service.db,
-        flag=flag,
-        reviewed_by_user_id=admin_user.id,
+    return await moderation_service.dismiss_flagged_message(
+        admin_user=admin_user,
+        flag_id=flag_id,
     )
-
-    return _flag_to_response(flag)

@@ -11,9 +11,9 @@ OFFSITE_PATTERNS: list[tuple[str, re.Pattern]] = [
     # Thai bank account format: xxx-x-xxxxx-x
     ("bank_account", re.compile(r"\b\d{3}[\s\-]?\d{1}[\s\-]?\d{5}[\s\-]?\d{1}\b")),
     # Line ID (English)
-    ("line_id", re.compile(r"(?:line\s*(?:id|ไอดี)\s*[:=]?\s*\S+)", re.IGNORECASE)),
+    ("line_id", re.compile(r"(?:line\s{0,5}(?:id|ไอดี)\s{0,5}[:=]?\s{0,5}\S{1,50})", re.IGNORECASE)),
     # Line ID (Thai)
-    ("line_id_thai", re.compile(r"(?:ไลน์\s*(?:ไอดี)?\s*[:=]?\s*\S+)")),
+    ("line_id_thai", re.compile(r"(?:ไลน์\s{0,5}(?:ไอดี)?\s{0,5}[:=]?\s{0,5}\S{1,50})")),
     # Add on Line
     ("add_line", re.compile(r"(?:(?:add|แอด)\s*(?:line|ไลน์))", re.IGNORECASE)),
     # Direct transfer (Thai)
@@ -39,17 +39,21 @@ OFFSITE_PATTERNS: list[tuple[str, re.Pattern]] = [
     )),
     # Social media contact sharing
     ("social_contact", re.compile(
-        r"(?:(?:ig|instagram|facebook|fb|whatsapp|telegram|wechat|tiktok)\s*[:=@]\s*\S+)",
+        r"(?:(?:ig|instagram|facebook|fb|whatsapp|telegram|wechat|tiktok)\s{0,5}[:=@]\s{0,5}\S{1,50})",
         re.IGNORECASE,
     )),
     # Email sharing
     ("email_sharing", re.compile(
-        r"(?:(?:email|อีเมล)\s*(?:me|ฉัน|มา)?\s*[:=]?\s*\S+@\S+\.\S+)",
+        r"(?:(?:email|อีเมล)\s{0,5}(?:me|ฉัน|มา)?\s{0,5}[:=]?\s{0,5}\S{1,50}@\S{1,50}\.\S{1,30})",
         re.IGNORECASE,
     )),
 ]
 
 
+MAX_SCAN_LENGTH = 2000
+
+
 def scan_message(content: str) -> list[str]:
     """Scan message content. Returns list of matched pattern names (empty = clean)."""
+    content = content[:MAX_SCAN_LENGTH]
     return [name for name, pattern in OFFSITE_PATTERNS if pattern.search(content)]
