@@ -413,9 +413,7 @@ class ModerationService:
             sender_id=flag.sender_id,
             sender_username=flag.sender.username,
             message_content=flag.message.content,
-            matched_patterns=flag.matched_patterns.split(",")
-            if flag.matched_patterns
-            else [],
+            matched_patterns=flag.matched_patterns.split(","),
             status=flag.status.value,
             created_date=flag.created_date,
             reviewed_by_username=flag.reviewed_by.username if flag.reviewed_by else None,
