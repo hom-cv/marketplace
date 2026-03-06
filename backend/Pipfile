@@ -27,6 +27,7 @@ pytest-asyncio = "0.24.*"
 pytest-cov = "6.*"
 httpx = "0.28.*"
 freezegun = "1.5.*"
+ruff = "0.15.*"
 
 [requires]
 python_version = "3.13"
