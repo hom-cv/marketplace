@@ -398,6 +398,8 @@ class ModerationService:
             flag=flag,
             reviewed_by_user_id=admin_user.id,
         )
+        await self.db.commit()
+        await self.db.refresh(flag)
 
         logger.info(f"Admin {admin_user.id} dismissed flag #{flag_id}")
         return self._flag_to_response(flag)
