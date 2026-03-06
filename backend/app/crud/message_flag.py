@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.constants.message_flag import MessageFlagStatus
 from app.models.message_flag import MessageFlag
@@ -51,6 +52,11 @@ class MessageFlagCRUD:
         count_query = select(func.count()).select_from(base_query.subquery())
         data_query = (
             base_query
+            .options(
+                selectinload(MessageFlag.message),
+                selectinload(MessageFlag.sender),
+                selectinload(MessageFlag.reviewed_by),
+            )
             .order_by(MessageFlag.created_date.desc())
             .offset(skip)
             .limit(limit)
@@ -68,7 +74,11 @@ class MessageFlagCRUD:
         flag_id: int,
     ) -> MessageFlag | None:
         """Get a message flag by ID."""
-        query = select(MessageFlag).where(MessageFlag.id == flag_id)
+        query = select(MessageFlag).where(MessageFlag.id == flag_id).options(
+            selectinload(MessageFlag.message),
+            selectinload(MessageFlag.sender),
+            selectinload(MessageFlag.reviewed_by),
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
