@@ -1,5 +1,8 @@
 """Admin API endpoints for bans, dashboard, and flagged messages."""
 
+from fastapi import APIRouter, Query, status
+from pydantic import BaseModel
+
 from app.constants.message_flag import MessageFlagStatus
 from app.core.security import AnnotatedAdminUser
 from app.schemas.ban import (
@@ -12,8 +15,6 @@ from app.schemas.ban import (
 )
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
 from app.services.moderation_service import AnnotatedModerationService
-from fastapi import APIRouter, Query, status
-from pydantic import BaseModel
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
