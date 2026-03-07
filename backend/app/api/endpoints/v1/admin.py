@@ -1,8 +1,9 @@
-"""Admin API endpoints for bans and dashboard."""
+"""Admin API endpoints for bans, dashboard, and flagged messages."""
 
-from pydantic import BaseModel
 from fastapi import APIRouter, Query, status
+from pydantic import BaseModel
 
+from app.constants.message_flag import MessageFlagStatus
 from app.core.security import AnnotatedAdminUser
 from app.schemas.ban import (
     BanPostRequest,
@@ -12,6 +13,7 @@ from app.schemas.ban import (
     UserBanListResponse,
     UserBanResponse,
 )
+from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
 from app.services.moderation_service import AnnotatedModerationService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -23,6 +25,8 @@ class AdminStatsResponse(BaseModel):
     pending_reports: int
     active_user_bans: int
     active_post_bans: int
+    pending_flags: int
+
 
 @router.get(
     "/stats",
@@ -38,14 +42,18 @@ async def get_admin_stats(
 
     **Admin only.** Returns counts of pending reports and active bans.
     """
-    pending_reports, active_user_bans, active_post_bans = (
-        await moderation_service.get_admin_stats()
-    )
+    (
+        pending_reports,
+        active_user_bans,
+        active_post_bans,
+        pending_flags,
+    ) = await moderation_service.get_admin_stats()
 
     return AdminStatsResponse(
         pending_reports=pending_reports,
         active_user_bans=active_user_bans,
         active_post_bans=active_post_bans,
+        pending_flags=pending_flags,
     )
 
 
@@ -115,6 +123,7 @@ async def list_user_bans(
         limit=limit,
     )
 
+
 @router.post(
     "/bans/posts",
     status_code=status.HTTP_201_CREATED,
@@ -179,4 +188,49 @@ async def list_post_bans(
         active_only=active_only,
         skip=skip,
         limit=limit,
+    )
+
+
+@router.get(
+    "/flagged-messages",
+    status_code=status.HTTP_200_OK,
+    response_model=MessageFlagListResponse,
+)
+async def list_flagged_messages(
+    admin_user: AnnotatedAdminUser,
+    moderation_service: AnnotatedModerationService,
+    flag_status: MessageFlagStatus | None = Query(None, description="Filter by status"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> MessageFlagListResponse:
+    """
+    List flagged messages.
+
+    **Admin only.** Returns paginated list of messages flagged for off-site transaction patterns.
+    """
+    return await moderation_service.get_flagged_messages(
+        status=flag_status,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.patch(
+    "/flagged-messages/{flag_id}/dismiss",
+    status_code=status.HTTP_200_OK,
+    response_model=MessageFlagResponse,
+)
+async def dismiss_flagged_message(
+    admin_user: AnnotatedAdminUser,
+    moderation_service: AnnotatedModerationService,
+    flag_id: int,
+) -> MessageFlagResponse:
+    """
+    Dismiss a flagged message.
+
+    **Admin only.** Marks a flag as dismissed after review.
+    """
+    return await moderation_service.dismiss_flagged_message(
+        admin_user=admin_user,
+        flag_id=flag_id,
     )

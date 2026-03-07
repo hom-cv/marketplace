@@ -11,6 +11,7 @@ from app.constants.message import MAX_MESSAGE_LENGTH
 from app.crud.ban import ban_crud
 from app.crud.conversation import ConversationCRUD
 from app.crud.message import MessageCRUD
+from app.crud.message_flag import message_flag_crud as _message_flag_crud
 from app.crud.post import PostCRUD
 from app.crud.user import UserCRUD
 from app.services.message_service import MessageService
@@ -82,6 +83,7 @@ class WebSocketService:
                 self._post_crud,
                 self._user_crud,
                 ws_manager=self._ws_manager,
+                message_flag_crud=_message_flag_crud,
             )
             await service.send_message(
                 conversation_id=conversation_id,

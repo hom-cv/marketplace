@@ -3,6 +3,9 @@
 from datetime import timedelta
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, Query, status
+from fastapi.security import OAuth2PasswordRequestForm
+
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user
 from app.models import User
@@ -15,8 +18,6 @@ from app.schemas.auth import (
 from app.schemas.email_verification import EmailVerificationResponse
 from app.schemas.user import UserResponseSchema
 from app.services.auth import AnnotatedAuthService
-from fastapi import APIRouter, Depends, Query, status
-from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
