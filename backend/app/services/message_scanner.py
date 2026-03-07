@@ -50,10 +50,6 @@ OFFSITE_PATTERNS: list[tuple[str, re.Pattern]] = [
 ]
 
 
-MAX_SCAN_LENGTH = 2000
-
-
 def scan_message(content: str) -> list[str]:
     """Scan message content. Returns list of matched pattern names (empty = clean)."""
-    content = content[:MAX_SCAN_LENGTH]
     return [name for name, pattern in OFFSITE_PATTERNS if pattern.search(content)]
