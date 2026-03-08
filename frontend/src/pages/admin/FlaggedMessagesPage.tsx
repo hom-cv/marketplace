@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader, Select, Textarea } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -14,7 +14,6 @@ import {
 } from "@/api/admin";
 import { getPost } from "@/api/posts";
 import type { MessageFlag } from "@/api/types/admin";
-import type { Post } from "@/api/types/post";
 import type { ConversationDetail } from "@/api/types/chat";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -24,6 +23,8 @@ import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import { formatShortDate } from "@/utils/date";
 import styles from "./FlaggedMessagesPage.module.css";
+
+const MESSAGES_PAGE_LIMIT = 50;
 
 interface ConversationGroup {
   conversationId: number;
@@ -87,21 +88,14 @@ function groupByConversation(flags: MessageFlag[]): ConversationGroup[] {
   );
 }
 
-interface ConvCache {
-  detail: ConversationDetail;
-  post: Post | null;
-}
-
 export function FlaggedMessagesPage() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedConv, setSelectedConv] = useState<number | null>(null);
   const [banReason, setBanReason] = useState("");
   const [showBanForm, setShowBanForm] = useState(false);
-  const [chatLoading, setChatLoading] = useState(false);
-  const cacheRef = useRef<Map<number, ConvCache>>(new Map());
-  const [cacheVersion, setCacheVersion] = useState(0);
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
+  const [loadingOlder, setLoadingOlder] = useState(false);
 
   const { data: flagsData, isLoading, error } = useQuery({
     queryKey: ["admin-flagged-messages", statusFilter],
@@ -116,6 +110,43 @@ export function FlaggedMessagesPage() {
   const activeGroup = useMemo(
     () => groups.find((g) => g.conversationId === selectedConv) ?? null,
     [groups, selectedConv]
+  );
+
+  const { data: conversationDetail, isLoading: chatLoading } = useQuery({
+    queryKey: ["admin-conversation", selectedConv],
+    queryFn: () => getAdminConversation(selectedConv!, undefined, MESSAGES_PAGE_LIMIT),
+    enabled: selectedConv !== null,
+    staleTime: Infinity,
+  });
+
+  const { data: convPost } = useQuery({
+    queryKey: ["admin-conversation-post", conversationDetail?.post.id],
+    queryFn: async () => {
+      try {
+        return await getPost(conversationDetail!.post.id);
+      } catch (error) {
+        console.error("Failed to fetch post for admin review:", error);
+        return null;
+      }
+    },
+    enabled: !!conversationDetail?.post.id,
+    staleTime: Infinity,
+  });
+
+  // Auto-scroll to first flagged message after chat loads
+  const chatScrollCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      chatScrollRef.current = node;
+      if (node && conversationDetail) {
+        requestAnimationFrame(() => {
+          const flaggedEl = node.querySelector("[data-flagged='true']");
+          if (flaggedEl) {
+            flaggedEl.scrollIntoView({ block: "center" });
+          }
+        });
+      }
+    },
+    [conversationDetail]
   );
 
   const dismissMutation = useMutation({
@@ -145,35 +176,10 @@ export function FlaggedMessagesPage() {
     },
   });
 
-  const loadConversation = useCallback(async (conversationId: number) => {
-    if (cacheRef.current.has(conversationId)) return;
-    setChatLoading(true);
-    try {
-      const detail = await getAdminConversation(conversationId, undefined, 50);
-      let post: Post | null = null;
-      try {
-        post = await getPost(detail.post.id);
-      } catch (error) {
-        // Post may be deleted/banned — that's fine, but log other errors.
-        console.error("Failed to fetch post for admin review:", error);
-      }
-      cacheRef.current.set(conversationId, { detail, post });
-      setCacheVersion((v) => v + 1);
-    } catch {
-      notifications.show({ title: "Error", message: "Failed to load chat history", color: "red" });
-    } finally {
-      setChatLoading(false);
-    }
-  }, []);
-
-  const [loadingOlder, setLoadingOlder] = useState(false);
-
   const handleLoadOlder = useCallback(async () => {
-    if (!selectedConv) return;
-    const entry = cacheRef.current.get(selectedConv);
-    if (!entry || !entry.detail.messages.length) return;
+    if (!selectedConv || !conversationDetail?.messages.length) return;
 
-    const oldestId = entry.detail.messages[0].id;
+    const oldestId = conversationDetail.messages[0].id;
     if (oldestId < 0) return;
 
     const container = chatScrollRef.current;
@@ -181,18 +187,19 @@ export function FlaggedMessagesPage() {
 
     setLoadingOlder(true);
     try {
-      const older = await getAdminConversation(selectedConv, oldestId, 50);
+      const older = await getAdminConversation(selectedConv, oldestId, MESSAGES_PAGE_LIMIT);
       if (older.messages.length > 0) {
-        const updated: ConvCache = {
-          ...entry,
-          detail: {
-            ...entry.detail,
-            messages: [...older.messages, ...entry.detail.messages],
-            total_messages: older.total_messages,
-          },
-        };
-        cacheRef.current.set(selectedConv, updated);
-        setCacheVersion((v) => v + 1);
+        queryClient.setQueryData<ConversationDetail>(
+          ["admin-conversation", selectedConv],
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              messages: [...older.messages, ...old.messages],
+              total_messages: older.total_messages,
+            };
+          }
+        );
 
         requestAnimationFrame(() => {
           if (container) {
@@ -201,30 +208,13 @@ export function FlaggedMessagesPage() {
           }
         });
       }
-    } catch {
+    } catch (error) {
+      console.error("Failed to load older messages:", error);
       notifications.show({ title: "Error", message: "Failed to load older messages", color: "red" });
     } finally {
       setLoadingOlder(false);
     }
-  }, [selectedConv]);
-
-  useEffect(() => {
-    if (selectedConv !== null) {
-      loadConversation(selectedConv);
-    }
-  }, [selectedConv, loadConversation]);
-
-  // Auto-scroll to first flagged message after chat loads
-  useEffect(() => {
-    if (selectedConv !== null && cacheRef.current.has(selectedConv) && chatScrollRef.current) {
-      requestAnimationFrame(() => {
-        const flaggedEl = chatScrollRef.current?.querySelector("[data-flagged='true']");
-        if (flaggedEl) {
-          flaggedEl.scrollIntoView({ block: "center" });
-        }
-      });
-    }
-  }, [selectedConv, cacheVersion]);
+  }, [selectedConv, conversationDetail, queryClient]);
 
   function handleSelectConv(conversationId: number) {
     if (selectedConv === conversationId) return;
@@ -249,7 +239,6 @@ export function FlaggedMessagesPage() {
     );
   }
 
-  const cached = selectedConv ? cacheRef.current.get(selectedConv) : undefined;
   const flaggedMessageIds = activeGroup
     ? new Set(activeGroup.flags.map((f) => f.message_id))
     : new Set<number>();
@@ -261,9 +250,9 @@ export function FlaggedMessagesPage() {
       senderNameMap.set(f.sender_id, f.sender_username);
     }
   }
-  if (cached?.detail) {
-    senderNameMap.set(cached.detail.initiator.id, cached.detail.initiator.username);
-    senderNameMap.set(cached.detail.recipient.id, cached.detail.recipient.username);
+  if (conversationDetail) {
+    senderNameMap.set(conversationDetail.initiator.id, conversationDetail.initiator.username);
+    senderNameMap.set(conversationDetail.recipient.id, conversationDetail.recipient.username);
   }
 
   const allPatterns = activeGroup
@@ -348,24 +337,24 @@ export function FlaggedMessagesPage() {
           <>
             <div className={styles.chatHeader}>
               <span className={styles.chatHeaderTitle}>
-                {cached?.detail
-                  ? `${cached.detail.initiator.username} & ${cached.detail.recipient.username}`
+                {conversationDetail
+                  ? `${conversationDetail.initiator.username} & ${conversationDetail.recipient.username}`
                   : activeGroup.senderUsernames.join(", ")}
               </span>
-              {cached?.detail.post && (
+              {conversationDetail?.post && (
                 <span className={styles.chatHeaderPost}>
-                  re: {cached.detail.post.title}
+                  re: {conversationDetail.post.title}
                 </span>
               )}
             </div>
 
-            <div className={styles.chatArea} ref={chatScrollRef}>
+            <div className={styles.chatArea} ref={chatScrollCallback}>
               {chatLoading && (
                 <div className={styles.chatLoading}>
                   <Loader size="sm" />
                 </div>
               )}
-              {cached?.detail && cached.detail.messages.length < cached.detail.total_messages && (
+              {conversationDetail && conversationDetail.messages.length < conversationDetail.total_messages && (
                 <button
                   className={styles.loadOlderButton}
                   onClick={handleLoadOlder}
@@ -374,7 +363,7 @@ export function FlaggedMessagesPage() {
                   {loadingOlder ? "Loading..." : "Load older messages"}
                 </button>
               )}
-              {cached?.detail.messages.map((msg) => {
+              {conversationDetail?.messages.map((msg) => {
                 const isFlagged = flaggedMessageIds.has(msg.id);
                 const senderName = senderNameMap.get(msg.sender_id) ?? `User #${msg.sender_id}`;
                 return (
@@ -403,20 +392,20 @@ export function FlaggedMessagesPage() {
         <div className={styles.detailPane}>
           {/* Listing — scrollable area */}
           <div className={styles.listingScroll}>
-            {!cached && (
+            {chatLoading && (
               <div className={styles.detailLoading}>
                 <Loader size="sm" />
               </div>
             )}
 
-            {cached && !cached.post && (
+            {conversationDetail && !convPost && !chatLoading && (
               <div className={styles.listingUnavailable}>
                 Listing unavailable
               </div>
             )}
 
-            {cached?.post && (() => {
-              const post = cached.post;
+            {convPost && (() => {
+              const post = convPost;
               const price = parseFloat(post.price);
               const shippingCost = parseFloat(post.shipping_cost || "0");
               const imageUrls =
@@ -486,7 +475,7 @@ export function FlaggedMessagesPage() {
             })()}
 
             {/* Flag summary inside scroll area */}
-            {cached && (
+            {conversationDetail && (
               <div className={styles.flagSummary}>
                 <span className={styles.flagStat}>
                   {activeGroup.flags.length} flag{activeGroup.flags.length !== 1 && "s"} &middot; {activeGroup.pendingCount} pending

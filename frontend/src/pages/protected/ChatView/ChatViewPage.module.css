@@ -51,16 +51,16 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: #fffbe6;
-  border-bottom: 1px solid #ffe58f;
+  background: var(--color-warning-light);
+  border-bottom: 1px solid var(--color-warning-border);
   font-size: 0.8rem;
-  color: #8b6914;
+  color: var(--color-warning);
   flex-shrink: 0;
 }
 
 .safetyBannerIcon {
   flex-shrink: 0;
-  color: #d48806;
+  color: var(--color-warning);
 }
 
 .safetyBannerText {
@@ -75,7 +75,7 @@
   background: none;
   border: none;
   border-radius: var(--radius-sm);
-  color: #8b6914;
+  color: var(--color-warning);
   cursor: pointer;
   flex-shrink: 0;
 }
