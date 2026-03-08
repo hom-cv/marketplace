@@ -36,7 +36,7 @@ export function DetailPane({
         flagIds.map((id) => dismissFlaggedMessage(id))
       );
       const failed = results.filter((r) => r.status === "rejected");
-      if (failed.length === results.length) {
+      if (flagIds.length > 0 && failed.length === results.length) {
         throw new Error("Failed to dismiss all flags");
       }
       return { total: results.length, failed: failed.length };
