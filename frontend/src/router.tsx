@@ -2,6 +2,7 @@ import {
   createRouter,
   createRootRoute,
   createRoute,
+  redirect,
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
@@ -42,7 +43,6 @@ import { ChatSubscriptionProvider } from "@/components/ChatSubscriptionProvider"
 
 // Admin pages
 import {
-  AdminDashboardPage,
   InviteCodesPage,
   ReportsPage,
   UserBansPage,
@@ -219,11 +219,13 @@ const adminLayout = createRoute({
   component: AdminLayout,
 });
 
-// Admin pages
-const adminDashboardRoute = createRoute({
+// Admin index — redirect to reports
+const adminIndexRoute = createRoute({
   getParentRoute: () => adminLayout,
   path: "/",
-  component: AdminDashboardPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/admin/reports" });
+  },
 });
 
 const adminInvitesRoute = createRoute({
@@ -274,7 +276,7 @@ const routeTree = rootRoute.addChildren([
     chatViewRoute,
     adminProtectedLayout.addChildren([
       adminLayout.addChildren([
-        adminDashboardRoute,
+        adminIndexRoute,
         adminInvitesRoute,
         adminReportsRoute,
         adminUserBansRoute,

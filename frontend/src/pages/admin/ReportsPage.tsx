@@ -58,7 +58,7 @@ export function ReportsPage() {
       reviewReport(reportId, { status, admin_notes: adminNotes.trim() || undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+
       setExpandedId(null);
       setAdminNotes("");
     },
@@ -70,6 +70,7 @@ export function ReportsPage() {
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-user-bans"] });
     },
     onError: (err: Error) => {
       notifications.show({ title: "Ban Failed", message: err.message, color: "red" });
@@ -82,6 +83,7 @@ export function ReportsPage() {
     onSuccess: () => {
       notifications.show({ title: "Listing Removed", message: "The listing has been removed.", color: "red" });
       queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-post-bans"] });
     },
     onError: (err: Error) => {
       notifications.show({ title: "Removal Failed", message: err.message, color: "red" });

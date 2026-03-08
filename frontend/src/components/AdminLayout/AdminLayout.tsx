@@ -1,7 +1,6 @@
 import { Link, Outlet } from "@tanstack/react-router";
 import { Box } from "@mantine/core";
 import {
-  IconHome,
   IconTicket,
   IconFlag,
   IconUserOff,
@@ -20,29 +19,18 @@ function SidebarContent() {
       </Link>
 
       <div className={styles.navSection}>
-        <div className={styles.navHeader}>Overview</div>
-        <SidebarNavLink
-          to="/admin"
-          icon={<IconHome size={18} />}
-          label="Dashboard"
-          className={styles.navLink}
-          activeClassName={`${styles.navLink} ${styles.active}`}
-        />
-      </div>
-
-      <div className={styles.navSection}>
         <div className={styles.navHeader}>Management</div>
-        <SidebarNavLink
-          to="/admin/invites"
-          icon={<IconTicket size={18} />}
-          label="Invite Codes"
-          className={styles.navLink}
-          activeClassName={`${styles.navLink} ${styles.active}`}
-        />
         <SidebarNavLink
           to="/admin/reports"
           icon={<IconFlag size={18} />}
           label="Reports"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/admin/invites"
+          icon={<IconTicket size={18} />}
+          label="Invite Codes"
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
@@ -70,9 +58,8 @@ function SidebarContent() {
 }
 
 const MOBILE_NAV_LINKS = [
-  { to: "/admin" as const, icon: IconHome, label: "Home" },
-  { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
   { to: "/admin/reports" as const, icon: IconFlag, label: "Reports" },
+  { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
   { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Users" },
   { to: "/admin/bans/posts" as const, icon: IconPackageOff, label: "Posts" },
 ];
