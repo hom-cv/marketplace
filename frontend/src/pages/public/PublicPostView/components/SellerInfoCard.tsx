@@ -5,21 +5,23 @@
 import { Link } from "@tanstack/react-router";
 import { IconChevronRight } from "@tabler/icons-react";
 import type { Post } from "@/api/types/post";
+import { Username } from "@/components/Username";
 import styles from "../PublicPostViewPage.module.css";
 
 interface SellerInfoCardProps {
   user: Post["user"];
   isOwner: boolean;
+  isBanned?: boolean;
 }
 
-export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
+export function SellerInfoCard({ user, isOwner, isBanned }: SellerInfoCardProps) {
   const content = (
     <div className={styles.sellerInfo}>
       <div className={styles.sellerAvatar}>
         {user.username.charAt(0).toUpperCase()}
       </div>
       <div className={styles.sellerDetails}>
-        <div className={styles.sellerUsername}>@{user.username}</div>
+        <Username username={user.username} isBanned={isBanned} className={styles.sellerUsername} />
       </div>
     </div>
   );

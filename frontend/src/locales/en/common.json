@@ -76,6 +76,9 @@
     "size": "Size",
     "oneSize": "One Size"
   },
+  "user": {
+    "banned": "This user has been banned"
+  },
   "report": {
     "title": "Report {{type}}",
     "user": "User",

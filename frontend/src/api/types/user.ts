@@ -26,6 +26,7 @@ export interface PublicUserProfile {
   total_likes: number;
   follower_count: number;
   is_followed: boolean;
+  is_banned?: boolean;
 }
 
 export interface UpdateProfileRequest {

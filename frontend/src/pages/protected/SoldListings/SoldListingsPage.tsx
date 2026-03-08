@@ -15,6 +15,7 @@ import { Link } from "@tanstack/react-router";
 import { getMySales, addTracking } from "@/api/payments";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
+import { Username } from "@/components/Username";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { ShippingAddressCard } from "@/components/ShippingAddressCard";
@@ -160,7 +161,7 @@ export function SoldListingsPage() {
                               className={styles.buyerLink}
                             >
                               <IconUser size={14} />
-                              <span className={styles.buyerUsername}>@{sale.buyer.username}</span>
+                              <Username username={sale.buyer.username} isBanned={sale.buyer.is_banned} className={styles.buyerUsername} />
                               <span className={styles.buyerDate}>
                                 {new Date(sale.created_at).toLocaleDateString()}
                               </span>

@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { IconArrowLeft, IconExternalLink } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { ConversationParticipant, ConversationPost } from "@/api/types/chat";
+import { Username } from "@/components/Username";
 import styles from "./ChatHeader.module.css";
 
 interface ChatHeaderProps {
@@ -24,7 +25,7 @@ export function ChatHeader({ otherUser, post, onBack }: ChatHeaderProps) {
       </button>
 
       <div className={styles.info}>
-        <span className={styles.username}>@{otherUser.username}</span>
+        <Username username={otherUser.username} isBanned={otherUser.is_banned} className={styles.username} />
         <span className={styles.postTitle}>{post.title}</span>
       </div>
 

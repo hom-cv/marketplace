@@ -55,6 +55,7 @@ export interface PostSummary {
 export interface UserSummary {
   id: number;
   username: string;
+  is_banned?: boolean;
 }
 
 export interface PurchaseListItem {

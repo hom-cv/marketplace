@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.user import AnnotatedValidUserByUsername
 from app.core.security import get_current_user, get_current_user_optional
+from app.crud.ban import AnnotatedBanCRUD
 from app.crud.follow import AnnotatedFollowCRUD
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
@@ -32,6 +33,7 @@ async def get_user_profile(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     like_crud: AnnotatedLikeCRUD,
     follow_crud: AnnotatedFollowCRUD,
+    ban_crud: AnnotatedBanCRUD,
     user: AnnotatedValidUserByUsername,
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PublicUserProfileSchema:
@@ -60,8 +62,15 @@ async def get_user_profile(
             db, follower_id=current_user.id, following_id=user.id
         )
 
+    # Check ban status
+    active_ban = await ban_crud.get_active_user_ban(db, user_id=user.id)
+
     return PublicUserProfileSchema.from_user(
-        user, total_likes, follower_count=follower_count, is_followed=is_followed
+        user,
+        total_likes,
+        follower_count=follower_count,
+        is_followed=is_followed,
+        is_banned=active_ban is not None,
     )
 
 

@@ -5,6 +5,7 @@
 export interface ConversationParticipant {
   id: number;
   username: string;
+  is_banned?: boolean;
 }
 
 export interface ConversationPost {

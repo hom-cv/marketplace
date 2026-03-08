@@ -1,7 +1,9 @@
 """CRUD operations for bans."""
 
 from datetime import datetime, timezone
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -104,6 +106,19 @@ class BanCRUD:
         query = select(UserBan.user_id).where(UserBan.is_active.is_(True))
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    async def get_banned_user_ids_from_set(
+        self, db: AsyncSession, *, user_ids: set[int]
+    ) -> set[int]:
+        """Get the subset of user_ids that have an active ban."""
+        if not user_ids:
+            return set()
+        query = select(UserBan.user_id).where(
+            UserBan.user_id.in_(user_ids),
+            UserBan.is_active.is_(True),
+        )
+        result = await db.execute(query)
+        return set(result.scalars().all())
 
     async def count_active_user_bans(self, db: AsyncSession) -> int:
         """Get count of active user bans."""
@@ -216,3 +231,6 @@ ban_crud = BanCRUD()
 def get_ban_crud() -> BanCRUD:
     """Factory function for dependency injection."""
     return ban_crud
+
+
+AnnotatedBanCRUD = Annotated[BanCRUD, Depends(get_ban_crud)]

@@ -172,7 +172,7 @@ export function PublicPostViewPage() {
                 onLikeAuthRequired={handleLikeAuthRequired}
               />
 
-              <SellerInfoCard user={post.user} isOwner={isOwner} />
+              <SellerInfoCard user={post.user} isOwner={isOwner} isBanned={post.is_user_banned} />
 
               <PostActions
                 post={post}

@@ -14,6 +14,7 @@ import { FollowButton } from "@/components/FollowButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
+import { Username } from "@/components/Username";
 import { useAuthStore } from "@/stores/authStore";
 import styles from "./ProfilePage.module.css";
 
@@ -98,7 +99,7 @@ export function ProfilePage() {
             {/* Right: Info + Follow */}
             <div className={styles.profileInfo}>
               <div className={styles.topRow}>
-                <h1 className={styles.username}>@{profile.username}</h1>
+                <Username username={profile.username} isBanned={profile.is_banned} className={styles.username} />
                 {profile.is_seller && (
                   <span className={styles.badge}>{t("badges.seller")}</span>
                 )}

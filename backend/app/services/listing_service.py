@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.crud.ban import BanCRUD, get_ban_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
@@ -88,26 +89,52 @@ class ListingService:
         db: AsyncSession,
         post_crud_dep: PostCRUD,
         payment_crud_dep: PaymentCRUD,
+        ban_crud_dep: BanCRUD | None = None,
     ) -> None:
         self.db = db
         self._post_crud = post_crud_dep
         self._payment_crud = payment_crud_dep
+        self._ban_crud = ban_crud_dep
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
         payments = await self._payment_crud.get_payments_by_buyer(
             self.db, buyer_id=buyer_id
         )
-        return [_payment_to_list_item(p) for p in payments]
+        items = [_payment_to_list_item(p) for p in payments]
+
+        # Batch check ban status for sellers
+        if self._ban_crud and items:
+            seller_ids = {item.seller.id for item in items if item.seller}
+            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
+                self.db, user_ids=seller_ids
+            )
+            for item in items:
+                if item.seller and item.seller.id in banned_ids:
+                    item.seller.is_banned = True
+
+        return items
 
     async def get_sales(self, seller_id: int) -> list[PurchaseListItem]:
         """Get all sales made by a seller (includes shipping address)."""
         payments = await self._payment_crud.get_payments_by_seller(
             self.db, seller_id=seller_id
         )
-        return [
+        items = [
             _payment_to_list_item(p, include_shipping_address=True) for p in payments
         ]
+
+        # Batch check ban status for buyers
+        if self._ban_crud and items:
+            buyer_ids = {item.buyer.id for item in items if item.buyer}
+            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
+                self.db, user_ids=buyer_ids
+            )
+            for item in items:
+                if item.buyer and item.buyer.id in banned_ids:
+                    item.buyer.is_banned = True
+
+        return items
 
     async def get_my_listings(
         self,
@@ -158,13 +185,17 @@ class ListingService:
         return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
 
 
+AnnotatedBanCRUD = Annotated[BanCRUD, Depends(get_ban_crud)]
+
+
 def _get_listing_service(
     post_crud_dep: AnnotatedPostCRUD,
     payment_crud_dep: AnnotatedPaymentCRUD,
+    ban_crud_dep: AnnotatedBanCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
-    return ListingService(db, post_crud_dep, payment_crud_dep)
+    return ListingService(db, post_crud_dep, payment_crud_dep, ban_crud_dep)
 
 
 AnnotatedListingService = Annotated[ListingService, Depends(_get_listing_service)]

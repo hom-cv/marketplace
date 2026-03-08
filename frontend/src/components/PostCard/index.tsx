@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
+import { Username } from "@/components/Username";
 import styles from "./PostCard.module.css";
 
 export interface ReportTarget {
@@ -139,7 +140,7 @@ export function PostCard({
           ฿{price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
         </Text>
         <Group justify="space-between" align="center">
-          <Text size="xs" c="var(--color-text-muted)">@{post.user.username}</Text>
+          <Username username={post.user.username} isBanned={post.is_user_banned} className={styles.username} />
           <LikeButton
             key={`${post.id}-${post.is_liked}-${post.like_count}`}
             postId={post.id}

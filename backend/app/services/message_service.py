@@ -6,6 +6,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, forbidden_error, not_found_error
+from app.crud.ban import BanCRUD, get_ban_crud
 from app.crud.conversation import ConversationCRUD, get_conversation_crud
 from app.crud.message import MessageCRUD, get_message_crud
 from app.crud.message_flag import MessageFlagCRUD, get_message_flag_crud
@@ -39,6 +40,7 @@ class MessageService:
         user_crud: UserCRUD,
         ws_manager: ConnectionManager,
         message_flag_crud: MessageFlagCRUD | None = None,
+        ban_crud: BanCRUD | None = None,
     ) -> None:
         self.db = db
         self._conversation_crud = conversation_crud
@@ -47,6 +49,7 @@ class MessageService:
         self._user_crud = user_crud
         self._ws_manager = ws_manager
         self._message_flag_crud = message_flag_crud
+        self._ban_crud = ban_crud
 
     async def get_or_create_conversation(
         self, *, user_id: int, post_id: int
@@ -87,14 +90,29 @@ class MessageService:
             self.db, conversation_ids=conv_ids
         )
 
+        # Batch check ban status for all participants
+        banned_ids: set[int] = set()
+        if self._ban_crud and conversations:
+            participant_ids = set()
+            for conv in conversations:
+                participant_ids.add(conv.initiator.id)
+                participant_ids.add(conv.recipient.id)
+            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
+                self.db, user_ids=participant_ids
+            )
+
         return [
             ConversationResponseSchema(
                 id=conv.id,
                 initiator=ConversationParticipantSchema(
-                    id=conv.initiator.id, username=conv.initiator.username
+                    id=conv.initiator.id,
+                    username=conv.initiator.username,
+                    is_banned=conv.initiator.id in banned_ids,
                 ),
                 recipient=ConversationParticipantSchema(
-                    id=conv.recipient.id, username=conv.recipient.username
+                    id=conv.recipient.id,
+                    username=conv.recipient.username,
+                    is_banned=conv.recipient.id in banned_ids,
                 ),
                 post=self._build_post_schema(conv.post),
                 last_message=MessageResponseSchema.model_validate(last_msg)
@@ -163,13 +181,25 @@ class MessageService:
             self.db, conversation_id=conversation.id
         )
 
+        # Batch check ban status for participants
+        banned_ids: set[int] = set()
+        if self._ban_crud:
+            participant_ids = {conversation.initiator.id, conversation.recipient.id}
+            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
+                self.db, user_ids=participant_ids
+            )
+
         return ConversationDetailSchema(
             id=conversation.id,
             initiator=ConversationParticipantSchema(
-                id=conversation.initiator.id, username=conversation.initiator.username
+                id=conversation.initiator.id,
+                username=conversation.initiator.username,
+                is_banned=conversation.initiator.id in banned_ids,
             ),
             recipient=ConversationParticipantSchema(
-                id=conversation.recipient.id, username=conversation.recipient.username
+                id=conversation.recipient.id,
+                username=conversation.recipient.username,
+                is_banned=conversation.recipient.id in banned_ids,
             ),
             post=self._build_post_schema(conversation.post),
             messages=[
@@ -271,13 +301,25 @@ class MessageService:
             self.db, conversation_id=conversation.id
         )
 
+        # Check ban status for participants
+        banned_ids: set[int] = set()
+        if self._ban_crud:
+            participant_ids = {initiator.id, recipient.id}
+            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
+                self.db, user_ids=participant_ids
+            )
+
         return ConversationResponseSchema(
             id=conversation.id,
             initiator=ConversationParticipantSchema(
-                id=initiator.id, username=initiator.username
+                id=initiator.id,
+                username=initiator.username,
+                is_banned=initiator.id in banned_ids,
             ),
             recipient=ConversationParticipantSchema(
-                id=recipient.id, username=recipient.username
+                id=recipient.id,
+                username=recipient.username,
+                is_banned=recipient.id in banned_ids,
             ),
             post=self._build_post_schema(post),
             last_message=MessageResponseSchema.model_validate(last_message)
@@ -293,12 +335,14 @@ def _get_message_service(
     message_flag_crud: Annotated[MessageFlagCRUD, Depends(get_message_flag_crud)],
     post_crud: Annotated[PostCRUD, Depends(get_post_crud)],
     user_crud: Annotated[UserCRUD, Depends(get_user_crud)],
+    ban_crud: Annotated[BanCRUD, Depends(get_ban_crud)],
     db: AsyncSession = Depends(get_async_db),
 ) -> MessageService:
     """Factory function to create MessageService instance."""
     return MessageService(
         db, conversation_crud, message_crud, post_crud, user_crud,
         ws_manager=_ws_manager, message_flag_crud=message_flag_crud,
+        ban_crud=ban_crud,
     )
 
 

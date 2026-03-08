@@ -1,0 +1,5 @@
+.banned {
+  color: var(--color-error);
+  text-decoration: line-through;
+  cursor: default;
+}

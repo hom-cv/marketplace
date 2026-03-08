@@ -8,6 +8,7 @@ import { IconChevronRight, IconExternalLink, IconPhoto, IconRosetteDiscountCheck
 import { useTranslation } from "react-i18next";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
+import { Username } from "@/components/Username";
 import type { Post } from "@/api/types/post";
 import styles from "./ListingSidebar.module.css";
 
@@ -101,7 +102,7 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
           </div>
           <div className={styles.sellerDetails}>
             <div className={styles.sellerNameRow}>
-              <span className={styles.sellerName}>@{post.user.username}</span>
+              <Username username={post.user.username} isBanned={post.is_user_banned} className={styles.sellerName} />
               {post.user.is_seller && (
                 <IconRosetteDiscountCheck size={14} className={styles.sellerBadgeIcon} />
               )}

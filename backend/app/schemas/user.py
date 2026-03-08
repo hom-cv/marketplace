@@ -100,6 +100,7 @@ class PublicUserProfileSchema(BaseModel):
     total_likes: int = 0
     follower_count: int = 0
     is_followed: bool = False
+    is_banned: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -110,6 +111,7 @@ class PublicUserProfileSchema(BaseModel):
         total_likes: int,
         follower_count: int = 0,
         is_followed: bool = False,
+        is_banned: bool = False,
     ) -> "PublicUserProfileSchema":
         """Create public profile from User model."""
         return cls(
@@ -122,4 +124,5 @@ class PublicUserProfileSchema(BaseModel):
             total_likes=total_likes,
             follower_count=follower_count,
             is_followed=is_followed,
+            is_banned=is_banned,
         )

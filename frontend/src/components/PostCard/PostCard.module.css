@@ -71,3 +71,8 @@
 .titleRow {
   margin-bottom: 4px;
 }
+
+.username {
+  font-size: var(--mantine-font-size-xs);
+  color: var(--color-text-muted);
+}

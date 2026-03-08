@@ -120,6 +120,7 @@ class UserSummary(BaseModel):
 
     id: int
     username: str
+    is_banned: bool = False
 
     model_config = {"from_attributes": True}
 

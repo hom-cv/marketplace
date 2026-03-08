@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { getConversations } from "@/api/chat";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
+import { Username } from "@/components/Username";
 import type { Conversation } from "@/api/types/chat";
 import shared from "@/styles/listPage.module.css";
 import styles from "./MessagesPage.module.css";
@@ -103,7 +104,7 @@ export function MessagesPage() {
                   </div>
                   <div className={styles.conversationInfo}>
                     <div className={styles.conversationHeader}>
-                      <span className={styles.username}>@{otherUser.username}</span>
+                      <Username username={otherUser.username} isBanned={otherUser.is_banned} className={styles.username} />
                       <span className={styles.time}>
                         {conv.last_message
                           ? formatTime(conv.last_message.created_date, t)
