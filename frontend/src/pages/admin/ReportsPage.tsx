@@ -14,6 +14,7 @@ import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { formatShortDate } from "@/utils/date";
 import shared from "@/styles/listPage.module.css";
 import styles from "./ReportsPage.module.css";
 
@@ -187,11 +188,7 @@ export function ReportsPage() {
                         by {report.reporter_username || "anonymous"}
                       </span>
                       <span className={shared.date}>
-                        {new Date(report.created_date).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {formatShortDate(report.created_date)}
                       </span>
                     </div>
                   </div>
@@ -206,14 +203,14 @@ export function ReportsPage() {
                   <div className={shared.expandedContent}>
                     <div className={styles.detailGrid}>
                       <div>
-                        <p className={styles.detailLabel}>Reason</p>
-                        <p className={styles.detailValue}>
+                        <p className={shared.detailLabel}>Reason</p>
+                        <p className={shared.detailValue}>
                           {REASON_LABELS[report.reason] || report.reason}
                         </p>
                       </div>
                       <div>
-                        <p className={styles.detailLabel}>Description</p>
-                        <p className={styles.detailValue}>{report.description}</p>
+                        <p className={shared.detailLabel}>Description</p>
+                        <p className={styles.detailValueWrap}>{report.description}</p>
                       </div>
                     </div>
 

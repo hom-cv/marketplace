@@ -18,7 +18,9 @@ import type { InviteStatus } from "@/api/types/admin";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { DetailItem } from "@/components/DetailItem";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { formatShortDate } from "@/utils/date";
 import shared from "@/styles/listPage.module.css";
 import styles from "./InviteCodesPage.module.css";
 
@@ -95,7 +97,7 @@ export function InviteCodesPage() {
         </Button>
       </div>
 
-      <div className={styles.toolbar}>
+      <div className={shared.toolbar}>
         <Select
           placeholder="Filter by status"
           value={statusFilter}
@@ -109,7 +111,7 @@ export function InviteCodesPage() {
           clearable
           w={180}
         />
-        <span className={styles.count}>{invitesData?.total ?? 0} total</span>
+        <span className={shared.count}>{invitesData?.total ?? 0} total</span>
       </div>
 
       {invites.length === 0 ? (
@@ -139,11 +141,7 @@ export function InviteCodesPage() {
                     <div className={shared.meta}>
                       <StatusBadge label={badge.label} color={badge.color} />
                       <span className={shared.date}>
-                        {new Date(invite.created_date).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {formatShortDate(invite.created_date)}
                       </span>
                     </div>
                   </div>
@@ -173,45 +171,21 @@ export function InviteCodesPage() {
                       </CopyButton>
                     </div>
 
-                    <div className={styles.detailGrid}>
-                      <div>
-                        <p className={styles.detailLabel}>Created By</p>
-                        <p className={styles.detailValue}>{invite.created_by_username || "-"}</p>
-                      </div>
-                      <div>
-                        <p className={styles.detailLabel}>Created</p>
-                        <p className={styles.detailValue}>
-                          {new Date(invite.created_date).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
+                    <div className={shared.detailGrid}>
+                      <DetailItem label="Created By">{invite.created_by_username || "-"}</DetailItem>
+                      <DetailItem label="Created">{formatShortDate(invite.created_date)}</DetailItem>
                       {invite.used_by_username && (
                         <>
-                          <div>
-                            <p className={styles.detailLabel}>Used By</p>
-                            <p className={styles.detailValue}>{invite.used_by_username}</p>
-                          </div>
+                          <DetailItem label="Used By">{invite.used_by_username}</DetailItem>
                           {invite.used_at && (
-                            <div>
-                              <p className={styles.detailLabel}>Used At</p>
-                              <p className={styles.detailValue}>
-                                {new Date(invite.used_at).toLocaleDateString(undefined, {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </p>
-                            </div>
+                            <DetailItem label="Used At">{formatShortDate(invite.used_at)}</DetailItem>
                           )}
                         </>
                       )}
                     </div>
 
                     {invite.status === "active" && (
-                      <div className={styles.revokeButton}>
+                      <div className={styles.expandedActions}>
                         <Button
                           variant="ghost"
                           size="sm"

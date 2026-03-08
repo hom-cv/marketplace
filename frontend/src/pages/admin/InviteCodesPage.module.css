@@ -1,4 +1,4 @@
-/* InviteCodesPage */
+/* InviteCodesPage — page-specific styles only */
 
 .generateCard {
   border: 1px solid var(--color-border);
@@ -9,18 +9,6 @@
   display: flex;
   align-items: flex-end;
   gap: 12px;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.count {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
 }
 
 .code {
@@ -45,28 +33,6 @@
   margin-top: 8px;
 }
 
-.detailGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.detailLabel {
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  margin: 0 0 2px;
-}
-
-.detailValue {
-  font-size: 0.85rem;
-  color: var(--color-text);
-  margin: 0;
-}
-
 .copyButton {
   display: flex;
   align-items: center;
@@ -84,7 +50,7 @@
   background: var(--color-bg-muted);
 }
 
-.revokeButton {
+.expandedActions {
   margin-top: 12px;
 }
 
@@ -92,9 +58,5 @@
   .generateCard {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .detailGrid {
-    grid-template-columns: 1fr;
   }
 }

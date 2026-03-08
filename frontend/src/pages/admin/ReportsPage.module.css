@@ -1,4 +1,4 @@
-/* ReportsPage */
+/* ReportsPage — page-specific styles only */
 
 .toolbar {
   display: flex;
@@ -31,6 +31,7 @@
   color: var(--color-text-muted);
 }
 
+/* Override shared grid for reports: wider description column */
 .detailGrid {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -38,16 +39,8 @@
   margin-top: 12px;
 }
 
-.detailLabel {
-  font-size: 0.65rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-  margin: 0 0 2px;
-}
-
-.detailValue {
+/* Override shared value for pre-wrap (descriptions) */
+.detailValueWrap {
   font-size: 0.85rem;
   color: var(--color-text);
   margin: 0;

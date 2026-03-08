@@ -11,7 +11,9 @@ import type { BanPostRequest } from "@/api/types/admin";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
+import { DetailItem } from "@/components/DetailItem";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { formatShortDate } from "@/utils/date";
 import shared from "@/styles/listPage.module.css";
 import styles from "./PostBansPage.module.css";
 
@@ -69,14 +71,14 @@ export function PostBansPage() {
     <div className={shared.container}>
       <h1 className={shared.title}>Post Bans</h1>
 
-      <div className={styles.toolbar}>
-        <div className={styles.toolbarLeft}>
+      <div className={shared.toolbar}>
+        <div className={shared.toolbarLeft}>
           <Switch
             label="Active only"
             checked={activeOnly}
             onChange={(e) => setActiveOnly(e.currentTarget.checked)}
           />
-          <span className={styles.count}>{bansData?.total ?? 0} total</span>
+          <span className={shared.count}>{bansData?.total ?? 0} total</span>
         </div>
         <Button
           variant="primary"
@@ -89,9 +91,9 @@ export function PostBansPage() {
       </div>
 
       {showCreateForm && (
-        <div className={styles.createForm}>
-          <p className={styles.createFormTitle}>Ban a Post</p>
-          <div className={styles.formFields}>
+        <div className={shared.createForm}>
+          <p className={shared.createFormTitle}>Ban a Post</p>
+          <div className={shared.formFields}>
             <NumberInput
               label="Post ID"
               placeholder="Enter post ID to ban"
@@ -109,7 +111,7 @@ export function PostBansPage() {
               rows={3}
             />
           </div>
-          <div className={styles.formActions}>
+          <div className={shared.formActions}>
             <Button
               variant="ghost"
               size="sm"
@@ -158,7 +160,7 @@ export function PostBansPage() {
                 >
                   <div className={shared.info}>
                     <div className={shared.topRow}>
-                      <span className={styles.rowMain}>{ban.post_title}</span>
+                      <span className={shared.itemTitle}>{ban.post_title}</span>
                       <span className={styles.rowSeller}>{ban.seller_username}</span>
                     </div>
                     <div className={shared.meta}>
@@ -167,11 +169,7 @@ export function PostBansPage() {
                         color={ban.is_active ? "red" : "gray"}
                       />
                       <span className={shared.date}>
-                        {new Date(ban.created_date).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {formatShortDate(ban.created_date)}
                       </span>
                     </div>
                   </div>
@@ -184,58 +182,22 @@ export function PostBansPage() {
 
                 {isExpanded && (
                   <div className={shared.expandedContent}>
-                    <div className={styles.detailGrid}>
-                      <div>
-                        <p className={styles.detailLabel}>Post ID</p>
-                        <p className={styles.detailValue}>{ban.post_id}</p>
-                      </div>
-                      <div>
-                        <p className={styles.detailLabel}>Post Title</p>
-                        <p className={styles.detailValue}>{ban.post_title}</p>
-                      </div>
-                      <div>
-                        <p className={styles.detailLabel}>Seller</p>
-                        <p className={styles.detailValue}>{ban.seller_username}</p>
-                      </div>
-                      <div>
-                        <p className={styles.detailLabel}>Reason</p>
-                        <p className={styles.detailValue}>{ban.reason}</p>
-                      </div>
-                      <div>
-                        <p className={styles.detailLabel}>Banned By</p>
-                        <p className={styles.detailValue}>{ban.banned_by_username}</p>
-                      </div>
-                      <div>
-                        <p className={styles.detailLabel}>Date</p>
-                        <p className={styles.detailValue}>
-                          {new Date(ban.created_date).toLocaleDateString(undefined, {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
+                    <div className={shared.detailGrid}>
+                      <DetailItem label="Post ID">{ban.post_id}</DetailItem>
+                      <DetailItem label="Post Title">{ban.post_title}</DetailItem>
+                      <DetailItem label="Seller">{ban.seller_username}</DetailItem>
+                      <DetailItem label="Reason">{ban.reason}</DetailItem>
+                      <DetailItem label="Banned By">{ban.banned_by_username}</DetailItem>
+                      <DetailItem label="Date">{formatShortDate(ban.created_date)}</DetailItem>
                       {ban.lifted_at && (
                         <>
-                          <div>
-                            <p className={styles.detailLabel}>Lifted At</p>
-                            <p className={styles.detailValue}>
-                              {new Date(ban.lifted_at).toLocaleDateString(undefined, {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </p>
-                          </div>
-                          <div>
-                            <p className={styles.detailLabel}>Lifted By</p>
-                            <p className={styles.detailValue}>{ban.lifted_by_username}</p>
-                          </div>
+                          <DetailItem label="Lifted At">{formatShortDate(ban.lifted_at)}</DetailItem>
+                          <DetailItem label="Lifted By">{ban.lifted_by_username}</DetailItem>
                         </>
                       )}
                     </div>
                     {ban.is_active && (
-                      <div className={styles.liftButton}>
+                      <div className={styles.expandedActions}>
                         <Button
                           variant="secondary"
                           size="sm"
