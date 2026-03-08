@@ -60,12 +60,7 @@ export function BannedPage() {
               for assistance.
             </Text>
 
-            <Button
-              variant="outline"
-              color="dark"
-              fullWidth
-              onClick={handleGoHome}
-            >
+            <Button fullWidth radius="xs" onClick={handleGoHome}>
               Return to Home
             </Button>
           </Stack>
