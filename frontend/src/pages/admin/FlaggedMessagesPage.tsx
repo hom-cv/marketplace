@@ -149,7 +149,7 @@ export function FlaggedMessagesPage() {
     if (cacheRef.current.has(conversationId)) return;
     setChatLoading(true);
     try {
-      const detail = await getAdminConversation(conversationId, undefined, 100);
+      const detail = await getAdminConversation(conversationId, undefined, 50);
       let post: Post | null = null;
       try {
         post = await getPost(detail.post.id);
@@ -165,6 +165,48 @@ export function FlaggedMessagesPage() {
       setChatLoading(false);
     }
   }, []);
+
+  const [loadingOlder, setLoadingOlder] = useState(false);
+
+  const handleLoadOlder = useCallback(async () => {
+    if (!selectedConv) return;
+    const entry = cacheRef.current.get(selectedConv);
+    if (!entry || !entry.detail.messages.length) return;
+
+    const oldestId = entry.detail.messages[0].id;
+    if (oldestId < 0) return;
+
+    const container = chatScrollRef.current;
+    const scrollHeightBefore = container?.scrollHeight ?? 0;
+
+    setLoadingOlder(true);
+    try {
+      const older = await getAdminConversation(selectedConv, oldestId, 50);
+      if (older.messages.length > 0) {
+        const updated: ConvCache = {
+          ...entry,
+          detail: {
+            ...entry.detail,
+            messages: [...older.messages, ...entry.detail.messages],
+            total_messages: older.total_messages,
+          },
+        };
+        cacheRef.current.set(selectedConv, updated);
+        setCacheVersion((v) => v + 1);
+
+        requestAnimationFrame(() => {
+          if (container) {
+            const scrollHeightAfter = container.scrollHeight;
+            container.scrollTop = scrollHeightAfter - scrollHeightBefore;
+          }
+        });
+      }
+    } catch {
+      notifications.show({ title: "Error", message: "Failed to load older messages", color: "red" });
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [selectedConv]);
 
   useEffect(() => {
     if (selectedConv !== null) {
@@ -322,6 +364,15 @@ export function FlaggedMessagesPage() {
                 <div className={styles.chatLoading}>
                   <Loader size="sm" />
                 </div>
+              )}
+              {cached?.detail && cached.detail.messages.length < cached.detail.total_messages && (
+                <button
+                  className={styles.loadOlderButton}
+                  onClick={handleLoadOlder}
+                  disabled={loadingOlder}
+                >
+                  {loadingOlder ? "Loading..." : "Load older messages"}
+                </button>
               )}
               {cached?.detail.messages.map((msg) => {
                 const isFlagged = flaggedMessageIds.has(msg.id);
