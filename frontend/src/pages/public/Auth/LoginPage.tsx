@@ -21,7 +21,7 @@ import styles from "./Auth.module.css";
 export function LoginPage() {
   const navigate = useNavigate();
   const loginMutation = useLoginMutation();
-  const { token } = useAuthStore();
+  const { token, isBanned } = useAuthStore();
   const { t } = useTranslation("auth");
   const routerState = useRouterState();
 
@@ -31,10 +31,14 @@ export function LoginPage() {
   }, [routerState.location.searchStr]);
 
   useEffect(() => {
+    if (isBanned) {
+      navigate({ to: "/banned" });
+      return;
+    }
     if (token) {
       navigate({ to: "/explore" });
     }
-  }, [token, navigate]);
+  }, [token, isBanned, navigate]);
 
   const form = useForm({
     initialValues: {

@@ -211,3 +211,8 @@ class BanCRUD:
 
 
 ban_crud = BanCRUD()
+
+
+def get_ban_crud() -> BanCRUD:
+    """Factory function for dependency injection."""
+    return ban_crud

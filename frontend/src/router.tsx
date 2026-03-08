@@ -17,6 +17,7 @@ import {
   LoginPage,
   SignUpPage,
   VerifyEmailPage,
+  BannedPage,
   TermsPage,
   PrivacyPage,
   ProfilePage,
@@ -91,6 +92,12 @@ const verifyEmailRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => ({
     token: (search.token as string) || undefined,
   }),
+});
+
+const bannedRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/banned",
+  component: BannedPage,
 });
 
 // Public policy routes
@@ -264,6 +271,7 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   signUpRoute,
   verifyEmailRoute,
+  bannedRoute,
   termsRoute,
   privacyRoute,
   publicExploreRoute,

@@ -14,6 +14,7 @@ from app.core.exceptions import (
 )
 from app.core.jwt import verify_email_token
 from app.core.password import get_password_hash, verify_password
+from app.crud.ban import BanCRUD, get_ban_crud
 from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.models.user import User
@@ -24,13 +25,18 @@ logger = logging.getLogger(__name__)
 
 
 AnnotatedUserCRUD = Annotated[UserCRUD, Depends(get_user_crud)]
+AnnotatedBanCRUD = Annotated[BanCRUD, Depends(get_ban_crud)]
 
 
 class AuthService:
     """Service class for authentication-related operations."""
 
     def __init__(
-        self, db: AsyncSession, email_service: EmailService, user_crud_dep: UserCRUD
+        self,
+        db: AsyncSession,
+        email_service: EmailService,
+        user_crud_dep: UserCRUD,
+        ban_crud_dep: BanCRUD,
     ):
         """
         Initialize the AuthService with a database session.
@@ -39,10 +45,12 @@ class AuthService:
             db (AsyncSession): The asynchronous database session.
             email_service (EmailService): Email service for sending emails.
             user_crud_dep (UserCRUD): User CRUD operations.
+            ban_crud_dep (BanCRUD): Ban CRUD operations.
         """
         self.db = db
         self._email_service = email_service
         self._user_crud = user_crud_dep
+        self._ban_crud = ban_crud_dep
 
     async def register_user(self, obj_in: AuthRegisterSchema) -> User:
         """
@@ -122,6 +130,12 @@ class AuthService:
         if not verify_password(obj_in.password, user.hashed_password):
             raise unauthorized_error("Invalid email or password")
 
+        active_ban = await self._ban_crud.get_active_user_ban(
+            db=self.db, user_id=user.id
+        )
+        if active_ban:
+            raise unauthorized_error("Account has been banned")
+
         return user
 
     async def verify_email(self, token: str) -> User:
@@ -185,10 +199,11 @@ class AuthService:
 def _get_auth_service(
     email_service: AnnotatedEmailService,
     user_crud_dep: AnnotatedUserCRUD,
+    ban_crud_dep: AnnotatedBanCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> AuthService:
     """Factory function to create AuthService instance."""
-    return AuthService(db, email_service, user_crud_dep)
+    return AuthService(db, email_service, user_crud_dep, ban_crud_dep)
 
 
 AnnotatedAuthService = Annotated[AuthService, Depends(_get_auth_service)]

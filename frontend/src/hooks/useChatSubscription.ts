@@ -138,6 +138,9 @@ export function useChatSubscription() {
       // Auth-related close codes — clear session
       if (event.code === 4001 || event.code === 4003) {
         useAuthStore.getState().logout();
+        if (event.code === 4003) {
+          useAuthStore.getState().setBanned(true);
+        }
         return;
       }
 

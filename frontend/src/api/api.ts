@@ -31,7 +31,11 @@ export async function apiRequest<T>(
 
     // Auto-logout on 401 from any endpoint
     if (response.status === 401) {
+      const isBanned = message === "Account has been banned";
       useAuthStore.getState().logout();
+      if (isBanned) {
+        useAuthStore.getState().setBanned(true);
+      }
     }
 
     throw new Error(message);

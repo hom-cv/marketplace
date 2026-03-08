@@ -13,11 +13,16 @@ import { useLogout, useCurrentUser } from "@/hooks/useAuth";
 
 export function ProtectedRoute() {
   const navigate = useNavigate();
-  const { user, token } = useAuthStore();
+  const { user, token, isBanned } = useAuthStore();
   const { isLoading, isError } = useCurrentUser();
   const logout = useLogout();
 
   useEffect(() => {
+    if (isBanned) {
+      navigate({ to: "/banned" });
+      return;
+    }
+
     if (!token) {
       logout();
       navigate({ to: "/" });
@@ -28,7 +33,7 @@ export function ProtectedRoute() {
       logout();
       navigate({ to: "/" });
     }
-  }, [token, isError, navigate, logout]);
+  }, [token, isError, isBanned, navigate, logout]);
 
   useEffect(() => {
     if (user && !user.email_verified) {
