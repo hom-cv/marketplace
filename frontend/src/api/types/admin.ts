@@ -137,3 +137,13 @@ export interface MessageFlagListResponse {
   skip: number;
   limit: number;
 }
+
+export interface ConversationGroup {
+  conversationId: number;
+  senderUsernames: string[];
+  senderIds: number[];
+  primarySenderId: number;
+  flags: MessageFlag[];
+  pendingCount: number;
+  latestDate: string;
+}
