@@ -1,43 +1,40 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Title,
-  Text,
-  Stack,
-  Table,
-  Badge,
-  Button,
-  Group,
+  Loader,
   Select,
   NumberInput,
-  Loader,
-  Paper,
   CopyButton,
-  ActionIcon,
   Tooltip,
 } from "@mantine/core";
 import {
   IconPlus,
   IconCopy,
   IconCheck,
-  IconX,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { getInvites, generateInvites, revokeInvite } from "@/api/admin";
 import type { InviteStatus } from "@/api/types/admin";
 import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
+import { StatusBadge } from "@/components/StatusBadge";
+import { DetailItem } from "@/components/DetailItem";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { formatShortDate } from "@/utils/date";
+import shared from "@/styles/listPage.module.css";
 import styles from "./InviteCodesPage.module.css";
 
-const STATUS_COLORS: Record<InviteStatus, string> = {
-  active: "green",
-  used: "blue",
-  revoked: "red",
+const STATUS_BADGE: Record<InviteStatus, { label: string; color: "green" | "blue" | "red" }> = {
+  active: { label: "Active", color: "green" },
+  used: { label: "Used", color: "blue" },
+  revoked: { label: "Revoked", color: "red" },
 };
 
 export function InviteCodesPage() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [generateCount, setGenerateCount] = useState<number>(1);
+  const [expandedCode, setExpandedCode] = useState<string | null>(null);
 
   const { data: invitesData, isLoading, error } = useQuery({
     queryKey: ["admin-invites", statusFilter],
@@ -60,7 +57,7 @@ export function InviteCodesPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.loading}>
+      <div className={shared.loading}>
         <Loader size="lg" />
       </div>
     );
@@ -77,35 +74,30 @@ export function InviteCodesPage() {
   const invites = invitesData?.items ?? [];
 
   return (
-    <Stack gap="lg">
-      <div>
-        <Title order={2} mb="xs">Invite Codes</Title>
-        <Text c="dimmed">Generate and manage seller invite codes.</Text>
+    <div className={shared.container}>
+      <h1 className={shared.title}>Invite Codes</h1>
+
+      <div className={styles.generateCard}>
+        <NumberInput
+          value={generateCount}
+          onChange={(val) => setGenerateCount(typeof val === "number" ? val : 1)}
+          min={1}
+          max={50}
+          w={100}
+          label="Count"
+        />
+        <Button
+          variant="primary"
+          size="sm"
+          leftIcon={<IconPlus size={14} />}
+          onClick={() => generateMutation.mutate(generateCount)}
+          disabled={generateMutation.isPending}
+        >
+          {generateMutation.isPending ? "Generating..." : "Generate"}
+        </Button>
       </div>
 
-      <Paper withBorder p="md" radius="md">
-        <Group>
-          <NumberInput
-            value={generateCount}
-            onChange={(val) => setGenerateCount(typeof val === "number" ? val : 1)}
-            min={1}
-            max={50}
-            w={100}
-            label="Count"
-          />
-          <Button
-            leftSection={<IconPlus size={16} />}
-            color="orange"
-            onClick={() => generateMutation.mutate(generateCount)}
-            loading={generateMutation.isPending}
-            mt="auto"
-          >
-            Generate Codes
-          </Button>
-        </Group>
-      </Paper>
-
-      <Group>
+      <div className={shared.toolbar}>
         <Select
           placeholder="Filter by status"
           value={statusFilter}
@@ -117,12 +109,10 @@ export function InviteCodesPage() {
             { value: "revoked", label: "Revoked" },
           ]}
           clearable
-          w={200}
+          w={180}
         />
-        <Text size="sm" c="dimmed">
-          {invitesData?.total ?? 0} total codes
-        </Text>
-      </Group>
+        <span className={shared.count}>{invitesData?.total ?? 0} total</span>
+      </div>
 
       {invites.length === 0 ? (
         <EmptyStateCard
@@ -131,77 +121,88 @@ export function InviteCodesPage() {
           description="Generate invite codes to allow new sellers to register."
         />
       ) : (
-        <Table.ScrollContainer minWidth={600}>
-          <Table striped highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Code</Table.Th>
-                <Table.Th>Status</Table.Th>
-                <Table.Th>Created</Table.Th>
-                <Table.Th>Created By</Table.Th>
-                <Table.Th>Used By</Table.Th>
-                <Table.Th>Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {invites.map((invite) => (
-                <Table.Tr key={invite.code}>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <Text ff="monospace" size="sm">{invite.code}</Text>
+        <div className={shared.list}>
+          {invites.map((invite) => {
+            const isExpanded = expandedCode === invite.code;
+            const badge = STATUS_BADGE[invite.status];
+
+            return (
+              <div key={invite.code} className={shared.item}>
+                <button
+                  type="button"
+                  className={shared.row}
+                  onClick={() => setExpandedCode(isExpanded ? null : invite.code)}
+                  aria-expanded={isExpanded}
+                >
+                  <div className={shared.info}>
+                    <div className={shared.topRow}>
+                      <span className={styles.code}>{invite.code}</span>
+                    </div>
+                    <div className={shared.meta}>
+                      <StatusBadge label={badge.label} color={badge.color} />
+                      <span className={shared.date}>
+                        {formatShortDate(invite.created_date)}
+                      </span>
+                    </div>
+                  </div>
+                  <IconChevronDown
+                    size={18}
+                    className={`${shared.expandIcon} ${isExpanded ? shared.expandIconOpen : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {isExpanded && (
+                  <div className={shared.expandedContent}>
+                    <div className={styles.copyRow}>
+                      <span className={styles.codeFull}>{invite.code}</span>
                       <CopyButton value={invite.code}>
                         {({ copied, copy }) => (
                           <Tooltip label={copied ? "Copied" : "Copy"}>
-                            <ActionIcon
-                              size="sm"
-                              variant="subtle"
-                              color={copied ? "green" : "gray"}
+                            <button
+                              type="button"
                               onClick={copy}
+                              className={styles.copyButton}
                             >
                               {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
-                            </ActionIcon>
+                            </button>
                           </Tooltip>
                         )}
                       </CopyButton>
-                    </Group>
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge color={STATUS_COLORS[invite.status]} variant="light">
-                      {invite.status}
-                    </Badge>
-                  </Table.Td>
-                  <Table.Td>
-                    {new Date(invite.created_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                  </Table.Td>
-                  <Table.Td>{invite.created_by_username || "-"}</Table.Td>
-                  <Table.Td>
-                    {invite.used_by_username || "-"}
-                    {invite.used_at && (
-                      <Text size="xs" c="dimmed">
-                        {new Date(invite.used_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                      </Text>
-                    )}
-                  </Table.Td>
-                  <Table.Td>
+                    </div>
+
+                    <div className={shared.detailGrid}>
+                      <DetailItem label="Created By">{invite.created_by_username || "-"}</DetailItem>
+                      <DetailItem label="Created">{formatShortDate(invite.created_date)}</DetailItem>
+                      {invite.used_by_username && (
+                        <>
+                          <DetailItem label="Used By">{invite.used_by_username}</DetailItem>
+                          {invite.used_at && (
+                            <DetailItem label="Used At">{formatShortDate(invite.used_at)}</DetailItem>
+                          )}
+                        </>
+                      )}
+                    </div>
+
                     {invite.status === "active" && (
-                      <Button
-                        size="xs"
-                        variant="light"
-                        color="red"
-                        leftSection={<IconX size={14} />}
-                        onClick={() => revokeMutation.mutate(invite.code)}
-                        loading={revokeMutation.isPending}
-                      >
-                        Revoke
-                      </Button>
+                      <div className={styles.expandedActions}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => revokeMutation.mutate(invite.code)}
+                          disabled={revokeMutation.isPending}
+                        >
+                          {revokeMutation.isPending ? "Revoking..." : "Revoke"}
+                        </Button>
+                      </div>
                     )}
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       )}
-    </Stack>
+    </div>
   );
 }

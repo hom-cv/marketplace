@@ -1,35 +1,27 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Title,
-  Text,
-  Stack,
-  Table,
-  Badge,
-  Button,
-  Group,
-  Switch,
-  Loader,
-  Modal,
-  Textarea,
-  NumberInput,
-} from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
+import { Loader, NumberInput, Textarea, Switch } from "@mantine/core";
 import {
   IconUserOff,
   IconPlus,
-  IconCheck,
+  IconChevronDown,
 } from "@tabler/icons-react";
 import { getUserBans, banUser, liftUserBan } from "@/api/admin";
 import type { BanUserRequest } from "@/api/types/admin";
 import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
+import { StatusBadge } from "@/components/StatusBadge";
+import { DetailItem } from "@/components/DetailItem";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { formatShortDate } from "@/utils/date";
+import shared from "@/styles/listPage.module.css";
 import styles from "./UserBansPage.module.css";
 
 export function UserBansPage() {
   const queryClient = useQueryClient();
   const [activeOnly, setActiveOnly] = useState(true);
-  const [opened, { open, close }] = useDisclosure(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [userId, setUserId] = useState<number | "">("");
   const [reason, setReason] = useState("");
 
@@ -42,8 +34,8 @@ export function UserBansPage() {
     mutationFn: (request: BanUserRequest) => banUser(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-bans"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
-      close();
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      setShowCreateForm(false);
       setUserId("");
       setReason("");
     },
@@ -53,13 +45,13 @@ export function UserBansPage() {
     mutationFn: (banId: number) => liftUserBan(banId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-user-bans"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
     },
   });
 
   if (isLoading) {
     return (
-      <div className={styles.loading}>
+      <div className={shared.loading}>
         <Loader size="lg" />
       </div>
     );
@@ -76,31 +68,76 @@ export function UserBansPage() {
   const bans = bansData?.items ?? [];
 
   return (
-    <Stack gap="lg">
-      <div>
-        <Title order={2} mb="xs">User Bans</Title>
-        <Text c="dimmed">Manage banned users and create new bans.</Text>
-      </div>
+    <div className={shared.container}>
+      <h1 className={shared.title}>User Bans</h1>
 
-      <Group justify="space-between">
-        <Group>
+      <div className={shared.toolbar}>
+        <div className={shared.toolbarLeft}>
           <Switch
             label="Active only"
             checked={activeOnly}
             onChange={(e) => setActiveOnly(e.currentTarget.checked)}
           />
-          <Text size="sm" c="dimmed">
-            {bansData?.total ?? 0} total bans
-          </Text>
-        </Group>
+          <span className={shared.count}>{bansData?.total ?? 0} total</span>
+        </div>
         <Button
-          leftSection={<IconPlus size={16} />}
-          color="red"
-          onClick={open}
+          variant="primary"
+          size="sm"
+          leftIcon={<IconPlus size={14} />}
+          onClick={() => setShowCreateForm(!showCreateForm)}
         >
           Ban User
         </Button>
-      </Group>
+      </div>
+
+      {showCreateForm && (
+        <div className={shared.createForm}>
+          <p className={shared.createFormTitle}>Ban a User</p>
+          <div className={shared.formFields}>
+            <NumberInput
+              label="User ID"
+              placeholder="Enter user ID to ban"
+              value={userId}
+              onChange={(val) => setUserId(typeof val === "number" ? val : "")}
+              min={1}
+            />
+            <Textarea
+              label="Reason"
+              placeholder="Reason for banning this user..."
+              value={reason}
+              onChange={(e) => setReason(e.currentTarget.value)}
+              minLength={5}
+              maxLength={500}
+              rows={3}
+            />
+          </div>
+          <div className={shared.formActions}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowCreateForm(false);
+                setUserId("");
+                setReason("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                if (typeof userId === "number") {
+                  banMutation.mutate({ user_id: userId, reason });
+                }
+              }}
+              disabled={typeof userId !== "number" || reason.length < 5 || banMutation.isPending}
+            >
+              {banMutation.isPending ? "Banning..." : "Ban User"}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {bans.length === 0 ? (
         <EmptyStateCard
@@ -109,100 +146,73 @@ export function UserBansPage() {
           description={activeOnly ? "No active bans found." : "No bans found."}
         />
       ) : (
-        <Table.ScrollContainer minWidth={700}>
-          <Table striped highlightOnHover>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>User</Table.Th>
-                <Table.Th>Reason</Table.Th>
-                <Table.Th>Banned By</Table.Th>
-                <Table.Th>Date</Table.Th>
-                <Table.Th>Status</Table.Th>
-                <Table.Th>Actions</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {bans.map((ban) => (
-                <Table.Tr key={ban.id}>
-                  <Table.Td>
-                    <Text size="sm" fw={500}>{ban.username}</Text>
-                    <Text size="xs" c="dimmed">ID: {ban.user_id}</Text>
-                  </Table.Td>
-                  <Table.Td>
-                    <Text size="sm" lineClamp={2}>{ban.reason}</Text>
-                  </Table.Td>
-                  <Table.Td>{ban.banned_by_username}</Table.Td>
-                  <Table.Td>
-                    <Text size="sm">{new Date(ban.created_date).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}</Text>
-                  </Table.Td>
-                  <Table.Td>
-                    <Badge color={ban.is_active ? "red" : "gray"} variant="light">
-                      {ban.is_active ? "Active" : "Lifted"}
-                    </Badge>
-                    {ban.lifted_at && (
-                      <Text size="xs" c="dimmed">
-                        by {ban.lifted_by_username}
-                      </Text>
-                    )}
-                  </Table.Td>
-                  <Table.Td>
-                    {ban.is_active && (
-                      <Button
-                        size="xs"
-                        variant="light"
-                        color="green"
-                        leftSection={<IconCheck size={14} />}
-                        onClick={() => liftMutation.mutate(ban.id)}
-                        loading={liftMutation.isPending}
-                      >
-                        Lift Ban
-                      </Button>
-                    )}
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
-      )}
+        <div className={shared.list}>
+          {bans.map((ban) => {
+            const isExpanded = expandedId === ban.id;
 
-      <Modal opened={opened} onClose={close} title="Ban User" centered>
-        <Stack gap="md">
-          <NumberInput
-            label="User ID"
-            placeholder="Enter user ID to ban"
-            value={userId}
-            onChange={(val) => setUserId(typeof val === "number" ? val : "")}
-            min={1}
-            required
-          />
-          <Textarea
-            label="Reason"
-            placeholder="Reason for banning this user..."
-            value={reason}
-            onChange={(e) => setReason(e.currentTarget.value)}
-            minLength={5}
-            maxLength={500}
-            rows={3}
-            required
-          />
-          <Group justify="flex-end">
-            <Button variant="light" onClick={close}>Cancel</Button>
-            <Button
-              color="red"
-              onClick={() => {
-                if (typeof userId === 'number') {
-                  banMutation.mutate({ user_id: userId, reason });
-                }
-              }}
-              loading={banMutation.isPending}
-              disabled={typeof userId !== "number" || reason.length < 5}
-            >
-              Ban User
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-    </Stack>
+            return (
+              <div key={ban.id} className={shared.item}>
+                <button
+                  type="button"
+                  className={shared.row}
+                  onClick={() => setExpandedId(isExpanded ? null : ban.id)}
+                  aria-expanded={isExpanded}
+                >
+                  <div className={shared.info}>
+                    <div className={shared.topRow}>
+                      <span className={shared.itemTitle}>{ban.username}</span>
+                      <span className={styles.rowReason}>{ban.reason}</span>
+                    </div>
+                    <div className={shared.meta}>
+                      <StatusBadge
+                        label={ban.is_active ? "Active" : "Lifted"}
+                        color={ban.is_active ? "red" : "gray"}
+                      />
+                      <span className={shared.date}>
+                        {formatShortDate(ban.created_date)}
+                      </span>
+                    </div>
+                  </div>
+                  <IconChevronDown
+                    size={18}
+                    className={`${shared.expandIcon} ${isExpanded ? shared.expandIconOpen : ""}`}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                {isExpanded && (
+                  <div className={shared.expandedContent}>
+                    <div className={shared.detailGrid}>
+                      <DetailItem label="User ID">{ban.user_id}</DetailItem>
+                      <DetailItem label="Reason">{ban.reason}</DetailItem>
+                      <DetailItem label="Banned By">{ban.banned_by_username}</DetailItem>
+                      <DetailItem label="Date">{formatShortDate(ban.created_date)}</DetailItem>
+                      {ban.lifted_at && (
+                        <>
+                          <DetailItem label="Lifted At">{formatShortDate(ban.lifted_at)}</DetailItem>
+                          <DetailItem label="Lifted By">{ban.lifted_by_username}</DetailItem>
+                        </>
+                      )}
+                    </div>
+                    {ban.is_active && (
+                      <div className={styles.expandedActions}>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => liftMutation.mutate(ban.id)}
+                          disabled={liftMutation.isPending}
+                        >
+                          {liftMutation.isPending ? "Lifting..." : "Lift Ban"}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
