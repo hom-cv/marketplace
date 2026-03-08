@@ -114,3 +114,26 @@ export interface BanPostRequest {
   post_id: number;
   reason: string;
 }
+
+export type MessageFlagStatus = "PENDING" | "DISMISSED";
+
+export interface MessageFlag {
+  id: number;
+  message_id: number;
+  conversation_id: number;
+  sender_id: number;
+  sender_username: string;
+  message_content: string;
+  matched_patterns: string[];
+  status: MessageFlagStatus;
+  created_date: string;
+  reviewed_by_username: string | null;
+  reviewed_at: string | null;
+}
+
+export interface MessageFlagListResponse {
+  items: MessageFlag[];
+  total: number;
+  skip: number;
+  limit: number;
+}

@@ -45,6 +45,45 @@
   padding: 0 24px;
 }
 
+/* Safety banner */
+.safetyBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #fffbe6;
+  border-bottom: 1px solid #ffe58f;
+  font-size: 0.8rem;
+  color: #8b6914;
+  flex-shrink: 0;
+}
+
+.safetyBannerIcon {
+  flex-shrink: 0;
+  color: #d48806;
+}
+
+.safetyBannerText {
+  flex: 1;
+}
+
+.safetyBannerClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #8b6914;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.safetyBannerClose:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
 /* Messages area - only scrollable region */
 .messagesArea {
   flex: 1;

@@ -11,13 +11,19 @@ import {
   Stack,
   Box,
 } from "@mantine/core";
-import { Link } from "@tanstack/react-router";
+import { Link, useMatchRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Footer() {
   const { t } = useTranslation("common");
   const currentYear = new Date().getFullYear();
+  const matchRoute = useMatchRoute();
+
+  // Hide footer on full-viewport pages
+  if (matchRoute({ to: "/admin/flagged-messages", fuzzy: true })) {
+    return null;
+  }
 
   return (
     <Box component="footer" mt="auto" pb="1.5rem">

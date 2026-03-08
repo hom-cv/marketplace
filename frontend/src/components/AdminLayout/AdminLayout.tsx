@@ -3,6 +3,7 @@ import { Box } from "@mantine/core";
 import {
   IconTicket,
   IconFlag,
+  IconMessageReport,
   IconUserOff,
   IconPackageOff,
   IconArrowLeft,
@@ -24,6 +25,13 @@ function SidebarContent() {
           to="/admin/reports"
           icon={<IconFlag size={18} />}
           label="Reports"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
+        <SidebarNavLink
+          to="/admin/flagged-messages"
+          icon={<IconMessageReport size={18} />}
+          label="Flagged Messages"
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
@@ -59,6 +67,7 @@ function SidebarContent() {
 
 const MOBILE_NAV_LINKS = [
   { to: "/admin/reports" as const, icon: IconFlag, label: "Reports" },
+  { to: "/admin/flagged-messages" as const, icon: IconMessageReport, label: "Flags" },
   { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
   { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Users" },
   { to: "/admin/bans/posts" as const, icon: IconPackageOff, label: "Posts" },

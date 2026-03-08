@@ -45,6 +45,7 @@ import { ChatSubscriptionProvider } from "@/components/ChatSubscriptionProvider"
 import {
   InviteCodesPage,
   ReportsPage,
+  FlaggedMessagesPage,
   UserBansPage,
   PostBansPage,
 } from "@/pages/admin";
@@ -240,6 +241,12 @@ const adminReportsRoute = createRoute({
   component: ReportsPage,
 });
 
+const adminFlaggedMessagesRoute = createRoute({
+  getParentRoute: () => adminLayout,
+  path: "/flagged-messages",
+  component: FlaggedMessagesPage,
+});
+
 const adminUserBansRoute = createRoute({
   getParentRoute: () => adminLayout,
   path: "/bans/users",
@@ -279,6 +286,7 @@ const routeTree = rootRoute.addChildren([
         adminIndexRoute,
         adminInvitesRoute,
         adminReportsRoute,
+        adminFlaggedMessagesRoute,
         adminUserBansRoute,
         adminPostBansRoute,
       ]),

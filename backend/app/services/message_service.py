@@ -123,14 +123,44 @@ class MessageService:
         if conversation.initiator_id != user_id and conversation.recipient_id != user_id:
             raise forbidden_error("You are not a participant in this conversation")
 
+        return await self._build_conversation_detail(
+            conversation, before_id=before_id, limit=limit
+        )
+
+    async def get_conversation_messages_admin(
+        self,
+        *,
+        conversation_id: int,
+        before_id: int | None = None,
+        limit: int = 50,
+    ) -> ConversationDetailSchema:
+        """Get conversation detail for admin review (no participant check)."""
+        conversation = await self._conversation_crud.get_by_id_with_relations(
+            self.db, conversation_id=conversation_id
+        )
+        if not conversation:
+            raise not_found_error("Conversation not found")
+
+        return await self._build_conversation_detail(
+            conversation, before_id=before_id, limit=limit
+        )
+
+    async def _build_conversation_detail(
+        self,
+        conversation: Conversation,
+        *,
+        before_id: int | None = None,
+        limit: int = 50,
+    ) -> ConversationDetailSchema:
+        """Build conversation detail schema with paginated messages."""
         messages = await self._message_crud.get_messages(
             self.db,
-            conversation_id=conversation_id,
+            conversation_id=conversation.id,
             before_id=before_id,
             limit=limit,
         )
         total = await self._message_crud.count_messages(
-            self.db, conversation_id=conversation_id
+            self.db, conversation_id=conversation.id
         )
 
         return ConversationDetailSchema(
