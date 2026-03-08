@@ -31,11 +31,27 @@ export function DetailPane({
   const [showBanForm, setShowBanForm] = useState(false);
 
   const dismissMutation = useMutation({
-    mutationFn: (flagIds: number[]) =>
-      Promise.all(flagIds.map((id) => dismissFlaggedMessage(id))),
-    onSuccess: () => {
+    mutationFn: async (flagIds: number[]) => {
+      const results = await Promise.allSettled(
+        flagIds.map((id) => dismissFlaggedMessage(id))
+      );
+      const failed = results.filter((r) => r.status === "rejected");
+      if (failed.length === results.length) {
+        throw new Error("Failed to dismiss all flags");
+      }
+      return { total: results.length, failed: failed.length };
+    },
+    onSuccess: ({ total, failed }) => {
       queryClient.invalidateQueries({ queryKey: ["admin-flagged-messages"] });
-      notifications.show({ title: "Dismissed", message: "All pending flags dismissed.", color: "gray" });
+      if (failed > 0) {
+        notifications.show({
+          title: "Partially Dismissed",
+          message: `${total - failed} of ${total} flags dismissed. ${failed} failed.`,
+          color: "orange",
+        });
+      } else {
+        notifications.show({ title: "Dismissed", message: "All pending flags dismissed.", color: "gray" });
+      }
     },
     onError: (err: Error) => {
       notifications.show({ title: "Error", message: err.message, color: "red" });

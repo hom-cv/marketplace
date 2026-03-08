@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useCallback, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -28,21 +28,24 @@ export function ChatPane({
   const queryClient = useQueryClient();
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
+  const hasScrolledRef = useRef<number | null>(null);
 
-  const chatScrollCallback = useCallback(
-    (node: HTMLDivElement | null) => {
-      chatScrollRef.current = node;
-      if (node && conversationDetail) {
-        requestAnimationFrame(() => {
-          const flaggedEl = node.querySelector("[data-flagged='true']");
-          if (flaggedEl) {
-            flaggedEl.scrollIntoView({ block: "center" });
-          }
-        });
-      }
-    },
-    [conversationDetail]
-  );
+  // Auto-scroll to first flagged message only once per conversation
+  useEffect(() => {
+    if (
+      conversationDetail &&
+      chatScrollRef.current &&
+      hasScrolledRef.current !== activeGroup.conversationId
+    ) {
+      hasScrolledRef.current = activeGroup.conversationId;
+      requestAnimationFrame(() => {
+        const flaggedEl = chatScrollRef.current?.querySelector("[data-flagged='true']");
+        if (flaggedEl) {
+          flaggedEl.scrollIntoView({ block: "center" });
+        }
+      });
+    }
+  }, [conversationDetail, activeGroup.conversationId]);
 
   const handleLoadOlder = useCallback(async () => {
     if (!conversationDetail?.messages.length) return;
@@ -107,7 +110,7 @@ export function ChatPane({
         )}
       </div>
 
-      <div className={styles.chatArea} ref={chatScrollCallback}>
+      <div className={styles.chatArea} ref={chatScrollRef}>
         {chatLoading && (
           <div className={styles.chatLoading}>
             <Loader size="sm" />

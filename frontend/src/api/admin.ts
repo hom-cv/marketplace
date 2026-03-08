@@ -140,7 +140,7 @@ export function getAdminConversation(
   limit: number = 50
 ): Promise<ConversationDetail> {
   const params = new URLSearchParams();
-  if (beforeId) params.set("before_id", String(beforeId));
+  if (beforeId !== undefined) params.set("before_id", String(beforeId));
   params.set("limit", String(limit));
   return apiRequest<ConversationDetail>(
     `/admin/conversations/${conversationId}?${params.toString()}`
