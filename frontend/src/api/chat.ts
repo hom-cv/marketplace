@@ -21,7 +21,7 @@ export async function getConversationMessages(
   limit: number = 50
 ): Promise<ConversationDetail> {
   const params = new URLSearchParams();
-  if (beforeId) params.set("before_id", String(beforeId));
+  if (beforeId !== undefined) params.set("before_id", String(beforeId));
   params.set("limit", String(limit));
   const query = params.toString();
   return apiRequest<ConversationDetail>(

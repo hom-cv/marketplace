@@ -13,7 +13,9 @@ from app.schemas.ban import (
     UserBanListResponse,
     UserBanResponse,
 )
+from app.schemas.conversation import ConversationDetailSchema
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
+from app.services.message_service import AnnotatedMessageService
 from app.services.moderation_service import AnnotatedModerationService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -233,4 +235,28 @@ async def dismiss_flagged_message(
     return await moderation_service.dismiss_flagged_message(
         admin_user=admin_user,
         flag_id=flag_id,
+    )
+
+
+@router.get(
+    "/conversations/{conversation_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=ConversationDetailSchema,
+)
+async def get_conversation_admin(
+    admin_user: AnnotatedAdminUser,
+    message_service: AnnotatedMessageService,
+    conversation_id: int,
+    before_id: int | None = Query(None),
+    limit: int = Query(50, ge=1, le=100),
+) -> ConversationDetailSchema:
+    """
+    Get a conversation with messages for admin review.
+
+    **Admin only.** Bypasses participant check so admins can review flagged conversations.
+    """
+    return await message_service.get_conversation_messages_admin(
+        conversation_id=conversation_id,
+        before_id=before_id,
+        limit=limit,
     )

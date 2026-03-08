@@ -3,10 +3,11 @@
  * Two-column layout: chat left, listing summary right
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
+import { IconX, IconShieldCheck } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getConversationMessages } from "@/api/chat";
 import { getPost } from "@/api/posts";
@@ -32,6 +33,7 @@ export function ChatViewPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const sendMessage = useSendMessage();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Lock body scroll while chat is mounted
   useEffect(() => {
@@ -146,6 +148,21 @@ export function ChatViewPage() {
           post={conversation.post}
           onBack={() => navigate({ to: "/messages" })}
         />
+
+        {!bannerDismissed && (
+          <div className={styles.safetyBanner}>
+            <IconShieldCheck size={16} className={styles.safetyBannerIcon} />
+            <span className={styles.safetyBannerText}>{t("safetyBanner")}</span>
+            <button
+              type="button"
+              className={styles.safetyBannerClose}
+              onClick={() => setBannerDismissed(true)}
+              aria-label="Dismiss"
+            >
+              <IconX size={14} />
+            </button>
+          </div>
+        )}
 
         <div className={styles.messagesArea} ref={messagesContainerRef}>
           {hasOlderMessages && (

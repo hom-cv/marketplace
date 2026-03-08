@@ -18,7 +18,10 @@ import type {
   PostBan,
   PostBanListResponse,
   BanPostRequest,
+  MessageFlag,
+  MessageFlagListResponse,
 } from "@/api/types/admin";
+import type { ConversationDetail } from "@/api/types/chat";
 
 /**
  * Build URLSearchParams for paginated list endpoints
@@ -114,4 +117,32 @@ export function banPost(request: BanPostRequest): Promise<PostBan> {
 
 export function liftPostBan(banId: number): Promise<PostBan> {
   return apiRequest<PostBan>(`/admin/bans/posts/${banId}`, { method: "DELETE" });
+}
+
+export function getFlaggedMessages(
+  flagStatus?: string,
+  skip = 0,
+  limit = 50
+): Promise<MessageFlagListResponse> {
+  const query = buildPaginatedParams(skip, limit, { flag_status: flagStatus });
+  return apiRequest<MessageFlagListResponse>(`/admin/flagged-messages?${query}`);
+}
+
+export function dismissFlaggedMessage(flagId: number): Promise<MessageFlag> {
+  return apiRequest<MessageFlag>(`/admin/flagged-messages/${flagId}/dismiss`, {
+    method: "PATCH",
+  });
+}
+
+export function getAdminConversation(
+  conversationId: number,
+  beforeId?: number,
+  limit: number = 50
+): Promise<ConversationDetail> {
+  const params = new URLSearchParams();
+  if (beforeId !== undefined) params.set("before_id", String(beforeId));
+  params.set("limit", String(limit));
+  return apiRequest<ConversationDetail>(
+    `/admin/conversations/${conversationId}?${params.toString()}`
+  );
 }
