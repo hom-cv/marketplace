@@ -153,8 +153,9 @@ export function FlaggedMessagesPage() {
       let post: Post | null = null;
       try {
         post = await getPost(detail.post.id);
-      } catch {
-        // Post may be deleted/banned — that's fine
+      } catch (error) {
+        // Post may be deleted/banned — that's fine, but log other errors.
+        console.error("Failed to fetch post for admin review:", error);
       }
       cacheRef.current.set(conversationId, { detail, post });
       setCacheVersion((v) => v + 1);
