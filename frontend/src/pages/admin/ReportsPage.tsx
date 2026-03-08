@@ -36,6 +36,10 @@ const REASON_LABELS: Record<string, string> = {
   scam: "Scam",
 };
 
+function buildBanReason(notes: string, reportReason: string, fallback: string): string {
+  return `Report: ${notes.trim() || REASON_LABELS[reportReason] || fallback}`;
+}
+
 export function ReportsPage() {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
@@ -174,7 +178,6 @@ export function ReportsPage() {
                     <div className={shared.topRow}>
                       <span className={styles.rowTarget}>
                         <StatusBadge label={typeBadge.label} color={typeBadge.color} />
-                        {" "}
                         {targetName}
                       </span>
                       <StatusBadge label={statusBadge.label} color={statusBadge.color} />
@@ -247,7 +250,7 @@ export function ReportsPage() {
                                 onClick={() =>
                                   banUserMutation.mutate({
                                     userId: report.reported_user_id!,
-                                    reason: `Report: ${adminNotes.trim() || REASON_LABELS[report.reason] || "Rules violation"}`,
+                                    reason: buildBanReason(adminNotes, report.reason, "Rules violation"),
                                   })
                                 }
                                 disabled={report.is_user_banned || banUserMutation.isPending}
@@ -264,7 +267,7 @@ export function ReportsPage() {
                                   onClick={() =>
                                     banPostMutation.mutate({
                                       postId: report.reported_post_id!,
-                                      reason: `Report: ${adminNotes.trim() || REASON_LABELS[report.reason] || "Inappropriate content"}`,
+                                      reason: buildBanReason(adminNotes, report.reason, "Inappropriate content"),
                                     })
                                   }
                                   disabled={report.is_post_banned || banPostMutation.isPending}
@@ -279,7 +282,7 @@ export function ReportsPage() {
                                     onClick={() =>
                                       banUserMutation.mutate({
                                         userId: report.reported_user_id!,
-                                        reason: `Report: ${adminNotes.trim() || REASON_LABELS[report.reason] || "Rules violation"}`,
+                                        reason: buildBanReason(adminNotes, report.reason, "Rules violation"),
                                       })
                                     }
                                     disabled={report.is_user_banned || banUserMutation.isPending}

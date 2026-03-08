@@ -164,8 +164,7 @@ export function InviteCodesPage() {
                             <button
                               type="button"
                               onClick={copy}
-                              className={shared.row}
-                              style={{ padding: "4px", width: "auto", cursor: "pointer" }}
+                              className={styles.copyButton}
                             >
                               {copied ? <IconCheck size={14} /> : <IconCopy size={14} />}
                             </button>

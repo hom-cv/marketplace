@@ -69,44 +69,27 @@ function SidebarContent() {
   );
 }
 
+const MOBILE_NAV_LINKS = [
+  { to: "/admin" as const, icon: IconHome, label: "Home" },
+  { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
+  { to: "/admin/reports" as const, icon: IconFlag, label: "Reports" },
+  { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Users" },
+  { to: "/admin/bans/posts" as const, icon: IconPackageOff, label: "Posts" },
+];
+
 function MobileNav() {
   return (
     <nav className={styles.mobileNav}>
-      <SidebarNavLink
-        to="/admin"
-        icon={<IconHome size={20} />}
-        label="Home"
-        className={styles.mobileNavLink}
-        activeClassName={`${styles.mobileNavLink} ${styles.active}`}
-      />
-      <SidebarNavLink
-        to="/admin/invites"
-        icon={<IconTicket size={20} />}
-        label="Invites"
-        className={styles.mobileNavLink}
-        activeClassName={`${styles.mobileNavLink} ${styles.active}`}
-      />
-      <SidebarNavLink
-        to="/admin/reports"
-        icon={<IconFlag size={20} />}
-        label="Reports"
-        className={styles.mobileNavLink}
-        activeClassName={`${styles.mobileNavLink} ${styles.active}`}
-      />
-      <SidebarNavLink
-        to="/admin/bans/users"
-        icon={<IconUserOff size={20} />}
-        label="Users"
-        className={styles.mobileNavLink}
-        activeClassName={`${styles.mobileNavLink} ${styles.active}`}
-      />
-      <SidebarNavLink
-        to="/admin/bans/posts"
-        icon={<IconPackageOff size={20} />}
-        label="Posts"
-        className={styles.mobileNavLink}
-        activeClassName={`${styles.mobileNavLink} ${styles.active}`}
-      />
+      {MOBILE_NAV_LINKS.map((link) => (
+        <SidebarNavLink
+          key={link.to}
+          to={link.to}
+          icon={<link.icon size={20} />}
+          label={link.label}
+          className={styles.mobileNavLink}
+          activeClassName={`${styles.mobileNavLink} ${styles.active}`}
+        />
+      ))}
     </nav>
   );
 }
