@@ -1,14 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  Title,
-  Text,
-  Stack,
-  SimpleGrid,
-  Paper,
-  Group,
-  Loader,
-  ThemeIcon,
-} from "@mantine/core";
+import { Loader } from "@mantine/core";
 import {
   IconFlag,
   IconUserOff,
@@ -16,32 +7,25 @@ import {
 } from "@tabler/icons-react";
 import { getAdminStats } from "@/api/admin";
 import { Alert } from "@/components/Alert";
+import shared from "@/styles/listPage.module.css";
 import styles from "./AdminDashboardPage.module.css";
 
 interface StatCardProps {
-  title: string;
+  label: string;
   value: number;
   icon: React.ReactNode;
   color: string;
 }
 
-function StatCard({ title, value, icon, color }: StatCardProps) {
+function StatCard({ label, value, icon, color }: StatCardProps) {
   return (
-    <Paper withBorder p="md" radius="md">
-      <Group>
-        <ThemeIcon size="xl" radius="md" color={color} variant="light">
-          {icon}
-        </ThemeIcon>
-        <div>
-          <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
-            {title}
-          </Text>
-          <Text fw={700} size="xl">
-            {value}
-          </Text>
-        </div>
-      </Group>
-    </Paper>
+    <div className={styles.statCard} data-color={color}>
+      <div className={styles.iconBox}>{icon}</div>
+      <div>
+        <p className={styles.statLabel}>{label}</p>
+        <p className={styles.statValue}>{value}</p>
+      </div>
+    </div>
   );
 }
 
@@ -53,7 +37,7 @@ export function AdminDashboardPage() {
 
   if (isLoading) {
     return (
-      <div className={styles.loading}>
+      <div className={shared.loading}>
         <Loader size="lg" />
       </div>
     );
@@ -68,32 +52,30 @@ export function AdminDashboardPage() {
   }
 
   return (
-    <Stack gap="lg">
-      <div>
-        <Title order={2} mb="xs">Admin Dashboard</Title>
-        <Text c="dimmed">Overview of moderation and management activities.</Text>
-      </div>
+    <div className={shared.container}>
+      <h1 className={shared.title}>Admin Dashboard</h1>
+      <p className={styles.subtitle}>Overview of moderation and management activities.</p>
 
-      <SimpleGrid cols={{ base: 1, sm: 3 }}>
+      <div className={styles.statsGrid}>
         <StatCard
-          title="Pending Reports"
+          label="Pending Reports"
           value={stats?.pending_reports ?? 0}
-          icon={<IconFlag size={24} />}
+          icon={<IconFlag size={22} />}
           color="orange"
         />
         <StatCard
-          title="Active User Bans"
+          label="Active User Bans"
           value={stats?.active_user_bans ?? 0}
-          icon={<IconUserOff size={24} />}
+          icon={<IconUserOff size={22} />}
           color="red"
         />
         <StatCard
-          title="Active Post Bans"
+          label="Active Post Bans"
           value={stats?.active_post_bans ?? 0}
-          icon={<IconPackageOff size={24} />}
-          color="grape"
+          icon={<IconPackageOff size={22} />}
+          color="violet"
         />
-      </SimpleGrid>
-    </Stack>
+      </div>
+    </div>
   );
 }

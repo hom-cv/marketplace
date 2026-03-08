@@ -1,22 +1,126 @@
-.loading {
+/* ReportsPage */
+
+.toolbar {
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 300px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
-.accordionItem {
-  background-color: var(--color-bg-card);
+.count {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
 }
 
-.noWrap {
+.rowTarget {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.preWrap {
+.rowReporter {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.detailLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 2px;
+}
+
+.detailValue {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  margin: 0;
   white-space: pre-wrap;
 }
 
-.dashedBorder {
-  border-style: dashed;
+.adminNotesCard {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-top: 12px;
+  background: rgba(36, 67, 255, 0.03);
+}
+
+.adminNotesLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-primary);
+  margin: 0 0 4px;
+}
+
+.adminNotesText {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.adminNotesReviewer {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin: 8px 0 0;
+}
+
+.pendingActions {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionsLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.moderationRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.resolutionRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-wrap: wrap;
+  }
+
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .moderationRow,
+  .resolutionRow {
+    flex-direction: column;
+  }
 }
