@@ -34,7 +34,7 @@ export function PostBansPage() {
     mutationFn: (request: BanPostRequest) => banPost(request),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-post-bans"] });
-
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
       setShowCreateForm(false);
       setPostId("");
       setReason("");
@@ -45,7 +45,7 @@ export function PostBansPage() {
     mutationFn: (banId: number) => liftPostBan(banId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-post-bans"] });
-
+      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
     },
   });
 
