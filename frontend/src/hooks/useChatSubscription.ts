@@ -121,8 +121,10 @@ export function useChatSubscription() {
         if (data.type === "auth" && data.status === "ok") {
           wsRef.current = ws;
           // On reconnect, invalidate all chat queries to catch missed messages
-          queryClient.invalidateQueries({ queryKey: ["conversations"] });
-          queryClient.invalidateQueries({ queryKey: ["conversation"] });
+          Promise.all([
+            queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+            queryClient.invalidateQueries({ queryKey: ["conversation"] }),
+          ]);
           return;
         }
       } catch {

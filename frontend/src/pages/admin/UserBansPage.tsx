@@ -33,8 +33,10 @@ export function UserBansPage() {
   const banMutation = useMutation({
     mutationFn: (request: BanUserRequest) => banUser(request),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUserBans"] });
-      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
+        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
+      ]);
       setShowCreateForm(false);
       setUserId("");
       setReason("");
@@ -44,8 +46,10 @@ export function UserBansPage() {
   const liftMutation = useMutation({
     mutationFn: (banId: number) => liftUserBan(banId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminUserBans"] });
-      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
+        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
+      ]);
     },
   });
 

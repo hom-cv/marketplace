@@ -37,12 +37,13 @@ export function ProfileEditPage() {
     mutationFn: updateMyProfile,
     onSuccess: (updatedUser) => {
       setUser(updatedUser);
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      const promises = [
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
+      ];
       if (user?.username) {
-        queryClient.invalidateQueries({
-          queryKey: ["userProfile", user.username],
-        });
+        promises.push(queryClient.invalidateQueries({ queryKey: ["userProfile", user.username] }));
       }
+      Promise.all(promises);
     },
   });
 

@@ -63,8 +63,10 @@ export function DetailPane({
       banUser({ user_id: userId, reason }),
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
-      queryClient.invalidateQueries({ queryKey: ["adminFlaggedMessages"] });
-      queryClient.invalidateQueries({ queryKey: ["adminUserBans"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["adminFlaggedMessages"] }),
+        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
+      ]);
       setShowBanForm(false);
       setBanReason("");
     },

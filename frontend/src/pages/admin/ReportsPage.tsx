@@ -69,8 +69,10 @@ export function ReportsPage() {
       banUser({ user_id: userId, reason }),
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
-      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
-      queryClient.invalidateQueries({ queryKey: ["adminUserBans"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
+        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
+      ]);
     },
     onError: (err: Error) => {
       notifications.show({ title: "Ban Failed", message: err.message, color: "red" });
@@ -82,8 +84,10 @@ export function ReportsPage() {
       banPost({ post_id: postId, reason }),
     onSuccess: () => {
       notifications.show({ title: "Listing Removed", message: "The listing has been removed.", color: "red" });
-      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
-      queryClient.invalidateQueries({ queryKey: ["adminPostBans"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
+        queryClient.invalidateQueries({ queryKey: ["adminPostBans"] }),
+      ]);
     },
     onError: (err: Error) => {
       notifications.show({ title: "Removal Failed", message: err.message, color: "red" });

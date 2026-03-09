@@ -40,8 +40,10 @@ export function LikeButton({
       setLikeCount((prev) => Math.max(0, prev - 1));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["post", postId] }),
+      ]);
     },
   });
 
@@ -56,9 +58,11 @@ export function LikeButton({
       setLikeCount((prev) => prev + 1);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      queryClient.invalidateQueries({ queryKey: ["likedPosts"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["posts"] }),
+        queryClient.invalidateQueries({ queryKey: ["post", postId] }),
+        queryClient.invalidateQueries({ queryKey: ["likedPosts"] }),
+      ]);
     },
   });
 
