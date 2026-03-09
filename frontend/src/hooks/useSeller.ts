@@ -22,8 +22,10 @@ export function useRegisterSellerMutation(options?: {
   return useMutation({
     mutationFn: (data: SellerVerificationRequest) => registerSeller(data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.seller.status });
-      queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.seller.status }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
+      ]);
       options?.onSuccess?.(data);
     },
     onError: options?.onError,

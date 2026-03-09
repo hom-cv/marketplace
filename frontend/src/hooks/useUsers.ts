@@ -33,12 +33,13 @@ export function useUpdateProfileMutation() {
     mutationFn: (data: UpdateProfileRequest) => updateMyProfile(data),
     onSuccess: (updatedUser) => {
       setUser(updatedUser);
-      queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
+      const promises = [
+        queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
+      ];
       if (user?.username) {
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.users.profile(user.username),
-        });
+        promises.push(queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(user.username) }));
       }
+      Promise.all(promises);
     },
   });
 }

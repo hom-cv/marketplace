@@ -145,11 +145,11 @@ export function useBanUserMutation(options?: {
   return useMutation({
     mutationFn: (request: BanUserRequest) => banUser(request),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.userBans() });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.flaggedMessages(),
-      });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.userBans() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.flaggedMessages() }),
+      ]);
       options?.onSuccess?.();
     },
     onError: options?.onError,
@@ -164,8 +164,10 @@ export function useBanPostMutation(options?: {
   return useMutation({
     mutationFn: (request: BanPostRequest) => banPost(request),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.postBans() });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.postBans() }),
+      ]);
       options?.onSuccess?.();
     },
     onError: options?.onError,
@@ -177,8 +179,10 @@ export function useLiftUserBanMutation() {
   return useMutation({
     mutationFn: (banId: number) => liftUserBan(banId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.userBans() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.userBans() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
+      ]);
     },
   });
 }
@@ -188,8 +192,10 @@ export function useLiftPostBanMutation() {
   return useMutation({
     mutationFn: (banId: number) => liftPostBan(banId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.postBans() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.postBans() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
+      ]);
     },
   });
 }
