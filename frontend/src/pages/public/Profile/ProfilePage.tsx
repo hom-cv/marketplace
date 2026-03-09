@@ -3,12 +3,11 @@
  */
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { Loader, Box } from "@mantine/core";
 import { IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getUserProfile, getUserPosts } from "@/api/users";
+import { useUserProfile, useUserPosts } from "@/hooks/useUsers";
 import { Alert } from "@/components/Alert";
 import { FollowButton } from "@/components/FollowButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -28,21 +27,13 @@ export function ProfilePage() {
     data: profile,
     isLoading: profileLoading,
     error: profileError,
-  } = useQuery({
-    queryKey: ["userProfile", username],
-    queryFn: () => getUserProfile(username!),
-    enabled: !!username,
-  });
+  } = useUserProfile(username);
 
   const {
     data: posts,
     isLoading: postsLoading,
     error: postsError,
-  } = useQuery({
-    queryKey: ["userPosts", username],
-    queryFn: () => getUserPosts(username!),
-    enabled: !!username,
-  });
+  } = useUserPosts(username);
 
   if (profileLoading) {
     return (

@@ -41,7 +41,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  background: rgba(36, 67, 255, 0.1);
+  background: var(--color-primary-alpha-10);
   color: var(--color-primary);
 }
 

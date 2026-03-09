@@ -4,9 +4,10 @@ import { Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { getAdminConversation } from "@/api/admin";
 import type { ConversationDetail } from "@/api/types/chat";
+import { queryKeys } from "@/hooks/queryKeys";
 import { formatShortDate } from "@/utils/date";
 import type { ConversationGroup } from "@/api/types/admin";
-import styles from "../FlaggedMessagesPage.module.css";
+import styles from "./FlaggedMessagesPage.module.css";
 
 const MESSAGES_PAGE_LIMIT = 50;
 
@@ -65,7 +66,7 @@ export function ChatPane({
       );
       if (older.messages.length > 0) {
         queryClient.setQueryData<ConversationDetail>(
-          ["adminConversation", activeGroup.conversationId],
+          queryKeys.admin.conversation(activeGroup.conversationId),
           (old) => {
             if (!old) return old;
             return {

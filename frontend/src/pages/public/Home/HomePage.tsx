@@ -1,25 +1,19 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Button, Group } from "@mantine/core";
 import { IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
-import { getPosts } from "@/api/posts";
+import { useGuestPreviewPosts } from "@/hooks/usePosts";
 import { PostCard } from "@/components/PostCard";
 import styles from "./HomePage.module.css";
-
-const PREVIEW_POST_COUNT = 12;
 
 export function HomePage() {
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const { t } = useTranslation("common");
 
-  const { data: postsData } = useQuery({
-    queryKey: ["posts", "guestLandingPreview"],
-    queryFn: () => getPosts(0, PREVIEW_POST_COUNT),
-  });
+  const { data: postsData } = useGuestPreviewPosts();
 
   const posts = useMemo(() => {
     return postsData?.items ?? [];

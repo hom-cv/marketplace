@@ -46,6 +46,18 @@
   /* Primary border (for info state) */
   --color-primary-border: #748ffc;
 
+  /* Alpha variants */
+  --color-primary-alpha-02: rgba(36, 67, 255, 0.02);
+  --color-primary-alpha-03: rgba(36, 67, 255, 0.03);
+  --color-primary-alpha-04: rgba(36, 67, 255, 0.04);
+  --color-primary-alpha-06: rgba(36, 67, 255, 0.06);
+  --color-primary-alpha-08: rgba(36, 67, 255, 0.08);
+  --color-primary-alpha-10: rgba(36, 67, 255, 0.1);
+  --color-error-alpha-08: rgba(224, 49, 49, 0.08);
+  --color-error-alpha-10: rgba(255, 100, 100, 0.1);
+  --color-overlay-light: rgba(0, 0, 0, 0.06);
+  --color-overlay-lighter: rgba(0, 0, 0, 0.08);
+
   /* Radius */
   --radius-sm: 4px;
 }

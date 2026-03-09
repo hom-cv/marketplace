@@ -4,13 +4,15 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { IconX, IconShieldCheck } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getConversationMessages } from "@/api/chat";
-import { getPost } from "@/api/posts";
+import { useConversation } from "@/hooks/useChat";
+import { usePost } from "@/hooks/usePosts";
+import { queryKeys } from "@/hooks/queryKeys";
 import { useAuthStore } from "@/stores/authStore";
 import { useSendMessage } from "@/hooks/useSendMessage";
 import { Alert } from "@/components/Alert";
@@ -47,20 +49,10 @@ export function ChatViewPage() {
     data: conversation,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["conversation", conversationId],
-    queryFn: () =>
-      conversationId ? getConversationMessages(conversationId) : null,
-    enabled: !!conversationId,
-    staleTime: Infinity,
-  });
+  } = useConversation(conversationId);
 
   // Fetch full post data for the sidebar
-  const { data: post } = useQuery({
-    queryKey: ["post", conversation?.post.id],
-    queryFn: () => (conversation?.post.id ? getPost(conversation.post.id) : null),
-    enabled: !!conversation?.post.id,
-  });
+  const { data: post } = usePost(conversation?.post.id ?? null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -88,7 +80,7 @@ export function ChatViewPage() {
 
     if (older.messages.length > 0) {
       queryClient.setQueryData<ConversationDetail>(
-        ["conversation", conversationId],
+        queryKeys.chat.conversation(conversationId),
         (old) => {
           if (!old) return old;
           return {

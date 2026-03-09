@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import { getErrorMessage } from "@/utils/error";
-import { useCreatePostForm } from "./hooks/useCreatePostForm";
+import { useCreatePostForm } from "@/hooks/useCreatePostForm";
 import {
   NotSellerGate,
   ImageUploadSection,

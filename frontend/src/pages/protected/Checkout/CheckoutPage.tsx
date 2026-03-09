@@ -4,19 +4,18 @@
  */
 
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconArrowLeft, IconMapPin, IconCreditCard } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { usePost } from "@/hooks/usePosts";
 import {
-  createCardPayment,
-  createPromptPayPayment,
-  getPaymentStatus,
-  getPriceBreakdown,
-} from "@/api/payments";
-import { getPost } from "@/api/posts";
+  usePriceBreakdown,
+  usePaymentStatus,
+  useCardPaymentMutation,
+  usePromptPayPaymentMutation,
+} from "@/hooks/usePayments";
 import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -124,31 +123,23 @@ export function CheckoutPage() {
     data: post,
     isLoading: postLoading,
     error: postError,
-  } = useQuery({
-    queryKey: ["post", postId],
-    queryFn: () => getPost(parseInt(postId, 10)),
-    enabled: !!postId,
-  });
+  } = usePost(postId);
 
-  const { data: priceBreakdown } = useQuery({
-    queryKey: ["priceBreakdown", postId, paymentMethod],
-    queryFn: () => getPriceBreakdown(parseInt(postId, 10), paymentMethod),
-    enabled: !!postId,
-  });
+  const { data: priceBreakdown } = usePriceBreakdown(postId, paymentMethod);
 
-  const { data: paymentStatus } = useQuery({
-    queryKey: ["paymentStatus", paymentResponse?.payment_id],
-    queryFn: () => getPaymentStatus(paymentResponse!.payment_id),
-    enabled:
-      !!paymentResponse?.payment_id &&
-      paymentResponse.status === "pending" &&
-      paymentMethod === "promptpay",
-    refetchInterval: 3000,
-  });
+  const { data: paymentStatus } = usePaymentStatus(
+    paymentResponse?.payment_id ?? null,
+    {
+      enabled:
+        !!paymentResponse?.payment_id &&
+        paymentResponse.status === "pending" &&
+        paymentMethod === "promptpay",
+      refetchInterval: 3000,
+    },
+  );
 
   // Mutations
-  const cardPaymentMutation = useMutation({
-    mutationFn: createCardPayment,
+  const cardPaymentMutation = useCardPaymentMutation({
     onSuccess: (data) => {
       setPaymentResponse(data);
       if (data.authorize_uri) {
@@ -158,8 +149,7 @@ export function CheckoutPage() {
     onError: (err: Error) => setError(err.message),
   });
 
-  const promptPayMutation = useMutation({
-    mutationFn: createPromptPayPayment,
+  const promptPayMutation = usePromptPayPaymentMutation({
     onSuccess: (data) => setPaymentResponse(data),
     onError: (err: Error) => setError(err.message),
   });

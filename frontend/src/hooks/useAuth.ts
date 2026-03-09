@@ -6,12 +6,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { registerUser, loginUser, getCurrentUser, verifyEmail, resendVerificationEmail } from "@/api/auth";
 import { useAuthStore } from "@/stores/authStore";
 import type { RegisterRequest } from "@/api/types/user";
+import { queryKeys } from "./queryKeys";
 
 export function useCurrentUser() {
   const { setUser, token } = useAuthStore();
 
   return useQuery({
-    queryKey: ["currentUser"],
+    queryKey: queryKeys.currentUser,
     queryFn: async () => {
       const user = await getCurrentUser();
       setUser(user);
@@ -47,7 +48,7 @@ export function useLogout() {
 
   return () => {
     logout();
-    queryClient.removeQueries({ queryKey: ["currentUser"] });
+    queryClient.removeQueries({ queryKey: queryKeys.currentUser });
     // Note: Backend should provide a logout endpoint to clear the cookie
     // For now, we just clear client state
   };
@@ -55,7 +56,7 @@ export function useLogout() {
 
 export function useVerifyEmailQuery(token: string | undefined) {
   return useQuery({
-    queryKey: ["verifyEmail", token],
+    queryKey: queryKeys.verifyEmail(token!),
     queryFn: () => verifyEmail(token!),
     enabled: !!token,
     retry: false,

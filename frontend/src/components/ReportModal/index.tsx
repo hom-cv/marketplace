@@ -4,7 +4,6 @@
  */
 
 import { useState, useMemo } from "react";
-import { useMutation } from "@tanstack/react-query";
 import {
   Modal,
   Stack,
@@ -18,7 +17,8 @@ import {
 import { notifications } from "@mantine/notifications";
 import { IconAlertTriangle, IconCheck, IconFlag } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { submitReport, type ReportCreateRequest } from "@/api/reports";
+import { useSubmitReportMutation } from "@/hooks/useReports";
+import type { ReportCreateRequest } from "@/api/reports";
 import type { ReportReason, ReportType } from "@/api/types/admin";
 
 interface ReportModalProps {
@@ -62,8 +62,7 @@ export function ReportModal({
     [t],
   );
 
-  const reportMutation = useMutation({
-    mutationFn: (request: ReportCreateRequest) => submitReport(request),
+  const reportMutation = useSubmitReportMutation({
     onSuccess: () => {
       notifications.show({
         title: t("report.submitted"),

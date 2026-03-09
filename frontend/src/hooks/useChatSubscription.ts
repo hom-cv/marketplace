@@ -11,6 +11,7 @@ import { useEffect, useRef, useCallback, createContext, useContext } from "react
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { getWsTicket, getWebSocketUrl } from "@/api/chat";
+import { queryKeys } from "@/hooks/queryKeys";
 import type { WebSocketMessage, ConversationDetail } from "@/api/types/chat";
 
 const defaultWsRef: React.RefObject<WebSocket | null> = { current: null };
@@ -52,7 +53,7 @@ export function useChatSubscription() {
 
           // Append message to active conversation cache (if open)
           queryClient.setQueryData<ConversationDetail>(
-            ["conversation", conversationId],
+            queryKeys.chat.conversation(conversationId),
             (old) => {
               if (!old) return old;
               // Deduplicate by message ID
@@ -80,7 +81,7 @@ export function useChatSubscription() {
           );
 
           // Refresh conversation list (for last_message preview + reorder)
-          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations });
         }
       } catch (err) {
         console.warn("Failed to parse WebSocket message:", err);
@@ -122,7 +123,7 @@ export function useChatSubscription() {
           wsRef.current = ws;
           // On reconnect, invalidate all chat queries to catch missed messages
           Promise.all([
-            queryClient.invalidateQueries({ queryKey: ["conversations"] }),
+            queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations }),
             queryClient.invalidateQueries({ queryKey: ["conversation"] }),
           ]);
           return;

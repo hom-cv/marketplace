@@ -3,14 +3,7 @@
  */
 
 import { apiRequest } from "@/api/api";
-import type { Post } from "@/api/types/post";
-
-export interface LikedPostsResponse {
-  items: Post[];
-  total: number;
-  skip: number;
-  limit: number;
-}
+import type { PaginatedPostsResponse } from "@/api/types/post";
 
 /**
  * Like a post (returns 204 No Content)
@@ -38,6 +31,6 @@ export async function unlikePost(postId: number): Promise<void> {
 export async function getLikedPosts(
   skip = 0,
   limit = 50
-): Promise<LikedPostsResponse> {
-  return apiRequest<LikedPostsResponse>(`/likes/me?skip=${skip}&limit=${limit}`);
+): Promise<PaginatedPostsResponse> {
+  return apiRequest<PaginatedPostsResponse>(`/likes/me?skip=${skip}&limit=${limit}`);
 }

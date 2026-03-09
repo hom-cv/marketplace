@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageRest } from "@/api/chat";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatWebSocket } from "@/hooks/useChatSubscription";
+import { queryKeys } from "@/hooks/queryKeys";
 import type { ConversationDetail, ChatMessage } from "@/api/types/chat";
 
 interface SendMessageParams {
@@ -44,7 +45,7 @@ export function useSendMessage() {
     onMutate: async ({ conversationId, content }) => {
       // Cancel outgoing refetches
       await queryClient.cancelQueries({
-        queryKey: ["conversation", conversationId],
+        queryKey: queryKeys.chat.conversation(conversationId),
       });
 
       const previous = queryClient.getQueryData<ConversationDetail>([
@@ -63,7 +64,7 @@ export function useSendMessage() {
         };
 
         queryClient.setQueryData<ConversationDetail>(
-          ["conversation", conversationId],
+          queryKeys.chat.conversation(conversationId),
           {
             ...previous,
             messages: [...previous.messages, optimisticMessage],
@@ -79,7 +80,7 @@ export function useSendMessage() {
       // Rollback optimistic update
       if (context?.previous) {
         queryClient.setQueryData(
-          ["conversation", context.conversationId],
+          queryKeys.chat.conversation(context.conversationId),
           context.previous
         );
       }
@@ -87,8 +88,8 @@ export function useSendMessage() {
 
     onSettled: (_data, _error, vars) => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["conversations"] }),
-        queryClient.invalidateQueries({ queryKey: ["conversation", vars.conversationId] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversation(vars.conversationId) }),
       ]);
     },
   });

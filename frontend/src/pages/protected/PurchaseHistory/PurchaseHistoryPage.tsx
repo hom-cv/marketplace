@@ -3,7 +3,6 @@
  */
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader, Modal, Stack, Group, Text } from "@mantine/core";
 import {
   IconShoppingBag,
@@ -18,7 +17,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { getMyPurchases, confirmDelivery } from "@/api/payments";
+import { useMyPurchases, useConfirmDeliveryMutation } from "@/hooks/usePayments";
 import type { PurchaseListItem } from "@/api/types/payment";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -30,22 +29,13 @@ import shared from "@/styles/listPage.module.css";
 import styles from "./PurchaseHistoryPage.module.css";
 
 export function PurchaseHistoryPage() {
-  const queryClient = useQueryClient();
   const { t } = useTranslation("common");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [receiptModalData, setReceiptModalData] = useState<PurchaseListItem | null>(null);
 
-  const { data: purchases, isLoading, error } = useQuery({
-    queryKey: ["myPurchases"],
-    queryFn: getMyPurchases,
-  });
+  const { data: purchases, isLoading, error } = useMyPurchases();
 
-  const confirmMutation = useMutation({
-    mutationFn: (paymentId: number) => confirmDelivery(paymentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["myPurchases"] });
-    },
-  });
+  const confirmMutation = useConfirmDeliveryMutation();
 
   if (isLoading) {
     return (

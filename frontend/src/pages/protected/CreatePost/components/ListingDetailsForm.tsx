@@ -6,7 +6,7 @@
 import { TextInput, Textarea, Select, NumberInput, Stack, SimpleGrid } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import type { CreatePostFormValues, SelectOption } from "../hooks/useCreatePostForm";
+import type { CreatePostFormValues, SelectOption } from "@/hooks/useCreatePostForm";
 import formStyles from "@/styles/forms.module.css";
 import styles from "./ListingDetailsForm.module.css";
 

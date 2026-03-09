@@ -9,9 +9,8 @@
 import { useMemo } from "react";
 import { Loader } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { getPriceBreakdown, getEarningsPreview } from "@/api/payments";
+import { usePriceBreakdown, useEarningsPreview } from "@/hooks/usePayments";
 import styles from "./EarningsPreview.module.css";
 
 interface BreakdownData {
@@ -53,18 +52,15 @@ export function EarningsPreview({
   const displayTitle = title !== undefined ? title : t("earnings.title");
 
   // Mode 1: Fetch by post ID
-  const postQuery = useQuery({
-    queryKey: ["priceBreakdown", postId],
-    queryFn: () => getPriceBreakdown(postId!, "card"),
-    enabled: !!postId && !breakdown,
-  });
+  const postQuery = usePriceBreakdown(
+    !breakdown && postId ? postId : null,
+  );
 
   // Mode 3: Fetch preview by price/shipping
-  const previewQuery = useQuery({
-    queryKey: ["earningsPreview", itemPrice, shippingCost],
-    queryFn: () => getEarningsPreview(itemPrice!, shippingCost, "card"),
-    enabled: !!itemPrice && !postId && !breakdown,
-  });
+  const previewQuery = useEarningsPreview(
+    !postId && !breakdown ? itemPrice : undefined,
+    shippingCost,
+  );
 
   const isLoading = postQuery.isLoading || previewQuery.isLoading;
   const isError = postQuery.isError || previewQuery.isError;

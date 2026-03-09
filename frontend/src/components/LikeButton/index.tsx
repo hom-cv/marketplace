@@ -4,6 +4,7 @@ import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { likePost, unlikePost } from "@/api/likes";
+import { queryKeys } from "@/hooks/queryKeys";
 import { useIsAuthenticated } from "@/stores/authStore";
 import styles from "./LikeButton.module.css";
 
@@ -41,8 +42,8 @@ export function LikeButton({
     },
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["posts"] }),
-        queryClient.invalidateQueries({ queryKey: ["post", postId] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) }),
       ]);
     },
   });
@@ -59,9 +60,9 @@ export function LikeButton({
     },
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["posts"] }),
-        queryClient.invalidateQueries({ queryKey: ["post", postId] }),
-        queryClient.invalidateQueries({ queryKey: ["likedPosts"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.liked }),
       ]);
     },
   });
