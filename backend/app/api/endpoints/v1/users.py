@@ -83,6 +83,7 @@ async def get_user_posts(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     post_crud: AnnotatedPostCRUD,
     like_crud: AnnotatedLikeCRUD,
+    ban_crud: AnnotatedBanCRUD,
     user: AnnotatedValidUserByUsername,
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
     skip: Annotated[int, Query(ge=0)] = 0,
@@ -91,7 +92,7 @@ async def get_user_posts(
     """
     Get a user's public posts by username.
 
-    Returns non-deleted posts with like counts.
+    Returns non-deleted posts with like counts and ban status.
     If authenticated, also includes is_liked status for each post.
     """
     posts = await post_crud.get_by_user_id(db, user_id=user.id, skip=skip, limit=limit)
@@ -105,11 +106,16 @@ async def get_user_posts(
             user_id=current_user.id if current_user else None,
         )
 
+    # Check if the profile user is banned
+    active_ban = await ban_crud.get_active_user_ban(db, user_id=user.id)
+    is_user_banned = active_ban is not None
+
     def _build_post_response(post: Post, all_like_data: dict) -> PostResponseSchema:
         response = PostResponseSchema.model_validate(post)
         post_like_info = all_like_data.get(post.id, {})
         response.like_count = post_like_info.get("count", 0)
         response.is_liked = post_like_info.get("is_liked", False)
+        response.is_user_banned = is_user_banned
         return response
 
     return [_build_post_response(p, like_data) for p in posts]

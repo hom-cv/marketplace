@@ -96,23 +96,34 @@ class ListingService:
         self._payment_crud = payment_crud_dep
         self._ban_crud = ban_crud_dep
 
+    async def _apply_user_ban_status(
+        self,
+        items: list[PurchaseListItem],
+        role: str,
+    ) -> None:
+        """Set is_banned on the buyer or seller UserSummary of each item."""
+        if not self._ban_crud or not items:
+            return
+        user_ids = {
+            getattr(item, role).id
+            for item in items
+            if getattr(item, role) is not None
+        }
+        banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
+            self.db, user_ids=user_ids
+        )
+        for item in items:
+            user_summary = getattr(item, role)
+            if user_summary and user_summary.id in banned_ids:
+                user_summary.is_banned = True
+
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
         payments = await self._payment_crud.get_payments_by_buyer(
             self.db, buyer_id=buyer_id
         )
         items = [_payment_to_list_item(p) for p in payments]
-
-        # Batch check ban status for sellers
-        if self._ban_crud and items:
-            seller_ids = {item.seller.id for item in items if item.seller}
-            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
-                self.db, user_ids=seller_ids
-            )
-            for item in items:
-                if item.seller and item.seller.id in banned_ids:
-                    item.seller.is_banned = True
-
+        await self._apply_user_ban_status(items, "seller")
         return items
 
     async def get_sales(self, seller_id: int) -> list[PurchaseListItem]:
@@ -123,17 +134,7 @@ class ListingService:
         items = [
             _payment_to_list_item(p, include_shipping_address=True) for p in payments
         ]
-
-        # Batch check ban status for buyers
-        if self._ban_crud and items:
-            buyer_ids = {item.buyer.id for item in items if item.buyer}
-            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
-                self.db, user_ids=buyer_ids
-            )
-            for item in items:
-                if item.buyer and item.buyer.id in banned_ids:
-                    item.buyer.is_banned = True
-
+        await self._apply_user_ban_status(items, "buyer")
         return items
 
     async def get_my_listings(

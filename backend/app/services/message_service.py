@@ -51,6 +51,14 @@ class MessageService:
         self._message_flag_crud = message_flag_crud
         self._ban_crud = ban_crud
 
+    async def _get_banned_ids(self, user_ids: set[int]) -> set[int]:
+        """Return the subset of user_ids that have an active ban."""
+        if not self._ban_crud or not user_ids:
+            return set()
+        return await self._ban_crud.get_banned_user_ids_from_set(
+            self.db, user_ids=user_ids
+        )
+
     async def get_or_create_conversation(
         self, *, user_id: int, post_id: int
     ) -> ConversationResponseSchema:
@@ -91,15 +99,11 @@ class MessageService:
         )
 
         # Batch check ban status for all participants
-        banned_ids: set[int] = set()
-        if self._ban_crud and conversations:
-            participant_ids = set()
-            for conv in conversations:
-                participant_ids.add(conv.initiator.id)
-                participant_ids.add(conv.recipient.id)
-            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
-                self.db, user_ids=participant_ids
-            )
+        participant_ids: set[int] = set()
+        for conv in conversations:
+            participant_ids.add(conv.initiator.id)
+            participant_ids.add(conv.recipient.id)
+        banned_ids = await self._get_banned_ids(participant_ids)
 
         return [
             ConversationResponseSchema(
@@ -181,13 +185,9 @@ class MessageService:
             self.db, conversation_id=conversation.id
         )
 
-        # Batch check ban status for participants
-        banned_ids: set[int] = set()
-        if self._ban_crud:
-            participant_ids = {conversation.initiator.id, conversation.recipient.id}
-            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
-                self.db, user_ids=participant_ids
-            )
+        banned_ids = await self._get_banned_ids(
+            {conversation.initiator.id, conversation.recipient.id}
+        )
 
         return ConversationDetailSchema(
             id=conversation.id,
@@ -301,13 +301,7 @@ class MessageService:
             self.db, conversation_id=conversation.id
         )
 
-        # Check ban status for participants
-        banned_ids: set[int] = set()
-        if self._ban_crud:
-            participant_ids = {initiator.id, recipient.id}
-            banned_ids = await self._ban_crud.get_banned_user_ids_from_set(
-                self.db, user_ids=participant_ids
-            )
+        banned_ids = await self._get_banned_ids({initiator.id, recipient.id})
 
         return ConversationResponseSchema(
             id=conversation.id,

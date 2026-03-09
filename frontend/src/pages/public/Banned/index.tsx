@@ -1,7 +1,7 @@
 /**
  * Banned Page
  * Displayed when a user's account has been banned.
- * Clears the banned flag on unmount so the user can navigate away.
+ * The banned flag is cleared when the user clicks "Return to Home".
  */
 
 import { useEffect } from "react";
