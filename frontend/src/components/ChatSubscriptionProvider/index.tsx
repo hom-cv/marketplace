@@ -10,11 +10,11 @@ import {
   ChatWebSocketContext,
 } from "@/hooks/useChatSubscription";
 
-interface Props {
+interface ChatSubscriptionProviderProps {
   children: ReactNode;
 }
 
-export function ChatSubscriptionProvider({ children }: Props) {
+export function ChatSubscriptionProvider({ children }: ChatSubscriptionProviderProps) {
   const isAuthenticated = useIsAuthenticated();
 
   if (!isAuthenticated) return <>{children}</>;
@@ -22,7 +22,7 @@ export function ChatSubscriptionProvider({ children }: Props) {
   return <ChatSubscriptionInner>{children}</ChatSubscriptionInner>;
 }
 
-function ChatSubscriptionInner({ children }: Props) {
+function ChatSubscriptionInner({ children }: ChatSubscriptionProviderProps) {
   const wsRef = useChatSubscription();
 
   return (

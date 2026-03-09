@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader,
   Select,
@@ -13,7 +12,11 @@ import {
   IconCheck,
   IconChevronDown,
 } from "@tabler/icons-react";
-import { getInvites, generateInvites, revokeInvite } from "@/api/admin";
+import {
+  useAdminInvites,
+  useGenerateInvitesMutation,
+  useRevokeInviteMutation,
+} from "@/hooks/useAdmin";
 import type { InviteStatus } from "@/api/types/admin";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -31,29 +34,15 @@ const STATUS_BADGE: Record<InviteStatus, { label: string; color: "green" | "blue
 };
 
 export function InviteCodesPage() {
-  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [generateCount, setGenerateCount] = useState<number>(1);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
 
-  const { data: invitesData, isLoading, error } = useQuery({
-    queryKey: ["adminInvites", statusFilter],
-    queryFn: () => getInvites(statusFilter || undefined),
-  });
+  const { data: invitesData, isLoading, error } = useAdminInvites(statusFilter);
 
-  const generateMutation = useMutation({
-    mutationFn: (count: number) => generateInvites(count),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminInvites"] });
-    },
-  });
+  const generateMutation = useGenerateInvitesMutation();
 
-  const revokeMutation = useMutation({
-    mutationFn: (code: string) => revokeInvite(code),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminInvites"] });
-    },
-  });
+  const revokeMutation = useRevokeInviteMutation();
 
   if (isLoading) {
     return (

@@ -4,7 +4,6 @@
  */
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Loader, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -16,7 +15,7 @@ import {
   IconUserExclamation,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getPost } from "@/api/posts";
+import { usePost } from "@/hooks/usePosts";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -47,11 +46,7 @@ export function PublicPostViewPage() {
     data: post,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["post", postId],
-    queryFn: () => (postId ? getPost(postId) : null),
-    enabled: !!postId,
-  });
+  } = usePost(postId);
 
   // Get all image URLs (use image_urls array or fall back to single image_url)
   const imageUrls =

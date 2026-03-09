@@ -1,5 +1,5 @@
-export { InviteCodesPage } from "./InviteCodesPage";
-export { ReportsPage } from "./ReportsPage";
-export { FlaggedMessagesPage } from "./FlaggedMessagesPage";
-export { UserBansPage } from "./UserBansPage";
-export { PostBansPage } from "./PostBansPage";
+export { InviteCodesPage } from "./InviteCodes";
+export { ReportsPage } from "./Reports";
+export { FlaggedMessagesPage } from "./FlaggedMessages";
+export { UserBansPage } from "./UserBans";
+export { PostBansPage } from "./PostBans";

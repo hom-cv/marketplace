@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader, NumberInput, Textarea, Switch } from "@mantine/core";
 import {
   IconPackageOff,
   IconPlus,
   IconChevronDown,
 } from "@tabler/icons-react";
-import { getPostBans, banPost, liftPostBan } from "@/api/admin";
-import type { BanPostRequest } from "@/api/types/admin";
+import {
+  useAdminPostBans,
+  useBanPostMutation,
+  useLiftPostBanMutation,
+} from "@/hooks/useAdmin";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -18,40 +20,23 @@ import shared from "@/styles/listPage.module.css";
 import styles from "./PostBansPage.module.css";
 
 export function PostBansPage() {
-  const queryClient = useQueryClient();
   const [activeOnly, setActiveOnly] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [postId, setPostId] = useState<number | "">("");
   const [reason, setReason] = useState("");
 
-  const { data: bansData, isLoading, error } = useQuery({
-    queryKey: ["adminPostBans", activeOnly],
-    queryFn: () => getPostBans(activeOnly),
-  });
+  const { data: bansData, isLoading, error } = useAdminPostBans(activeOnly);
 
-  const banMutation = useMutation({
-    mutationFn: (request: BanPostRequest) => banPost(request),
+  const banMutation = useBanPostMutation({
     onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminPostBans"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
-      ]);
       setShowCreateForm(false);
       setPostId("");
       setReason("");
     },
   });
 
-  const liftMutation = useMutation({
-    mutationFn: (banId: number) => liftPostBan(banId),
-    onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminPostBans"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
-      ]);
-    },
-  });
+  const liftMutation = useLiftPostBanMutation();
 
   if (isLoading) {
     return (

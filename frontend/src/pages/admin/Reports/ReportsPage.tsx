@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader, Select, Textarea } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -8,7 +7,12 @@ import {
   IconTrash,
   IconUserCancel,
 } from "@tabler/icons-react";
-import { getReports, reviewReport, banUser, banPost } from "@/api/admin";
+import {
+  useAdminReports,
+  useReviewReportMutation,
+  useBanUserMutation,
+  useBanPostMutation,
+} from "@/hooks/useAdmin";
 import type { ReportStatus, ReportType } from "@/api/types/admin";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -42,52 +46,27 @@ function buildBanReason(notes: string, reportReason: string, fallback: string): 
 }
 
 export function ReportsPage() {
-  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
 
-  const { data: reportsData, isLoading, error } = useQuery({
-    queryKey: ["adminReports", statusFilter, typeFilter],
-    queryFn: () => getReports(statusFilter || undefined, typeFilter || undefined),
-  });
+  const { data: reportsData, isLoading, error } = useAdminReports(statusFilter, typeFilter);
 
-  const reviewMutation = useMutation({
-    mutationFn: ({ reportId, status }: { reportId: number; status: "reviewed" | "resolved" | "dismissed" }) =>
-      reviewReport(reportId, { status, admin_notes: adminNotes.trim() || undefined }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+  const reviewMutation = useReviewReportMutation();
 
-      setExpandedId(null);
-      setAdminNotes("");
-    },
-  });
-
-  const banUserMutation = useMutation({
-    mutationFn: ({ userId, reason }: { userId: number; reason: string }) =>
-      banUser({ user_id: userId, reason }),
+  const banUserMutation = useBanUserMutation({
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
-      ]);
     },
     onError: (err: Error) => {
       notifications.show({ title: "Ban Failed", message: err.message, color: "red" });
     },
   });
 
-  const banPostMutation = useMutation({
-    mutationFn: ({ postId, reason }: { postId: number; reason: string }) =>
-      banPost({ post_id: postId, reason }),
+  const banPostMutation = useBanPostMutation({
     onSuccess: () => {
       notifications.show({ title: "Listing Removed", message: "The listing has been removed.", color: "red" });
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminPostBans"] }),
-      ]);
     },
     onError: (err: Error) => {
       notifications.show({ title: "Removal Failed", message: err.message, color: "red" });
@@ -252,7 +231,7 @@ export function ReportsPage() {
                                 leftIcon={<IconUserCancel size={14} />}
                                 onClick={() =>
                                   banUserMutation.mutate({
-                                    userId: report.reported_user_id!,
+                                    user_id: report.reported_user_id!,
                                     reason: buildBanReason(adminNotes, report.reason, "Rules violation"),
                                   })
                                 }
@@ -269,7 +248,7 @@ export function ReportsPage() {
                                   leftIcon={<IconTrash size={14} />}
                                   onClick={() =>
                                     banPostMutation.mutate({
-                                      postId: report.reported_post_id!,
+                                      post_id: report.reported_post_id!,
                                       reason: buildBanReason(adminNotes, report.reason, "Inappropriate content"),
                                     })
                                   }
@@ -284,7 +263,7 @@ export function ReportsPage() {
                                     leftIcon={<IconUserCancel size={14} />}
                                     onClick={() =>
                                       banUserMutation.mutate({
-                                        userId: report.reported_user_id!,
+                                        user_id: report.reported_user_id!,
                                         reason: buildBanReason(adminNotes, report.reason, "Rules violation"),
                                       })
                                     }
@@ -302,7 +281,7 @@ export function ReportsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => reviewMutation.mutate({ reportId: report.id, status: "dismissed" })}
+                            onClick={() => reviewMutation.mutate({ reportId: report.id, status: "dismissed", adminNotes: adminNotes.trim() }, { onSuccess: () => { setExpandedId(null); setAdminNotes(""); } })}
                             disabled={reviewMutation.isPending}
                           >
                             Dismiss
@@ -310,7 +289,7 @@ export function ReportsPage() {
                           <Button
                             variant="secondary"
                             size="sm"
-                            onClick={() => reviewMutation.mutate({ reportId: report.id, status: "reviewed" })}
+                            onClick={() => reviewMutation.mutate({ reportId: report.id, status: "reviewed", adminNotes: adminNotes.trim() }, { onSuccess: () => { setExpandedId(null); setAdminNotes(""); } })}
                             disabled={reviewMutation.isPending}
                           >
                             Mark Reviewed
@@ -318,7 +297,7 @@ export function ReportsPage() {
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={() => reviewMutation.mutate({ reportId: report.id, status: "resolved" })}
+                            onClick={() => reviewMutation.mutate({ reportId: report.id, status: "resolved", adminNotes: adminNotes.trim() }, { onSuccess: () => { setExpandedId(null); setAdminNotes(""); } })}
                             disabled={reviewMutation.isPending}
                           >
                             Resolve

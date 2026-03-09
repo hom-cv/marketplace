@@ -3,11 +3,10 @@
  */
 
 import { useMemo, useRef, useCallback, useEffect } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { Loader, Box } from "@mantine/core";
 import { IconHeart } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getLikedPosts } from "@/api/likes";
+import { useLikedPosts } from "@/hooks/usePosts";
 import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
@@ -29,15 +28,7 @@ export function LikedListingsPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["likedPosts"],
-    queryFn: ({ pageParam = 0 }) => getLikedPosts(pageParam, ITEMS_PER_PAGE),
-    getNextPageParam: (lastPage) => {
-      const nextSkip = lastPage.skip + lastPage.limit;
-      return nextSkip < lastPage.total ? nextSkip : undefined;
-    },
-    initialPageParam: 0,
-  });
+  } = useLikedPosts(ITEMS_PER_PAGE);
 
   const posts = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];

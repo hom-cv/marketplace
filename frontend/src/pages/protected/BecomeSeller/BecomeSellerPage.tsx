@@ -3,7 +3,6 @@
  */
 
 import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Container,
   Title,
@@ -21,9 +20,12 @@ import {
 import { useForm } from "@mantine/form";
 import { IconBuildingBank, IconCheck, IconAlertCircle, IconTicket } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { registerSeller, getSellerStatus, BANK_BRANDS } from "@/api/seller";
+import { BANK_BRANDS } from "@/api/seller";
+import { useSellerStatus, useRegisterSellerMutation } from "@/hooks/useSeller";
+import { queryKeys } from "@/hooks/queryKeys";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import styles from "./BecomeSellerPage.module.css";
 
 export function BecomeSellerPage() {
@@ -35,21 +37,13 @@ export function BecomeSellerPage() {
   const { t: tPolicies } = useTranslation("policies");
 
   // Query current seller status
-  const { data: sellerStatus, isLoading: isLoadingStatus } = useQuery({
-    queryKey: ["sellerStatus"],
-    queryFn: getSellerStatus,
-  });
+  const { data: sellerStatus, isLoading: isLoadingStatus } = useSellerStatus();
 
   // Mutation for registering as seller
-  const registerMutation = useMutation({
-    mutationFn: registerSeller,
+  const registerMutation = useRegisterSellerMutation({
     onSuccess: (data) => {
       setError(null);
       setSuccess(data.message);
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["sellerStatus"] }),
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
-      ]);
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -110,7 +104,7 @@ export function BecomeSellerPage() {
             <Text c="dimmed" ta="center">
               {t("seller.pendingMessage")}
             </Text>
-            <Button variant="light" onClick={() => queryClient.invalidateQueries({ queryKey: ["sellerStatus"] })}>
+            <Button variant="light" onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.seller.status })}>
               {t("seller.checkStatus")}
             </Button>
           </Stack>

@@ -2,12 +2,11 @@
  * Messages page - List of all conversations
  */
 
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { IconMessage, IconPhoto } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getConversations } from "@/api/chat";
+import { useConversations } from "@/hooks/useChat";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import type { Conversation } from "@/api/types/chat";
@@ -36,10 +35,7 @@ export function MessagesPage() {
     data: conversations,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["conversations"],
-    queryFn: getConversations,
-  });
+  } = useConversations();
 
   if (isLoading) {
     return (

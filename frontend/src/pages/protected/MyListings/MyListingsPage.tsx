@@ -2,12 +2,11 @@
  * My Listings page - Flat design
  */
 
-import { useQuery } from "@tanstack/react-query";
 import { Loader } from "@mantine/core";
 import { IconPlus, IconPackage } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { getMyPosts } from "@/api/posts";
+import { useMyPosts } from "@/hooks/usePosts";
 import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import styles from "./MyListingsPage.module.css";
@@ -17,10 +16,7 @@ export function MyListingsPage() {
   const { t: tNav } = useTranslation("navigation");
   const { t: tCommon } = useTranslation("common");
 
-  const { data: posts, isLoading, error } = useQuery({
-    queryKey: ["posts", "me"],
-    queryFn: () => getMyPosts(),
-  });
+  const { data: posts, isLoading, error } = useMyPosts();
 
   if (isLoading) {
     return (

@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { followUser, unfollowUser } from "@/api/follows";
+import { queryKeys } from "@/hooks/queryKeys";
 import { useIsAuthenticated } from "@/stores/authStore";
 import styles from "./FollowButton.module.css";
 
 interface FollowButtonProps {
   userId: number;
+  username: string;
   initialFollowed: boolean;
   size?: "md" | "lg";
   fullWidth?: boolean;
@@ -15,6 +17,7 @@ interface FollowButtonProps {
 
 export function FollowButton({
   userId,
+  username,
   initialFollowed,
   size = "md",
   fullWidth = false,
@@ -40,7 +43,10 @@ export function FollowButton({
       setIsFollowed(false);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(username) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
+      ]);
     },
   });
 
@@ -53,7 +59,10 @@ export function FollowButton({
       setIsFollowed(true);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(username) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
+      ]);
     },
   });
 

@@ -5,12 +5,11 @@
  */
 
 import { useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useSearch, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { IconCheck, IconX, IconShoppingBag, IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getPaymentStatus } from "@/api/payments";
+import { usePaymentStatus } from "@/hooks/usePayments";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -30,10 +29,7 @@ export function PaymentReturnPage() {
     data: paymentStatus,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: ["paymentStatus", paymentId],
-    queryFn: () => (paymentId ? getPaymentStatus(paymentId) : null),
-    enabled: !!paymentId,
+  } = usePaymentStatus(paymentId, {
     refetchInterval: (query) => {
       // Stop polling if payment is complete or after 20 attempts (60 seconds)
       const status = query.state.data?.status;

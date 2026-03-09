@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader, Textarea } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconUserCancel } from "@tabler/icons-react";
-import { dismissFlaggedMessage, banUser } from "@/api/admin";
+import {
+  useDismissFlaggedMessageMutation,
+  useBanUserMutation,
+} from "@/hooks/useAdmin";
 import type { Post } from "@/api/types/post";
 import { Button } from "@/components/Button";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { ConversationGroup } from "@/api/types/admin";
-import styles from "../FlaggedMessagesPage.module.css";
+import styles from "./FlaggedMessagesPage.module.css";
 
 interface DetailPaneProps {
   activeGroup: ConversationGroup;
@@ -26,23 +28,11 @@ export function DetailPane({
   allPatterns,
   senderNameMap,
 }: DetailPaneProps) {
-  const queryClient = useQueryClient();
   const [banReason, setBanReason] = useState("");
   const [showBanForm, setShowBanForm] = useState(false);
 
-  const dismissMutation = useMutation({
-    mutationFn: async (flagIds: number[]) => {
-      const results = await Promise.allSettled(
-        flagIds.map((id) => dismissFlaggedMessage(id))
-      );
-      const failed = results.filter((r) => r.status === "rejected");
-      if (flagIds.length > 0 && failed.length === results.length) {
-        throw new Error("Failed to dismiss all flags");
-      }
-      return { total: results.length, failed: failed.length };
-    },
+  const dismissMutation = useDismissFlaggedMessageMutation({
     onSuccess: ({ total, failed }) => {
-      queryClient.invalidateQueries({ queryKey: ["adminFlaggedMessages"] });
       if (failed > 0) {
         notifications.show({
           title: "Partially Dismissed",
@@ -58,15 +48,9 @@ export function DetailPane({
     },
   });
 
-  const banUserMutation = useMutation({
-    mutationFn: ({ userId, reason }: { userId: number; reason: string }) =>
-      banUser({ user_id: userId, reason }),
+  const banUserMutation = useBanUserMutation({
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminFlaggedMessages"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
-      ]);
       setShowBanForm(false);
       setBanReason("");
     },
@@ -175,7 +159,7 @@ export function DetailPane({
                 size="sm"
                 onClick={() =>
                   banUserMutation.mutate({
-                    userId: activeGroup.primarySenderId,
+                    user_id: activeGroup.primarySenderId,
                     reason: banReason,
                   })
                 }

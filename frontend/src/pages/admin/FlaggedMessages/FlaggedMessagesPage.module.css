@@ -200,7 +200,7 @@
 }
 
 .chatMsgFlagged {
-  background: rgba(255, 100, 100, 0.1);
+  background: var(--color-error-alpha-10);
   border: 1px solid var(--color-error);
 }
 

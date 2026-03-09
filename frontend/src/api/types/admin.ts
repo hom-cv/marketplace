@@ -66,6 +66,14 @@ export interface ReportReviewRequest {
   admin_notes?: string;
 }
 
+export interface ReportCreateRequest {
+  report_type: ReportType;
+  reported_user_id?: number;
+  reported_post_id?: number;
+  reason: ReportReason;
+  description: string;
+}
+
 export interface UserBan {
   id: number;
   user_id: number;

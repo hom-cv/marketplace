@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader, NumberInput, Textarea, Switch } from "@mantine/core";
 import {
   IconUserOff,
   IconPlus,
   IconChevronDown,
 } from "@tabler/icons-react";
-import { getUserBans, banUser, liftUserBan } from "@/api/admin";
-import type { BanUserRequest } from "@/api/types/admin";
+import {
+  useAdminUserBans,
+  useBanUserMutation,
+  useLiftUserBanMutation,
+} from "@/hooks/useAdmin";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -18,40 +20,23 @@ import shared from "@/styles/listPage.module.css";
 import styles from "./UserBansPage.module.css";
 
 export function UserBansPage() {
-  const queryClient = useQueryClient();
   const [activeOnly, setActiveOnly] = useState(true);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [userId, setUserId] = useState<number | "">("");
   const [reason, setReason] = useState("");
 
-  const { data: bansData, isLoading, error } = useQuery({
-    queryKey: ["adminUserBans", activeOnly],
-    queryFn: () => getUserBans(activeOnly),
-  });
+  const { data: bansData, isLoading, error } = useAdminUserBans(activeOnly);
 
-  const banMutation = useMutation({
-    mutationFn: (request: BanUserRequest) => banUser(request),
+  const banMutation = useBanUserMutation({
     onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
-      ]);
       setShowCreateForm(false);
       setUserId("");
       setReason("");
     },
   });
 
-  const liftMutation = useMutation({
-    mutationFn: (banId: number) => liftUserBan(banId),
-    onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["adminUserBans"] }),
-        queryClient.invalidateQueries({ queryKey: ["adminReports"] }),
-      ]);
-    },
-  });
+  const liftMutation = useLiftUserBanMutation();
 
   if (isLoading) {
     return (

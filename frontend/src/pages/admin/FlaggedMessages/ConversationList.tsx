@@ -4,7 +4,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { formatShortDate } from "@/utils/date";
 import type { ConversationGroup } from "@/api/types/admin";
-import styles from "../FlaggedMessagesPage.module.css";
+import styles from "./FlaggedMessagesPage.module.css";
 
 interface ConversationListProps {
   groups: ConversationGroup[];

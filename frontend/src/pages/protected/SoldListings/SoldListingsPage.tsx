@@ -3,7 +3,6 @@
  */
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader,
   Select,
@@ -12,7 +11,7 @@ import {
 import { IconReceipt, IconTruck, IconCheck, IconUser, IconChevronDown } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
-import { getMySales, addTracking } from "@/api/payments";
+import { useMySales, useAddTrackingMutation } from "@/hooks/usePayments";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { EarningsPreview } from "@/components/EarningsPreview";
@@ -25,24 +24,14 @@ import shared from "@/styles/listPage.module.css";
 import styles from "./SoldListingsPage.module.css";
 
 export function SoldListingsPage() {
-  const queryClient = useQueryClient();
   const { t } = useTranslation("common");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [trackingInputs, setTrackingInputs] = useState<Record<number, string>>({});
   const [carrierInputs, setCarrierInputs] = useState<Record<number, string | null>>({});
 
-  const { data: sales, isLoading, error } = useQuery({
-    queryKey: ["mySales"],
-    queryFn: getMySales,
-  });
+  const { data: sales, isLoading, error } = useMySales();
 
-  const trackingMutation = useMutation({
-    mutationFn: ({ paymentId, carrier, trackingNumber }: { paymentId: number; carrier: string; trackingNumber: string }) =>
-      addTracking(paymentId, carrier, trackingNumber),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mySales"] });
-    },
-  });
+  const trackingMutation = useAddTrackingMutation();
 
   if (isLoading) {
     return (

@@ -4,13 +4,12 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { Loader, Stack, Box, Drawer } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { getPosts } from "@/api/posts";
+import { usePublicPosts } from "@/hooks/usePosts";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
@@ -111,16 +110,7 @@ export function PublicExplorePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery({
-    queryKey: ["publicPosts", queryFilters],
-    queryFn: ({ pageParam = 0 }) =>
-      getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
-    getNextPageParam: (lastPage) => {
-      const nextSkip = lastPage.skip + lastPage.limit;
-      return nextSkip < lastPage.total ? nextSkip : undefined;
-    },
-    initialPageParam: 0,
-  });
+  } = usePublicPosts(queryFilters, ITEMS_PER_PAGE);
 
   const posts = useMemo(() => {
     return data?.pages.flatMap((page) => page.items) ?? [];

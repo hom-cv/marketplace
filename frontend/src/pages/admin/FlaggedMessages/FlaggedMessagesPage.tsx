@@ -1,13 +1,15 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Loader } from "@mantine/core";
-import { getFlaggedMessages, getAdminConversation } from "@/api/admin";
-import { getPost } from "@/api/posts";
+import {
+  useAdminFlaggedMessages,
+  useAdminConversation,
+  useAdminConversationPost,
+} from "@/hooks/useAdmin";
 import { Alert } from "@/components/Alert";
-import { ConversationList } from "./FlaggedMessages/ConversationList";
-import { ChatPane } from "./FlaggedMessages/ChatPane";
-import { DetailPane } from "./FlaggedMessages/DetailPane";
-import { groupByConversation } from "./FlaggedMessages/utils";
+import { ConversationList } from "./ConversationList";
+import { ChatPane } from "./ChatPane";
+import { DetailPane } from "./DetailPane";
+import { groupByConversation } from "./utils";
 import styles from "./FlaggedMessagesPage.module.css";
 
 const MESSAGES_PAGE_LIMIT = 50;
@@ -16,10 +18,7 @@ export function FlaggedMessagesPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [selectedConv, setSelectedConv] = useState<number | null>(null);
 
-  const { data: flagsData, isLoading, error } = useQuery({
-    queryKey: ["adminFlaggedMessages", statusFilter],
-    queryFn: () => getFlaggedMessages(statusFilter || undefined),
-  });
+  const { data: flagsData, isLoading, error } = useAdminFlaggedMessages(statusFilter);
 
   const groups = useMemo(
     () => groupByConversation(flagsData?.items ?? []),
@@ -31,26 +30,12 @@ export function FlaggedMessagesPage() {
     [groups, selectedConv]
   );
 
-  const { data: conversationDetail, isLoading: chatLoading } = useQuery({
-    queryKey: ["adminConversation", selectedConv],
-    queryFn: () => getAdminConversation(selectedConv!, undefined, MESSAGES_PAGE_LIMIT),
-    enabled: selectedConv !== null,
-    staleTime: Infinity,
-  });
+  const { data: conversationDetail, isLoading: chatLoading } = useAdminConversation(
+    selectedConv,
+    MESSAGES_PAGE_LIMIT,
+  );
 
-  const { data: convPost } = useQuery({
-    queryKey: ["adminConversationPost", conversationDetail?.post.id],
-    queryFn: async () => {
-      try {
-        return await getPost(conversationDetail!.post.id);
-      } catch (error) {
-        console.error("Failed to fetch post for admin review:", error);
-        return null;
-      }
-    },
-    enabled: !!conversationDetail?.post.id,
-    staleTime: Infinity,
-  });
+  const { data: convPost } = useAdminConversationPost(conversationDetail?.post.id);
 
   function handleSelectConv(conversationId: number) {
     if (selectedConv === conversationId) return;

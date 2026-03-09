@@ -2,12 +2,11 @@
  * Profile edit page - Flat design
  */
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Textarea, Switch, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import { updateMyProfile } from "@/api/users";
 import { useAuthStore } from "@/stores/authStore";
+import { useUpdateProfileMutation } from "@/hooks/useUsers";
 import { getErrorMessage } from "@/utils/error";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -15,12 +14,10 @@ import type { UpdateProfileRequest } from "@/api/types/user";
 import styles from "./ProfileEditPage.module.css";
 
 export function ProfileEditPage() {
-  const queryClient = useQueryClient();
   const { t } = useTranslation("profile");
   const { t: tCommon } = useTranslation("common");
 
   const user = useAuthStore((state) => state.user);
-  const setUser = useAuthStore((state) => state.setUser);
 
   const form = useForm<UpdateProfileRequest>({
     initialValues: {
@@ -33,19 +30,7 @@ export function ProfileEditPage() {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: updateMyProfile,
-    onSuccess: (updatedUser) => {
-      setUser(updatedUser);
-      const promises = [
-        queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
-      ];
-      if (user?.username) {
-        promises.push(queryClient.invalidateQueries({ queryKey: ["userProfile", user.username] }));
-      }
-      Promise.all(promises);
-    },
-  });
+  const updateMutation = useUpdateProfileMutation();
 
   const handleSubmit = (values: UpdateProfileRequest) => {
     updateMutation.mutate(values);
