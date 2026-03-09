@@ -1,0 +1,10 @@
+/* PostBansPage — page-specific styles only */
+
+.rowSeller {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.expandedActions {
+  margin-top: 12px;
+}
