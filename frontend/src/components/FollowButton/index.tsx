@@ -8,6 +8,7 @@ import styles from "./FollowButton.module.css";
 
 interface FollowButtonProps {
   userId: number;
+  username: string;
   initialFollowed: boolean;
   size?: "md" | "lg";
   fullWidth?: boolean;
@@ -16,6 +17,7 @@ interface FollowButtonProps {
 
 export function FollowButton({
   userId,
+  username,
   initialFollowed,
   size = "md",
   fullWidth = false,
@@ -41,7 +43,10 @@ export function FollowButton({
       setIsFollowed(false);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.profile() });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(username) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
+      ]);
     },
   });
 
@@ -54,7 +59,10 @@ export function FollowButton({
       setIsFollowed(true);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.users.profile() });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: queryKeys.users.profile(username) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
+      ]);
     },
   });
 

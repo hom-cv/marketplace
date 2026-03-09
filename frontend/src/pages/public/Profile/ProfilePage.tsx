@@ -108,6 +108,7 @@ export function ProfilePage() {
                 <div className={styles.followAction}>
                   <FollowButton
                     userId={profile.id}
+                    username={profile.username}
                     initialFollowed={profile.is_followed}
                     size="lg"
                     fullWidth

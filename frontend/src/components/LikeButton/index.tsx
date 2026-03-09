@@ -44,6 +44,7 @@ export function LikeButton({
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.posts.all }),
         queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.posts.liked }),
       ]);
     },
   });
