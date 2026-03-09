@@ -80,14 +80,7 @@ export function useAdminConversation(
 export function useAdminConversationPost(postId?: number) {
   return useQuery({
     queryKey: queryKeys.admin.conversationPost(postId),
-    queryFn: async () => {
-      try {
-        return await getPost(postId!);
-      } catch (error) {
-        console.error("Failed to fetch post for admin review:", error);
-        return null;
-      }
-    },
+    queryFn: () => getPost(postId!),
     enabled: !!postId,
     staleTime: Infinity,
   });
@@ -112,7 +105,7 @@ export function useReviewReportMutation() {
         admin_notes: adminNotes || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports });
     },
   });
 }
@@ -122,7 +115,7 @@ export function useGenerateInvitesMutation() {
   return useMutation({
     mutationFn: (count: number) => generateInvites(count),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.invites() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.allInvites });
     },
   });
 }
@@ -132,7 +125,7 @@ export function useRevokeInviteMutation() {
   return useMutation({
     mutationFn: (code: string) => revokeInvite(code),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.invites() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.allInvites });
     },
   });
 }
@@ -146,9 +139,9 @@ export function useBanUserMutation(options?: {
     mutationFn: (request: BanUserRequest) => banUser(request),
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.userBans() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.flaggedMessages() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allUserBans }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allFlaggedMessages }),
       ]);
       options?.onSuccess?.();
     },
@@ -165,8 +158,8 @@ export function useBanPostMutation(options?: {
     mutationFn: (request: BanPostRequest) => banPost(request),
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.postBans() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPostBans }),
       ]);
       options?.onSuccess?.();
     },
@@ -180,8 +173,8 @@ export function useLiftUserBanMutation() {
     mutationFn: (banId: number) => liftUserBan(banId),
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.userBans() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allUserBans }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
       ]);
     },
   });
@@ -193,8 +186,8 @@ export function useLiftPostBanMutation() {
     mutationFn: (banId: number) => liftPostBan(banId),
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.postBans() }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.reports() }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPostBans }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
       ]);
     },
   });
@@ -218,7 +211,7 @@ export function useDismissFlaggedMessageMutation(options?: {
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.flaggedMessages(),
+        queryKey: queryKeys.admin.allFlaggedMessages,
       });
       options?.onSuccess?.(result);
     },

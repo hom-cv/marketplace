@@ -124,7 +124,7 @@ export function useChatSubscription() {
           // On reconnect, invalidate all chat queries to catch missed messages
           Promise.all([
             queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations }),
-            queryClient.invalidateQueries({ queryKey: ["conversation"] }),
+            queryClient.invalidateQueries({ queryKey: queryKeys.chat.allConversationDetails }),
           ]);
           return;
         }
