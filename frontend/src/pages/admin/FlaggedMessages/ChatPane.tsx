@@ -65,7 +65,7 @@ export function ChatPane({
       );
       if (older.messages.length > 0) {
         queryClient.setQueryData<ConversationDetail>(
-          ["admin-conversation", activeGroup.conversationId],
+          ["adminConversation", activeGroup.conversationId],
           (old) => {
             if (!old) return old;
             return {

@@ -49,7 +49,7 @@ export function ReportsPage() {
   const [adminNotes, setAdminNotes] = useState("");
 
   const { data: reportsData, isLoading, error } = useQuery({
-    queryKey: ["admin-reports", statusFilter, typeFilter],
+    queryKey: ["adminReports", statusFilter, typeFilter],
     queryFn: () => getReports(statusFilter || undefined, typeFilter || undefined),
   });
 
@@ -57,7 +57,7 @@ export function ReportsPage() {
     mutationFn: ({ reportId, status }: { reportId: number; status: "reviewed" | "resolved" | "dismissed" }) =>
       reviewReport(reportId, { status, admin_notes: adminNotes.trim() || undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
 
       setExpandedId(null);
       setAdminNotes("");
@@ -69,8 +69,8 @@ export function ReportsPage() {
       banUser({ user_id: userId, reason }),
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
-      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-user-bans"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      queryClient.invalidateQueries({ queryKey: ["adminUserBans"] });
     },
     onError: (err: Error) => {
       notifications.show({ title: "Ban Failed", message: err.message, color: "red" });
@@ -82,8 +82,8 @@ export function ReportsPage() {
       banPost({ post_id: postId, reason }),
     onSuccess: () => {
       notifications.show({ title: "Listing Removed", message: "The listing has been removed.", color: "red" });
-      queryClient.invalidateQueries({ queryKey: ["admin-reports"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-post-bans"] });
+      queryClient.invalidateQueries({ queryKey: ["adminReports"] });
+      queryClient.invalidateQueries({ queryKey: ["adminPostBans"] });
     },
     onError: (err: Error) => {
       notifications.show({ title: "Removal Failed", message: err.message, color: "red" });

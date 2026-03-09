@@ -112,7 +112,7 @@ export function PublicExplorePage() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["public-posts", queryFilters],
+    queryKey: ["publicPosts", queryFilters],
     queryFn: ({ pageParam = 0 }) =>
       getPosts(pageParam, ITEMS_PER_PAGE, queryFilters),
     getNextPageParam: (lastPage) => {

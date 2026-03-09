@@ -36,14 +36,14 @@ export function PurchaseHistoryPage() {
   const [receiptModalData, setReceiptModalData] = useState<PurchaseListItem | null>(null);
 
   const { data: purchases, isLoading, error } = useQuery({
-    queryKey: ["my-purchases"],
+    queryKey: ["myPurchases"],
     queryFn: getMyPurchases,
   });
 
   const confirmMutation = useMutation({
     mutationFn: (paymentId: number) => confirmDelivery(paymentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-purchases"] });
+      queryClient.invalidateQueries({ queryKey: ["myPurchases"] });
     },
   });
 

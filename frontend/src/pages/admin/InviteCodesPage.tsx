@@ -37,21 +37,21 @@ export function InviteCodesPage() {
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
 
   const { data: invitesData, isLoading, error } = useQuery({
-    queryKey: ["admin-invites", statusFilter],
+    queryKey: ["adminInvites", statusFilter],
     queryFn: () => getInvites(statusFilter || undefined),
   });
 
   const generateMutation = useMutation({
     mutationFn: (count: number) => generateInvites(count),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-invites"] });
+      queryClient.invalidateQueries({ queryKey: ["adminInvites"] });
     },
   });
 
   const revokeMutation = useMutation({
     mutationFn: (code: string) => revokeInvite(code),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-invites"] });
+      queryClient.invalidateQueries({ queryKey: ["adminInvites"] });
     },
   });
 

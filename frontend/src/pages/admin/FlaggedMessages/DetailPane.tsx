@@ -42,7 +42,7 @@ export function DetailPane({
       return { total: results.length, failed: failed.length };
     },
     onSuccess: ({ total, failed }) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-flagged-messages"] });
+      queryClient.invalidateQueries({ queryKey: ["adminFlaggedMessages"] });
       if (failed > 0) {
         notifications.show({
           title: "Partially Dismissed",
@@ -63,8 +63,8 @@ export function DetailPane({
       banUser({ user_id: userId, reason }),
     onSuccess: () => {
       notifications.show({ title: "User Banned", message: "The user has been banned.", color: "red" });
-      queryClient.invalidateQueries({ queryKey: ["admin-flagged-messages"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-user-bans"] });
+      queryClient.invalidateQueries({ queryKey: ["adminFlaggedMessages"] });
+      queryClient.invalidateQueries({ queryKey: ["adminUserBans"] });
       setShowBanForm(false);
       setBanReason("");
     },

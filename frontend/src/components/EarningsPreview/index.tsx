@@ -54,14 +54,14 @@ export function EarningsPreview({
 
   // Mode 1: Fetch by post ID
   const postQuery = useQuery({
-    queryKey: ["price-breakdown", postId],
+    queryKey: ["priceBreakdown", postId],
     queryFn: () => getPriceBreakdown(postId!, "card"),
     enabled: !!postId && !breakdown,
   });
 
   // Mode 3: Fetch preview by price/shipping
   const previewQuery = useQuery({
-    queryKey: ["earnings-preview", itemPrice, shippingCost],
+    queryKey: ["earningsPreview", itemPrice, shippingCost],
     queryFn: () => getEarningsPreview(itemPrice!, shippingCost, "card"),
     enabled: !!itemPrice && !postId && !breakdown,
   });

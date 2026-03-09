@@ -32,7 +32,7 @@ export function SoldListingsPage() {
   const [carrierInputs, setCarrierInputs] = useState<Record<number, string | null>>({});
 
   const { data: sales, isLoading, error } = useQuery({
-    queryKey: ["my-sales"],
+    queryKey: ["mySales"],
     queryFn: getMySales,
   });
 
@@ -40,7 +40,7 @@ export function SoldListingsPage() {
     mutationFn: ({ paymentId, carrier, trackingNumber }: { paymentId: number; carrier: string; trackingNumber: string }) =>
       addTracking(paymentId, carrier, trackingNumber),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-sales"] });
+      queryClient.invalidateQueries({ queryKey: ["mySales"] });
     },
   });
 

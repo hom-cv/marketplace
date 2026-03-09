@@ -13,7 +13,7 @@ import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { ReportModal } from "@/components/ReportModal";
 import { useReportModal } from "@/hooks/useReportModal";
-import styles from "./LikedListings.module.css";
+import styles from "./LikedListingsPage.module.css";
 
 const ITEMS_PER_PAGE = 20;
 
