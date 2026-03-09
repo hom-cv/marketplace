@@ -46,8 +46,10 @@ export function BecomeSellerPage() {
     onSuccess: (data) => {
       setError(null);
       setSuccess(data.message);
-      queryClient.invalidateQueries({ queryKey: ["sellerStatus"] });
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["sellerStatus"] }),
+        queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
+      ]);
     },
     onError: (err: Error) => {
       setError(err.message);

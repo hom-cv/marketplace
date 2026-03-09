@@ -17,7 +17,7 @@ export function FlaggedMessagesPage() {
   const [selectedConv, setSelectedConv] = useState<number | null>(null);
 
   const { data: flagsData, isLoading, error } = useQuery({
-    queryKey: ["admin-flagged-messages", statusFilter],
+    queryKey: ["adminFlaggedMessages", statusFilter],
     queryFn: () => getFlaggedMessages(statusFilter || undefined),
   });
 
@@ -32,14 +32,14 @@ export function FlaggedMessagesPage() {
   );
 
   const { data: conversationDetail, isLoading: chatLoading } = useQuery({
-    queryKey: ["admin-conversation", selectedConv],
+    queryKey: ["adminConversation", selectedConv],
     queryFn: () => getAdminConversation(selectedConv!, undefined, MESSAGES_PAGE_LIMIT),
     enabled: selectedConv !== null,
     staleTime: Infinity,
   });
 
   const { data: convPost } = useQuery({
-    queryKey: ["admin-conversation-post", conversationDetail?.post.id],
+    queryKey: ["adminConversationPost", conversationDetail?.post.id],
     queryFn: async () => {
       try {
         return await getPost(conversationDetail!.post.id);

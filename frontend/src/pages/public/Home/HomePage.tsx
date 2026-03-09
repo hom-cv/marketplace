@@ -17,7 +17,7 @@ export function HomePage() {
   const { t } = useTranslation("common");
 
   const { data: postsData } = useQuery({
-    queryKey: ["posts", "guest-landing-preview"],
+    queryKey: ["posts", "guestLandingPreview"],
     queryFn: () => getPosts(0, PREVIEW_POST_COUNT),
   });
 
