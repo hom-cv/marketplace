@@ -91,6 +91,7 @@ class Payment(Base):
     platform_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     processing_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     total_vat: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    transfer_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     seller_payout: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     # Payment method and status

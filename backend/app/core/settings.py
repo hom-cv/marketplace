@@ -44,16 +44,17 @@ class Settings(BaseSettings):
     DO_SPACES_BUCKET: str | None = None
     DO_SPACES_REGION: str | None = None
 
-    # Transaction fees (percentages)
-    PLATFORM_FEE_PERCENT: Decimal = Decimal("10.0")  # Platform fee to us
-    VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on item price
+    # Transaction fees (percentages) — all on seller side
+    PLATFORM_FEE_PERCENT: Decimal = Decimal("10.0")  # Seller-side platform fee
+    VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on fees
 
-    # Payment processing fees (Omise fees passed to buyer)
+    # Payment processing fees (Omise fees deducted from seller)
     CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("3.65")  # Credit card processing fee
     PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal(
         "1.65"
     )  # PromptPay processing fee
     PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
+    TRANSFER_FEE: Decimal = Decimal("30.0")  # Omise transfer fee per payout (THB)
 
     @property
     def do_spaces_endpoint(self) -> str:

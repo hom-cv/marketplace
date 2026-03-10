@@ -20,6 +20,9 @@ import type {
   BanPostRequest,
   MessageFlag,
   MessageFlagListResponse,
+  PayoutListResponse,
+  PayoutHistoryListResponse,
+  PayoutResponse,
 } from "@/api/types/admin";
 import type { ConversationDetail } from "@/api/types/chat";
 
@@ -131,6 +134,28 @@ export function getFlaggedMessages(
 export function dismissFlaggedMessage(flagId: number): Promise<MessageFlag> {
   return apiRequest<MessageFlag>(`/admin/flagged-messages/${flagId}/dismiss`, {
     method: "PATCH",
+  });
+}
+
+export function getPendingPayouts(
+  skip = 0,
+  limit = 50
+): Promise<PayoutListResponse> {
+  const query = buildPaginatedParams(skip, limit);
+  return apiRequest<PayoutListResponse>(`/admin/payouts?${query}`);
+}
+
+export function getPayoutHistory(
+  skip = 0,
+  limit = 50
+): Promise<PayoutHistoryListResponse> {
+  const query = buildPaginatedParams(skip, limit);
+  return apiRequest<PayoutHistoryListResponse>(`/admin/payouts/history?${query}`);
+}
+
+export function createPayout(paymentId: number): Promise<PayoutResponse> {
+  return apiRequest<PayoutResponse>(`/admin/payouts/${paymentId}`, {
+    method: "POST",
   });
 }
 

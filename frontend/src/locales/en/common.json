@@ -105,7 +105,7 @@
     "shipping": "+ Shipping",
     "fees": "- Fees",
     "youReceive": "You receive",
-    "feesExplanation": "Fees include platform fee, processing fee, and VAT"
+    "feesExplanation": "Fees include platform fee, processing fee, transfer fee, and VAT"
   },
   "tracking": {
     "title": "Tracking",

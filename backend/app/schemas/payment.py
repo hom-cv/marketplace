@@ -16,11 +16,12 @@ class PaymentMethodType(str, Enum):
 class PriceBreakdown(BaseModel):
     """
     Price breakdown for an order.
-    
+
     All monetary values are in THB.
-    - platform_fee: includes VAT
-    - processing_fee: includes VAT  
-    - total_vat: total VAT from both fees
+    - platform_fee: 10% + VAT + transfer fee, deducted from seller
+    - processing_fee: Omise rate + VAT, deducted from seller
+    - total: what the buyer pays (item + shipping)
+    - seller_payout: what the seller receives (item + shipping - platform_fee - processing_fee)
     """
     item_price: Decimal
     shipping_cost: Decimal
@@ -167,6 +168,71 @@ class AddTrackingRequest(BaseModel):
 
     carrier: str = Field(..., description="Carrier code: EMS, KEX, FLASH_EXPRESS, J_AND_T")
     tracking_number: str = Field(..., description="Tracking number", min_length=1, max_length=50)
+
+
+class PayoutItem(BaseModel):
+    """Schema for a pending payout list item."""
+
+    payment_id: int
+    seller_id: int
+    seller_username: str
+    buyer_username: str
+    post_title: str
+    amount: int
+    seller_payout: int
+    currency: str
+    payment_method: str
+    paid_at: datetime | None = None
+    delivered_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class PayoutListResponse(BaseModel):
+    """Paginated list of pending payouts."""
+
+    items: list[PayoutItem]
+    total: int
+    skip: int
+    limit: int
+
+
+class PayoutHistoryItem(BaseModel):
+    """Schema for a completed payout list item."""
+
+    payment_id: int
+    seller_id: int
+    seller_username: str
+    buyer_username: str
+    post_title: str
+    amount: int
+    seller_payout: int
+    currency: str
+    payment_method: str
+    paid_at: datetime | None = None
+    delivered_at: datetime | None = None
+    transferred_at: datetime | None = None
+    omise_transfer_id: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class PayoutHistoryListResponse(BaseModel):
+    """Paginated list of completed payouts."""
+
+    items: list[PayoutHistoryItem]
+    total: int
+    skip: int
+    limit: int
+
+
+class PayoutResponse(BaseModel):
+    """Response after initiating a payout."""
+
+    payment_id: int
+    transfer_id: str
+    amount: int
+    status: str
 
 
 class WebhookEventData(BaseModel):

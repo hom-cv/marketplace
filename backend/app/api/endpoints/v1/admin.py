@@ -1,4 +1,4 @@
-"""Admin API endpoints for bans, dashboard, and flagged messages."""
+"""Admin API endpoints for bans, dashboard, payouts, and flagged messages."""
 
 from fastapi import APIRouter, Query, status
 from pydantic import BaseModel
@@ -15,8 +15,16 @@ from app.schemas.ban import (
 )
 from app.schemas.conversation import ConversationDetailSchema
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
+from app.schemas.payment import (
+    PayoutHistoryItem,
+    PayoutHistoryListResponse,
+    PayoutItem,
+    PayoutListResponse,
+    PayoutResponse,
+)
 from app.services.message_service import AnnotatedMessageService
 from app.services.moderation_service import AnnotatedModerationService
+from app.services.payment_service import AnnotatedPaymentService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -259,4 +267,115 @@ async def get_conversation_admin(
         conversation_id=conversation_id,
         before_id=before_id,
         limit=limit,
+    )
+
+
+@router.get(
+    "/payouts",
+    status_code=status.HTTP_200_OK,
+    response_model=PayoutListResponse,
+)
+async def list_pending_payouts(
+    admin_user: AnnotatedAdminUser,
+    payment_service: AnnotatedPaymentService,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> PayoutListResponse:
+    """
+    List payments eligible for payout.
+
+    **Admin only.** Returns successful, delivered payments that haven't been transferred yet.
+    """
+    payments, total = await payment_service.get_pending_payouts(
+        skip=skip, limit=limit
+    )
+
+    items = [
+        PayoutItem(
+            payment_id=p.id,
+            seller_id=p.seller_id,
+            seller_username=p.seller.username if p.seller else "unknown",
+            buyer_username=p.buyer.username if p.buyer else "unknown",
+            post_title=p.post.title if p.post else "unknown",
+            amount=p.amount,
+            seller_payout=p.seller_payout or 0,
+            currency=p.currency,
+            payment_method=p.payment_method.value.lower(),
+            paid_at=p.paid_at,
+            delivered_at=p.delivered_at,
+        )
+        for p in payments
+    ]
+
+    return PayoutListResponse(
+        items=items, total=total, skip=skip, limit=limit
+    )
+
+
+@router.get(
+    "/payouts/history",
+    status_code=status.HTTP_200_OK,
+    response_model=PayoutHistoryListResponse,
+)
+async def list_payout_history(
+    admin_user: AnnotatedAdminUser,
+    payment_service: AnnotatedPaymentService,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> PayoutHistoryListResponse:
+    """
+    List completed payouts.
+
+    **Admin only.** Returns payments that have been transferred to sellers.
+    """
+    payments, total = await payment_service.get_completed_payouts(
+        skip=skip, limit=limit
+    )
+
+    items = [
+        PayoutHistoryItem(
+            payment_id=p.id,
+            seller_id=p.seller_id,
+            seller_username=p.seller.username if p.seller else "unknown",
+            buyer_username=p.buyer.username if p.buyer else "unknown",
+            post_title=p.post.title if p.post else "unknown",
+            amount=p.amount,
+            seller_payout=p.seller_payout or 0,
+            currency=p.currency,
+            payment_method=p.payment_method.value.lower(),
+            paid_at=p.paid_at,
+            delivered_at=p.delivered_at,
+            transferred_at=p.transferred_at,
+            omise_transfer_id=p.omise_transfer_id,
+        )
+        for p in payments
+    ]
+
+    return PayoutHistoryListResponse(
+        items=items, total=total, skip=skip, limit=limit
+    )
+
+
+@router.post(
+    "/payouts/{payment_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=PayoutResponse,
+)
+async def create_payout(
+    admin_user: AnnotatedAdminUser,
+    payment_service: AnnotatedPaymentService,
+    payment_id: int,
+) -> PayoutResponse:
+    """
+    Initiate a payout (Omise transfer) for a payment.
+
+    **Admin only.** Transfers the seller_payout amount to the seller's bank account.
+    """
+    result = await payment_service.create_payout(payment_id)
+
+    return PayoutResponse(
+        payment_id=payment_id,
+        transfer_id=result["transfer_id"],
+        amount=result["seller_payout"],
+        status="transferred",
     )

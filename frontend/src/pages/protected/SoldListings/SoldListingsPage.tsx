@@ -12,6 +12,7 @@ import { IconReceipt, IconTruck, IconCheck, IconUser, IconChevronDown } from "@t
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { useMySales, useAddTrackingMutation } from "@/hooks/usePayments";
+import { satangToThb } from "@/utils/currency";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { EarningsPreview } from "@/components/EarningsPreview";
@@ -66,7 +67,7 @@ export function SoldListingsPage() {
   };
 
   const getSellerPayout = (sale: typeof successfulSales[0]) => {
-    return (sale.seller_payout ?? 0) / 100;
+    return satangToThb(sale.seller_payout ?? 0);
   };
 
   const successfulSales = sales?.filter((s) => s.status === "successful") || [];
@@ -129,10 +130,10 @@ export function SoldListingsPage() {
                           <p className={styles.cellLabel}>{t("sales.earnings")}</p>
                           <EarningsPreview
                             breakdown={{
-                              itemPrice: (sale.item_price ?? 0) / 100,
-                              shippingCost: (sale.shipping_cost ?? 0) / 100,
-                              totalFees: (sale.total_fees ?? 0) / 100,
-                              sellerPayout: (sale.seller_payout ?? 0) / 100,
+                              itemPrice: satangToThb(sale.item_price ?? 0),
+                              shippingCost: satangToThb(sale.shipping_cost ?? 0),
+                              totalFees: satangToThb(sale.total_fees ?? 0),
+                              sellerPayout: satangToThb(sale.seller_payout ?? 0),
                             }}
                             title=""
                             compact

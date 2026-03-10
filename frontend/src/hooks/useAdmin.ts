@@ -10,6 +10,9 @@ import {
   getInvites,
   getUserBans,
   getPostBans,
+  getPendingPayouts,
+  getPayoutHistory,
+  createPayout,
   reviewReport,
   generateInvites,
   revokeInvite,
@@ -190,6 +193,35 @@ export function useLiftPostBanMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
       ]);
     },
+  });
+}
+
+export function useAdminPayouts() {
+  return useQuery({
+    queryKey: queryKeys.admin.payouts,
+    queryFn: () => getPendingPayouts(),
+  });
+}
+
+export function useAdminPayoutHistory() {
+  return useQuery({
+    queryKey: queryKeys.admin.payoutHistory,
+    queryFn: () => getPayoutHistory(),
+  });
+}
+
+export function useCreatePayoutMutation(options?: {
+  onSuccess?: () => void;
+  onError?: (err: Error) => void;
+}) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (paymentId: number) => createPayout(paymentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPayouts });
+      options?.onSuccess?.();
+    },
+    onError: options?.onError,
   });
 }
 

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -15,6 +15,7 @@ from app.models.payment import (
     PaymentStatus,
     ShippingCarrier,
 )
+from app.models.user import User
 from app.schemas.payment import CreateCardPaymentRequest
 
 
@@ -112,6 +113,7 @@ class PaymentCRUD(
         platform_fee: int | None = None,
         processing_fee: int | None = None,
         total_vat: int | None = None,
+        transfer_fee: int | None = None,
         seller_payout: int | None = None,
         # Shipping address
         shipping_name: str | None = None,
@@ -164,6 +166,7 @@ class PaymentCRUD(
             platform_fee=platform_fee,
             processing_fee=processing_fee,
             total_vat=total_vat,
+            transfer_fee=transfer_fee,
             seller_payout=seller_payout,
             # Shipping address
             shipping_name=shipping_name,
@@ -303,6 +306,80 @@ class PaymentCRUD(
         await db.refresh(payment)
 
         return payment
+
+
+    async def get_pending_payouts(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Payment], int]:
+        """
+        Retrieve payments eligible for payout: successful, delivered, not yet transferred.
+
+        Returns:
+            Tuple of (payments list, total count).
+        """
+        conditions = [
+            self.model.status == PaymentStatus.SUCCESSFUL,
+            self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
+            self.model.omise_transfer_id.is_(None),
+        ]
+
+        count_query = select(func.count(self.model.id)).where(*conditions)
+        total = (await db.execute(count_query)).scalar_one()
+
+        query = (
+            select(self.model)
+            .where(*conditions)
+            .order_by(self.model.delivered_at.asc())
+            .offset(skip)
+            .limit(limit)
+            .options(
+                selectinload(self.model.post),
+                selectinload(self.model.buyer),
+                selectinload(self.model.seller).selectinload(User.seller_profile),
+            )
+        )
+        result = await db.scalars(query)
+        return list(result.all()), total
+
+
+    async def get_completed_payouts(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Payment], int]:
+        """
+        Retrieve payments that have been paid out (have a transfer ID).
+
+        Returns:
+            Tuple of (payments list, total count).
+        """
+        conditions = [
+            self.model.omise_transfer_id.isnot(None),
+        ]
+
+        count_query = select(func.count(self.model.id)).where(*conditions)
+        total = (await db.execute(count_query)).scalar_one()
+
+        query = (
+            select(self.model)
+            .where(*conditions)
+            .order_by(self.model.transferred_at.desc())
+            .offset(skip)
+            .limit(limit)
+            .options(
+                selectinload(self.model.post),
+                selectinload(self.model.buyer),
+                selectinload(self.model.seller).selectinload(User.seller_profile),
+            )
+        )
+        result = await db.scalars(query)
+        return list(result.all()), total
 
 
 payment_crud = PaymentCRUD(Payment)

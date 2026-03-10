@@ -61,6 +61,7 @@ export const queryKeys = {
     allUserBans: ["adminUserBans"] as const,
     allPostBans: ["adminPostBans"] as const,
     allFlaggedMessages: ["adminFlaggedMessages"] as const,
+    allPayouts: ["adminPayouts"] as const,
     // Parameterized keys for specific queries
     reports: (status?: string | null, type?: string | null) =>
       ["adminReports", status, type] as const,
@@ -69,6 +70,8 @@ export const queryKeys = {
     postBans: (activeOnly?: boolean) => ["adminPostBans", activeOnly] as const,
     flaggedMessages: (status?: string | null) =>
       ["adminFlaggedMessages", status] as const,
+    payouts: ["adminPayouts"] as const,
+    payoutHistory: ["adminPayoutHistory"] as const,
     conversation: (conversationId: number | null) =>
       ["adminConversation", conversationId] as const,
     conversationPost: (postId?: number) =>
