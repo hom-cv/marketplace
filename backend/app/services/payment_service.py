@@ -22,7 +22,7 @@ from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
-from app.models.payment import FulfillmentStatus, PaymentMethod, PaymentStatus
+from app.models.payment import FulfillmentStatus, Payment, PaymentMethod, PaymentStatus
 from app.models.seller import SellerVerificationStatus
 from app.models.user import User
 from app.schemas.payment import (
@@ -515,7 +515,7 @@ class PaymentService:
 
     async def get_pending_payouts(
         self, skip: int = 0, limit: int = 50
-    ) -> tuple[list, int]:
+    ) -> tuple[list[Payment], int]:
         """Get payments eligible for payout (successful, delivered, not transferred)."""
         return await payment_crud.get_pending_payouts(
             self.db, skip=skip, limit=limit
@@ -523,7 +523,7 @@ class PaymentService:
 
     async def get_completed_payouts(
         self, skip: int = 0, limit: int = 50
-    ) -> tuple[list, int]:
+    ) -> tuple[list[Payment], int]:
         """Get payments that have been paid out."""
         return await payment_crud.get_completed_payouts(
             self.db, skip=skip, limit=limit
