@@ -44,9 +44,10 @@ def _payment_to_list_item(
         else None,
         item_price=p.item_price,
         shipping_cost=p.shipping_cost,
-        platform_fee=(p.platform_fee or 0) + (p.transfer_fee or 0),
+        platform_fee=p.platform_fee,
+        transfer_fee=p.transfer_fee,
         processing_fee=p.processing_fee,
-        total_fees=(p.platform_fee or 0) + (p.processing_fee or 0) + (p.transfer_fee or 0),
+        total_fees=(p.platform_fee or 0) + (p.transfer_fee or 0) + (p.processing_fee or 0),
         total_vat=p.total_vat,
         seller_payout=p.seller_payout,
         fulfillment_status=p.fulfillment_status.value.lower()

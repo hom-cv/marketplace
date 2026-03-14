@@ -70,8 +70,8 @@ export const queryKeys = {
     postBans: (activeOnly?: boolean) => ["adminPostBans", activeOnly] as const,
     flaggedMessages: (status?: string | null) =>
       ["adminFlaggedMessages", status] as const,
-    payouts: ["adminPayouts"] as const,
-    payoutHistory: ["adminPayoutHistory"] as const,
+    payouts: ["adminPayouts", "pending"] as const,
+    payoutHistory: ["adminPayouts", "history"] as const,
     conversation: (conversationId: number | null) =>
       ["adminConversation", conversationId] as const,
     conversationPost: (postId?: number) =>

@@ -168,18 +168,7 @@ export interface PayoutListResponse {
   limit: number;
 }
 
-export interface PayoutHistoryItem {
-  payment_id: number;
-  seller_id: number;
-  seller_username: string;
-  buyer_username: string;
-  post_title: string;
-  amount: number;
-  seller_payout: number;
-  currency: string;
-  payment_method: string;
-  paid_at: string | null;
-  delivered_at: string | null;
+export interface PayoutHistoryItem extends PayoutItem {
   transferred_at: string | null;
   omise_transfer_id: string | null;
 }

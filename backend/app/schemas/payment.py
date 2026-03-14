@@ -144,6 +144,7 @@ class PurchaseListItem(BaseModel):
     item_price: int | None = None
     shipping_cost: int | None = None
     platform_fee: int | None = None
+    transfer_fee: int | None = None
     processing_fee: int | None = None
     total_fees: int | None = None
     total_vat: int | None = None

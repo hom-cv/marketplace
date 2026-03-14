@@ -72,6 +72,7 @@ export interface PurchaseListItem {
   item_price: number | null;
   shipping_cost: number | null;
   platform_fee: number | null;
+  transfer_fee: number | null;
   processing_fee: number | null;
   total_fees: number | null;
   total_vat: number | null;
