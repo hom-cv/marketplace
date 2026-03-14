@@ -24,6 +24,19 @@ class PaymentCRUD(
 ):
     """CRUD operations for Payment model."""
 
+    async def get_by_id_for_update(
+        self, db: AsyncSession, *, id: int
+    ) -> Payment | None:
+        """
+        Retrieve a payment by ID with a row-level lock (SELECT FOR UPDATE).
+
+        Use this when performing check-then-act operations to prevent
+        race conditions (e.g., duplicate payouts).
+        """
+        query = select(self.model).where(self.model.id == id).with_for_update()
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
     async def get_by_charge_id(
         self, db: AsyncSession, *, charge_id: str
     ) -> Payment | None:

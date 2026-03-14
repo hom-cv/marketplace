@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime
 from typing import Annotated
+from urllib.parse import urlparse
 
 import omise.errors
 from fastapi import Depends
@@ -41,20 +42,26 @@ from app.services.pricing_service import (
 logger = logging.getLogger(__name__)
 
 
-def _breakdown_to_satang(
-    breakdown: PriceBreakdown, transfer_fee_thb: int,
-) -> dict[str, int]:
+def _breakdown_to_satang(breakdown: PriceBreakdown) -> dict[str, int]:
     """Convert a PriceBreakdown (THB Decimals) to satang ints for DB storage."""
     m = CURRENCY_SUBUNIT_MULTIPLIER
     return {
         "item_price": int(breakdown.item_price * m),
         "shipping_cost": int(breakdown.shipping_cost * m),
         "platform_fee": int(breakdown.platform_fee * m),
+        "transfer_fee": int(breakdown.transfer_fee * m),
         "processing_fee": int(breakdown.processing_fee * m),
         "total_vat": int(breakdown.total_vat * m),
-        "transfer_fee": transfer_fee_thb,
         "seller_payout": int(breakdown.seller_payout * m),
     }
+
+
+def _validate_return_uri(return_uri: str, base_url: str) -> None:
+    """Validate that return_uri points to the application's own domain."""
+    allowed = urlparse(base_url)
+    provided = urlparse(return_uri)
+    if provided.scheme != allowed.scheme or provided.netloc != allowed.netloc:
+        raise bad_request_error("Invalid return URL")
 
 
 class PaymentService:
@@ -108,6 +115,9 @@ class PaymentService:
         ):
             raise bad_request_error("Seller is not verified")
 
+        # Validate return_uri against application domain
+        _validate_return_uri(payment_request.return_uri, self._settings.BASE_URL)
+
         # Calculate total with all fees using pricing service
         price_breakdown = self.pricing_service.calculate_order_total(
             post.price, post.shipping_cost, PaymentMethodType.CARD
@@ -115,8 +125,7 @@ class PaymentService:
 
         # Convert to satang
         amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
-        transfer_fee_satang = int(self._settings.TRANSFER_FEE * CURRENCY_SUBUNIT_MULTIPLIER)
-        fees = _breakdown_to_satang(price_breakdown, transfer_fee_satang)
+        fees = _breakdown_to_satang(price_breakdown)
         currency = DEFAULT_CURRENCY
 
         try:
@@ -235,6 +244,9 @@ class PaymentService:
         ):
             raise bad_request_error("Seller is not verified")
 
+        # Validate return_uri against application domain
+        _validate_return_uri(payment_request.return_uri, self._settings.BASE_URL)
+
         # Calculate total with all fees using pricing service
         price_breakdown = self.pricing_service.calculate_order_total(
             post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY
@@ -242,8 +254,7 @@ class PaymentService:
 
         # Convert to satang
         amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
-        transfer_fee_satang = int(self._settings.TRANSFER_FEE * CURRENCY_SUBUNIT_MULTIPLIER)
-        fees = _breakdown_to_satang(price_breakdown, transfer_fee_satang)
+        fees = _breakdown_to_satang(price_breakdown)
         currency = DEFAULT_CURRENCY
 
         try:
@@ -531,7 +542,8 @@ class PaymentService:
             NotFoundError: If payment not found.
             BadRequestError: If payment is not eligible for payout.
         """
-        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        # Lock the row to prevent concurrent duplicate payouts
+        payment = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
         if not payment:
             raise not_found_error("Payment not found")
 

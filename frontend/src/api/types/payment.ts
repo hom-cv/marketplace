@@ -95,6 +95,7 @@ export interface PriceBreakdownResponse {
   item_price: string;
   shipping_cost: string;
   platform_fee: string;
+  transfer_fee: string;
   processing_fee: string;
   total_fees: string;
   total_vat: string;

@@ -85,7 +85,7 @@ class TestCalculateOrderTotal:
         assert promptpay_result.processing_fee < card_result.processing_fee
 
     def test_platform_fee_calculation(self, pricing_service):
-        """Platform fee should be 10% + 7% VAT + 30 THB transfer fee."""
+        """Platform fee should be 10% + 7% VAT (transfer fee is separate)."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("0.00")
 
@@ -97,9 +97,9 @@ class TestCalculateOrderTotal:
 
         # Platform fee base: 1000 * 10% = 100.00
         # Platform VAT: 100 * 7% = 7.00
-        # Transfer fee: 30.00
-        # Total platform: 100.00 + 7.00 + 30.00 = 137.00
-        assert result.platform_fee == Decimal("137.00")
+        # Total platform: 100.00 + 7.00 = 107.00
+        assert result.platform_fee == Decimal("107.00")
+        assert result.transfer_fee == Decimal("30.00")
 
     def test_seller_payout_is_base_minus_fees(self, pricing_service):
         """Seller payout = base_amount - total_fees."""
@@ -115,8 +115,8 @@ class TestCalculateOrderTotal:
         base_amount = item_price + shipping_cost
         assert result.seller_payout == base_amount - result.total_fees
 
-    def test_total_fees_equals_platform_plus_processing(self, pricing_service):
-        """Total fees = platform_fee + processing_fee."""
+    def test_total_fees_equals_platform_plus_transfer_plus_processing(self, pricing_service):
+        """Total fees = platform_fee + transfer_fee + processing_fee."""
         item_price = Decimal("500.00")
         shipping_cost = Decimal("50.00")
 
@@ -126,7 +126,7 @@ class TestCalculateOrderTotal:
             payment_method=PaymentMethodType.CARD,
         )
 
-        assert result.total_fees == result.platform_fee + result.processing_fee
+        assert result.total_fees == result.platform_fee + result.transfer_fee + result.processing_fee
 
     def test_zero_shipping_cost(self, pricing_service):
         """Calculations should work with zero shipping cost."""
@@ -153,6 +153,7 @@ class TestCalculateOrderTotal:
         assert hasattr(result, "item_price")
         assert hasattr(result, "shipping_cost")
         assert hasattr(result, "platform_fee")
+        assert hasattr(result, "transfer_fee")
         assert hasattr(result, "processing_fee")
         assert hasattr(result, "total_fees")
         assert hasattr(result, "total_vat")
@@ -172,9 +173,9 @@ class TestCalculateOrderTotal:
 
         # Platform fee base: 333.33 * 10% = 33.333 -> 33.34 (ROUND_UP)
         # Platform VAT: 33.34 * 7% = 2.3338 -> 2.34 (ROUND_UP)
-        # Transfer fee: 30.00
-        # Total platform fee: 33.34 + 2.34 + 30.00 = 65.68
-        assert result.platform_fee == Decimal("65.68")
+        # Total platform fee: 33.34 + 2.34 = 35.68
+        assert result.platform_fee == Decimal("35.68")
+        assert result.transfer_fee == Decimal("30.00")
 
     def test_total_vat_includes_platform_and_processing(self, pricing_service):
         """Total VAT should include platform VAT + processing VAT."""

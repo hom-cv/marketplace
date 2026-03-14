@@ -18,14 +18,16 @@ class PriceBreakdown(BaseModel):
     Price breakdown for an order.
 
     All monetary values are in THB.
-    - platform_fee: 10% + VAT + transfer fee, deducted from seller
+    - platform_fee: 10% + VAT, deducted from seller
+    - transfer_fee: Omise transfer fee per payout, deducted from seller
     - processing_fee: Omise rate + VAT, deducted from seller
     - total: what the buyer pays (item + shipping)
-    - seller_payout: what the seller receives (item + shipping - platform_fee - processing_fee)
+    - seller_payout: what the seller receives (total - all fees)
     """
     item_price: Decimal
     shipping_cost: Decimal
     platform_fee: Decimal
+    transfer_fee: Decimal
     processing_fee: Decimal
     total_fees: Decimal
     total_vat: Decimal

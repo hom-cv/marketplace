@@ -23,7 +23,7 @@ import styles from "./PayoutsPage.module.css";
 type Tab = "pending" | "history";
 
 function formatSatangLabel(satang: number): string {
-  return `${formatSatangLabel(satang)} THB`;
+  return `${formatSatang(satang)} THB`;
 }
 
 export function PayoutsPage() {

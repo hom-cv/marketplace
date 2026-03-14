@@ -47,7 +47,7 @@ class PricingService:
         base_amount = item_price + shipping_cost
         vat_percent = Decimal(str(self._settings.VAT_PERCENT))
 
-        # Platform fee: 10% + VAT + transfer fee — deducted from seller
+        # Platform fee: 10% + VAT — deducted from seller
         platform_fee_percent = Decimal(str(self._settings.PLATFORM_FEE_PERCENT))
         platform_fee_base = (base_amount * platform_fee_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
@@ -55,8 +55,10 @@ class PricingService:
         platform_vat = (platform_fee_base * vat_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
+        platform_fee = platform_fee_base + platform_vat
+
+        # Transfer fee: flat Omise payout fee — deducted from seller
         transfer_fee = Decimal(str(self._settings.TRANSFER_FEE))
-        platform_fee = platform_fee_base + platform_vat + transfer_fee
 
         # Processing fee: Omise rate + VAT — deducted from seller
         if payment_method == PaymentMethodType.PROMPTPAY:
@@ -75,7 +77,7 @@ class PricingService:
 
         # Totals
         total = base_amount  # What buyer pays
-        total_fees = platform_fee + processing_fee  # Deducted from seller
+        total_fees = platform_fee + transfer_fee + processing_fee  # Deducted from seller
         total_vat = platform_vat + processing_vat
         seller_payout = base_amount - total_fees
 
@@ -83,6 +85,7 @@ class PricingService:
             item_price=item_price,
             shipping_cost=shipping_cost,
             platform_fee=platform_fee,
+            transfer_fee=transfer_fee,
             processing_fee=processing_fee,
             total_fees=total_fees,
             total_vat=total_vat,
