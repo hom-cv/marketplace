@@ -1,7 +1,8 @@
 """fix_platform_fee_double_counting_transfer_fee
 
-Subtract transfer_fee from platform_fee for existing payments where
-transfer_fee was previously included in platform_fee (double-counted).
+Back-populate transfer_fee for historical rows (added as NULL by the
+previous migration), then subtract it from platform_fee so the two
+columns are stored independently.
 
 Revision ID: 629fe1a92027
 Revises: 53a80c00e8cc
@@ -19,9 +20,22 @@ down_revision: Union[str, Sequence[str], None] = '53a80c00e8cc'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+# 30 THB × 100 satang/THB
+TRANSFER_FEE_SATANG = 3000
+
 
 def upgrade() -> None:
-    """Remove transfer_fee from platform_fee for existing rows."""
+    """Back-populate transfer_fee, then subtract it from platform_fee."""
+    # Step 1: Set transfer_fee on historical rows where it was never populated.
+    op.execute(
+        f"""
+        UPDATE payments
+        SET transfer_fee = {TRANSFER_FEE_SATANG}
+        WHERE transfer_fee IS NULL
+          AND platform_fee IS NOT NULL
+        """
+    )
+    # Step 2: Remove transfer_fee from platform_fee for all rows.
     op.execute(
         """
         UPDATE payments
@@ -33,7 +47,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Add transfer_fee back into platform_fee."""
+    """Add transfer_fee back into platform_fee, then clear historical transfer_fee."""
+    # Step 1: Fold transfer_fee back into platform_fee.
     op.execute(
         """
         UPDATE payments
@@ -42,3 +57,6 @@ def downgrade() -> None:
           AND platform_fee IS NOT NULL
         """
     )
+    # Step 2: Clear transfer_fee on rows that had it back-populated.
+    # We can't distinguish which rows were back-populated vs. set by app code,
+    # so we leave transfer_fee populated. The old code simply ignored the column.
