@@ -173,7 +173,7 @@ class AddTrackingRequest(BaseModel):
 
 
 class PayoutItem(BaseModel):
-    """Schema for a pending payout list item."""
+    """Schema for a payout list item."""
 
     payment_id: int
     seller_id: int
@@ -199,24 +199,11 @@ class PayoutListResponse(BaseModel):
     limit: int
 
 
-class PayoutHistoryItem(BaseModel):
-    """Schema for a completed payout list item."""
+class PayoutHistoryItem(PayoutItem):
+    """Schema for a completed payout list item (extends PayoutItem)."""
 
-    payment_id: int
-    seller_id: int
-    seller_username: str
-    buyer_username: str
-    post_title: str
-    amount: int
-    seller_payout: int
-    currency: str
-    payment_method: str
-    paid_at: datetime | None = None
-    delivered_at: datetime | None = None
     transferred_at: datetime | None = None
     omise_transfer_id: str | None = None
-
-    model_config = {"from_attributes": True}
 
 
 class PayoutHistoryListResponse(BaseModel):

@@ -30,6 +30,7 @@ from app.schemas.payment import (
     CreatePromptPayPaymentRequest,
     PaymentResponse,
     PaymentStatusResponse,
+    PayoutResponse,
     PriceBreakdown,
 )
 from app.services.omise_service import AnnotatedOmiseService, OmiseService
@@ -528,7 +529,7 @@ class PaymentService:
             self.db, skip=skip, limit=limit
         )
 
-    async def create_payout(self, payment_id: int) -> dict:
+    async def create_payout(self, payment_id: int) -> PayoutResponse:
         """
         Initiate a payout (Omise transfer) for a delivered payment.
 
@@ -536,7 +537,7 @@ class PaymentService:
             payment_id: The payment ID to pay out.
 
         Returns:
-            dict with transfer_id and seller_payout amount.
+            PayoutResponse with transfer details.
 
         Raises:
             NotFoundError: If payment not found.
@@ -585,10 +586,12 @@ class PaymentService:
                 f"transfer {transfer.id}, amount {payment.seller_payout} satang"
             )
 
-            return {
-                "transfer_id": transfer.id,
-                "seller_payout": payment.seller_payout,
-            }
+            return PayoutResponse(
+                payment_id=payment_id,
+                transfer_id=transfer.id,
+                amount=payment.seller_payout,
+                status="transferred",
+            )
 
         except omise.errors.BaseError as e:
             logger.error(f"Omise error during payout for payment {payment_id}: {e}")

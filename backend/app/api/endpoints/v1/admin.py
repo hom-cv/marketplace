@@ -15,6 +15,7 @@ from app.schemas.ban import (
 )
 from app.schemas.conversation import ConversationDetailSchema
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
+from app.models.payment import Payment
 from app.schemas.payment import (
     PayoutHistoryItem,
     PayoutHistoryListResponse,
@@ -27,6 +28,23 @@ from app.services.moderation_service import AnnotatedModerationService
 from app.services.payment_service import AnnotatedPaymentService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+def _payment_to_payout_fields(p: Payment) -> dict:
+    """Extract common payout fields from a Payment model."""
+    return {
+        "payment_id": p.id,
+        "seller_id": p.seller_id,
+        "seller_username": p.seller.username if p.seller else "unknown",
+        "buyer_username": p.buyer.username if p.buyer else "unknown",
+        "post_title": p.post.title if p.post else "unknown",
+        "amount": p.amount,
+        "seller_payout": p.seller_payout or 0,
+        "currency": p.currency,
+        "payment_method": p.payment_method.value.lower(),
+        "paid_at": p.paid_at,
+        "delivered_at": p.delivered_at,
+    }
 
 
 class AdminStatsResponse(BaseModel):
@@ -290,22 +308,7 @@ async def list_pending_payouts(
         skip=skip, limit=limit
     )
 
-    items = [
-        PayoutItem(
-            payment_id=p.id,
-            seller_id=p.seller_id,
-            seller_username=p.seller.username if p.seller else "unknown",
-            buyer_username=p.buyer.username if p.buyer else "unknown",
-            post_title=p.post.title if p.post else "unknown",
-            amount=p.amount,
-            seller_payout=p.seller_payout or 0,
-            currency=p.currency,
-            payment_method=p.payment_method.value.lower(),
-            paid_at=p.paid_at,
-            delivered_at=p.delivered_at,
-        )
-        for p in payments
-    ]
+    items = [PayoutItem(**_payment_to_payout_fields(p)) for p in payments]
 
     return PayoutListResponse(
         items=items, total=total, skip=skip, limit=limit
@@ -334,17 +337,7 @@ async def list_payout_history(
 
     items = [
         PayoutHistoryItem(
-            payment_id=p.id,
-            seller_id=p.seller_id,
-            seller_username=p.seller.username if p.seller else "unknown",
-            buyer_username=p.buyer.username if p.buyer else "unknown",
-            post_title=p.post.title if p.post else "unknown",
-            amount=p.amount,
-            seller_payout=p.seller_payout or 0,
-            currency=p.currency,
-            payment_method=p.payment_method.value.lower(),
-            paid_at=p.paid_at,
-            delivered_at=p.delivered_at,
+            **_payment_to_payout_fields(p),
             transferred_at=p.transferred_at,
             omise_transfer_id=p.omise_transfer_id,
         )
@@ -371,11 +364,4 @@ async def create_payout(
 
     **Admin only.** Transfers the seller_payout amount to the seller's bank account.
     """
-    result = await payment_service.create_payout(payment_id)
-
-    return PayoutResponse(
-        payment_id=payment_id,
-        transfer_id=result["transfer_id"],
-        amount=result["seller_payout"],
-        status="transferred",
-    )
+    return await payment_service.create_payout(payment_id)
