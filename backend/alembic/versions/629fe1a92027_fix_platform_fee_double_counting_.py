@@ -28,12 +28,13 @@ def upgrade() -> None:
     """Back-populate transfer_fee, then subtract it from platform_fee."""
     # Step 1: Set transfer_fee on historical rows where it was never populated.
     op.execute(
-        f"""
+        """
         UPDATE payments
-        SET transfer_fee = {TRANSFER_FEE_SATANG}
+        SET transfer_fee = :transfer_fee
         WHERE transfer_fee IS NULL
           AND platform_fee IS NOT NULL
-        """
+        """,
+        transfer_fee=TRANSFER_FEE_SATANG,
     )
     # Step 2: Remove transfer_fee from platform_fee for all rows.
     op.execute(
