@@ -47,7 +47,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Add transfer_fee back into platform_fee, then clear historical transfer_fee."""
+    """Add transfer_fee back into platform_fee."""
     # Step 1: Fold transfer_fee back into platform_fee.
     op.execute(
         """
