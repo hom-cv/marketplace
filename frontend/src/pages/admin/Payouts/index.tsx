@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import {
   useAdminPayouts,
   useAdminPayoutHistory,
@@ -33,6 +34,14 @@ export function PayoutsPage() {
 
   const payoutMutation = useCreatePayoutMutation({
     onSuccess: () => setPayingOutId(null),
+    onError: (err) => {
+      setPayingOutId(null);
+      notifications.show({
+        title: "Payout Failed",
+        message: err.message,
+        color: "red",
+      });
+    },
   });
 
   const isLoading = tab === "pending" ? pendingLoading : historyLoading;

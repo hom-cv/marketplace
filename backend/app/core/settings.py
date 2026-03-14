@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     )  # PromptPay processing fee
     PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
     TRANSFER_FEE: Decimal = Decimal("30.0")  # Omise transfer fee per payout (THB)
+    MIN_PAYOUT_AMOUNT_SATANG: int = 200  # Omise minimum transfer amount (2 THB)
 
     @property
     def do_spaces_endpoint(self) -> str:

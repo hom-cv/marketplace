@@ -17,7 +17,6 @@ from app.models.payment import (
     PaymentStatus,
     ShippingCarrier,
 )
-from app.models.user import User
 from app.schemas.payment import CreateCardPaymentRequest
 
 
@@ -345,7 +344,7 @@ class PaymentCRUD(
             .options(
                 selectinload(self.model.post),
                 selectinload(self.model.buyer),
-                selectinload(self.model.seller).selectinload(User.seller_profile),
+                selectinload(self.model.seller),
             )
         )
         result = await db.scalars(query)

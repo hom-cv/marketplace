@@ -560,6 +560,13 @@ class PaymentService:
         if not payment.seller_payout or payment.seller_payout <= 0:
             raise bad_request_error("No payout amount calculated for this payment")
 
+        min_amount = self._settings.MIN_PAYOUT_AMOUNT_SATANG
+        if payment.seller_payout < min_amount:
+            raise bad_request_error(
+                f"Payout amount ({payment.seller_payout} satang) is below "
+                f"the minimum transfer amount ({min_amount} satang)"
+            )
+
         # Get seller's Omise recipient ID
         seller_profile = await seller_crud.get_by_user_id(
             self.db, user_id=payment.seller_id
