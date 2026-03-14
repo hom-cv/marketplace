@@ -54,6 +54,7 @@ class AdminStatsResponse(BaseModel):
     active_user_bans: int
     active_post_bans: int
     pending_flags: int
+    pending_payouts: int
 
 
 @router.get(
@@ -75,6 +76,7 @@ async def get_admin_stats(
         active_user_bans,
         active_post_bans,
         pending_flags,
+        pending_payouts,
     ) = await moderation_service.get_admin_stats()
 
     return AdminStatsResponse(
@@ -82,6 +84,7 @@ async def get_admin_stats(
         active_user_bans=active_user_bans,
         active_post_bans=active_post_bans,
         pending_flags=pending_flags,
+        pending_payouts=pending_payouts,
     )
 
 

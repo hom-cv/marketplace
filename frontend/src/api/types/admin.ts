@@ -7,7 +7,8 @@ export interface AdminStats {
   pending_reports: number;
   active_user_bans: number;
   active_post_bans: number;
-  pending_payouts?: number;
+  pending_flags: number;
+  pending_payouts: number;
 }
 
 export type InviteStatus = "active" | "used" | "revoked";

@@ -21,3 +21,8 @@ export function formatThb(thb: number): string {
 export function formatSatang(satang: number): string {
   return formatThb(satangToThb(satang));
 }
+
+/** Convert satang to a formatted THB string with currency label. */
+export function formatSatangLabel(satang: number): string {
+  return `${formatSatang(satang)} THB`;
+}
