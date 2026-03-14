@@ -213,7 +213,7 @@ class ModerationService:
         result = await self.db.execute(query)
         row = result.one()
 
-        return row[0] or 0, row[1] or 0, row[2] or 0, row[3] or 0, row[4] or 0
+        return tuple(count or 0 for count in row)
 
     async def ban_user(
         self,
