@@ -583,26 +583,35 @@ class PaymentService:
                     "seller_id": payment.seller_id,
                 },
             )
-
-            await payment_crud.update_transfer(
-                self.db, payment=payment, transfer_id=transfer.id
-            )
-
-            logger.info(
-                f"Payout created for payment {payment_id}: "
-                f"transfer {transfer.id}, amount {payment.seller_payout} satang"
-            )
-
-            return PayoutResponse(
-                payment_id=payment_id,
-                transfer_id=transfer.id,
-                amount=payment.seller_payout,
-                status="transferred",
-            )
-
         except omise.errors.BaseError as e:
             logger.error(f"Omise error during payout for payment {payment_id}: {e}")
             raise bad_request_error(f"Failed to create payout: {str(e)}")
+
+        try:
+            await payment_crud.update_transfer(
+                self.db, payment=payment, transfer_id=transfer.id
+            )
+        except Exception:
+            logger.critical(
+                f"TRANSFER RECORDED BUT DB UPDATE FAILED. "
+                f"payment_id={payment_id}, transfer_id={transfer.id}, "
+                f"amount={payment.seller_payout} satang, "
+                f"seller_id={payment.seller_id}. "
+                f"Manual reconciliation required."
+            )
+            raise
+
+        logger.info(
+            f"Payout created for payment {payment_id}: "
+            f"transfer {transfer.id}, amount {payment.seller_payout} satang"
+        )
+
+        return PayoutResponse(
+            payment_id=payment_id,
+            transfer_id=transfer.id,
+            amount=payment.seller_payout,
+            status="transferred",
+        )
 
     async def add_tracking(
         self,

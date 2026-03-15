@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Loader } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -18,7 +18,7 @@ type Tab = "pending" | "history";
 export function PayoutsPage() {
   const [tab, setTab] = useState<Tab>("pending");
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [payingOutId, setPayingOutId] = useState<number | null>(null);
+  const [payingOutIds, setPayingOutIds] = useState<Set<number>>(new Set());
 
   const {
     data: pendingData,
@@ -33,9 +33,19 @@ export function PayoutsPage() {
   } = useAdminPayoutHistory();
 
   const payoutMutation = useCreatePayoutMutation({
-    onSuccess: () => setPayingOutId(null),
-    onError: (err) => {
-      setPayingOutId(null);
+    onSuccess: (_data, paymentId) => {
+      setPayingOutIds((prev) => {
+        const next = new Set(prev);
+        next.delete(paymentId);
+        return next;
+      });
+    },
+    onError: (err, paymentId) => {
+      setPayingOutIds((prev) => {
+        const next = new Set(prev);
+        next.delete(paymentId);
+        return next;
+      });
       notifications.show({
         title: "Payout Failed",
         message: err.message,
@@ -43,6 +53,14 @@ export function PayoutsPage() {
       });
     },
   });
+
+  const handlePayout = useCallback(
+    (id: number) => {
+      setPayingOutIds((prev) => new Set(prev).add(id));
+      payoutMutation.mutate(id);
+    },
+    [payoutMutation],
+  );
 
   const isLoading = tab === "pending" ? pendingLoading : historyLoading;
   const error = tab === "pending" ? pendingError : historyError;
@@ -94,12 +112,8 @@ export function PayoutsPage() {
           items={pendingData?.items ?? []}
           expandedId={expandedId}
           setExpandedId={setExpandedId}
-          payingOutId={payingOutId}
-          onPayout={(id) => {
-            setPayingOutId(id);
-            payoutMutation.mutate(id);
-          }}
-          isPaying={payoutMutation.isPending}
+          payingOutIds={payingOutIds}
+          onPayout={handlePayout}
         />
       )}
 

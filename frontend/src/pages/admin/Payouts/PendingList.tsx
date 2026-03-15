@@ -13,18 +13,16 @@ interface PendingListProps {
   items: PayoutItem[];
   expandedId: number | null;
   setExpandedId: (id: number | null) => void;
-  payingOutId: number | null;
+  payingOutIds: Set<number>;
   onPayout: (id: number) => void;
-  isPaying: boolean;
 }
 
 export function PendingList({
   items,
   expandedId,
   setExpandedId,
-  payingOutId,
+  payingOutIds,
   onPayout,
-  isPaying,
 }: PendingListProps) {
   if (items.length === 0) {
     return (
@@ -111,9 +109,9 @@ export function PendingList({
                     variant="primary"
                     size="sm"
                     onClick={() => onPayout(payout.payment_id)}
-                    disabled={isPaying && payingOutId === payout.payment_id}
+                    disabled={payingOutIds.has(payout.payment_id)}
                   >
-                    {isPaying && payingOutId === payout.payment_id
+                    {payingOutIds.has(payout.payment_id)
                       ? "Processing..."
                       : "Transfer to Seller"}
                   </Button>

@@ -23,7 +23,11 @@ import {
   dismissFlaggedMessage,
 } from "@/api/admin";
 import { getPost } from "@/api/posts";
-import type { BanUserRequest, BanPostRequest } from "@/api/types/admin";
+import type {
+  BanUserRequest,
+  BanPostRequest,
+  PayoutResponse,
+} from "@/api/types/admin";
 import { queryKeys } from "./queryKeys";
 
 // Queries
@@ -211,17 +215,19 @@ export function useAdminPayoutHistory() {
 }
 
 export function useCreatePayoutMutation(options?: {
-  onSuccess?: () => void;
-  onError?: (err: Error) => void;
+  onSuccess?: (data: PayoutResponse, paymentId: number) => void;
+  onError?: (err: Error, paymentId: number) => void;
 }) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (paymentId: number) => createPayout(paymentId),
-    onSuccess: () => {
+    onSuccess: (data, paymentId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPayouts });
-      options?.onSuccess?.();
+      options?.onSuccess?.(data, paymentId);
     },
-    onError: options?.onError,
+    onError: (err, paymentId) => {
+      options?.onError?.(err, paymentId);
+    },
   });
 }
 
