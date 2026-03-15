@@ -17,6 +17,7 @@ interface PostActionsProps {
   isBanned: boolean;
   onBuyClick: () => void;
   onMessageClick?: () => void;
+  isMessaging?: boolean;
 }
 
 export function PostActions({
@@ -26,6 +27,7 @@ export function PostActions({
   isBanned,
   onBuyClick,
   onMessageClick,
+  isMessaging,
 }: PostActionsProps) {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
@@ -66,7 +68,7 @@ export function PostActions({
           fullWidth
           leftIcon={<IconMessage size={20} />}
           onClick={onMessageClick}
-          disabled={isBanned}
+          disabled={isBanned || isMessaging}
         >
           {t("view.messageSeller")}
         </Button>

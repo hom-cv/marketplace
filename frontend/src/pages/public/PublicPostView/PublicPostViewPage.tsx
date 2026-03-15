@@ -203,6 +203,7 @@ export function PublicPostViewPage() {
                 isBanned={!!isBanned}
                 onBuyClick={handleBuyClick}
                 onMessageClick={handleMessageClick}
+                isMessaging={messageSellerMutation.isPending}
               />
             </div>
           </div>
