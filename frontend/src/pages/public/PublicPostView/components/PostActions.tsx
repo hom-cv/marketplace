@@ -2,9 +2,10 @@
  * PostActions - Buy button, sold state, and earnings preview for owners
  */
 
-import { IconShoppingCart } from "@tabler/icons-react";
+import { IconShoppingCart, IconMessage } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/Alert";
+import { Button } from "@/components/Button";
 import { EarningsPreview } from "@/components/EarningsPreview";
 import type { Post } from "@/api/types/post";
 import styles from "../PublicPostViewPage.module.css";
@@ -15,6 +16,7 @@ interface PostActionsProps {
   isOwner: boolean;
   isBanned: boolean;
   onBuyClick: () => void;
+  onMessageClick?: () => void;
 }
 
 export function PostActions({
@@ -23,6 +25,7 @@ export function PostActions({
   isOwner,
   isBanned,
   onBuyClick,
+  onMessageClick,
 }: PostActionsProps) {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
@@ -54,6 +57,20 @@ export function PostActions({
             {t("view.buyNow")} - ฿{price.toLocaleString()}
           </button>
         ))}
+
+      {/* Message Seller - hide for owners and sold items */}
+      {!isOwner && !post.is_sold && onMessageClick && (
+        <Button
+          variant="secondary"
+          size="lg"
+          fullWidth
+          leftIcon={<IconMessage size={20} />}
+          onClick={onMessageClick}
+          disabled={isBanned}
+        >
+          {t("view.messageSeller")}
+        </Button>
+      )}
 
       {/* Earnings Preview - only show for owners */}
       {isOwner && (

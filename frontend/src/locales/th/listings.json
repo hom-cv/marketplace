@@ -90,6 +90,8 @@
     "listingRemoved": "รายการนี้ถูกลบเนื่องจากละเมิดนโยบาย",
     "sellerSuspended": "บัญชีของผู้ขายนี้ถูกระงับ",
     "failedToLoad": "ไม่สามารถโหลดโพสต์ได้",
+    "messageSeller": "ส่งข้อความหาผู้ขาย",
+    "messageAction": "ส่งข้อความหาผู้ขาย",
     "purchaseAction": "ซื้อสินค้านี้",
     "itemSold": "สินค้านี้ถูกขายแล้ว",
     "shipping": "ค่าจัดส่ง",
