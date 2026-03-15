@@ -33,23 +33,25 @@ export function PayoutsPage() {
   } = useAdminPayoutHistory();
 
   const payoutMutation = useCreatePayoutMutation({
-    onSuccess: (_data, paymentId) => {
-      setPayingOutIds((prev) => {
-        const next = new Set(prev);
-        next.delete(paymentId);
-        return next;
+    onSuccess: (data) => {
+      notifications.show({
+        title: "Payout Successful",
+        message: `Transfer ${data.transfer_id} created for ${data.amount} satang.`,
+        color: "green",
       });
     },
-    onError: (err, paymentId) => {
-      setPayingOutIds((prev) => {
-        const next = new Set(prev);
-        next.delete(paymentId);
-        return next;
-      });
+    onError: (err) => {
       notifications.show({
         title: "Payout Failed",
         message: err.message,
         color: "red",
+      });
+    },
+    onSettled: (paymentId) => {
+      setPayingOutIds((prev) => {
+        const next = new Set(prev);
+        next.delete(paymentId);
+        return next;
       });
     },
   });

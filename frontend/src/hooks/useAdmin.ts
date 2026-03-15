@@ -217,6 +217,7 @@ export function useAdminPayoutHistory() {
 export function useCreatePayoutMutation(options?: {
   onSuccess?: (data: PayoutResponse, paymentId: number) => void;
   onError?: (err: Error, paymentId: number) => void;
+  onSettled?: (paymentId: number) => void;
 }) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -227,6 +228,9 @@ export function useCreatePayoutMutation(options?: {
     },
     onError: (err, paymentId) => {
       options?.onError?.(err, paymentId);
+    },
+    onSettled: (_data, _err, paymentId) => {
+      options?.onSettled?.(paymentId);
     },
   });
 }
