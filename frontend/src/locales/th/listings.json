@@ -92,6 +92,7 @@
     "failedToLoad": "ไม่สามารถโหลดโพสต์ได้",
     "messageSeller": "ส่งข้อความหาผู้ขาย",
     "messageAction": "ส่งข้อความหาผู้ขาย",
+    "messageError": "ไม่สามารถเริ่มการสนทนาได้",
     "purchaseAction": "ซื้อสินค้านี้",
     "itemSold": "สินค้านี้ถูกขายแล้ว",
     "shipping": "ค่าจัดส่ง",
