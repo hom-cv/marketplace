@@ -35,9 +35,9 @@ def _payment_to_payout_fields(p: Payment) -> dict:
     return {
         "payment_id": p.id,
         "seller_id": p.seller_id,
-        "seller_username": p.seller.username if p.seller else "unknown",
-        "buyer_username": p.buyer.username if p.buyer else "unknown",
-        "post_title": p.post.title if p.post else "unknown",
+        "seller_username": p.seller.username,
+        "buyer_username": p.buyer.username,
+        "post_title": p.post.title,
         "amount": p.amount,
         "seller_payout": p.seller_payout or 0,
         "currency": p.currency,
