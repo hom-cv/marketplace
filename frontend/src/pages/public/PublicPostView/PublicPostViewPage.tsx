@@ -5,8 +5,10 @@
 
 import { useState } from "react";
 import { useNavigate, useParams } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
 import { Loader, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 import {
   IconShoppingCart,
   IconArrowLeft,
@@ -23,6 +25,8 @@ import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { ReportModal } from "@/components/ReportModal";
 import type { ReportType } from "@/api/types/admin";
+import { getOrCreateConversation } from "@/api/chat";
+import { getErrorMessage } from "@/utils/error";
 import { PostDetails, SellerInfoCard, PostActions } from "./components";
 import styles from "./PublicPostViewPage.module.css";
 
@@ -81,6 +85,29 @@ export function PublicPostViewPage() {
   const handleReportUser = () => {
     setReportType("user");
     setReportModalOpened(true);
+  };
+
+  const messageSellerMutation = useMutation({
+    mutationFn: (pId: number) => getOrCreateConversation(pId),
+    onSuccess: (conversation) => {
+      navigate({ to: `/messages/${conversation.id}` });
+    },
+    onError: (error) => {
+      notifications.show({
+        title: tCommon("errors.error"),
+        message: getErrorMessage(error, t("view.messageError")),
+        color: "red",
+      });
+    },
+  });
+
+  const handleMessageClick = () => {
+    if (isAuthenticated && postId) {
+      messageSellerMutation.mutate(postId);
+    } else {
+      setLoginAction(t("view.messageAction"));
+      openLoginModal();
+    }
   };
 
   if (isLoading) {
@@ -175,6 +202,8 @@ export function PublicPostViewPage() {
                 isOwner={isOwner}
                 isBanned={!!isBanned}
                 onBuyClick={handleBuyClick}
+                onMessageClick={handleMessageClick}
+                isMessaging={messageSellerMutation.isPending}
               />
             </div>
           </div>
