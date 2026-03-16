@@ -25,39 +25,27 @@ TRANSFER_FEE_SATANG = 3000
 
 
 def upgrade() -> None:
-    """Back-populate transfer_fee, then subtract it from platform_fee."""
-    # Step 1: Set transfer_fee on historical rows where it was never populated.
+    """Back-populate transfer_fee and fix platform_fee for historical rows."""
     op.execute(
         """
         UPDATE payments
-        SET transfer_fee = :transfer_fee
+        SET transfer_fee = :transfer_fee,
+            platform_fee = platform_fee - :transfer_fee
         WHERE transfer_fee IS NULL
           AND platform_fee IS NOT NULL
         """,
         transfer_fee=TRANSFER_FEE_SATANG,
     )
-    # Step 2: Remove transfer_fee from platform_fee for all rows.
-    op.execute(
-        """
-        UPDATE payments
-        SET platform_fee = platform_fee - transfer_fee
-        WHERE transfer_fee IS NOT NULL
-          AND platform_fee IS NOT NULL
-        """
-    )
 
 
 def downgrade() -> None:
-    """Add transfer_fee back into platform_fee."""
-    # Step 1: Fold transfer_fee back into platform_fee.
+    """Fold transfer_fee back into platform_fee for historical rows."""
     op.execute(
         """
         UPDATE payments
-        SET platform_fee = platform_fee + transfer_fee
+        SET platform_fee = platform_fee + transfer_fee,
+            transfer_fee = NULL
         WHERE transfer_fee IS NOT NULL
           AND platform_fee IS NOT NULL
         """
     )
-    # Step 2: Clear transfer_fee on rows that had it back-populated.
-    # We can't distinguish which rows were back-populated vs. set by app code,
-    # so we leave transfer_fee populated. The old code simply ignored the column.
