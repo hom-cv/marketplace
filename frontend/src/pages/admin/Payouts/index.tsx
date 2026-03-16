@@ -36,7 +36,7 @@ export function PayoutsPage() {
     onSuccess: (data) => {
       notifications.show({
         title: "Payout Successful",
-        message: `Transfer ${data.transfer_id} created for ${data.amount} satang.`,
+        message: `Transfer ${data.transfer_id} created for ${formatSatangLabel(data.amount)}.`,
         color: "green",
       });
     },
