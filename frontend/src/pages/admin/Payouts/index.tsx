@@ -8,6 +8,7 @@ import {
 } from "@/hooks/useAdmin";
 import { Alert } from "@/components/Alert";
 import { getErrorMessage } from "@/utils/error";
+import { formatSatangLabel } from "@/utils/currency";
 import { PendingList } from "./PendingList";
 import { HistoryList } from "./HistoryList";
 import shared from "@/styles/listPage.module.css";
