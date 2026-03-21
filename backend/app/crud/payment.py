@@ -255,8 +255,7 @@ class PaymentCRUD(
         payment.omise_transfer_id = transfer_id
         payment.transferred_at = datetime.now(timezone.utc)
 
-        await db.commit()
-        await db.refresh(payment)
+        await db.flush()
 
         return payment
 

@@ -591,7 +591,9 @@ class PaymentService:
             await payment_crud.update_transfer(
                 self.db, payment=payment, transfer_id=transfer.id
             )
+            await self.db.commit()
         except Exception:
+            await self.db.rollback()
             logger.critical(
                 f"TRANSFER RECORDED BUT DB UPDATE FAILED. "
                 f"payment_id={payment_id}, transfer_id={transfer.id}, "
