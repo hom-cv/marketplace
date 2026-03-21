@@ -3,6 +3,7 @@
 import logging
 from datetime import datetime
 from typing import Annotated
+from urllib.parse import urlparse
 
 import omise.errors
 from fastapi import Depends
@@ -21,7 +22,7 @@ from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
-from app.models.payment import PaymentMethod, PaymentStatus
+from app.models.payment import FulfillmentStatus, Payment, PaymentMethod, PaymentStatus
 from app.models.seller import SellerVerificationStatus
 from app.models.user import User
 from app.schemas.payment import (
@@ -29,6 +30,8 @@ from app.schemas.payment import (
     CreatePromptPayPaymentRequest,
     PaymentResponse,
     PaymentStatusResponse,
+    PayoutResponse,
+    PriceBreakdown,
 )
 from app.services.omise_service import AnnotatedOmiseService, OmiseService
 from app.services.pricing_service import (
@@ -38,6 +41,28 @@ from app.services.pricing_service import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _breakdown_to_satang(breakdown: PriceBreakdown) -> dict[str, int]:
+    """Convert a PriceBreakdown (THB Decimals) to satang ints for DB storage."""
+    m = CURRENCY_SUBUNIT_MULTIPLIER
+    return {
+        "item_price": int(breakdown.item_price * m),
+        "shipping_cost": int(breakdown.shipping_cost * m),
+        "platform_fee": int(breakdown.platform_fee * m),
+        "transfer_fee": int(breakdown.transfer_fee * m),
+        "processing_fee": int(breakdown.processing_fee * m),
+        "total_vat": int(breakdown.total_vat * m),
+        "seller_payout": int(breakdown.seller_payout * m),
+    }
+
+
+def _validate_return_uri(return_uri: str, base_url: str) -> None:
+    """Validate that return_uri points to the application's own domain."""
+    allowed = urlparse(base_url)
+    provided = urlparse(return_uri)
+    if provided.scheme != allowed.scheme or provided.netloc != allowed.netloc:
+        raise bad_request_error("Invalid return URL")
 
 
 class PaymentService:
@@ -91,20 +116,20 @@ class PaymentService:
         ):
             raise bad_request_error("Seller is not verified")
 
+        # Validate return_uri against application domain
+        _validate_return_uri(payment_request.return_uri, self._settings.BASE_URL)
+
         # Calculate total with all fees using pricing service
         price_breakdown = self.pricing_service.calculate_order_total(
             post.price, post.shipping_cost, PaymentMethodType.CARD
         )
 
-        # Convert total to satang (smallest unit for THB)
+        # Convert to satang
         amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
-        platform_fee_satang = int(
-            price_breakdown.platform_fee * CURRENCY_SUBUNIT_MULTIPLIER
-        )
+        fees = _breakdown_to_satang(price_breakdown)
         currency = DEFAULT_CURRENCY
 
         try:
-            # Build return_uri with payment_id placeholder - we'll create payment first
             # Create payment record first to get the ID
             payment = await payment_crud.create_payment(
                 self.db,
@@ -118,21 +143,7 @@ class PaymentService:
                 authorize_uri=None,
                 return_uri=payment_request.return_uri,
                 description=f"Purchase: {post.title}",
-                # Fee breakdown for accounting (all in satang)
-                item_price=int(
-                    price_breakdown.item_price * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                shipping_cost=int(
-                    price_breakdown.shipping_cost * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                platform_fee=platform_fee_satang,
-                processing_fee=int(
-                    price_breakdown.processing_fee * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                total_vat=int(price_breakdown.total_vat * CURRENCY_SUBUNIT_MULTIPLIER),
-                seller_payout=int(
-                    price_breakdown.seller_payout * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
+                **fees,
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
                 shipping_address=payment_request.shipping.address,
@@ -149,10 +160,10 @@ class PaymentService:
 
             # Only pass platform_fee if Omise Connect is enabled
             omise_platform_fee = (
-                platform_fee_satang if self._settings.OMISE_CONNECT_ENABLED else None
+                fees["platform_fee"] if self._settings.OMISE_CONNECT_ENABLED else None
             )
 
-            # Create Omise charge with payment_id in return_uri and platform_fee for Omise Connect
+            # Create Omise charge with payment_id in return_uri
             charge = self.omise_service.create_charge(
                 amount=amount,
                 currency=currency,
@@ -234,16 +245,17 @@ class PaymentService:
         ):
             raise bad_request_error("Seller is not verified")
 
+        # Validate return_uri against application domain
+        _validate_return_uri(payment_request.return_uri, self._settings.BASE_URL)
+
         # Calculate total with all fees using pricing service
         price_breakdown = self.pricing_service.calculate_order_total(
             post.price, post.shipping_cost, PaymentMethodType.PROMPTPAY
         )
 
-        # Convert total to satang
+        # Convert to satang
         amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
-        platform_fee_satang = int(
-            price_breakdown.platform_fee * CURRENCY_SUBUNIT_MULTIPLIER
-        )
+        fees = _breakdown_to_satang(price_breakdown)
         currency = DEFAULT_CURRENCY
 
         try:
@@ -255,10 +267,10 @@ class PaymentService:
 
             # Only pass platform_fee if Omise Connect is enabled
             omise_platform_fee = (
-                platform_fee_satang if self._settings.OMISE_CONNECT_ENABLED else None
+                fees["platform_fee"] if self._settings.OMISE_CONNECT_ENABLED else None
             )
 
-            # Create charge with source and platform_fee for Omise Connect
+            # Create charge with source
             charge = self.omise_service.create_charge_with_source(
                 amount=amount,
                 currency=currency,
@@ -328,22 +340,7 @@ class PaymentService:
                 qr_code_uri=qr_code_uri,
                 expires_at=expires_at,
                 description=f"Purchase: {post.title}",
-                # Fee breakdown for accounting (all in satang)
-                item_price=int(
-                    price_breakdown.item_price * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                shipping_cost=int(
-                    price_breakdown.shipping_cost * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                platform_fee=platform_fee_satang,
-                processing_fee=int(
-                    price_breakdown.processing_fee * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                total_vat=int(price_breakdown.total_vat * CURRENCY_SUBUNIT_MULTIPLIER),
-                seller_payout=int(
-                    price_breakdown.seller_payout * CURRENCY_SUBUNIT_MULTIPLIER
-                ),
-                # Shipping address
+                **fees,
                 shipping_name=payment_request.shipping.name,
                 shipping_phone=payment_request.shipping.phone,
                 shipping_address=payment_request.shipping.address,
@@ -515,6 +512,108 @@ class PaymentService:
                 rejection_reason=data.get("failure_code"),
             )
             logger.info(f"Seller {seller_profile.user_id} rejected via webhook")
+
+    async def get_pending_payouts(
+        self, skip: int = 0, limit: int = 50
+    ) -> tuple[list[Payment], int]:
+        """Get payments eligible for payout (successful, delivered, not transferred)."""
+        return await payment_crud.get_pending_payouts(
+            self.db, skip=skip, limit=limit
+        )
+
+    async def get_completed_payouts(
+        self, skip: int = 0, limit: int = 50
+    ) -> tuple[list[Payment], int]:
+        """Get payments that have been paid out."""
+        return await payment_crud.get_completed_payouts(
+            self.db, skip=skip, limit=limit
+        )
+
+    async def create_payout(self, payment_id: int) -> PayoutResponse:
+        """
+        Initiate a payout (Omise transfer) for a delivered payment.
+
+        Args:
+            payment_id: The payment ID to pay out.
+
+        Returns:
+            PayoutResponse with transfer details.
+
+        Raises:
+            NotFoundError: If payment not found.
+            BadRequestError: If payment is not eligible for payout.
+        """
+        # Lock the row to prevent concurrent duplicate payouts
+        payment = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
+        if not payment:
+            raise not_found_error("Payment not found")
+
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            raise bad_request_error("Payment is not successful")
+
+        if payment.omise_transfer_id:
+            raise bad_request_error("Payment has already been paid out")
+
+        if payment.fulfillment_status != FulfillmentStatus.DELIVERED:
+            raise bad_request_error("Item has not been delivered yet")
+
+        if not payment.seller_payout or payment.seller_payout <= 0:
+            raise bad_request_error("No payout amount calculated for this payment")
+
+        min_amount = self._settings.MIN_PAYOUT_AMOUNT_SATANG
+        if payment.seller_payout < min_amount:
+            raise bad_request_error(
+                f"Payout amount ({payment.seller_payout} satang) is below "
+                f"the minimum transfer amount ({min_amount} satang)"
+            )
+
+        # Get seller's Omise recipient ID
+        seller_profile = await seller_crud.get_by_user_id(
+            self.db, user_id=payment.seller_id
+        )
+        if not seller_profile or not seller_profile.omise_recipient_id:
+            raise bad_request_error("Seller does not have a verified payout account")
+
+        try:
+            transfer = self.omise_service.create_transfer(
+                amount=payment.seller_payout,
+                recipient_id=seller_profile.omise_recipient_id,
+                metadata={
+                    "payment_id": payment.id,
+                    "seller_id": payment.seller_id,
+                },
+            )
+        except omise.errors.BaseError as e:
+            logger.error(f"Omise error during payout for payment {payment_id}: {e}")
+            raise bad_request_error(f"Failed to create payout: {str(e)}")
+
+        try:
+            await payment_crud.update_transfer(
+                self.db, payment=payment, transfer_id=transfer.id
+            )
+            await self.db.commit()
+        except Exception:
+            await self.db.rollback()
+            logger.critical(
+                f"TRANSFER RECORDED BUT DB UPDATE FAILED. "
+                f"payment_id={payment_id}, transfer_id={transfer.id}, "
+                f"amount={payment.seller_payout} satang, "
+                f"seller_id={payment.seller_id}. "
+                f"Manual reconciliation required."
+            )
+            raise
+
+        logger.info(
+            f"Payout created for payment {payment_id}: "
+            f"transfer {transfer.id}, amount {payment.seller_payout} satang"
+        )
+
+        return PayoutResponse(
+            payment_id=payment_id,
+            transfer_id=transfer.id,
+            amount=payment.seller_payout,
+            status="transferred",
+        )
 
     async def add_tracking(
         self,

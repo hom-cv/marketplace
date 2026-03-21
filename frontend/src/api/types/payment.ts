@@ -72,6 +72,7 @@ export interface PurchaseListItem {
   item_price: number | null;
   shipping_cost: number | null;
   platform_fee: number | null;
+  transfer_fee: number | null;
   processing_fee: number | null;
   total_fees: number | null;
   total_vat: number | null;
@@ -95,6 +96,7 @@ export interface PriceBreakdownResponse {
   item_price: string;
   shipping_cost: string;
   platform_fee: string;
+  transfer_fee: string;
   processing_fee: string;
   total_fees: string;
   total_vat: string;

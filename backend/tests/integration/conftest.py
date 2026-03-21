@@ -44,6 +44,7 @@ def _create_test_pricing_service() -> PricingService:
     mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
     mock_settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
+    mock_settings.TRANSFER_FEE = Decimal("30.0")
     return PricingService(db=AsyncMock(), settings=mock_settings, post_crud_dep=MagicMock())
 
 
@@ -168,6 +169,7 @@ def create_mock_settings() -> MagicMock:
     mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
     mock_settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
+    mock_settings.TRANSFER_FEE = Decimal("30.0")
     return mock_settings
 
 

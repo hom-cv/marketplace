@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { useMyPurchases, useConfirmDeliveryMutation } from "@/hooks/usePayments";
 import type { PurchaseListItem } from "@/api/types/payment";
+import { formatSatang } from "@/utils/currency";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
@@ -68,9 +69,7 @@ export function PurchaseHistoryPage() {
     }
   };
 
-  const formatPrice = (satang: number) => {
-    return (satang / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
-  };
+  const formatPrice = formatSatang;
 
   const successfulPurchases = purchases?.filter((p) => p.status === "successful") || [];
 

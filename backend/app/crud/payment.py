@@ -2,7 +2,9 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from typing import Sequence
+
+from sqlalchemy import ColumnElement, UnaryExpression, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -22,6 +24,19 @@ class PaymentCRUD(
     BaseCRUD[Payment, CreateCardPaymentRequest, CreateCardPaymentRequest]
 ):
     """CRUD operations for Payment model."""
+
+    async def get_by_id_for_update(
+        self, db: AsyncSession, *, id: int
+    ) -> Payment | None:
+        """
+        Retrieve a payment by ID with a row-level lock (SELECT FOR UPDATE).
+
+        Use this when performing check-then-act operations to prevent
+        race conditions (e.g., duplicate payouts).
+        """
+        query = select(self.model).where(self.model.id == id).with_for_update()
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
 
     async def get_by_charge_id(
         self, db: AsyncSession, *, charge_id: str
@@ -112,6 +127,7 @@ class PaymentCRUD(
         platform_fee: int | None = None,
         processing_fee: int | None = None,
         total_vat: int | None = None,
+        transfer_fee: int | None = None,
         seller_payout: int | None = None,
         # Shipping address
         shipping_name: str | None = None,
@@ -164,6 +180,7 @@ class PaymentCRUD(
             platform_fee=platform_fee,
             processing_fee=processing_fee,
             total_vat=total_vat,
+            transfer_fee=transfer_fee,
             seller_payout=seller_payout,
             # Shipping address
             shipping_name=shipping_name,
@@ -238,8 +255,7 @@ class PaymentCRUD(
         payment.omise_transfer_id = transfer_id
         payment.transferred_at = datetime.now(timezone.utc)
 
-        await db.commit()
-        await db.refresh(payment)
+        await db.flush()
 
         return payment
 
@@ -303,6 +319,73 @@ class PaymentCRUD(
         await db.refresh(payment)
 
         return payment
+
+
+    async def _get_payouts(
+        self,
+        db: AsyncSession,
+        *,
+        conditions: Sequence[ColumnElement[bool]],
+        order_by: UnaryExpression,
+        skip: int,
+        limit: int,
+    ) -> tuple[list[Payment], int]:
+        """Shared payout query: count + paginated fetch with relations."""
+        count_query = select(func.count(self.model.id)).where(*conditions)
+        total = (await db.execute(count_query)).scalar_one()
+
+        query = (
+            select(self.model)
+            .where(*conditions)
+            .order_by(order_by)
+            .offset(skip)
+            .limit(limit)
+            .options(
+                selectinload(self.model.post),
+                selectinload(self.model.buyer),
+                selectinload(self.model.seller),
+            )
+        )
+        result = await db.scalars(query)
+        return list(result.all()), total
+
+    async def get_pending_payouts(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Payment], int]:
+        """Retrieve payments eligible for payout: successful, delivered, not yet transferred."""
+        return await self._get_payouts(
+            db,
+            conditions=[
+                self.model.status == PaymentStatus.SUCCESSFUL,
+                self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
+                self.model.omise_transfer_id.is_(None),
+            ],
+            order_by=self.model.delivered_at.asc(),
+            skip=skip,
+            limit=limit,
+        )
+
+    async def get_completed_payouts(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> tuple[list[Payment], int]:
+        """Retrieve payments that have been paid out (have a transfer ID)."""
+        return await self._get_payouts(
+            db,
+            conditions=[
+                self.model.omise_transfer_id.isnot(None),
+            ],
+            order_by=self.model.transferred_at.desc(),
+            skip=skip,
+            limit=limit,
+        )
 
 
 payment_crud = PaymentCRUD(Payment)

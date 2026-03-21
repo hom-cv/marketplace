@@ -12,7 +12,6 @@ from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
 
-
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 
 
@@ -41,31 +40,27 @@ class PricingService:
         """
         Calculate order total and seller payout.
 
-        Buyer pays: item_price + shipping_cost (no extra fees)
-        Seller receives: item_price + shipping_cost - total_fees
-
-        Fees breakdown:
-        - Platform fee: base_amount * platform_fee_percent + VAT
-        - Processing fee: base_amount * processing_rate * (1 + VAT)
-
-        total_fees = platform_fee + processing_fee (both include VAT)
-        total_vat = platform_vat + processing_vat
+        All fees are on the seller side:
+        - Buyer pays: item_price + shipping_cost
+        - Seller receives: item_price + shipping_cost - platform_fee - processing_fee
         """
         base_amount = item_price + shipping_cost
+        vat_percent = Decimal(str(self._settings.VAT_PERCENT))
 
-        # Platform fee calculation
+        # Platform fee: 10% + VAT — deducted from seller
         platform_fee_percent = Decimal(str(self._settings.PLATFORM_FEE_PERCENT))
         platform_fee_base = (base_amount * platform_fee_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
-
-        vat_percent = Decimal(str(self._settings.VAT_PERCENT))
         platform_vat = (platform_fee_base * vat_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
         )
         platform_fee = platform_fee_base + platform_vat
 
-        # Processing fee calculation (includes VAT)
+        # Transfer fee: flat Omise payout fee — deducted from seller
+        transfer_fee = Decimal(str(self._settings.TRANSFER_FEE))
+
+        # Processing fee: Omise rate + VAT — deducted from seller
         if payment_method == PaymentMethodType.PROMPTPAY:
             base_rate = Decimal(str(self._settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
         else:
@@ -81,15 +76,16 @@ class PricingService:
         processing_fee = processing_fee_base + processing_vat
 
         # Totals
-        total = item_price + shipping_cost
-        total_fees = platform_fee + processing_fee
+        total = base_amount  # What buyer pays
+        total_fees = platform_fee + transfer_fee + processing_fee  # Deducted from seller
         total_vat = platform_vat + processing_vat
-        seller_payout = total - total_fees
+        seller_payout = base_amount - total_fees
 
         return PriceBreakdown(
             item_price=item_price,
             shipping_cost=shipping_cost,
             platform_fee=platform_fee,
+            transfer_fee=transfer_fee,
             processing_fee=processing_fee,
             total_fees=total_fees,
             total_vat=total_vat,

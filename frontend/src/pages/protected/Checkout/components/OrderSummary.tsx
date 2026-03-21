@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
+import { formatThb } from "@/utils/currency";
 import { Card } from "@/components/Card";
 import styles from "../CheckoutPage.module.css";
 
@@ -17,12 +18,6 @@ interface OrderSummaryProps {
 
 export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
   const { t } = useTranslation("common");
-
-  const formatAmount = (v: number) =>
-    v.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
 
   const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
   const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
@@ -52,7 +47,7 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
       {/* Price breakdown */}
       <div className={styles.priceRow}>
         <span className={styles.priceLabel}>{t("checkout.itemPrice")}</span>
-        <span className={styles.priceValue}>฿{formatAmount(itemPrice)}</span>
+        <span className={styles.priceValue}>฿{formatThb(itemPrice)}</span>
       </div>
       <div className={styles.priceRow}>
         <span className={styles.priceLabel}>{t("checkout.shippingLabel")}</span>
@@ -63,14 +58,14 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
         >
           {shippingCost === 0
             ? t("checkout.freeShipping")
-            : `฿${formatAmount(shippingCost)}`}
+            : `฿${formatThb(shippingCost)}`}
         </span>
       </div>
 
       {/* Total */}
       <div className={styles.totalRow}>
         <span className={styles.totalLabel}>{t("checkout.total")}</span>
-        <span className={styles.totalValue}>฿{formatAmount(total)}</span>
+        <span className={styles.totalValue}>฿{formatThb(total)}</span>
       </div>
     </Card>
   );

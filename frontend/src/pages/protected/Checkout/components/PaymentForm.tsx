@@ -2,6 +2,7 @@ import { Loader, TextInput, SimpleGrid } from "@mantine/core";
 import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
 import { Trans, useTranslation } from "react-i18next";
 import type { UseFormReturnType } from "@mantine/form";
+import { formatThb } from "@/utils/currency";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
@@ -38,12 +39,6 @@ export function PaymentForm({
   isLoading,
 }: PaymentFormProps) {
   const { t } = useTranslation("common");
-
-  const formatAmount = (v: number) =>
-    v.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
 
   return (
     <Card title={t("checkout.paymentMethod")}>
@@ -139,7 +134,7 @@ export function PaymentForm({
           {isLoading ? (
             <Loader size="xs" color="white" />
           ) : (
-            t("checkout.payAmount", { amount: formatAmount(total) })
+            t("checkout.payAmount", { amount: formatThb(total) })
           )}
         </Button>
       ) : (
@@ -153,7 +148,7 @@ export function PaymentForm({
           {isLoading ? (
             <Loader size="xs" color="white" />
           ) : (
-            t("checkout.generateQR", { amount: formatAmount(total) })
+            t("checkout.generateQR", { amount: formatThb(total) })
           )}
         </Button>
       )}
