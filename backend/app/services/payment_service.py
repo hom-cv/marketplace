@@ -521,17 +521,19 @@ class PaymentService:
             logger.warning(f"Payment not found for transfer {transfer_id}")
             return
 
-        transfer_status = data.get("status")
         failure_code = data.get("failure_code")
         if failure_code:
+            await payment_crud.record_transfer_failure(
+                self.db, payment=payment
+            )
             logger.critical(
                 f"Transfer {transfer_id} FAILED for payment {payment.id}: "
-                f"{failure_code}. Manual reconciliation required."
+                f"{failure_code}. transferred_at cleared, "
+                f"omise_transfer_id preserved for reconciliation."
             )
         else:
             logger.info(
-                f"Transfer {transfer_id} completed for payment {payment.id}, "
-                f"status={transfer_status}"
+                f"Transfer {transfer_id} completed for payment {payment.id}"
             )
 
     async def _handle_recipient_verify(self, data: dict) -> None:

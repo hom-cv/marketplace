@@ -281,6 +281,27 @@ class PaymentCRUD(
 
         return payment
 
+    async def record_transfer_failure(
+        self,
+        db: AsyncSession,
+        *,
+        payment: Payment,
+    ) -> Payment:
+        """
+        Mark a transfer as failed.
+
+        Clears transferred_at but preserves omise_transfer_id so the failed
+        Omise transfer can be looked up for reconciliation.  The combination
+        (omise_transfer_id IS NOT NULL, transferred_at IS NULL) uniquely
+        identifies payments with failed transfers.
+        """
+        payment.transferred_at = None
+
+        await db.commit()
+        await db.refresh(payment)
+
+        return payment
+
     async def add_tracking_number(
         self,
         db: AsyncSession,
@@ -398,11 +419,12 @@ class PaymentCRUD(
         skip: int = 0,
         limit: int = 50,
     ) -> tuple[list[Payment], int]:
-        """Retrieve payments that have been paid out (have a transfer ID)."""
+        """Retrieve payments that have been successfully paid out."""
         return await self._get_payouts(
             db,
             conditions=[
                 self.model.omise_transfer_id.isnot(None),
+                self.model.transferred_at.isnot(None),
             ],
             order_by=self.model.transferred_at.desc(),
             skip=skip,
