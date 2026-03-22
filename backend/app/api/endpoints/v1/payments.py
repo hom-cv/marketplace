@@ -20,6 +20,7 @@ from app.schemas.payment import (
 )
 from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
+from app.services.webhook_service import AnnotatedWebhookService
 from fastapi import APIRouter, Depends, Request, status
 from pydantic import ValidationError
 
@@ -191,7 +192,7 @@ def _verify_webhook_signature(
 )
 async def omise_webhook(
     request: Request,
-    payment_service: AnnotatedPaymentService,
+    webhook_service: AnnotatedWebhookService,
     settings: AnnotatedSettings,
 ) -> WebhookResponse:
     """
@@ -239,7 +240,7 @@ async def omise_webhook(
         webhook_event = WebhookEvent.model_validate_json(body)
         event_data = webhook_event.data.model_dump(exclude_none=True)
 
-        await payment_service.process_webhook(
+        await webhook_service.process_webhook(
             event_key=webhook_event.key,
             event_data=event_data,
         )
