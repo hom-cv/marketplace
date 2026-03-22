@@ -526,6 +526,9 @@ class PaymentService:
             await payment_crud.record_transfer_failure(
                 self.db, payment=payment
             )
+
+            await self.db.commit()
+
             logger.critical(
                 f"Transfer {transfer_id} FAILED for payment {payment.id}: "
                 f"{failure_code}. transferred_at cleared, "

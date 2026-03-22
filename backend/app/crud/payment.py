@@ -297,8 +297,7 @@ class PaymentCRUD(
         """
         payment.transferred_at = None
 
-        await db.commit()
-        await db.refresh(payment)
+        await db.flush()
 
         return payment
 
