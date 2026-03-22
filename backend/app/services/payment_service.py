@@ -108,6 +108,12 @@ class PaymentService:
         if post.user_id == buyer.id:
             raise forbidden_error("You cannot purchase your own listing")
 
+        # Check if post is already sold
+        if await payment_crud.has_successful_payment(
+            self.db, post_id=payment_request.post_id
+        ):
+            raise bad_request_error("This item has already been sold")
+
         # Check if seller is verified
         seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
         if (
@@ -212,6 +218,12 @@ class PaymentService:
             )
 
         except omise.errors.BaseError as e:
+            if payment:
+                await payment_crud.update_status(
+                    self.db, payment=payment, status=PaymentStatus.FAILED,
+                    failure_code="omise_error",
+                    failure_message=str(e),
+                )
             logger.error(f"Omise error during payment: {e}")
             raise bad_request_error(f"Payment failed: {str(e)}")
 
@@ -236,6 +248,11 @@ class PaymentService:
         # Cannot buy own post
         if post.user_id == buyer.id:
             raise forbidden_error("You cannot purchase your own listing")
+
+        if await payment_crud.has_successful_payment(
+            self.db, post_id=payment_request.post_id
+        ):
+            raise bad_request_error("This item has already been sold")
 
         # Check if seller is verified
         seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
@@ -444,7 +461,7 @@ class PaymentService:
             await self._handle_recipient_verify(event_data)
 
     async def _handle_charge_complete(self, data: dict) -> None:
-        """Handle charge.complete webhook event."""
+        """Handle charge.complete webhook event (idempotent)."""
         charge_id = data.get("id")
         if not charge_id:
             return
@@ -452,6 +469,18 @@ class PaymentService:
         payment = await payment_crud.get_by_charge_id(self.db, charge_id=charge_id)
         if not payment:
             logger.warning(f"Payment not found for charge {charge_id}")
+            return
+
+        if payment.status in (
+            PaymentStatus.SUCCESSFUL,
+            PaymentStatus.FAILED,
+            PaymentStatus.EXPIRED,
+            PaymentStatus.REFUNDED,
+        ):
+            logger.info(
+                f"Payment {payment.id} already in terminal state "
+                f"{payment.status.value}, skipping webhook"
+            )
             return
 
         status = data.get("status")
@@ -471,12 +500,39 @@ class PaymentService:
                 failure_message=data.get("failure_message"),
             )
             logger.info(f"Payment {payment.id} marked as failed")
+        elif status == ChargeStatus.EXPIRED:
+            await payment_crud.update_status(
+                self.db,
+                payment=payment,
+                status=PaymentStatus.EXPIRED,
+            )
+            logger.info(f"Payment {payment.id} marked as expired")
 
     async def _handle_transfer_pay(self, data: dict) -> None:
         """Handle transfer.pay webhook event."""
-        # Handle transfer completion - could update payment records
         transfer_id = data.get("id")
-        logger.info(f"Transfer completed: {transfer_id}")
+        if not transfer_id:
+            return
+
+        payment = await payment_crud.get_by_transfer_id(
+            self.db, transfer_id=transfer_id
+        )
+        if not payment:
+            logger.warning(f"Payment not found for transfer {transfer_id}")
+            return
+
+        transfer_status = data.get("status")
+        failure_code = data.get("failure_code")
+        if failure_code:
+            logger.critical(
+                f"Transfer {transfer_id} FAILED for payment {payment.id}: "
+                f"{failure_code}. Manual reconciliation required."
+            )
+        else:
+            logger.info(
+                f"Transfer {transfer_id} completed for payment {payment.id}, "
+                f"status={transfer_status}"
+            )
 
     async def _handle_recipient_verify(self, data: dict) -> None:
         """Handle recipient.verify webhook event."""
@@ -645,6 +701,9 @@ class PaymentService:
         if payment.status != PaymentStatus.SUCCESSFUL:
             raise forbidden_error("Can only add tracking to successful payments")
 
+        if payment.fulfillment_status == FulfillmentStatus.DELIVERED:
+            raise bad_request_error("Cannot update tracking for a delivered item")
+
         await payment_crud.add_tracking_number(
             self.db,
             payment=payment,
@@ -677,6 +736,11 @@ class PaymentService:
 
         if payment.status != PaymentStatus.SUCCESSFUL:
             raise forbidden_error("Can only confirm delivery for successful payments")
+
+        if payment.fulfillment_status != FulfillmentStatus.IN_TRANSIT:
+            raise bad_request_error(
+                "Can only confirm delivery for items that are in transit"
+            )
 
         await payment_crud.confirm_delivery(self.db, payment=payment)
 

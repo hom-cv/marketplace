@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from typing import Sequence
 
-from sqlalchemy import ColumnElement, UnaryExpression, func, select
+from sqlalchemy import ColumnElement, UnaryExpression, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -54,6 +54,28 @@ class PaymentCRUD(
         query = select(self.model).where(self.model.omise_charge_id == charge_id)
         result = await db.execute(query)
         return result.scalar_one_or_none()
+
+    async def get_by_transfer_id(
+        self, db: AsyncSession, *, transfer_id: str
+    ) -> Payment | None:
+        """Retrieve a payment by Omise transfer ID."""
+        query = select(self.model).where(
+            self.model.omise_transfer_id == transfer_id
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def has_successful_payment(
+        self, db: AsyncSession, *, post_id: int
+    ) -> bool:
+        """Check if a post already has a successful payment."""
+        query = select(
+            exists()
+            .where(self.model.post_id == post_id)
+            .where(self.model.status == PaymentStatus.SUCCESSFUL)
+        )
+        result = await db.execute(query)
+        return result.scalar_one()
 
     async def get_payments_by_buyer(
         self, db: AsyncSession, *, buyer_id: int
