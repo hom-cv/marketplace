@@ -523,6 +523,14 @@ class PaymentService:
 
         failure_code = data.get("failure_code")
         if failure_code:
+            # Idempotency check: if transferred_at is already None, we have already
+            # processed this failure webhook.
+            if payment.transferred_at is None:
+                logger.info(
+                    f"Transfer failure for {transfer_id} already recorded for payment {payment.id}"
+                )
+                return
+
             await payment_crud.record_transfer_failure(
                 self.db, payment=payment
             )
