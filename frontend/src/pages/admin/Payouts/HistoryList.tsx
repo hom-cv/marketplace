@@ -83,8 +83,8 @@ export function HistoryList({
                     <DetailItem label="Payment ID">
                       {payout.payment_id}
                     </DetailItem>
-                    <DetailItem label="Transfer ID">
-                      {payout.omise_transfer_id ?? "\u2014"}
+                    <DetailItem label="Stripe Transfer ID">
+                      {payout.stripe_transfer_id ?? "\u2014"}
                     </DetailItem>
                     <DetailItem label="Seller">
                       {payout.seller_username}

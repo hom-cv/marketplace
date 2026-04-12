@@ -1,9 +1,8 @@
-import base64
-import hashlib
-import hmac
 import logging
-import time
 from typing import Annotated
+
+import stripe
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.core.security import get_current_user
 from app.core.settings import AnnotatedSettings
@@ -15,13 +14,11 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
     PurchaseListItem,
-    WebhookEvent,
     WebhookResponse,
 )
 from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
-from fastapi import APIRouter, Depends, Request, status
-from pydantic import ValidationError
+from app.services.stripe_service import AnnotatedStripeService
 
 logger = logging.getLogger(__name__)
 
@@ -39,14 +36,12 @@ async def create_card_payment(
     payment_request: CreateCardPaymentRequest,
 ) -> PaymentResponse:
     """
-    Create a card payment for a post.
+    Create a card PaymentIntent for a post.
 
     - **post_id**: ID of the post to purchase
-    - **token**: Omise card token from frontend (obtained via Omise.js)
-    - **return_uri**: URL to redirect after 3DS authentication
+    - **shipping**: Shipping address details
 
-    If 3DS authentication is required, the response will include an
-    `authorize_uri` that the user should be redirected to.
+    Returns a `client_secret` that the frontend confirms via Stripe.js.
     """
     return await payment_service.create_card_payment(
         buyer=current_user,
@@ -65,13 +60,13 @@ async def create_promptpay_payment(
     payment_request: CreatePromptPayPaymentRequest,
 ) -> PaymentResponse:
     """
-    Create a PromptPay QR payment for a post.
+    Create a PromptPay PaymentIntent for a post.
 
     - **post_id**: ID of the post to purchase
-    - **return_uri**: URL to redirect after payment completion
+    - **shipping**: Shipping address details
 
-    The response will include a `qr_code_uri` for the QR code image
-    and an `expires_at` timestamp for when the QR code expires.
+    Returns a `client_secret`. The frontend confirms the intent with
+    Stripe.js, which returns the PromptPay QR code via `next_action`.
     """
     return await payment_service.create_promptpay_payment(
         buyer=current_user,
@@ -169,85 +164,58 @@ async def get_payment_status(
     )
 
 
-WEBHOOK_TOLERANCE_SECONDS = 300  # 5 minutes
-
-
-def _verify_webhook_signature(
-    body: bytes, signature_header: str, timestamp: str, secret: str
-) -> bool:
-    """Verify Omise webhook HMAC-SHA256 signature."""
-    decoded_secret = base64.b64decode(secret)
-    signed_payload = timestamp.encode() + b"." + body
-    computed = hmac.new(decoded_secret, signed_payload, hashlib.sha256).hexdigest()
-    # Support dual signatures during key rotation (comma-separated)
-    signatures = [s.strip() for s in signature_header.split(",")]
-    return any(hmac.compare_digest(computed, sig) for sig in signatures)
-
-
 @router.post(
-    "/webhook",
+    "/webhook/stripe",
     status_code=status.HTTP_200_OK,
     response_model=WebhookResponse,
 )
-async def omise_webhook(
+async def stripe_webhook(
     request: Request,
+    stripe_service: AnnotatedStripeService,
     payment_service: AnnotatedPaymentService,
     settings: AnnotatedSettings,
 ) -> WebhookResponse:
     """
-    Handle Omise webhook events.
+    Handle Stripe webhook events.
 
-    This endpoint receives notifications from Omise about:
-    - charge.complete: Payment completed (success or failure)
-    - transfer.pay: Transfer to seller completed
-    - recipient.verify: Seller verification completed
-
-    Configure this URL in the Omise dashboard under Webhooks.
+    Configure this URL in the Stripe dashboard (Developers → Webhooks).
+    Events handled: payment_intent.succeeded, payment_intent.payment_failed,
+    charge.refunded, account.updated.
     """
-    body = await request.body()
-
-    # Reject webhooks if secret is not configured
-    if not settings.OMISE_WEBHOOK_SECRET:
-        logger.error("OMISE_WEBHOOK_SECRET is not configured — rejecting webhook")
-        return WebhookResponse(status="error", message="Internal server error")
-
-    signature = request.headers.get("Omise-Signature")
-    timestamp = request.headers.get("Omise-Signature-Timestamp")
-    if not signature:
-        logger.warning("Webhook missing header: Omise-Signature")
-        return WebhookResponse(status="error", message="Missing header: Omise-Signature")
-    if not timestamp:
-        logger.warning("Webhook missing header: Omise-Signature-Timestamp")
-        return WebhookResponse(status="error", message="Missing header: Omise-Signature-Timestamp")
-
-    try:
-        ts = int(timestamp)
-    except ValueError:
-        logger.warning(f"Webhook timestamp is not a valid integer: {timestamp}")
-        return WebhookResponse(status="error", message="Invalid timestamp")
-    if abs(time.time() - ts) > WEBHOOK_TOLERANCE_SECONDS:
-        logger.warning("Webhook timestamp outside tolerance window")
-        return WebhookResponse(status="error", message="Timestamp out of range")
-
-    if not _verify_webhook_signature(
-        body, signature, timestamp, settings.OMISE_WEBHOOK_SECRET
-    ):
-        logger.warning("Webhook signature verification failed")
-        return WebhookResponse(status="error", message="Invalid signature")
-
-    try:
-        webhook_event = WebhookEvent.model_validate_json(body)
-        event_data = webhook_event.data.model_dump(exclude_none=True)
-
-        await payment_service.process_webhook(
-            event_key=webhook_event.key,
-            event_data=event_data,
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        logger.error("STRIPE_WEBHOOK_SECRET is not configured — rejecting webhook")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook secret not configured",
         )
 
-        return WebhookResponse(status="ok")
-    except ValidationError as e:
-        logger.error(f"Webhook validation error: {e}")
-        return WebhookResponse(status="error", message="Invalid webhook payload")
+    payload = await request.body()
+    sig_header = request.headers.get("Stripe-Signature", "")
+
+    try:
+        event = stripe_service.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError as e:
+        logger.warning(f"Webhook payload parse error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid payload",
+        ) from e
+    except stripe.SignatureVerificationError as e:
+        logger.warning("Webhook signature verification failed")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid signature",
+        ) from e
+
+    try:
+        await payment_service.process_webhook(event)
     except Exception as e:
-        logger.error(f"Webhook processing error: {e}")
-        return WebhookResponse(status="error", message="Internal error")
+        logger.error(f"Stripe webhook processing error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Webhook processing error",
+        ) from e
+
+    return WebhookResponse(status="ok")

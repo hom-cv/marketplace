@@ -6,18 +6,24 @@ import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { StatusIcon } from "@/components/StatusIcon";
-import type { PaymentResponse, PaymentStatusResponse } from "@/api/types/payment";
+import type {
+  PaymentResponse,
+  PaymentStatusResponse,
+  PromptPayQr,
+} from "@/api/types/payment";
 import styles from "../CheckoutPage.module.css";
 
 interface PaymentStatusProps {
   paymentResponse: PaymentResponse | null;
   paymentStatus: PaymentStatusResponse | null;
+  promptpayQr: PromptPayQr | null;
   error: string | null;
 }
 
 export function PaymentStatus({
   paymentResponse,
   paymentStatus,
+  promptpayQr,
   error,
 }: PaymentStatusProps) {
   const navigate = useNavigate();
@@ -28,7 +34,7 @@ export function PaymentStatus({
     paymentResponse?.status === "successful";
   const isFailed =
     paymentStatus?.status === "failed" || paymentResponse?.status === "failed";
-  const showQR = paymentResponse?.qr_code_uri && !isSuccess && !isFailed;
+  const showQR = !!promptpayQr && !isSuccess && !isFailed;
 
   return (
     <>
@@ -80,25 +86,16 @@ export function PaymentStatus({
       )}
 
       {/* QR Code state */}
-      {showQR && paymentResponse && (
+      {showQR && promptpayQr && (
         <Card>
           <div className={styles.qrContainer}>
             <h3 className={styles.qrTitle}>{t("checkout.scanToPay")}</h3>
             <p className={styles.qrSubtitle}>{t("checkout.scanWithApp")}</p>
             <img
-              src={paymentResponse.qr_code_uri ?? undefined}
+              src={promptpayQr.image_url_png}
               alt="PromptPay QR Code"
               className={styles.qrCode}
             />
-            {paymentResponse.expires_at && (
-              <p className={styles.qrExpiry}>
-                {t("checkout.expires", {
-                  time: new Date(
-                    paymentResponse.expires_at
-                  ).toLocaleTimeString(),
-                })}
-              </p>
-            )}
             <div className={styles.waitingIndicator}>
               <Loader size="xs" />
               <span>{t("checkout.waitingForPayment")}</span>

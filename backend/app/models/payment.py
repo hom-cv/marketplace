@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import auto
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Numeric, String, Text
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
@@ -49,22 +49,22 @@ class Payment(Base):
     """
     Payment model for tracking marketplace transactions.
 
-    This model stores payment information including Omise charge details,
-    buyer/seller information, and transaction status.
+    This model stores payment information including Stripe PaymentIntent
+    details, buyer/seller information, and transaction status.
     """
 
     __tablename__ = "payments"
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
 
-    # Omise identifiers
-    omise_charge_id: Mapped[str | None] = mapped_column(
+    # Stripe identifiers
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
         unique=True,
         index=True,
     )
-    omise_transfer_id: Mapped[str | None] = mapped_column(
+    stripe_transfer_id: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
         unique=True,
@@ -77,7 +77,7 @@ class Payment(Base):
     )  # Total amount in smallest currency unit (satang for THB)
     currency: Mapped[str] = mapped_column(
         String(3),
-        default="THB",
+        default="thb",  # Lowercase to match Stripe's currency code convention
         nullable=False,
     )
     description: Mapped[str | None] = mapped_column(
@@ -91,7 +91,6 @@ class Payment(Base):
     platform_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     processing_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     total_vat: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    transfer_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     seller_payout: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
 
     # Payment method and status
@@ -173,26 +172,6 @@ class Payment(Base):
     )
     shipping_postal_code: Mapped[str | None] = mapped_column(
         String(10),
-        nullable=True,
-    )
-
-    # 3DS authorization
-    authorize_uri: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
-    )
-    return_uri: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
-    )
-
-    # PromptPay specific
-    qr_code_uri: Mapped[str | None] = mapped_column(
-        String(512),
-        nullable=True,
-    )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
         nullable=True,
     )
 

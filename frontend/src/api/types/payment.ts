@@ -2,19 +2,6 @@
  * Payment types
  */
 
-export interface CreateCardPaymentRequest {
-  post_id: number;
-  token: string;
-  return_uri: string;
-  shipping: ShippingAddress;
-}
-
-export interface CreatePromptPayPaymentRequest {
-  post_id: number;
-  return_uri: string;
-  shipping: ShippingAddress;
-}
-
 export interface ShippingAddress {
   name: string;
   phone: string;
@@ -24,13 +11,21 @@ export interface ShippingAddress {
   postal_code: string;
 }
 
+export interface CreateCardPaymentRequest {
+  post_id: number;
+  shipping: ShippingAddress;
+}
+
+export interface CreatePromptPayPaymentRequest {
+  post_id: number;
+  shipping: ShippingAddress;
+}
+
 export interface PaymentResponse {
   payment_id: number;
   status: string;
-  charge_id: string | null;
-  authorize_uri: string | null;
-  qr_code_uri: string | null;
-  expires_at: string | null;
+  client_secret: string;
+  payment_intent_id: string;
 }
 
 export interface PaymentStatusResponse {
@@ -72,7 +67,6 @@ export interface PurchaseListItem {
   item_price: number | null;
   shipping_cost: number | null;
   platform_fee: number | null;
-  transfer_fee: number | null;
   processing_fee: number | null;
   total_fees: number | null;
   total_vat: number | null;
@@ -96,10 +90,15 @@ export interface PriceBreakdownResponse {
   item_price: string;
   shipping_cost: string;
   platform_fee: string;
-  transfer_fee: string;
   processing_fee: string;
   total_fees: string;
   total_vat: string;
   total: string;
   seller_payout: string;
+}
+
+export interface PromptPayQr {
+  image_url_png: string;
+  image_url_svg?: string;
+  data?: string;
 }

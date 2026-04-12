@@ -1,14 +1,14 @@
-"""Seller API endpoints for registration and verification."""
+"""Seller API endpoints for Stripe Connect onboarding and verification."""
 
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_current_user
-from app.db.utils import get_async_db
 from app.models import User
 from app.schemas.seller import (
+    DashboardLinkResponse,
+    OnboardingLinkResponse,
     SellerStatusResponse,
     SellerVerificationRequest,
     SellerVerificationResponse,
@@ -29,25 +29,14 @@ async def register_seller(
     verification_request: SellerVerificationRequest,
 ) -> SellerVerificationResponse:
     """
-    Register as a seller by providing bank account details.
+    Register as a seller by creating a Stripe Express account.
 
-    This initiates the seller verification process with Omise.
+    This initiates the seller onboarding process with Stripe Connect.
     You must have a verified email to become a seller.
 
-    - **bank_brand**: Bank code (e.g., 'kbank', 'bbl', 'scb', 'ktb')
-    - **bank_account_number**: Your bank account number
-    - **bank_account_name**: Name on the bank account
-
-    Available bank brands:
-    - 'bbl' - Bangkok Bank
-    - 'kbank' - Kasikorn Bank
-    - 'ktb' - Krung Thai Bank
-    - 'scb' - Siam Commercial Bank
-    - 'bay' - Bank of Ayudhya (Krungsri)
-    - 'gsb' - Government Savings Bank
-    - 'cimb' - CIMB Thai
-    - 'tbank' - Thanachart Bank
-    - 'uob' - United Overseas Bank
+    The response includes an `onboarding_url` that the frontend should
+    redirect the user to. Bank details, identity verification, and KYC
+    are collected on Stripe's hosted onboarding page.
     """
     return await seller_service.register_seller(
         user=current_user,
@@ -67,6 +56,35 @@ async def get_seller_status(
     """
     Get the current seller status for the authenticated user.
 
-    Returns verification status, bank details (if any), and verification timestamp.
+    Polls Stripe for the latest account state and returns verification
+    status plus dashboard / onboarding resume links when applicable.
     """
     return await seller_service.get_seller_status(user=current_user)
+
+
+@router.get(
+    "/onboarding-link",
+    status_code=status.HTTP_200_OK,
+    response_model=OnboardingLinkResponse,
+)
+async def get_onboarding_link(
+    current_user: Annotated[User, Depends(get_current_user)],
+    seller_service: AnnotatedSellerService,
+) -> OnboardingLinkResponse:
+    """Generate a fresh Stripe Express onboarding link."""
+    url = await seller_service.create_onboarding_refresh_link(user=current_user)
+    return OnboardingLinkResponse(onboarding_url=url)
+
+
+@router.get(
+    "/dashboard-link",
+    status_code=status.HTTP_200_OK,
+    response_model=DashboardLinkResponse,
+)
+async def get_dashboard_link(
+    current_user: Annotated[User, Depends(get_current_user)],
+    seller_service: AnnotatedSellerService,
+) -> DashboardLinkResponse:
+    """Generate a Stripe Express dashboard login link for the verified seller."""
+    url = await seller_service.create_dashboard_link(user=current_user)
+    return DashboardLinkResponse(dashboard_url=url)

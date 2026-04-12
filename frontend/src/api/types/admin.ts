@@ -171,7 +171,7 @@ export interface PayoutListResponse {
 
 export interface PayoutHistoryItem extends PayoutItem {
   transferred_at: string | null;
-  omise_transfer_id: string | null;
+  stripe_transfer_id: string | null;
 }
 
 export interface PayoutHistoryListResponse {

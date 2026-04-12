@@ -19,15 +19,14 @@ class PriceBreakdown(BaseModel):
 
     All monetary values are in THB.
     - platform_fee: 10% + VAT, deducted from seller
-    - transfer_fee: Omise transfer fee per payout, deducted from seller
-    - processing_fee: Omise rate + VAT, deducted from seller
+    - processing_fee: Stripe Thailand rate (percentage + fixed) + VAT, deducted
+      from seller
     - total: what the buyer pays (item + shipping)
     - seller_payout: what the seller receives (total - all fees)
     """
     item_price: Decimal
     shipping_cost: Decimal
     platform_fee: Decimal
-    transfer_fee: Decimal
     processing_fee: Decimal
     total_fees: Decimal
     total_vat: Decimal
@@ -49,31 +48,29 @@ class ShippingAddress(BaseModel):
 
 
 class CreateCardPaymentRequest(BaseModel):
-    """Schema for creating a card payment."""
+    """Schema for creating a card PaymentIntent."""
 
     post_id: int = Field(..., description="ID of the post to purchase")
-    token: str = Field(..., description="Omise card token from frontend")
-    return_uri: str = Field(..., description="URL to redirect after 3DS authentication")
     shipping: ShippingAddress = Field(..., description="Shipping address")
 
 
 class CreatePromptPayPaymentRequest(BaseModel):
-    """Schema for creating a PromptPay payment."""
+    """Schema for creating a PromptPay PaymentIntent."""
 
     post_id: int = Field(..., description="ID of the post to purchase")
-    return_uri: str = Field(..., description="URL to redirect after payment completion")
     shipping: ShippingAddress = Field(..., description="Shipping address")
 
 
 class PaymentResponse(BaseModel):
-    """Schema for payment response."""
+    """Schema for payment response with Stripe PaymentIntent details."""
 
     payment_id: int
     status: str
-    charge_id: str | None = None
-    authorize_uri: str | None = None  # For 3DS redirect
-    qr_code_uri: str | None = None  # For PromptPay
-    expires_at: datetime | None = None  # For PromptPay expiration
+    client_secret: str = Field(
+        ...,
+        description="Stripe PaymentIntent client secret for frontend confirmation",
+    )
+    payment_intent_id: str = Field(..., description="Stripe PaymentIntent ID")
 
 
 class PaymentStatusResponse(BaseModel):
@@ -144,7 +141,6 @@ class PurchaseListItem(BaseModel):
     item_price: int | None = None
     shipping_cost: int | None = None
     platform_fee: int | None = None
-    transfer_fee: int | None = None
     processing_fee: int | None = None
     total_fees: int | None = None
     total_vat: int | None = None
@@ -204,7 +200,7 @@ class PayoutHistoryItem(PayoutItem):
     """Schema for a completed payout list item (extends PayoutItem)."""
 
     transferred_at: datetime | None = None
-    omise_transfer_id: str | None = None
+    stripe_transfer_id: str | None = None
 
 
 class PayoutHistoryListResponse(BaseModel):
@@ -223,42 +219,6 @@ class PayoutResponse(BaseModel):
     transfer_id: str
     amount: int
     status: str
-
-
-class WebhookEventData(BaseModel):
-    """Data payload within an Omise webhook event.
-
-    This captures the common fields from charge/transfer objects.
-    Additional fields can be accessed via the model's extra config.
-    """
-
-    id: str = Field(..., description="Omise object ID (e.g., chrg_xxx, trsf_xxx)")
-    object: str = Field(..., description="Object type (charge, transfer, etc.)")
-    status: str | None = Field(None, description="Object status")
-    amount: int | None = Field(None, description="Amount in satang")
-    currency: str | None = Field(None, description="Currency code")
-    failure_code: str | None = Field(None, description="Failure code if failed")
-    failure_message: str | None = Field(None, description="Failure message if failed")
-    metadata: dict | None = Field(None, description="Metadata attached to the object")
-    paid_at: datetime | None = Field(None, description="When payment was completed")
-
-    model_config = {"extra": "allow"}
-
-
-class WebhookEvent(BaseModel):
-    """Omise webhook event payload.
-
-    See: https://www.omise.co/webhooks
-    """
-
-    object: str = Field(default="event", description="Always 'event'")
-    id: str = Field(..., description="Event ID")
-    livemode: bool = Field(default=False, description="Whether this is live mode")
-    key: str = Field(..., description="Event type key (e.g., charge.complete)")
-    data: WebhookEventData = Field(..., description="Event data payload")
-    created_at: datetime | None = Field(None, description="Event creation timestamp")
-
-    model_config = {"extra": "allow"}
 
 
 class WebhookResponse(BaseModel):

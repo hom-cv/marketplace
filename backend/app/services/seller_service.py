@@ -1,13 +1,14 @@
-"""Seller service for handling seller registration and verification."""
+"""Seller service for handling Stripe Connect onboarding and verification."""
 
 import logging
 from typing import Annotated
 
-import omise.errors
+import stripe
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error
+from app.core.settings import AnnotatedSettings, Settings
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
 from app.models.seller import SellerProfile, SellerVerificationStatus
@@ -18,41 +19,43 @@ from app.schemas.seller import (
     SellerVerificationResponse,
 )
 from app.services.invite_service import AnnotatedInviteService, InviteService
-from app.services.omise_service import AnnotatedOmiseService, OmiseService
+from app.services.stripe_service import AnnotatedStripeService, StripeService
 
 logger = logging.getLogger(__name__)
 
 
 class SellerService:
-    """Service for seller registration and verification operations."""
+    """Service for Stripe Connect seller onboarding and verification."""
 
     def __init__(
         self,
         db: AsyncSession,
-        omise_service: OmiseService,
+        stripe_service: StripeService,
         invite_service: InviteService,
+        settings: Settings,
     ) -> None:
         """Initialize seller service with database session."""
         self.db = db
-        self.omise_service = omise_service
+        self.stripe_service = stripe_service
         self.invite_service = invite_service
+        self._settings = settings
 
     async def register_seller(
         self, user: User, verification_request: SellerVerificationRequest
     ) -> SellerVerificationResponse:
         """
-        Register a user as a seller by creating an Omise recipient.
+        Register a user as a seller by creating a Stripe Express account.
 
         Args:
             user (User): The user to register as a seller.
-            verification_request (SellerVerificationRequest): Bank account details.
+            verification_request (SellerVerificationRequest): Invite code payload.
 
         Returns:
-            SellerVerificationResponse: The verification status.
+            SellerVerificationResponse: Onboarding URL and initial status.
 
         Raises:
             ConflictError: If user already has a seller profile.
-            BadRequestError: If bank account verification fails.
+            BadRequestError: If Stripe account creation fails.
         """
         # Check if user already has a seller profile
         existing_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
@@ -62,8 +65,9 @@ class SellerService:
                 == SellerVerificationStatus.VERIFIED
             ):
                 raise conflict_error("User is already a verified seller")
-            elif (
-                existing_profile.verification_status == SellerVerificationStatus.PENDING
+            if (
+                existing_profile.verification_status
+                == SellerVerificationStatus.PENDING
             ):
                 raise conflict_error("Seller verification is already in progress")
 
@@ -74,72 +78,46 @@ class SellerService:
         )
 
         try:
-            # Create Omise recipient
-            recipient = self.omise_service.create_recipient(
-                name=user.full_name,
+            account = self.stripe_service.create_express_account(
                 email=user.email_address,
-                bank_brand=verification_request.bank_brand,
-                bank_account_number=verification_request.bank_account_number,
-                bank_account_name=verification_request.bank_account_name,
             )
-
-            # Get last 4 digits of bank account
-            bank_last_digits = verification_request.bank_account_number[-4:]
-
-            # Create seller profile
-            seller_profile = await seller_crud.create_seller_profile(
-                self.db,
-                user_id=user.id,
-                omise_recipient_id=recipient.id,
-                bank_brand=verification_request.bank_brand,
-                bank_account_last_digits=bank_last_digits,
-                bank_account_name=verification_request.bank_account_name,
+            link = self.stripe_service.create_account_link(
+                account_id=account.id,
+                return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
+                refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
             )
+        except stripe.StripeError as e:
+            logger.error(f"Stripe error during seller registration: {e}")
+            raise bad_request_error(f"Failed to create payout account: {str(e)}")
 
-            # Check if recipient is already verified by Omise
-            if recipient.verified:
-                await self._complete_verification(user, seller_profile)
-                return SellerVerificationResponse(
-                    status="verified",
-                    recipient_id=recipient.id,
-                    message="Your seller account has been verified successfully!",
-                )
+        await seller_crud.create_seller_profile(
+            self.db,
+            user_id=user.id,
+            stripe_account_id=account.id,
+        )
 
-            return SellerVerificationResponse(
-                status="pending",
-                recipient_id=recipient.id,
-                message="Your bank account is being verified. This may take a few moments.",
-            )
-
-        except omise.errors.BaseError as e:
-            logger.error(f"Omise error during seller registration: {e}")
-            raise bad_request_error(f"Failed to verify bank account: {str(e)}")
+        return SellerVerificationResponse(
+            status="pending",
+            stripe_account_id=account.id,
+            onboarding_url=link.url,
+            message="Complete onboarding with Stripe to start selling.",
+        )
 
     async def _complete_verification(
         self, user: User, seller_profile: SellerProfile
     ) -> None:
-        """
-        Complete the seller verification process.
-
-        Args:
-            user (User): The user being verified.
-            seller_profile (SellerProfile): The seller profile to update.
-        """
-        # Update seller profile status
+        """Mark the seller as VERIFIED and assign the SELLER role."""
         await seller_crud.update_verification_status(
             self.db,
             seller_profile=seller_profile,
             status=SellerVerificationStatus.VERIFIED,
         )
-
-        # Assign SELLER role to user
         await seller_crud.assign_seller_role(self.db, user=user)
-
         logger.info(f"Seller verification completed for user {user.id}")
 
     async def check_and_update_verification(self, user: User) -> SellerStatusResponse:
         """
-        Check the current verification status and update if changed.
+        Check the current Stripe account status and update the seller profile.
 
         Args:
             user (User): The user to check.
@@ -150,53 +128,94 @@ class SellerService:
         seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
 
         if not seller_profile:
-            return SellerStatusResponse(
-                is_seller=False,
-                verification_status=None,
-            )
+            return SellerStatusResponse(is_seller=False, verification_status=None)
 
-        # If pending, check with Omise
-        if (
-            seller_profile.verification_status == SellerVerificationStatus.PENDING
-            and seller_profile.omise_recipient_id
-        ):
+        if seller_profile.stripe_account_id:
             try:
-                recipient = self.omise_service.get_recipient(
-                    seller_profile.omise_recipient_id
+                account = self.stripe_service.retrieve_account(
+                    seller_profile.stripe_account_id
+                )
+            except stripe.StripeError as e:
+                logger.error(f"Error retrieving Stripe account: {e}")
+                account = None
+
+            if account is not None:
+                charges_enabled = bool(account.charges_enabled)
+                payouts_enabled = bool(account.payouts_enabled)
+                details_submitted = bool(account.details_submitted)
+
+                await seller_crud.update_account_status(
+                    self.db,
+                    seller_profile=seller_profile,
+                    charges_enabled=charges_enabled,
+                    payouts_enabled=payouts_enabled,
+                    details_submitted=details_submitted,
                 )
 
-                if recipient.verified:
+                fully_onboarded = (
+                    charges_enabled and payouts_enabled and details_submitted
+                )
+                if (
+                    fully_onboarded
+                    and seller_profile.verification_status
+                    != SellerVerificationStatus.VERIFIED
+                ):
                     await self._complete_verification(user, seller_profile)
-                    return SellerStatusResponse(
-                        is_seller=True,
-                        verification_status="verified",
-                        bank_brand=seller_profile.bank_brand,
-                        bank_last_digits=seller_profile.bank_account_last_digits,
-                        verified_at=seller_profile.verified_at,
+                else:
+                    requirements = getattr(account, "requirements", None)
+                    disabled_reason = (
+                        requirements.get("disabled_reason")
+                        if requirements
+                        else None
                     )
-                elif recipient.failure_code:
-                    await seller_crud.update_verification_status(
-                        self.db,
-                        seller_profile=seller_profile,
-                        status=SellerVerificationStatus.REJECTED,
-                        rejection_reason=recipient.failure_code,
-                    )
-                    return SellerStatusResponse(
-                        is_seller=False,
-                        verification_status="rejected",
-                        bank_brand=seller_profile.bank_brand,
-                        bank_last_digits=seller_profile.bank_account_last_digits,
-                    )
-            except omise.errors.BaseError as e:
-                logger.error(f"Error checking Omise recipient status: {e}")
+                    if (
+                        disabled_reason
+                        and seller_profile.verification_status
+                        == SellerVerificationStatus.PENDING
+                    ):
+                        await seller_crud.update_verification_status(
+                            self.db,
+                            seller_profile=seller_profile,
+                            status=SellerVerificationStatus.REJECTED,
+                            rejection_reason=disabled_reason,
+                        )
+
+                await self.db.refresh(seller_profile)
+
+        dashboard_url: str | None = None
+        onboarding_url: str | None = None
+        if seller_profile.stripe_account_id:
+            try:
+                if (
+                    seller_profile.verification_status
+                    == SellerVerificationStatus.VERIFIED
+                ):
+                    dashboard_url = self.stripe_service.create_dashboard_login_link(
+                        seller_profile.stripe_account_id
+                    ).url
+                elif (
+                    seller_profile.verification_status
+                    == SellerVerificationStatus.PENDING
+                    and not seller_profile.details_submitted
+                ):
+                    onboarding_url = self.stripe_service.create_account_link(
+                        account_id=seller_profile.stripe_account_id,
+                        return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
+                        refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
+                    ).url
+            except stripe.StripeError as e:
+                logger.error(f"Error creating Stripe link for status response: {e}")
 
         return SellerStatusResponse(
             is_seller=seller_profile.verification_status
             == SellerVerificationStatus.VERIFIED,
             verification_status=seller_profile.verification_status.value.lower(),
-            bank_brand=seller_profile.bank_brand,
-            bank_last_digits=seller_profile.bank_account_last_digits,
+            charges_enabled=seller_profile.charges_enabled,
+            payouts_enabled=seller_profile.payouts_enabled,
+            details_submitted=seller_profile.details_submitted,
             verified_at=seller_profile.verified_at,
+            dashboard_url=dashboard_url,
+            onboarding_url=onboarding_url,
         )
 
     async def get_seller_status(self, user: User) -> SellerStatusResponse:
@@ -211,15 +230,54 @@ class SellerService:
         """
         return await self.check_and_update_verification(user)
 
+    async def create_onboarding_refresh_link(self, user: User) -> str:
+        """Generate a fresh onboarding link for a pending seller."""
+        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
+        if not seller_profile or not seller_profile.stripe_account_id:
+            raise bad_request_error("Seller has no Stripe account")
+
+        try:
+            link = self.stripe_service.create_account_link(
+                account_id=seller_profile.stripe_account_id,
+                return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
+                refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
+            )
+        except stripe.StripeError as e:
+            logger.error(f"Failed to refresh Stripe onboarding link: {e}")
+            raise bad_request_error("Failed to create onboarding link")
+
+        return link.url
+
+    async def create_dashboard_link(self, user: User) -> str:
+        """Generate a Stripe Express dashboard login link for a verified seller."""
+        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
+        if (
+            not seller_profile
+            or not seller_profile.stripe_account_id
+            or seller_profile.verification_status
+            != SellerVerificationStatus.VERIFIED
+        ):
+            raise bad_request_error("Seller is not verified")
+
+        try:
+            link = self.stripe_service.create_dashboard_login_link(
+                seller_profile.stripe_account_id
+            )
+        except stripe.StripeError as e:
+            logger.error(f"Failed to create Stripe dashboard link: {e}")
+            raise bad_request_error("Failed to create dashboard link")
+
+        return link.url
+
 
 def _get_seller_service(
-    omise_service: AnnotatedOmiseService,
+    stripe_service: AnnotatedStripeService,
     invite_service: AnnotatedInviteService,
+    settings: AnnotatedSettings,
     db: AsyncSession = Depends(get_async_db),
 ) -> SellerService:
     """Factory function to create SellerService instance."""
-    return SellerService(db, omise_service, invite_service)
+    return SellerService(db, stripe_service, invite_service, settings)
 
 
 AnnotatedSellerService = Annotated[SellerService, Depends(_get_seller_service)]
-

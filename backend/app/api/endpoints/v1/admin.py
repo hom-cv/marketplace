@@ -342,7 +342,7 @@ async def list_payout_history(
         PayoutHistoryItem(
             **_payment_to_payout_fields(p),
             transferred_at=p.transferred_at,
-            omise_transfer_id=p.omise_transfer_id,
+            stripe_transfer_id=p.stripe_transfer_id,
         )
         for p in payments
     ]
@@ -363,8 +363,9 @@ async def create_payout(
     payment_id: int,
 ) -> PayoutResponse:
     """
-    Initiate a payout (Omise transfer) for a payment.
+    Initiate a payout (Stripe transfer) for a payment.
 
-    **Admin only.** Transfers the seller_payout amount to the seller's bank account.
+    **Admin only.** Transfers the seller_payout amount to the seller's Stripe
+    connected account.
     """
     return await payment_service.create_payout(payment_id)

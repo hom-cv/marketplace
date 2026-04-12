@@ -4,21 +4,30 @@
 
 export interface SellerVerificationRequest {
   invite_code: string;
-  bank_brand: string;
-  bank_account_number: string;
-  bank_account_name: string;
 }
 
 export interface SellerVerificationResponse {
   status: string;
-  recipient_id: string | null;
+  stripe_account_id: string | null;
+  onboarding_url: string | null;
   message: string;
 }
 
 export interface SellerStatusResponse {
   is_seller: boolean;
   verification_status: string | null;
-  bank_brand: string | null;
-  bank_last_digits: string | null;
+  charges_enabled: boolean;
+  payouts_enabled: boolean;
+  details_submitted: boolean;
   verified_at: string | null;
+  dashboard_url: string | null;
+  onboarding_url: string | null;
+}
+
+export interface OnboardingLinkResponse {
+  onboarding_url: string;
+}
+
+export interface DashboardLinkResponse {
+  dashboard_url: string;
 }

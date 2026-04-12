@@ -3,7 +3,7 @@
 from datetime import datetime
 from enum import auto
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
@@ -22,8 +22,9 @@ class SellerProfile(Base):
     """
     Seller profile model for managing seller verification and payouts.
 
-    This model stores Omise recipient information and verification status
-    for users who want to sell on the marketplace.
+    This model stores the Stripe Connect account reference and verification
+    status for users who want to sell on the marketplace. Bank account details
+    are managed by Stripe Express and are not stored locally.
     """
 
     __tablename__ = "seller_profiles"
@@ -37,25 +38,28 @@ class SellerProfile(Base):
         index=True,
     )
 
-    # Omise recipient information
-    omise_recipient_id: Mapped[str | None] = mapped_column(
+    # Stripe Connect account
+    stripe_account_id: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
         unique=True,
     )
 
-    # Bank account information (stored for display purposes)
-    bank_brand: Mapped[str | None] = mapped_column(
-        String(64),
-        nullable=True,
+    # Stripe account capability flags (mirrored from Account object)
+    charges_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
-    bank_account_last_digits: Mapped[str | None] = mapped_column(
-        String(4),
-        nullable=True,
+    payouts_enabled: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
-    bank_account_name: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
+    details_submitted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
     )
 
     # Verification status

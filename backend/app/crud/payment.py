@@ -38,20 +38,22 @@ class PaymentCRUD(
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_charge_id(
-        self, db: AsyncSession, *, charge_id: str
+    async def get_by_payment_intent_id(
+        self, db: AsyncSession, *, payment_intent_id: str
     ) -> Payment | None:
         """
-        Retrieve a payment by Omise charge ID.
+        Retrieve a payment by Stripe PaymentIntent ID.
 
         Args:
             db (AsyncSession): The asynchronous database session.
-            charge_id (str): The Omise charge ID.
+            payment_intent_id (str): The Stripe PaymentIntent ID.
 
         Returns:
             Payment | None: The payment if found, or None.
         """
-        query = select(self.model).where(self.model.omise_charge_id == charge_id)
+        query = select(self.model).where(
+            self.model.stripe_payment_intent_id == payment_intent_id
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -115,11 +117,7 @@ class PaymentCRUD(
         amount: int,
         currency: str,
         payment_method: PaymentMethod,
-        omise_charge_id: str | None = None,
-        authorize_uri: str | None = None,
-        return_uri: str | None = None,
-        qr_code_uri: str | None = None,
-        expires_at: datetime | None = None,
+        stripe_payment_intent_id: str | None = None,
         description: str | None = None,
         # Fee breakdown (all in satang)
         item_price: int | None = None,
@@ -127,7 +125,6 @@ class PaymentCRUD(
         platform_fee: int | None = None,
         processing_fee: int | None = None,
         total_vat: int | None = None,
-        transfer_fee: int | None = None,
         seller_payout: int | None = None,
         # Shipping address
         shipping_name: str | None = None,
@@ -148,11 +145,7 @@ class PaymentCRUD(
             amount (int): Amount in smallest currency unit.
             currency (str): Currency code.
             payment_method (PaymentMethod): Payment method used.
-            omise_charge_id (str | None): Omise charge ID.
-            authorize_uri (str | None): 3DS authorization URL.
-            return_uri (str | None): Return URL after payment.
-            qr_code_uri (str | None): PromptPay QR code URL.
-            expires_at (datetime | None): Payment expiration time.
+            stripe_payment_intent_id (str | None): Stripe PaymentIntent ID.
             description (str | None): Payment description.
             Fee breakdown fields: item_price, shipping_cost, platform_fee, processing_fee, total_vat, seller_payout.
             shipping_*: Shipping address fields.
@@ -167,11 +160,7 @@ class PaymentCRUD(
             amount=amount,
             currency=currency,
             payment_method=payment_method,
-            omise_charge_id=omise_charge_id,
-            authorize_uri=authorize_uri,
-            return_uri=return_uri,
-            qr_code_uri=qr_code_uri,
-            expires_at=expires_at,
+            stripe_payment_intent_id=stripe_payment_intent_id,
             description=description,
             status=PaymentStatus.PENDING,
             # Fee breakdown
@@ -180,7 +169,6 @@ class PaymentCRUD(
             platform_fee=platform_fee,
             processing_fee=processing_fee,
             total_vat=total_vat,
-            transfer_fee=transfer_fee,
             seller_payout=seller_payout,
             # Shipping address
             shipping_name=shipping_name,
@@ -247,12 +235,12 @@ class PaymentCRUD(
         Args:
             db (AsyncSession): The asynchronous database session.
             payment (Payment): The payment to update.
-            transfer_id (str): The Omise transfer ID.
+            transfer_id (str): The Stripe transfer ID.
 
         Returns:
             Payment: The updated payment.
         """
-        payment.omise_transfer_id = transfer_id
+        payment.stripe_transfer_id = transfer_id
         payment.transferred_at = datetime.now(timezone.utc)
 
         await db.flush()
@@ -362,7 +350,7 @@ class PaymentCRUD(
             conditions=[
                 self.model.status == PaymentStatus.SUCCESSFUL,
                 self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
-                self.model.omise_transfer_id.is_(None),
+                self.model.stripe_transfer_id.is_(None),
             ],
             order_by=self.model.delivered_at.asc(),
             skip=skip,
@@ -380,7 +368,7 @@ class PaymentCRUD(
         return await self._get_payouts(
             db,
             conditions=[
-                self.model.omise_transfer_id.isnot(None),
+                self.model.stripe_transfer_id.isnot(None),
             ],
             order_by=self.model.transferred_at.desc(),
             skip=skip,

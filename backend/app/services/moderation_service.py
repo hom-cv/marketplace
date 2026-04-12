@@ -202,7 +202,7 @@ class ModerationService:
             .where(
                 Payment.status == PaymentStatus.SUCCESSFUL,
                 Payment.fulfillment_status == FulfillmentStatus.DELIVERED,
-                Payment.omise_transfer_id.is_(None),
+                Payment.stripe_transfer_id.is_(None),
             )
             .scalar_subquery()
         )

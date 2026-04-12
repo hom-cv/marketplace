@@ -1,6 +1,6 @@
 /**
  * Payment Return Page
- * Handles redirects from Omise 3DS authentication and QR payment completion
+ * Handles redirects from Stripe 3DS authentication and QR payment completion
  * Flat design matching homepage/auth/explore pages
  */
 
