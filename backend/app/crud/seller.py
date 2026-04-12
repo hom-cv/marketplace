@@ -77,7 +77,8 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         )
 
         db.add(seller_profile)
-        await db.commit()
+
+        await db.flush()
         await db.refresh(seller_profile)
 
         return seller_profile
@@ -108,7 +109,7 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         seller_profile.payouts_enabled = payouts_enabled
         seller_profile.details_submitted = details_submitted
 
-        await db.commit()
+        await db.flush()
         await db.refresh(seller_profile)
 
         return seller_profile
@@ -140,7 +141,7 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         elif status == SellerVerificationStatus.REJECTED:
             seller_profile.rejection_reason = rejection_reason
 
-        await db.commit()
+        await db.flush()
         await db.refresh(seller_profile)
 
         return seller_profile
@@ -170,7 +171,8 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         if not any(r.role == RoleType.SELLER for r in user.roles):
             user_role_assoc = UserToUserRole(user_id=user.id, role_id=seller_role.id)
             db.add(user_role_assoc)
-            await db.commit()
+
+            await db.flush()
 
             # Refresh user to get updated roles
             query = select(User).where(User.id == user.id).options(selectinload(User.roles))

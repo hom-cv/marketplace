@@ -1,7 +1,6 @@
 """Payment CRUD operations."""
 
 from datetime import datetime, timezone
-
 from typing import Sequence
 
 from sqlalchemy import ColumnElement, UnaryExpression, func, select
@@ -180,7 +179,8 @@ class PaymentCRUD(
         )
 
         db.add(payment)
-        await db.commit()
+
+        await db.flush()
         await db.refresh(payment)
 
         return payment
@@ -217,7 +217,7 @@ class PaymentCRUD(
             payment.failure_code = failure_code
             payment.failure_message = failure_message
 
-        await db.commit()
+        await db.flush()
         await db.refresh(payment)
 
         return payment
@@ -277,7 +277,7 @@ class PaymentCRUD(
         except KeyError:
             raise invalid_carrier_error(carrier)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(payment)
 
         return payment
@@ -303,7 +303,7 @@ class PaymentCRUD(
         payment.fulfillment_status = FulfillmentStatus.DELIVERED
         payment.delivered_at = datetime.now(timezone.utc)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(payment)
 
         return payment

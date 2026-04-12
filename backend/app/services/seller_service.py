@@ -96,6 +96,8 @@ class SellerService:
             stripe_account_id=account.id,
         )
 
+        await self.db.commit()
+
         return SellerVerificationResponse(
             status="pending",
             stripe_account_id=account.id,
@@ -180,6 +182,7 @@ class SellerService:
                             rejection_reason=disabled_reason,
                         )
 
+                await self.db.commit()
                 await self.db.refresh(seller_profile)
 
         dashboard_url: str | None = None

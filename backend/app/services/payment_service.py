@@ -266,6 +266,8 @@ class PaymentService:
                     payment=payment,
                     status=PaymentStatus.SUCCESSFUL,
                 )
+
+                await self.db.commit()
         elif intent.status == "canceled":
             last_error = getattr(intent, "last_payment_error", None) or {}
             await payment_crud.update_status(
@@ -275,6 +277,7 @@ class PaymentService:
                 failure_code=last_error.get("code") if last_error else None,
                 failure_message=last_error.get("message") if last_error else None,
             )
+            await self.db.commit()
 
     async def process_webhook(self, event: stripe.Event) -> None:
         """
@@ -362,6 +365,8 @@ class PaymentService:
             payment=payment,
             status=PaymentStatus.SUCCESSFUL,
         )
+
+        await self.db.commit()
         logger.info(f"Payment {payment.id} marked as successful via webhook")
 
     async def _handle_payment_intent_failed(self, intent: dict) -> None:
@@ -392,6 +397,8 @@ class PaymentService:
             failure_code=last_error.get("code"),
             failure_message=last_error.get("message"),
         )
+
+        await self.db.commit()
         logger.info(f"Payment {payment.id} marked as failed via webhook")
 
     async def _handle_charge_refunded(self, charge: dict) -> None:
@@ -416,17 +423,21 @@ class PaymentService:
             payment=payment,
             status=PaymentStatus.REFUNDED,
         )
+
+        await self.db.commit()
         logger.info(f"Payment {payment.id} marked as refunded via webhook")
 
     async def _handle_account_updated(self, account: dict) -> None:
         """Handle account.updated webhook event for seller Connect accounts."""
         account_id = account.get("id")
+
         if not account_id:
             return
 
         seller_profile = await seller_crud.get_by_stripe_account_id(
             self.db, stripe_account_id=account_id
         )
+
         if not seller_profile:
             logger.warning(f"Seller profile not found for account {account_id}")
             return
@@ -462,22 +473,25 @@ class PaymentService:
                 logger.info(
                     f"Seller {seller_profile.user_id} verified via account.updated webhook"
                 )
-            return
-
-        disabled_reason = (account.get("requirements") or {}).get("disabled_reason")
-        if (
-            disabled_reason
-            and seller_profile.verification_status == SellerVerificationStatus.PENDING
+        elif (
+            seller_profile.verification_status == SellerVerificationStatus.PENDING
         ):
-            await seller_crud.update_verification_status(
-                self.db,
-                seller_profile=seller_profile,
-                status=SellerVerificationStatus.REJECTED,
-                rejection_reason=disabled_reason,
+            disabled_reason = (account.get("requirements") or {}).get(
+                "disabled_reason"
             )
-            logger.info(
-                f"Seller {seller_profile.user_id} rejected via account.updated webhook"
-            )
+
+            if disabled_reason:
+                await seller_crud.update_verification_status(
+                    self.db,
+                    seller_profile=seller_profile,
+                    status=SellerVerificationStatus.REJECTED,
+                    rejection_reason=disabled_reason,
+                )
+                logger.info(
+                    f"Seller {seller_profile.user_id} rejected via account.updated webhook"
+                )
+
+        await self.db.commit()
 
     async def get_pending_payouts(
         self, skip: int = 0, limit: int = 50
@@ -620,6 +634,7 @@ class PaymentService:
             tracking_number=tracking_number,
             carrier=carrier,
         )
+        await self.db.commit()
 
     async def confirm_delivery(
         self,
@@ -648,6 +663,7 @@ class PaymentService:
             raise forbidden_error("Can only confirm delivery for successful payments")
 
         await payment_crud.confirm_delivery(self.db, payment=payment)
+        await self.db.commit()
 
 
 def _get_payment_service(
