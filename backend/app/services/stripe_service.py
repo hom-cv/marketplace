@@ -24,12 +24,17 @@ class StripeService:
         stripe.api_key = self._settings.STRIPE_SECRET_KEY
         stripe.api_version = self._settings.STRIPE_API_VERSION
 
-    def create_express_account(self, email: str) -> stripe.Account:
+    def create_express_account(
+        self,
+        email: str,
+        idempotency_key: str | None = None,
+    ) -> stripe.Account:
         """
         Create a Stripe Connect Express account for a seller.
 
         Args:
             email: Seller email address.
+            idempotency_key: Optional idempotency key to safely retry.
 
         Returns:
             Stripe Account object.
@@ -44,6 +49,7 @@ class StripeService:
                     "transfers": {"requested": True},
                     "promptpay_payments": {"requested": True},
                 },
+                idempotency_key=idempotency_key,
             )
             logger.info(f"Created Stripe Express account: {account.id}")
             return account

@@ -80,6 +80,7 @@ class SellerService:
         try:
             account = self.stripe_service.create_express_account(
                 email=user.email_address,
+                idempotency_key=f"acct-{user.id}",
             )
             link = self.stripe_service.create_account_link(
                 account_id=account.id,
