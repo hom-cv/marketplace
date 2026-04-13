@@ -106,19 +106,7 @@ class SellerService:
             message="Complete onboarding with Stripe to start selling.",
         )
 
-    async def _complete_verification(
-        self, user: User, seller_profile: SellerProfile
-    ) -> None:
-        """Mark the seller as VERIFIED and assign the SELLER role."""
-        await seller_crud.update_verification_status(
-            self.db,
-            seller_profile=seller_profile,
-            status=SellerVerificationStatus.VERIFIED,
-        )
-        await seller_crud.assign_seller_role(self.db, user=user)
-        logger.info(f"Seller verification completed for user {user.id}")
-
-    async def check_and_update_verification(self, user: User) -> SellerStatusResponse:
+    async def get_seller_status_for_user(self, user: User) -> SellerStatusResponse:
         """
         Return the current seller status from the DB.
 
@@ -174,16 +162,8 @@ class SellerService:
         )
 
     async def get_seller_status(self, user: User) -> SellerStatusResponse:
-        """
-        Get the current seller status for a user.
-
-        Args:
-            user (User): The user to check.
-
-        Returns:
-            SellerStatusResponse: The current seller status.
-        """
-        return await self.check_and_update_verification(user)
+        """Get the current seller status for a user."""
+        return await self.get_seller_status_for_user(user)
 
     async def create_onboarding_refresh_link(self, user: User) -> str:
         """Generate a fresh onboarding link for a pending seller."""

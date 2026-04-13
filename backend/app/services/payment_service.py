@@ -512,12 +512,14 @@ class PaymentService:
                 f"the minimum transfer amount ({min_amount} satang)"
             )
 
-        # Get seller's Stripe connected account ID
+        # Get seller's Stripe connected account and verify it can receive funds
         seller_profile = await seller_crud.get_by_user_id(
             self.db, user_id=payment.seller_id
         )
         if not seller_profile or not seller_profile.stripe_account_id:
             raise bad_request_error("Seller does not have a verified payout account")
+        if not seller_profile.payouts_enabled:
+            raise bad_request_error("Seller's payout account is not enabled for payouts")
 
         try:
             transfer = self.stripe_service.create_transfer(
