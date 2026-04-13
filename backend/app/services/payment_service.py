@@ -8,7 +8,11 @@ import stripe
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.stripe import CURRENCY_SUBUNIT_MULTIPLIER, DEFAULT_CURRENCY
+from app.constants.stripe import (
+    CURRENCY_SUBUNIT_MULTIPLIER,
+    DEFAULT_CURRENCY,
+    WEBHOOK_EVENT_HANDLER_MAP,
+)
 from app.core.exceptions import bad_request_error, forbidden_error, not_found_error
 from app.core.settings import AnnotatedSettings, Settings
 from app.crud.payment import payment_crud
@@ -257,17 +261,10 @@ class PaymentService:
 
         data_object = event["data"]["object"]
 
-        if event_type == "payment_intent.succeeded":
-            await self._handle_payment_intent_succeeded(data_object)
-        elif event_type in (
-            "payment_intent.payment_failed",
-            "payment_intent.canceled",
-        ):
-            await self._handle_payment_intent_failed(data_object)
-        elif event_type == "charge.refunded":
-            await self._handle_charge_refunded(data_object)
-        elif event_type == "account.updated":
-            await self._handle_account_updated(data_object)
+        handler_name = WEBHOOK_EVENT_HANDLER_MAP.get(event_type)
+        if handler_name:
+            handler = getattr(self, f"_handle_{handler_name}")
+            await handler(data_object)
         else:
             logger.debug(f"Unhandled Stripe event: {event_type}")
 

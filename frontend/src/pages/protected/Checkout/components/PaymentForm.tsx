@@ -3,6 +3,7 @@ import { Loader } from "@mantine/core";
 import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
 import { Trans, useTranslation } from "react-i18next";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import type { PaymentIntent } from "@stripe/stripe-js";
 import {
   createCardPayment,
   createPromptPayPayment,
@@ -88,16 +89,12 @@ export function PaymentForm({
       }
 
       if (paymentMethod === "promptpay" && paymentIntent?.next_action) {
-        const next = paymentIntent.next_action as {
-          type?: string;
-          promptpay_display_qr_code?: {
-            image_url_png?: string;
-            image_url_svg?: string;
-            data?: string;
-          };
-        };
-        if (next.type === "promptpay_display_qr_code" && next.promptpay_display_qr_code) {
-          const qr = next.promptpay_display_qr_code;
+        const nextAction = (paymentIntent as PaymentIntent).next_action;
+        if (
+          nextAction?.type === "promptpay_display_qr_code" &&
+          nextAction.promptpay_display_qr_code
+        ) {
+          const qr = nextAction.promptpay_display_qr_code;
           if (qr.image_url_png) {
             onPromptPayQr({
               image_url_png: qr.image_url_png,

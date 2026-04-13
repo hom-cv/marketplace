@@ -79,8 +79,7 @@ export function BecomeSellerPage() {
         })
         .catch((err: Error) => setError(err.message));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search?.refresh]);
+  }, [search?.refresh, sellerStatus?.stripe_account_id]);
 
   // If already verified, show success state
   if (sellerStatus?.is_seller && sellerStatus?.verification_status === "verified") {
