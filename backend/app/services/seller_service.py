@@ -120,7 +120,11 @@ class SellerService:
 
     async def check_and_update_verification(self, user: User) -> SellerStatusResponse:
         """
-        Check the current Stripe account status and update the seller profile.
+        Return the current seller status from the DB.
+
+        This is a pure read — the ``account.updated`` webhook is the single
+        writer for seller profile state. Dashboard and onboarding links are
+        generated on demand since they're single-use and short-lived.
 
         Args:
             user (User): The user to check.
@@ -133,67 +137,15 @@ class SellerService:
         if not seller_profile:
             return SellerStatusResponse(is_seller=False, verification_status=None)
 
-        if seller_profile.stripe_account_id:
-            try:
-                account = self.stripe_service.retrieve_account(
-                    seller_profile.stripe_account_id
-                )
-            except stripe.StripeError as e:
-                logger.error(f"Error retrieving Stripe account: {e}")
-                account = None
-
-            if account is not None:
-                charges_enabled = bool(account.charges_enabled)
-                payouts_enabled = bool(account.payouts_enabled)
-                details_submitted = bool(account.details_submitted)
-
-                await seller_crud.update_account_status(
-                    self.db,
-                    seller_profile=seller_profile,
-                    charges_enabled=charges_enabled,
-                    payouts_enabled=payouts_enabled,
-                    details_submitted=details_submitted,
-                )
-
-                fully_onboarded = (
-                    charges_enabled and payouts_enabled and details_submitted
-                )
-                if (
-                    fully_onboarded
-                    and seller_profile.verification_status
-                    != SellerVerificationStatus.VERIFIED
-                ):
-                    await self._complete_verification(user, seller_profile)
-                else:
-                    requirements = getattr(account, "requirements", None)
-                    disabled_reason = (
-                        requirements.get("disabled_reason")
-                        if requirements
-                        else None
-                    )
-                    if (
-                        disabled_reason
-                        and seller_profile.verification_status
-                        == SellerVerificationStatus.PENDING
-                    ):
-                        await seller_crud.update_verification_status(
-                            self.db,
-                            seller_profile=seller_profile,
-                            status=SellerVerificationStatus.REJECTED,
-                            rejection_reason=disabled_reason,
-                        )
-
-                await self.db.commit()
-                await self.db.refresh(seller_profile)
+        is_verified = (
+            seller_profile.verification_status == SellerVerificationStatus.VERIFIED
+        )
 
         dashboard_url: str | None = None
         onboarding_url: str | None = None
         if seller_profile.stripe_account_id:
             try:
-                if (
-                    seller_profile.verification_status
-                    == SellerVerificationStatus.VERIFIED
-                ):
+                if is_verified:
                     dashboard_url = self.stripe_service.create_dashboard_login_link(
                         seller_profile.stripe_account_id
                     ).url
@@ -211,8 +163,7 @@ class SellerService:
                 logger.error(f"Error creating Stripe link for status response: {e}")
 
         return SellerStatusResponse(
-            is_seller=seller_profile.verification_status
-            == SellerVerificationStatus.VERIFIED,
+            is_seller=is_verified,
             verification_status=seller_profile.verification_status.value.lower(),
             charges_enabled=seller_profile.charges_enabled,
             payouts_enabled=seller_profile.payouts_enabled,

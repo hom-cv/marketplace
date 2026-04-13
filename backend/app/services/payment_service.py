@@ -230,20 +230,6 @@ class PaymentService:
         if payment.buyer_id != user.id and payment.seller_id != user.id:
             raise forbidden_error("You are not authorized to view this payment")
 
-        # If still pending, poll Stripe for the latest state so the UI doesn't
-        # have to wait for the webhook to arrive.
-        if (
-            payment.status == PaymentStatus.PENDING
-            and payment.stripe_payment_intent_id
-        ):
-            try:
-                intent = self.stripe_service.retrieve_payment_intent(
-                    payment.stripe_payment_intent_id
-                )
-                await self._sync_status_from_intent(payment, intent)
-            except stripe.StripeError as e:
-                logger.error(f"Error retrieving Stripe PaymentIntent: {e}")
-
         return PaymentStatusResponse(
             payment_id=payment.id,
             status=payment.status.value.lower(),
@@ -254,30 +240,6 @@ class PaymentService:
             failure_code=payment.failure_code,
             failure_message=payment.failure_message,
         )
-
-    async def _sync_status_from_intent(
-        self, payment: Payment, intent: stripe.PaymentIntent
-    ) -> None:
-        """Map a PaymentIntent status onto a Payment row."""
-        if intent.status == "succeeded":
-            if payment.status != PaymentStatus.SUCCESSFUL:
-                await payment_crud.update_status(
-                    self.db,
-                    payment=payment,
-                    status=PaymentStatus.SUCCESSFUL,
-                )
-
-                await self.db.commit()
-        elif intent.status == "canceled":
-            last_error = getattr(intent, "last_payment_error", None) or {}
-            await payment_crud.update_status(
-                self.db,
-                payment=payment,
-                status=PaymentStatus.FAILED,
-                failure_code=last_error.get("code") if last_error else None,
-                failure_message=last_error.get("message") if last_error else None,
-            )
-            await self.db.commit()
 
     async def process_webhook(self, event: stripe.Event) -> None:
         """
@@ -480,7 +442,10 @@ class PaymentService:
                 "disabled_reason"
             )
 
-            if disabled_reason:
+            # Only treat "rejected.*" reasons as terminal. Other values like
+            # "requirements.past_due" or "under_review" are transient — the
+            # seller can still complete onboarding or wait for Stripe review.
+            if disabled_reason and disabled_reason.startswith("rejected"):
                 await seller_crud.update_verification_status(
                     self.db,
                     seller_profile=seller_profile,
