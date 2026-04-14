@@ -1,7 +1,6 @@
 """Payment service for handling payment processing."""
 
 import logging
-from datetime import datetime, timezone
 from typing import Annotated
 
 import stripe
@@ -141,8 +140,10 @@ class PaymentService:
         if (
             not seller_profile
             or seller_profile.verification_status != SellerVerificationStatus.VERIFIED
+            or not seller_profile.stripe_account_id
         ):
             raise bad_request_error("Seller is not verified")
+        seller_stripe_account_id: str = seller_profile.stripe_account_id
 
         # Calculate total with all fees using pricing service
         method_type = (
@@ -179,11 +180,15 @@ class PaymentService:
             shipping_postal_code=shipping.postal_code,
         )
 
+        application_fee_amount = fees["platform_fee"] + fees["processing_fee"]
+
         try:
             intent = self.stripe_service.create_payment_intent(
                 amount=amount,
                 currency=currency,
                 payment_method_types=payment_method_types,
+                destination_account_id=seller_stripe_account_id,
+                application_fee_amount=application_fee_amount,
                 metadata={
                     "payment_id": str(payment.id),
                     "post_id": str(post.id),
@@ -191,7 +196,6 @@ class PaymentService:
                     "seller_id": str(post.user_id),
                 },
                 description=f"Purchase: {post.title}",
-                transfer_group=f"payment_{payment.id}",
                 idempotency_key=f"pi-{payment.id}",
             )
         except stripe.StripeError as e:
@@ -201,6 +205,9 @@ class PaymentService:
         payment.stripe_payment_intent_id = intent.id
         await self.db.commit()
         await self.db.refresh(payment)
+
+        if not intent.client_secret:
+            raise bad_request_error("Payment intent missing client_secret")
 
         return PaymentResponse(
             payment_id=payment.id,
@@ -258,6 +265,9 @@ class PaymentService:
         """
         event_type = event.get("type")
         logger.info(f"Processing Stripe webhook: {event_type}")
+
+        if not event_type:
+            return
 
         data_object = event["data"]["object"]
 
@@ -519,16 +529,15 @@ class PaymentService:
             raise bad_request_error("Seller's payout account is not enabled for payouts")
 
         try:
-            transfer = self.stripe_service.create_transfer(
+            payout = self.stripe_service.create_seller_payout(
+                account_id=seller_profile.stripe_account_id,
                 amount=payment.seller_payout,
-                destination_account_id=seller_profile.stripe_account_id,
                 currency=payment.currency,
                 metadata={
                     "payment_id": str(payment.id),
                     "seller_id": str(payment.seller_id),
                 },
-                transfer_group=f"payment_{payment.id}",
-                idempotency_key=f"tr-payment-{payment.id}",
+                idempotency_key=f"po-payment-{payment.id}",
             )
         except stripe.StripeError as e:
             logger.error(f"Stripe error during payout for payment {payment_id}: {e}")
@@ -536,14 +545,14 @@ class PaymentService:
 
         try:
             await payment_crud.update_transfer(
-                self.db, payment=payment, transfer_id=transfer.id
+                self.db, payment=payment, transfer_id=payout.id
             )
             await self.db.commit()
         except Exception:
             await self.db.rollback()
             logger.critical(
-                f"TRANSFER RECORDED BUT DB UPDATE FAILED. "
-                f"payment_id={payment_id}, transfer_id={transfer.id}, "
+                f"PAYOUT RECORDED BUT DB UPDATE FAILED. "
+                f"payment_id={payment_id}, payout_id={payout.id}, "
                 f"amount={payment.seller_payout} satang, "
                 f"seller_id={payment.seller_id}. "
                 f"Manual reconciliation required."
@@ -552,12 +561,12 @@ class PaymentService:
 
         logger.info(
             f"Payout created for payment {payment_id}: "
-            f"transfer {transfer.id}, amount {payment.seller_payout} satang"
+            f"payout {payout.id}, amount {payment.seller_payout} satang"
         )
 
         return PayoutResponse(
             payment_id=payment_id,
-            transfer_id=transfer.id,
+            transfer_id=payout.id,
             amount=payment.seller_payout,
             status="transferred",
         )
@@ -628,6 +637,15 @@ class PaymentService:
 
         await payment_crud.confirm_delivery(self.db, payment=payment)
         await self.db.commit()
+
+        try:
+            await self.create_payout(payment.id)
+        except Exception as e:
+            # Common reason: charge is still in T+2 pending and seller's available
+            # balance is insufficient. Admin can retry via /admin/payouts/{id}.
+            logger.warning(
+                f"Auto-payout after delivery failed for payment {payment.id}: {e}"
+            )
 
 
 def _get_payment_service(

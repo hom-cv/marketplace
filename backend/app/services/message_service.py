@@ -24,7 +24,8 @@ from app.schemas.conversation import (
     WebSocketMessageSchema,
 )
 from app.services.message_scanner import scan_message
-from app.services.ws_manager import ConnectionManager, manager as _ws_manager
+from app.services.ws_manager import ConnectionManager
+from app.services.ws_manager import manager as _ws_manager
 
 
 class MessageService:

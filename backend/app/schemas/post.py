@@ -4,8 +4,9 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 
-from app.schemas.user import UserResponseSchema
 from pydantic import BaseModel, Field, ValidationError, model_validator
+
+from app.schemas.user import UserResponseSchema
 
 
 class PostType(str, Enum):

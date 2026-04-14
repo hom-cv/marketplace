@@ -7,6 +7,7 @@ using mocked CRUDs (allowing real service logic to run).
 from unittest.mock import MagicMock
 
 from httpx import AsyncClient
+
 from tests.integration.conftest import create_mock_user
 
 

@@ -20,14 +20,9 @@ export interface SellerStatusResponse {
   payouts_enabled: boolean;
   details_submitted: boolean;
   verified_at: string | null;
-  dashboard_url: string | null;
   onboarding_url: string | null;
 }
 
 export interface OnboardingLinkResponse {
   onboarding_url: string;
-}
-
-export interface DashboardLinkResponse {
-  dashboard_url: string;
 }

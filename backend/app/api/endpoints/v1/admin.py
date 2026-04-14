@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.constants.message_flag import MessageFlagStatus
 from app.core.security import AnnotatedAdminUser
+from app.models.payment import Payment
 from app.schemas.ban import (
     BanPostRequest,
     BanUserRequest,
@@ -15,7 +16,6 @@ from app.schemas.ban import (
 )
 from app.schemas.conversation import ConversationDetailSchema
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
-from app.models.payment import Payment
 from app.schemas.payment import (
     PayoutHistoryItem,
     PayoutHistoryListResponse,
@@ -363,9 +363,9 @@ async def create_payout(
     payment_id: int,
 ) -> PayoutResponse:
     """
-    Initiate a payout (Stripe transfer) for a payment.
+    Initiate a payout from the seller's Stripe balance to their bank.
 
-    **Admin only.** Transfers the seller_payout amount to the seller's Stripe
-    connected account.
+    **Admin only.** Only valid after the item is marked delivered and before
+    funds have been previously paid out.
     """
     return await payment_service.create_payout(payment_id)

@@ -1,11 +1,12 @@
 /**
- * BecomeSeller page for Stripe Connect Express onboarding.
+ * BecomeSeller page for Stripe Connect Standard onboarding.
  *
  * Seller registration is invite-gated. On submit, the backend creates a
- * Stripe Express account and returns a one-time onboarding URL. We redirect
- * the browser to that URL, where Stripe collects KYC and bank details. The
- * user is returned to this page (or the refresh URL) afterwards, at which
- * point we poll the backend for the latest account state.
+ * Stripe Connect Standard account and returns a one-time onboarding URL.
+ * We redirect the browser to that URL, where Stripe collects KYC and bank
+ * details. The user is returned to this page (or the refresh URL)
+ * afterwards, at which point we poll the backend for the latest account
+ * state. Verified sellers manage payouts on dashboard.stripe.com directly.
  */
 
 import { useEffect, useState } from "react";
@@ -26,7 +27,7 @@ import { useForm } from "@mantine/form";
 import { IconBuildingBank, IconCheck, IconAlertCircle, IconTicket } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useSellerStatus, useRegisterSellerMutation } from "@/hooks/useSeller";
-import { getOnboardingLink, getDashboardLink } from "@/api/seller";
+import { getOnboardingLink } from "@/api/seller";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate, useSearch } from "@tanstack/react-router";
@@ -72,14 +73,14 @@ export function BecomeSellerPage() {
   // When Stripe redirects back with ?refresh=true, generate a fresh link
   // and send the user back through onboarding.
   useEffect(() => {
-    if (search?.refresh && sellerStatus?.stripe_account_id) {
+    if (search?.refresh) {
       getOnboardingLink()
         .then((data) => {
           window.location.href = data.onboarding_url;
         })
         .catch((err: Error) => setError(err.message));
     }
-  }, [search?.refresh, sellerStatus?.stripe_account_id]);
+  }, [search?.refresh]);
 
   // If already verified, show success state
   if (sellerStatus?.is_seller && sellerStatus?.verification_status === "verified") {
@@ -98,13 +99,10 @@ export function BecomeSellerPage() {
               </Button>
               <Button
                 variant="light"
-                onClick={() =>
-                  getDashboardLink()
-                    .then((data) => {
-                      window.location.href = data.dashboard_url;
-                    })
-                    .catch((err: Error) => setError(err.message))
-                }
+                component="a"
+                href="https://dashboard.stripe.com/"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 {t("seller.managePayoutAccount")}
               </Button>
@@ -153,8 +151,7 @@ export function BecomeSellerPage() {
   // If onboarding has been started but not yet completed
   if (
     sellerStatus?.verification_status === "pending" &&
-    !sellerStatus?.details_submitted &&
-    sellerStatus?.stripe_account_id
+    !sellerStatus?.details_submitted
   ) {
     return (
       <Container size="sm" py="xl">

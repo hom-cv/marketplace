@@ -7,9 +7,10 @@ using mocked CRUDs (allowing real service logic to run).
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+from httpx import AsyncClient
+
 from app.models.like import Like
 from app.models.post import Post, PostType
-from httpx import AsyncClient
 from tests.integration.conftest import create_mock_user
 
 

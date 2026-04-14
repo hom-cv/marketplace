@@ -4,9 +4,11 @@ import logging
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.message_flag import MessageFlagStatus
+from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.core.exceptions import bad_request_error, conflict_error, not_found_error
 from app.crud.ban import ban_crud
 from app.crud.message_flag import message_flag_crud
@@ -14,11 +16,12 @@ from app.crud.post import post_crud
 from app.crud.report import report_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
-from app.constants.message_flag import MessageFlagStatus
-from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models.message_flag import MessageFlag
-from app.models.payment import Payment, PaymentStatus, FulfillmentStatus
+from app.models.payment import FulfillmentStatus, Payment, PaymentStatus
+from app.models.post_ban import PostBan
+from app.models.report import Report
 from app.models.user import User
+from app.models.user_ban import UserBan
 from app.schemas.ban import (
     PostBanListResponse,
     PostBanResponse,
@@ -27,10 +30,6 @@ from app.schemas.ban import (
 )
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
 from app.schemas.report import ReportListResponse, ReportResponse
-from app.constants.report import ReportStatus
-from app.models.post_ban import PostBan
-from app.models.report import Report
-from app.models.user_ban import UserBan
 
 logger = logging.getLogger(__name__)
 
@@ -213,7 +212,13 @@ class ModerationService:
         result = await self.db.execute(query)
         row = result.one()
 
-        return tuple(count or 0 for count in row)
+        return (
+            row[0] or 0,
+            row[1] or 0,
+            row[2] or 0,
+            row[3] or 0,
+            row[4] or 0,
+        )
 
     async def ban_user(
         self,

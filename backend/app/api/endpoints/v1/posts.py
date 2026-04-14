@@ -4,13 +4,16 @@ import json
 from decimal import Decimal
 from typing import Annotated, Literal, Optional
 
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
 )
 from app.core.security import get_current_user, get_current_user_optional
-from app.crud.like import LikeCRUD, get_like_crud, AnnotatedLikeCRUD
-from app.crud.post import PostCRUD, get_post_crud, AnnotatedPostCRUD
+from app.crud.like import AnnotatedLikeCRUD
+from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.models.post import PostType
@@ -24,8 +27,6 @@ from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
@@ -44,8 +45,8 @@ async def create_post(
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
     price: Annotated[Decimal, Form(gt=0, le=1000000)],
+    size: Annotated[str, Form(min_length=1, max_length=20)],
     shipping_cost: Annotated[Decimal, Form(ge=0, le=10000)] = Decimal("0"),
-    size: Annotated[str, Form(min_length=1, max_length=20)] = ...,
     measurements: Annotated[str | None, Form()] = None,
     images: Annotated[list[UploadFile], File()] = [],
 ) -> PostResponseSchema:

@@ -8,9 +8,10 @@ Create Date: 2025-12-04 01:20:20.850187
 
 from typing import Sequence, Union
 
-from alembic import op
 from sqlalchemy import BigInteger, Enum
 from sqlalchemy.sql import column, table
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "25db68c57aba"

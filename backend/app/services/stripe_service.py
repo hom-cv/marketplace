@@ -24,13 +24,13 @@ class StripeService:
         stripe.api_key = self._settings.STRIPE_SECRET_KEY
         stripe.api_version = self._settings.STRIPE_API_VERSION
 
-    def create_express_account(
+    def create_connect_account(
         self,
         email: str,
         idempotency_key: str | None = None,
     ) -> stripe.Account:
         """
-        Create a Stripe Connect Express account for a seller.
+        Create a Stripe Connect Standard account for a seller.
 
         Args:
             email: Seller email address.
@@ -41,20 +41,16 @@ class StripeService:
         """
         try:
             account = stripe.Account.create(
-                type="express",
+                type="standard",
                 country="TH",
                 email=email,
-                capabilities={
-                    "card_payments": {"requested": True},
-                    "transfers": {"requested": True},
-                    "promptpay_payments": {"requested": True},
-                },
+                settings={"payouts": {"schedule": {"interval": "manual"}}},
                 idempotency_key=idempotency_key,
             )
-            logger.info(f"Created Stripe Express account: {account.id}")
+            logger.info(f"Created Stripe Connect account: {account.id}")
             return account
         except stripe.StripeError as e:
-            logger.error(f"Failed to create Stripe Express account: {e}")
+            logger.error(f"Failed to create Stripe Connect account: {e}")
             raise
 
     def create_account_link(
@@ -89,24 +85,6 @@ class StripeService:
             logger.error(f"Failed to create Stripe account link: {e}")
             raise
 
-    def create_dashboard_login_link(self, account_id: str) -> stripe.LoginLink:
-        """
-        Create a login link to the Stripe Express Dashboard for a verified seller.
-
-        Args:
-            account_id: Stripe account ID.
-
-        Returns:
-            Stripe LoginLink object.
-        """
-        try:
-            return stripe.Account.create_login_link(account_id)
-        except stripe.StripeError as e:
-            logger.error(
-                f"Failed to create Stripe dashboard login link for {account_id}: {e}"
-            )
-            raise
-
     def retrieve_account(self, account_id: str) -> stripe.Account:
         """
         Retrieve a Stripe Connect account by ID.
@@ -128,22 +106,27 @@ class StripeService:
         amount: int,
         currency: str,
         payment_method_types: list[str],
+        destination_account_id: str,
+        application_fee_amount: int,
         metadata: dict[str, Any] | None = None,
         description: str | None = None,
-        transfer_group: str | None = None,
         idempotency_key: str | None = None,
     ) -> stripe.PaymentIntent:
         """
-        Create a Stripe PaymentIntent.
+        Create a Stripe PaymentIntent as a destination charge.
+
+        Funds route directly to the connected account; `application_fee_amount`
+        stays on the platform balance.
 
         Args:
             amount: Amount in smallest currency unit (satang for THB).
             currency: Currency code (e.g., 'thb').
             payment_method_types: List of allowed payment method types
                 (e.g., ['card'], ['promptpay']).
+            destination_account_id: Connected seller account to route funds to.
+            application_fee_amount: Platform's cut, in the smallest currency unit.
             metadata: Optional metadata to attach to the intent.
             description: Optional human-readable description.
-            transfer_group: Optional transfer group used to link later transfers.
             idempotency_key: Optional idempotency key to safely retry.
 
         Returns:
@@ -154,9 +137,10 @@ class StripeService:
                 amount=amount,
                 currency=currency,
                 payment_method_types=payment_method_types,
+                transfer_data={"destination": destination_account_id},
+                application_fee_amount=application_fee_amount,
                 metadata=metadata or {},
                 description=description,
-                transfer_group=transfer_group,
                 idempotency_key=idempotency_key,
             )
             logger.info(
@@ -188,42 +172,47 @@ class StripeService:
             )
             raise
 
-    def create_transfer(
+    def create_seller_payout(
         self,
+        account_id: str,
         amount: int,
-        destination_account_id: str,
         currency: str = "thb",
         metadata: dict[str, Any] | None = None,
-        transfer_group: str | None = None,
         idempotency_key: str | None = None,
-    ) -> stripe.Transfer:
+    ) -> stripe.Payout:
         """
-        Create a Stripe transfer from the platform balance to a connected account.
+        Trigger a bank payout from a connected seller's Stripe balance.
+
+        Required because connected accounts are created with manual payout
+        schedule — funds sit on the seller's Stripe balance until the platform
+        explicitly releases them after delivery.
 
         Args:
+            account_id: Connected account ID to pay out on behalf of.
             amount: Amount in smallest currency unit (satang for THB).
-            destination_account_id: Connected account ID to transfer to.
             currency: Currency code (default 'thb').
-            metadata: Optional metadata to attach to the transfer.
-            transfer_group: Optional transfer group, used to link charges to payouts.
+            metadata: Optional metadata to attach to the payout.
             idempotency_key: Optional idempotency key for safe retry.
 
         Returns:
-            Stripe Transfer object.
+            Stripe Payout object.
         """
         try:
-            transfer = stripe.Transfer.create(
+            payout = stripe.Payout.create(
                 amount=amount,
                 currency=currency,
-                destination=destination_account_id,
                 metadata=metadata or {},
-                transfer_group=transfer_group,
                 idempotency_key=idempotency_key,
+                stripe_account=account_id,
             )
-            logger.info(f"Created Stripe transfer: {transfer.id}")
-            return transfer
+            logger.info(
+                f"Created Stripe payout {payout.id} on account {account_id}"
+            )
+            return payout
         except stripe.StripeError as e:
-            logger.error(f"Failed to create Stripe transfer: {e}")
+            logger.error(
+                f"Failed to create Stripe payout on account {account_id}: {e}"
+            )
             raise
 
     def construct_event(

@@ -4,9 +4,9 @@ from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models._base import Base
 from app.models.conversation import Conversation
 from app.models.follow import Follow
-from app.models.message import Message
 from app.models.invite import SellerInvite
 from app.models.like import Like
+from app.models.message import Message
 from app.models.message_flag import MessageFlag
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
 from app.models.post import Post

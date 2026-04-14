@@ -1,9 +1,9 @@
 """Like CRUD operations."""
 
-from typing import Sequence, Annotated
-from fastapi import Depends
+from typing import Annotated, Sequence
 
-from sqlalchemy import delete, exists, func, select, literal
+from fastapi import Depends
+from sqlalchemy import delete, exists, func, literal, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload

@@ -22,8 +22,8 @@ class SellerVerificationResponse(BaseModel):
     status: str
     stripe_account_id: str | None = None
     onboarding_url: str | None = Field(
-        None,
-        description="One-time URL to complete Stripe Express onboarding",
+        default=None,
+        description="One-time URL to complete Stripe Connect onboarding",
     )
     message: str
 
@@ -37,13 +37,9 @@ class SellerStatusResponse(BaseModel):
     payouts_enabled: bool = False
     details_submitted: bool = False
     verified_at: datetime | None = None
-    dashboard_url: str | None = Field(
-        None,
-        description="One-time URL to the Stripe Express dashboard (verified sellers only)",
-    )
     onboarding_url: str | None = Field(
-        None,
-        description="One-time URL to resume Stripe Express onboarding (pending sellers only)",
+        default=None,
+        description="One-time URL to resume Stripe Connect onboarding (pending sellers only)",
     )
 
     model_config = {"from_attributes": True}
@@ -53,9 +49,3 @@ class OnboardingLinkResponse(BaseModel):
     """Schema returned when a fresh Stripe onboarding link is generated."""
 
     onboarding_url: str
-
-
-class DashboardLinkResponse(BaseModel):
-    """Schema returned when a Stripe Express dashboard login link is generated."""
-
-    dashboard_url: str

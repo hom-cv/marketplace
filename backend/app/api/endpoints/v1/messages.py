@@ -3,6 +3,8 @@
 import logging
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, Path, Query, WebSocket
+
 from app.core.jwt import create_ws_ticket
 from app.core.security import decode_access_token, get_current_user
 from app.crud.conversation import conversation_crud
@@ -21,7 +23,6 @@ from app.schemas.conversation import (
 from app.services.message_service import AnnotatedMessageService
 from app.services.ws_manager import manager
 from app.services.ws_service import WebSocketService
-from fastapi import APIRouter, Depends, Path, Query, WebSocket
 
 logger = logging.getLogger(__name__)
 

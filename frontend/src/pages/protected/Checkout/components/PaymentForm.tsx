@@ -3,7 +3,6 @@ import { Loader } from "@mantine/core";
 import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
 import { Trans, useTranslation } from "react-i18next";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import type { PaymentIntent } from "@stripe/stripe-js";
 import {
   createCardPayment,
   createPromptPayPayment,
@@ -17,6 +16,7 @@ import { formatThb } from "@/utils/currency";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { useAuthStore } from "@/stores/authStore";
 import type { PaymentMethod } from "../CheckoutPage";
 import styles from "../CheckoutPage.module.css";
 
@@ -44,10 +44,16 @@ export function PaymentForm({
   const { t } = useTranslation("common");
   const stripe = useStripe();
   const elements = useElements();
+  const buyerEmail = useAuthStore((state) => state.user?.email_address);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
 
   const handleSubmit = async () => {
-    if (!stripe || !elements) {
+    if (!stripe) {
+      onError(t("checkout.paymentSystemNotLoaded"));
+      return;
+    }
+    if (paymentMethod === "card" && (!elements || !isElementReady)) {
       onError(t("checkout.paymentSystemNotLoaded"));
       return;
     }
@@ -56,51 +62,78 @@ export function PaymentForm({
     setIsSubmitting(true);
 
     try {
-      // Validate the Payment Element before creating the PaymentIntent
-      const submit = await elements.submit();
-      if (submit.error) {
-        onError(submit.error.message ?? "Payment validation failed");
-        return;
-      }
+      if (paymentMethod === "card") {
+        const submit = await elements!.submit();
+        if (submit.error) {
+          onError(submit.error.message ?? "Payment validation failed");
+          return;
+        }
 
-      // Create the PaymentIntent on the backend
-      const intent =
-        paymentMethod === "card"
-          ? await createCardPayment({ post_id: postId, shipping })
-          : await createPromptPayPayment({ post_id: postId, shipping });
+        const intent = await createCardPayment({ post_id: postId, shipping });
+        onIntentCreated(intent);
 
-      onIntentCreated(intent);
+        const returnUrl = `${window.location.origin}/payment-return`;
+        const { error } = await stripe.confirmPayment({
+          elements: elements!,
+          clientSecret: intent.client_secret,
+          confirmParams: { return_url: returnUrl },
+          redirect: "if_required",
+        });
 
-      const returnUrl = `${window.location.origin}/payment-return`;
+        if (error) {
+          onError(error.message ?? "Payment failed");
+          return;
+        }
+      } else {
+        // PromptPay: no PaymentElement to mount. Create the intent server-side,
+        // then confirm directly with billing details from the shipping address
+        // so Stripe returns next_action.promptpay_display_qr_code inline.
+        const intent = await createPromptPayPayment({
+          post_id: postId,
+          shipping,
+        });
+        onIntentCreated(intent);
 
-      // Confirm with Stripe.js. With redirect:'if_required' Stripe only
-      // redirects for off-session methods that require it; card 3DS uses an
-      // inline modal and PromptPay returns next_action inline.
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        clientSecret: intent.client_secret,
-        confirmParams: { return_url: returnUrl },
-        redirect: "if_required",
-      });
+        const { error, paymentIntent } = await stripe.confirmPromptPayPayment(
+          intent.client_secret,
+          {
+            payment_method: {
+              billing_details: {
+                name: shipping.name,
+                phone: shipping.phone,
+                email: buyerEmail,
+              },
+            },
+          },
+        );
 
-      if (error) {
-        onError(error.message ?? "Payment failed");
-        return;
-      }
+        if (error) {
+          onError(error.message ?? "Payment failed");
+          return;
+        }
 
-      if (paymentMethod === "promptpay" && paymentIntent?.next_action) {
-        const nextAction = (paymentIntent as PaymentIntent).next_action;
-        if (
-          nextAction?.type === "promptpay_display_qr_code" &&
-          nextAction.promptpay_display_qr_code
-        ) {
-          const qr = nextAction.promptpay_display_qr_code;
-          if (qr.image_url_png) {
-            onPromptPayQr({
-              image_url_png: qr.image_url_png,
-              image_url_svg: qr.image_url_svg,
-              data: qr.data,
-            });
+        if (paymentIntent?.next_action) {
+          // Stripe's TS types don't yet declare promptpay_display_qr_code on NextAction.
+          const nextAction = paymentIntent.next_action as {
+            type: string;
+            promptpay_display_qr_code?: {
+              image_url_png?: string;
+              image_url_svg?: string;
+              data?: string;
+            };
+          };
+          if (
+            nextAction.type === "promptpay_display_qr_code" &&
+            nextAction.promptpay_display_qr_code
+          ) {
+            const qr = nextAction.promptpay_display_qr_code;
+            if (qr.image_url_png) {
+              onPromptPayQr({
+                image_url_png: qr.image_url_png,
+                image_url_svg: qr.image_url_svg,
+                data: qr.data,
+              });
+            }
           }
         }
       }
@@ -111,7 +144,10 @@ export function PaymentForm({
     }
   };
 
-  const isLoading = isSubmitting || !stripe || !elements;
+  const isLoading =
+    isSubmitting ||
+    !stripe ||
+    (paymentMethod === "card" && (!elements || !isElementReady));
 
   return (
     <Card title={t("checkout.paymentMethod")}>
@@ -139,11 +175,16 @@ export function PaymentForm({
         </button>
       </div>
 
-      {/* Stripe Payment Element — shows card fields for card, a minimal
-          confirmation UI for PromptPay */}
-      <div className={styles.paymentElementWrapper}>
-        <PaymentElement options={{ layout: "tabs" }} />
-      </div>
+      {/* Stripe Payment Element for card; PromptPay is handled via
+          stripe.confirmPromptPayPayment and renders no input UI here. */}
+      {paymentMethod === "card" && (
+        <div className={styles.paymentElementWrapper}>
+          <PaymentElement
+            options={{ layout: "tabs" }}
+            onReady={() => setIsElementReady(true)}
+          />
+        </div>
+      )}
 
       {/* Notice */}
       <Alert variant="info" margin="vertical">

@@ -1,5 +1,18 @@
-from app.api.endpoints.v1 import admin, auth, follows, invites, likes, messages, payments, posts, reports, seller, users
 from fastapi import APIRouter
+
+from app.api.endpoints.v1 import (
+    admin,
+    auth,
+    follows,
+    invites,
+    likes,
+    messages,
+    payments,
+    posts,
+    reports,
+    seller,
+    users,
+)
 
 api_router = APIRouter(prefix="/api/v1")
 

@@ -11,7 +11,7 @@ from app.core.exceptions import bad_request_error, conflict_error
 from app.core.settings import AnnotatedSettings, Settings
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.models.seller import SellerProfile, SellerVerificationStatus
+from app.models.seller import SellerVerificationStatus
 from app.models.user import User
 from app.schemas.seller import (
     SellerStatusResponse,
@@ -44,7 +44,7 @@ class SellerService:
         self, user: User, verification_request: SellerVerificationRequest
     ) -> SellerVerificationResponse:
         """
-        Register a user as a seller by creating a Stripe Express account.
+        Register a user as a seller by creating a Stripe Connect Standard account.
 
         Args:
             user (User): The user to register as a seller.
@@ -78,9 +78,9 @@ class SellerService:
         )
 
         try:
-            account = self.stripe_service.create_express_account(
+            account = self.stripe_service.create_connect_account(
                 email=user.email_address,
-                idempotency_key=f"acct-{user.id}",
+                idempotency_key=f"acct-v4-{user.id}",
             )
             link = self.stripe_service.create_account_link(
                 account_id=account.id,
@@ -111,8 +111,8 @@ class SellerService:
         Return the current seller status from the DB.
 
         This is a pure read — the ``account.updated`` webhook is the single
-        writer for seller profile state. Dashboard and onboarding links are
-        generated on demand since they're single-use and short-lived.
+        writer for seller profile state. Onboarding links are generated on
+        demand since they're single-use and short-lived.
 
         Args:
             user (User): The user to check.
@@ -129,24 +129,18 @@ class SellerService:
             seller_profile.verification_status == SellerVerificationStatus.VERIFIED
         )
 
-        dashboard_url: str | None = None
         onboarding_url: str | None = None
-        if seller_profile.stripe_account_id:
+        if (
+            seller_profile.stripe_account_id
+            and seller_profile.verification_status == SellerVerificationStatus.PENDING
+            and not seller_profile.details_submitted
+        ):
             try:
-                if is_verified:
-                    dashboard_url = self.stripe_service.create_dashboard_login_link(
-                        seller_profile.stripe_account_id
-                    ).url
-                elif (
-                    seller_profile.verification_status
-                    == SellerVerificationStatus.PENDING
-                    and not seller_profile.details_submitted
-                ):
-                    onboarding_url = self.stripe_service.create_account_link(
-                        account_id=seller_profile.stripe_account_id,
-                        return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
-                        refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
-                    ).url
+                onboarding_url = self.stripe_service.create_account_link(
+                    account_id=seller_profile.stripe_account_id,
+                    return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
+                    refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
+                ).url
             except stripe.StripeError as e:
                 logger.error(f"Error creating Stripe link for status response: {e}")
 
@@ -157,7 +151,6 @@ class SellerService:
             payouts_enabled=seller_profile.payouts_enabled,
             details_submitted=seller_profile.details_submitted,
             verified_at=seller_profile.verified_at,
-            dashboard_url=dashboard_url,
             onboarding_url=onboarding_url,
         )
 
@@ -180,27 +173,6 @@ class SellerService:
         except stripe.StripeError as e:
             logger.error(f"Failed to refresh Stripe onboarding link: {e}")
             raise bad_request_error("Failed to create onboarding link")
-
-        return link.url
-
-    async def create_dashboard_link(self, user: User) -> str:
-        """Generate a Stripe Express dashboard login link for a verified seller."""
-        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
-        if (
-            not seller_profile
-            or not seller_profile.stripe_account_id
-            or seller_profile.verification_status
-            != SellerVerificationStatus.VERIFIED
-        ):
-            raise bad_request_error("Seller is not verified")
-
-        try:
-            link = self.stripe_service.create_dashboard_login_link(
-                seller_profile.stripe_account_id
-            )
-        except stripe.StripeError as e:
-            logger.error(f"Failed to create Stripe dashboard link: {e}")
-            raise bad_request_error("Failed to create dashboard link")
 
         return link.url
 

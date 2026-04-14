@@ -13,7 +13,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = '629fe1a92027'
 down_revision: Union[str, Sequence[str], None] = '53a80c00e8cc'
@@ -27,14 +26,13 @@ TRANSFER_FEE_SATANG = 3000
 def upgrade() -> None:
     """Back-populate transfer_fee and fix platform_fee for historical rows."""
     op.execute(
-        """
+        f"""
         UPDATE payments
-        SET transfer_fee = :transfer_fee,
-            platform_fee = platform_fee - :transfer_fee
+        SET transfer_fee = {TRANSFER_FEE_SATANG},
+            platform_fee = platform_fee - {TRANSFER_FEE_SATANG}
         WHERE transfer_fee IS NULL
           AND platform_fee IS NOT NULL
-        """,
-        transfer_fee=TRANSFER_FEE_SATANG,
+        """
     )
 
 

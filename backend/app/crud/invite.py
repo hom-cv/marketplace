@@ -5,9 +5,9 @@ import string
 from datetime import datetime, timezone
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.constants.invite import InviteStatus
 from app.models.invite import SellerInvite

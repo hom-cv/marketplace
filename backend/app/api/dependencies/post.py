@@ -2,12 +2,13 @@
 
 from typing import Annotated
 
+from fastapi import Depends, Path
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.exceptions import not_found_error
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post
-from fastapi import Depends, Path
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_valid_post(

@@ -4,7 +4,6 @@
 
 import { apiRequest, jsonRequest } from "@/api/api";
 import type {
-  DashboardLinkResponse,
   OnboardingLinkResponse,
   SellerStatusResponse,
   SellerVerificationRequest,
@@ -12,7 +11,7 @@ import type {
 } from "@/api/types/seller";
 
 /**
- * Register as a seller by creating a Stripe Express account.
+ * Register as a seller by creating a Stripe Connect Standard account.
  * Returns an onboarding URL the frontend should redirect to.
  */
 export async function registerSeller(
@@ -29,16 +28,9 @@ export async function getSellerStatus(): Promise<SellerStatusResponse> {
 }
 
 /**
- * Get a fresh Stripe Express onboarding URL (used when a prior link expired
+ * Get a fresh Stripe Connect onboarding URL (used when a prior link expired
  * or the user needs to resume onboarding).
  */
 export async function getOnboardingLink(): Promise<OnboardingLinkResponse> {
   return apiRequest<OnboardingLinkResponse>("/seller/onboarding-link");
-}
-
-/**
- * Get a one-time Stripe Express dashboard login link (verified sellers only).
- */
-export async function getDashboardLink(): Promise<DashboardLinkResponse> {
-  return apiRequest<DashboardLinkResponse>("/seller/dashboard-link");
 }
