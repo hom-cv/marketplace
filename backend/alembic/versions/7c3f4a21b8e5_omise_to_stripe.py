@@ -1,13 +1,12 @@
 """omise to stripe
 
 Rename Omise columns to Stripe equivalents and drop Omise-only fields.
-This is a destructive pre-launch migration — it assumes `payments` and
-`seller_profiles` are empty. Verify with:
-
-    SELECT count(*) FROM payments;
-    SELECT count(*) FROM seller_profiles;
-
-Both must return 0 before running `alembic upgrade head`.
+This is a destructive pre-launch migration: it drops columns that hold
+Omise-specific data (authorize_uri, qr_code_uri, bank_brand, etc.) that
+cannot be reconstructed from Stripe data. The upgrade() refuses to run
+if `payments` or `seller_profiles` contain any rows — if you see that
+error, back up and truncate those tables first, or write a proper data
+migration that maps Omise artifacts to Stripe equivalents.
 
 Revision ID: 7c3f4a21b8e5
 Revises: 629fe1a92027
@@ -29,6 +28,14 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Rename Omise columns to Stripe and drop Omise-only fields."""
+    conn = op.get_bind()
+    for table in ("payments", "seller_profiles"):
+        count = conn.execute(sa.text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
+        if count:
+            raise RuntimeError(
+                f"Refusing destructive Omise→Stripe migration: {table} has "
+                f"{count} rows. Truncate it first or write a data migration."
+            )
 
     # --- payments table --------------------------------------------------
     op.drop_index('ix_payments_omise_charge_id', table_name='payments')
