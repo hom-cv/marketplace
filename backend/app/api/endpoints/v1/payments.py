@@ -18,6 +18,7 @@ from app.schemas.payment import (
 )
 from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
+from app.services.stripe_webhook_service import AnnotatedStripeWebhookService
 from app.services.stripe_service import AnnotatedStripeService
 
 logger = logging.getLogger(__name__)
@@ -172,7 +173,7 @@ async def get_payment_status(
 async def stripe_webhook(
     request: Request,
     stripe_service: AnnotatedStripeService,
-    payment_service: AnnotatedPaymentService,
+    webhook_service: AnnotatedStripeWebhookService,
     settings: AnnotatedSettings,
 ) -> WebhookResponse:
     """
@@ -210,7 +211,7 @@ async def stripe_webhook(
         ) from e
 
     try:
-        await payment_service.process_webhook(event)
+        await webhook_service.process_webhook(event)
     except Exception as e:
         logger.error(f"Stripe webhook processing error: {e}")
         raise HTTPException(

@@ -225,4 +225,4 @@ class WebhookResponse(BaseModel):
     """Response for webhook endpoints."""
 
     status: str = Field(..., description="Response status (ok or error)")
-    message: str | None = Field(None, description="Optional error message")
+    message: str | None = Field(default=None, description="Optional error message")
