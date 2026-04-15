@@ -169,58 +169,6 @@ class AddTrackingRequest(BaseModel):
     tracking_number: str = Field(..., description="Tracking number", min_length=1, max_length=50)
 
 
-class PayoutItem(BaseModel):
-    """Schema for a payout list item."""
-
-    payment_id: int
-    seller_id: int
-    seller_username: str
-    buyer_username: str
-    post_title: str
-    amount: int
-    seller_payout: int
-    currency: str
-    payment_method: str
-    paid_at: datetime | None = None
-    delivered_at: datetime | None = None
-
-    model_config = {"from_attributes": True}
-
-
-class PayoutListResponse(BaseModel):
-    """Paginated list of pending payouts."""
-
-    items: list[PayoutItem]
-    total: int
-    skip: int
-    limit: int
-
-
-class PayoutHistoryItem(PayoutItem):
-    """Schema for a completed payout list item (extends PayoutItem)."""
-
-    transferred_at: datetime | None = None
-    stripe_transfer_id: str | None = None
-
-
-class PayoutHistoryListResponse(BaseModel):
-    """Paginated list of completed payouts."""
-
-    items: list[PayoutHistoryItem]
-    total: int
-    skip: int
-    limit: int
-
-
-class PayoutResponse(BaseModel):
-    """Response after initiating a payout."""
-
-    payment_id: int
-    transfer_id: str
-    amount: int
-    status: str
-
-
 class WebhookResponse(BaseModel):
     """Response for webhook endpoints."""
 

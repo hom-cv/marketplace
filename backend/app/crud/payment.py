@@ -1,9 +1,8 @@
 """Payment CRUD operations."""
 
 from datetime import datetime, timezone
-from typing import Sequence
 
-from sqlalchemy import ColumnElement, UnaryExpression, func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -222,31 +221,6 @@ class PaymentCRUD(
 
         return payment
 
-    async def update_transfer(
-        self,
-        db: AsyncSession,
-        *,
-        payment: Payment,
-        transfer_id: str,
-    ) -> Payment:
-        """
-        Update the payment with transfer information.
-
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            payment (Payment): The payment to update.
-            transfer_id (str): The Stripe transfer ID.
-
-        Returns:
-            Payment: The updated payment.
-        """
-        payment.stripe_transfer_id = transfer_id
-        payment.transferred_at = datetime.now(timezone.utc)
-
-        await db.flush()
-
-        return payment
-
     async def add_tracking_number(
         self,
         db: AsyncSession,
@@ -307,73 +281,6 @@ class PaymentCRUD(
         await db.refresh(payment)
 
         return payment
-
-
-    async def _get_payouts(
-        self,
-        db: AsyncSession,
-        *,
-        conditions: Sequence[ColumnElement[bool]],
-        order_by: UnaryExpression,
-        skip: int,
-        limit: int,
-    ) -> tuple[list[Payment], int]:
-        """Shared payout query: count + paginated fetch with relations."""
-        count_query = select(func.count(self.model.id)).where(*conditions)
-        total = (await db.execute(count_query)).scalar_one()
-
-        query = (
-            select(self.model)
-            .where(*conditions)
-            .order_by(order_by)
-            .offset(skip)
-            .limit(limit)
-            .options(
-                selectinload(self.model.post),
-                selectinload(self.model.buyer),
-                selectinload(self.model.seller),
-            )
-        )
-        result = await db.scalars(query)
-        return list(result.all()), total
-
-    async def get_pending_payouts(
-        self,
-        db: AsyncSession,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> tuple[list[Payment], int]:
-        """Retrieve payments eligible for payout: successful, delivered, not yet transferred."""
-        return await self._get_payouts(
-            db,
-            conditions=[
-                self.model.status == PaymentStatus.SUCCESSFUL,
-                self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
-                self.model.stripe_transfer_id.is_(None),
-            ],
-            order_by=self.model.delivered_at.asc(),
-            skip=skip,
-            limit=limit,
-        )
-
-    async def get_completed_payouts(
-        self,
-        db: AsyncSession,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> tuple[list[Payment], int]:
-        """Retrieve payments that have been paid out (have a transfer ID)."""
-        return await self._get_payouts(
-            db,
-            conditions=[
-                self.model.stripe_transfer_id.isnot(None),
-            ],
-            order_by=self.model.transferred_at.desc(),
-            skip=skip,
-            limit=limit,
-        )
 
 
 payment_crud = PaymentCRUD(Payment)

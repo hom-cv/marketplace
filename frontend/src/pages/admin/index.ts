@@ -3,4 +3,3 @@ export { ReportsPage } from "./Reports";
 export { FlaggedMessagesPage } from "./FlaggedMessages";
 export { UserBansPage } from "./UserBans";
 export { PostBansPage } from "./PostBans";
-export { PayoutsPage } from "./Payouts";

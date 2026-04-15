@@ -17,7 +17,6 @@ from app.crud.report import report_crud
 from app.crud.user import user_crud
 from app.db.utils import get_async_db
 from app.models.message_flag import MessageFlag
-from app.models.payment import FulfillmentStatus, Payment, PaymentStatus
 from app.models.post_ban import PostBan
 from app.models.report import Report
 from app.models.user import User
@@ -169,11 +168,11 @@ class ModerationService:
         logger.info(f"Admin {admin_user.id} reviewed report #{report_id} as {status}")
         return self._report_to_response(report)
 
-    async def get_admin_stats(self) -> tuple[int, int, int, int, int]:
+    async def get_admin_stats(self) -> tuple[int, int, int, int]:
         """Get all admin stats in a single query.
 
         Returns:
-            Tuple of (pending_reports, active_user_bans, active_post_bans, pending_flags, pending_payouts).
+            Tuple of (pending_reports, active_user_bans, active_post_bans, pending_flags).
         """
 
         pending_reports = (
@@ -196,18 +195,9 @@ class ModerationService:
             .where(MessageFlag.status == MessageFlagStatus.PENDING)
             .scalar_subquery()
         )
-        pending_payouts = (
-            select(func.count(Payment.id))
-            .where(
-                Payment.status == PaymentStatus.SUCCESSFUL,
-                Payment.fulfillment_status == FulfillmentStatus.DELIVERED,
-                Payment.stripe_transfer_id.is_(None),
-            )
-            .scalar_subquery()
-        )
 
         query = select(
-            pending_reports, active_user_bans, active_post_bans, pending_flags, pending_payouts
+            pending_reports, active_user_bans, active_post_bans, pending_flags
         )
         result = await self.db.execute(query)
         row = result.one()
@@ -217,7 +207,6 @@ class ModerationService:
             row[1] or 0,
             row[2] or 0,
             row[3] or 0,
-            row[4] or 0,
         )
 
     async def ban_user(

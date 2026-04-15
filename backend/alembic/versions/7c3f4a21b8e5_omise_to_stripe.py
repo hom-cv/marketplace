@@ -48,13 +48,6 @@ def upgrade() -> None:
         existing_type=sa.String(length=255),
         existing_nullable=True,
     )
-    op.alter_column(
-        'payments',
-        'omise_transfer_id',
-        new_column_name='stripe_transfer_id',
-        existing_type=sa.String(length=255),
-        existing_nullable=True,
-    )
 
     op.create_index(
         'ix_payments_stripe_payment_intent_id',
@@ -62,12 +55,9 @@ def upgrade() -> None:
         ['stripe_payment_intent_id'],
         unique=True,
     )
-    op.create_unique_constraint(
-        'payments_stripe_transfer_id_key',
-        'payments',
-        ['stripe_transfer_id'],
-    )
 
+    op.drop_column('payments', 'omise_transfer_id')
+    op.drop_column('payments', 'transferred_at')
     op.drop_column('payments', 'authorize_uri')
     op.drop_column('payments', 'return_uri')
     op.drop_column('payments', 'qr_code_uri')
@@ -182,19 +172,17 @@ def downgrade() -> None:
         'payments',
         sa.Column('authorize_uri', sa.String(length=512), nullable=True),
     )
-
-    op.drop_constraint(
-        'payments_stripe_transfer_id_key', 'payments', type_='unique'
+    op.add_column(
+        'payments',
+        sa.Column('transferred_at', sa.DateTime(timezone=True), nullable=True),
     )
+    op.add_column(
+        'payments',
+        sa.Column('omise_transfer_id', sa.String(length=255), nullable=True),
+    )
+
     op.drop_index('ix_payments_stripe_payment_intent_id', table_name='payments')
 
-    op.alter_column(
-        'payments',
-        'stripe_transfer_id',
-        new_column_name='omise_transfer_id',
-        existing_type=sa.String(length=255),
-        existing_nullable=True,
-    )
     op.alter_column(
         'payments',
         'stripe_payment_intent_id',

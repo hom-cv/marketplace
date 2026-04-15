@@ -64,11 +64,6 @@ class Payment(Base):
         unique=True,
         index=True,
     )
-    stripe_transfer_id: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-        unique=True,
-    )
 
     # Transaction details
     amount: Mapped[int] = mapped_column(
@@ -197,10 +192,6 @@ class Payment(Base):
 
     # Timestamps
     paid_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-    transferred_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )

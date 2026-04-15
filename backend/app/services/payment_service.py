@@ -14,7 +14,7 @@ from app.crud.payment import payment_crud
 from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.models.payment import FulfillmentStatus, Payment, PaymentMethod, PaymentStatus
+from app.models.payment import PaymentMethod, PaymentStatus
 from app.models.seller import SellerVerificationStatus
 from app.models.user import User
 from app.schemas.payment import (
@@ -22,7 +22,6 @@ from app.schemas.payment import (
     CreatePromptPayPaymentRequest,
     PaymentResponse,
     PaymentStatusResponse,
-    PayoutResponse,
     PriceBreakdown,
 )
 from app.services.pricing_service import (
@@ -249,112 +248,6 @@ class PaymentService:
             failure_message=payment.failure_message,
         )
 
-    async def get_pending_payouts(
-        self, skip: int = 0, limit: int = 50
-    ) -> tuple[list[Payment], int]:
-        """Get payments eligible for payout (successful, delivered, not transferred)."""
-        return await payment_crud.get_pending_payouts(
-            self.db, skip=skip, limit=limit
-        )
-
-    async def get_completed_payouts(
-        self, skip: int = 0, limit: int = 50
-    ) -> tuple[list[Payment], int]:
-        """Get payments that have been paid out."""
-        return await payment_crud.get_completed_payouts(
-            self.db, skip=skip, limit=limit
-        )
-
-    async def create_payout(self, payment_id: int) -> PayoutResponse:
-        """
-        Initiate a payout (Stripe transfer) for a delivered payment.
-
-        Args:
-            payment_id: The payment ID to pay out.
-
-        Returns:
-            PayoutResponse with transfer details.
-
-        Raises:
-            NotFoundError: If payment not found.
-            BadRequestError: If payment is not eligible for payout.
-        """
-        # Lock the row to prevent concurrent duplicate payouts
-        payment = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
-        if not payment:
-            raise not_found_error("Payment not found")
-
-        if payment.status != PaymentStatus.SUCCESSFUL:
-            raise bad_request_error("Payment is not successful")
-
-        if payment.stripe_transfer_id:
-            raise bad_request_error("Payment has already been paid out")
-
-        if payment.fulfillment_status != FulfillmentStatus.DELIVERED:
-            raise bad_request_error("Item has not been delivered yet")
-
-        if not payment.seller_payout or payment.seller_payout <= 0:
-            raise bad_request_error("No payout amount calculated for this payment")
-
-        min_amount = self._settings.MIN_PAYOUT_AMOUNT_SATANG
-        if payment.seller_payout < min_amount:
-            raise bad_request_error(
-                f"Payout amount ({payment.seller_payout} satang) is below "
-                f"the minimum transfer amount ({min_amount} satang)"
-            )
-
-        # Get seller's Stripe connected account and verify it can receive funds
-        seller_profile = await seller_crud.get_by_user_id(
-            self.db, user_id=payment.seller_id
-        )
-        if not seller_profile or not seller_profile.stripe_account_id:
-            raise bad_request_error("Seller does not have a verified payout account")
-        if not seller_profile.payouts_enabled:
-            raise bad_request_error("Seller's payout account is not enabled for payouts")
-
-        try:
-            payout = self.stripe_service.create_seller_payout(
-                account_id=seller_profile.stripe_account_id,
-                amount=payment.seller_payout,
-                currency=payment.currency,
-                metadata={
-                    "payment_id": str(payment.id),
-                    "seller_id": str(payment.seller_id),
-                },
-                idempotency_key=f"po-payment-{payment.id}",
-            )
-        except stripe.StripeError as e:
-            logger.error(f"Stripe error during payout for payment {payment_id}: {e}")
-            raise bad_request_error(f"Failed to create payout: {str(e)}")
-
-        try:
-            await payment_crud.update_transfer(
-                self.db, payment=payment, transfer_id=payout.id
-            )
-            await self.db.commit()
-        except Exception:
-            await self.db.rollback()
-            logger.critical(
-                f"PAYOUT RECORDED BUT DB UPDATE FAILED. "
-                f"payment_id={payment_id}, payout_id={payout.id}, "
-                f"amount={payment.seller_payout} satang, "
-                f"seller_id={payment.seller_id}. "
-                f"Manual reconciliation required."
-            )
-            raise
-
-        logger.info(
-            f"Payout created for payment {payment_id}: "
-            f"payout {payout.id}, amount {payment.seller_payout} satang"
-        )
-
-        return PayoutResponse(
-            payment_id=payment_id,
-            transfer_id=payout.id,
-            amount=payment.seller_payout,
-            status="transferred",
-        )
-
     async def add_tracking(
         self,
         payment_id: int,
@@ -421,15 +314,6 @@ class PaymentService:
 
         await payment_crud.confirm_delivery(self.db, payment=payment)
         await self.db.commit()
-
-        try:
-            await self.create_payout(payment.id)
-        except Exception as e:
-            # Common reason: charge is still in T+2 pending and seller's available
-            # balance is insufficient. Admin can retry via /admin/payouts/{id}.
-            logger.warning(
-                f"Auto-payout after delivery failed for payment {payment.id}: {e}"
-            )
 
 
 def _get_payment_service(

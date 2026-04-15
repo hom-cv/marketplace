@@ -44,7 +44,6 @@ class StripeService:
                 type="standard",
                 country="TH",
                 email=email,
-                settings={"payouts": {"schedule": {"interval": "manual"}}},
                 idempotency_key=idempotency_key,
             )
             logger.info(f"Created Stripe Connect account: {account.id}")
@@ -169,49 +168,6 @@ class StripeService:
         except stripe.StripeError as e:
             logger.error(
                 f"Failed to retrieve Stripe PaymentIntent {payment_intent_id}: {e}"
-            )
-            raise
-
-    def create_seller_payout(
-        self,
-        account_id: str,
-        amount: int,
-        currency: str = "thb",
-        metadata: dict[str, Any] | None = None,
-        idempotency_key: str | None = None,
-    ) -> stripe.Payout:
-        """
-        Trigger a bank payout from a connected seller's Stripe balance.
-
-        Required because connected accounts are created with manual payout
-        schedule — funds sit on the seller's Stripe balance until the platform
-        explicitly releases them after delivery.
-
-        Args:
-            account_id: Connected account ID to pay out on behalf of.
-            amount: Amount in smallest currency unit (satang for THB).
-            currency: Currency code (default 'thb').
-            metadata: Optional metadata to attach to the payout.
-            idempotency_key: Optional idempotency key for safe retry.
-
-        Returns:
-            Stripe Payout object.
-        """
-        try:
-            payout = stripe.Payout.create(
-                amount=amount,
-                currency=currency,
-                metadata=metadata or {},
-                idempotency_key=idempotency_key,
-                stripe_account=account_id,
-            )
-            logger.info(
-                f"Created Stripe payout {payout.id} on account {account_id}"
-            )
-            return payout
-        except stripe.StripeError as e:
-            logger.error(
-                f"Failed to create Stripe payout on account {account_id}: {e}"
             )
             raise
 
