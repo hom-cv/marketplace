@@ -18,8 +18,8 @@ from app.schemas.payment import (
 )
 from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
-from app.services.stripe_webhook_service import AnnotatedStripeWebhookService
 from app.services.stripe_service import AnnotatedStripeService
+from app.services.stripe_webhook_service import AnnotatedStripeWebhookService
 
 logger = logging.getLogger(__name__)
 
