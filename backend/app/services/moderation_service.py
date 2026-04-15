@@ -199,15 +199,7 @@ class ModerationService:
         query = select(
             pending_reports, active_user_bans, active_post_bans, pending_flags
         )
-        result = await self.db.execute(query)
-        row = result.one()
-
-        return (
-            row[0] or 0,
-            row[1] or 0,
-            row[2] or 0,
-            row[3] or 0,
-        )
+        return (await self.db.execute(query)).one().tuple()
 
     async def ban_user(
         self,
