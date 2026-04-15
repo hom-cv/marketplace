@@ -161,6 +161,7 @@ class SellerService:
     async def create_onboarding_refresh_link(self, user: User) -> str:
         """Generate a fresh onboarding link for a pending seller."""
         seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
+
         if not seller_profile or not seller_profile.stripe_account_id:
             raise bad_request_error("Seller has no Stripe account")
 

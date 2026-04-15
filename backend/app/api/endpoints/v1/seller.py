@@ -72,4 +72,5 @@ async def get_onboarding_link(
 ) -> OnboardingLinkResponse:
     """Generate a fresh Stripe Connect onboarding link."""
     url = await seller_service.create_onboarding_refresh_link(user=current_user)
+
     return OnboardingLinkResponse(onboarding_url=url)
