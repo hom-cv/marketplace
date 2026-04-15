@@ -4,14 +4,14 @@ import logging
 from typing import Annotated
 
 import stripe
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error
 from app.core.settings import AnnotatedSettings, Settings
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.models.seller import SellerVerificationStatus
+from app.models.seller import SellerProfile, SellerVerificationStatus
 from app.models.user import User
 from app.schemas.seller import (
     SellerStatusResponse,
@@ -128,21 +128,7 @@ class SellerService:
         is_verified = (
             seller_profile.verification_status == SellerVerificationStatus.VERIFIED
         )
-
-        onboarding_url: str | None = None
-        if (
-            seller_profile.stripe_account_id
-            and seller_profile.verification_status == SellerVerificationStatus.PENDING
-            and not seller_profile.details_submitted
-        ):
-            try:
-                onboarding_url = self.stripe_service.create_account_link(
-                    account_id=seller_profile.stripe_account_id,
-                    return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
-                    refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
-                ).url
-            except stripe.StripeError as e:
-                logger.error(f"Error creating Stripe link for status response: {e}")
+        onboarding_url = await self._pending_onboarding_url(user, seller_profile)
 
         return SellerStatusResponse(
             is_seller=is_verified,
@@ -153,6 +139,24 @@ class SellerService:
             verified_at=seller_profile.verified_at,
             onboarding_url=onboarding_url,
         )
+
+    async def _pending_onboarding_url(
+        self, user: User, seller_profile: SellerProfile
+    ) -> str | None:
+        """Fresh onboarding link for a pending seller, or None if not applicable."""
+        if (
+            not seller_profile.stripe_account_id
+            or seller_profile.verification_status != SellerVerificationStatus.PENDING
+            or seller_profile.details_submitted
+        ):
+            return None
+
+        try:
+            return await self.create_onboarding_refresh_link(user)
+        except HTTPException as e:
+            logger.error(f"Error creating Stripe link for status response: {e}")
+
+            return None
 
     async def get_seller_status(self, user: User) -> SellerStatusResponse:
         """Get the current seller status for a user."""
