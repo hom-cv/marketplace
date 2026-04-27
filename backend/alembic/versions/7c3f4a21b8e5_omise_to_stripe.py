@@ -29,11 +29,13 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Rename Omise columns to Stripe and drop Omise-only fields."""
     conn = op.get_bind()
-    for table in ("payments", "seller_profiles"):
-        count = conn.execute(sa.text(f"SELECT COUNT(*) FROM {table}")).scalar_one()
+    for table_name in ("payments", "seller_profiles"):
+        count = conn.execute(
+            sa.select(sa.func.count()).select_from(sa.table(table_name))
+        ).scalar_one()
         if count:
             raise RuntimeError(
-                f"Refusing destructive Omise→Stripe migration: {table} has "
+                f"Refusing destructive Omise→Stripe migration: {table_name} has "
                 f"{count} rows. Truncate it first or write a data migration."
             )
 
