@@ -199,6 +199,7 @@ class PaymentService:
         payment.stripe_payment_intent_id = intent.id
 
         await self.db.commit()
+
         await self.db.refresh(payment)
 
         if not intent.client_secret:
