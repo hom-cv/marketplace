@@ -86,7 +86,6 @@ class StripeWebhookService:
 
         payment = await payment_crud.get_by_id(self.db, id=payment_id)
         if payment and intent_id and not payment.stripe_payment_intent_id:
-            # Heal the missing link so future webhooks use the primary lookup.
             payment.stripe_payment_intent_id = intent_id
             await self.db.commit()
             await self.db.refresh(payment)
