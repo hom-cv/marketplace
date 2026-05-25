@@ -42,13 +42,13 @@ class StripeWebhookService:
         Args:
             event: Verified Stripe Event object.
         """
-        event_type = event.get("type")
+        event_type = event.type
         logger.info(f"Processing Stripe webhook: {event_type}")
 
         if not event_type:
             return
 
-        data_object = event["data"]["object"]
+        data_object = event.data.object
 
         handler_name = WEBHOOK_EVENT_HANDLER_MAP.get(event_type)
         if handler_name:
