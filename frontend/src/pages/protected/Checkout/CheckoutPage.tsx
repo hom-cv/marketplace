@@ -81,8 +81,7 @@ export function CheckoutPage() {
   const { data: paymentStatus } = usePaymentStatus(
     paymentResponse?.payment_id ?? null,
     {
-      enabled:
-        !!paymentResponse?.payment_id && paymentMethod === "promptpay",
+      enabled: !!paymentResponse?.payment_id,
       refetchInterval: (query) =>
         query.state.data?.status === "pending" ? 3000 : false,
     },
@@ -110,11 +109,7 @@ export function CheckoutPage() {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
-          <Alert
-            variant="error"
-            title={t("status.error")}
-            margin="bottom"
-          >
+          <Alert variant="error" title={t("status.error")} margin="bottom">
             {t("checkout.failedToLoadProduct")}
           </Alert>
           <Button

@@ -137,6 +137,10 @@ class PaymentService:
             or not seller_profile.stripe_account_id
         ):
             raise bad_request_error("Seller is not verified")
+
+        if not seller_profile.charges_enabled:
+            raise bad_request_error("Seller is not currently able to accept payments")
+
         seller_stripe_account_id: str = seller_profile.stripe_account_id
 
         # Calculate total with all fees using pricing service
