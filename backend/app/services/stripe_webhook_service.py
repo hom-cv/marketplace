@@ -87,8 +87,9 @@ class StripeWebhookService:
         payment = await payment_crud.get_by_id(self.db, id=payment_id)
         if payment and intent_id and not payment.stripe_payment_intent_id:
             payment.stripe_payment_intent_id = intent_id
-            await self.db.commit()
-            await self.db.refresh(payment)
+
+            await self.db.flush()
+
         return payment
 
     async def _handle_payment_intent_succeeded(self, intent: dict) -> None:
