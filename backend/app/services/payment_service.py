@@ -23,6 +23,7 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
     PriceBreakdown,
+    ShippingAddress,
 )
 from app.services.pricing_service import (
     AnnotatedPricingService,
@@ -115,7 +116,7 @@ class PaymentService:
         *,
         buyer: User,
         post_id: int,
-        shipping,
+        shipping: ShippingAddress,
         payment_method: PaymentMethod,
         payment_method_types: list[str],
     ) -> PaymentResponse:
