@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Loader } from "@mantine/core";
 import { IconCreditCard, IconQrcode } from "@tabler/icons-react";
 import { Trans, useTranslation } from "react-i18next";
-import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import {
-  createCardPayment,
-  createPromptPayPayment,
-} from "@/api/payments";
+  PaymentElement,
+  useStripe,
+  useElements,
+} from "@stripe/react-stripe-js";
+import { createCardPayment, createPromptPayPayment } from "@/api/payments";
 import type {
   PaymentResponse,
   PromptPayQr,
@@ -73,7 +74,7 @@ export function PaymentForm({
         onIntentCreated(intent);
 
         const returnUrl = `${window.location.origin}/payment-return`;
-        const { error } = await stripe.confirmPayment({
+        const { error, paymentIntent } = await stripe.confirmPayment({
           elements: elements!,
           clientSecret: intent.client_secret,
           confirmParams: { return_url: returnUrl },
@@ -83,6 +84,10 @@ export function PaymentForm({
         if (error) {
           onError(error.message ?? "Payment failed");
           return;
+        }
+
+        if (paymentIntent?.status === "succeeded") {
+          onIntentCreated({ ...intent, status: "successful" });
         }
       } else {
         // PromptPay: no PaymentElement to mount. Create the intent server-side,
