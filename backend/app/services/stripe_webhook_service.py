@@ -57,7 +57,9 @@ class StripeWebhookService:
         else:
             logger.debug(f"Unhandled Stripe event: {event_type}")
 
-    async def _find_payment_for_intent(self, intent: dict) -> Payment | None:
+    async def _find_payment_for_intent(
+        self, intent: stripe.PaymentIntent
+    ) -> Payment | None:
         """
         Look up a Payment row for a PaymentIntent webhook payload.
 
@@ -92,7 +94,9 @@ class StripeWebhookService:
 
         return payment
 
-    async def _handle_payment_intent_succeeded(self, intent: dict) -> None:
+    async def _handle_payment_intent_succeeded(
+        self, intent: stripe.PaymentIntent
+    ) -> None:
         """Handle payment_intent.succeeded webhook event."""
         payment = await self._find_payment_for_intent(intent)
         if not payment:
@@ -117,7 +121,9 @@ class StripeWebhookService:
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as successful via webhook")
 
-    async def _handle_payment_intent_failed(self, intent: dict) -> None:
+    async def _handle_payment_intent_failed(
+        self, intent: stripe.PaymentIntent
+    ) -> None:
         """Handle payment_intent.payment_failed / payment_intent.canceled events."""
         payment = await self._find_payment_for_intent(intent)
         if not payment:
@@ -149,7 +155,7 @@ class StripeWebhookService:
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as failed via webhook")
 
-    async def _handle_charge_refunded(self, charge: dict) -> None:
+    async def _handle_charge_refunded(self, charge: stripe.Charge) -> None:
         """Handle charge.refunded webhook event."""
         intent_id = charge.get("payment_intent")
         payment: Payment | None = None
@@ -175,7 +181,7 @@ class StripeWebhookService:
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as refunded via webhook")
 
-    async def _handle_account_updated(self, account: dict) -> None:
+    async def _handle_account_updated(self, account: stripe.Account) -> None:
         """Handle account.updated webhook event for seller Connect accounts."""
         account_id = account.get("id")
 
