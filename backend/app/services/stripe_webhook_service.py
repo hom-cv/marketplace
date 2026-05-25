@@ -68,7 +68,7 @@ class StripeWebhookService:
         intent ID landed — rare but observable under failure) we fall back to
         ``metadata.payment_id``, which is always set at PaymentIntent creation.
         """
-        intent_id = intent.get("id")
+        intent_id = intent.id
         payment: Payment | None = None
         if intent_id:
             payment = await payment_crud.get_by_payment_intent_id(
@@ -77,7 +77,9 @@ class StripeWebhookService:
         if payment:
             return payment
 
-        metadata = intent.get("metadata") or {}
+        # metadata keys are user-defined, so payment_id may be absent — use
+        # .get() here rather than attribute access, which would raise.
+        metadata = intent.metadata or {}
         payment_id_raw = metadata.get("payment_id")
         if payment_id_raw is None:
             return None
@@ -101,7 +103,7 @@ class StripeWebhookService:
         payment = await self._find_payment_for_intent(intent)
         if not payment:
             logger.warning(
-                f"Payment not found for PaymentIntent {intent.get('id')}"
+                f"Payment not found for PaymentIntent {intent.id}"
             )
             return
 
@@ -128,7 +130,7 @@ class StripeWebhookService:
         payment = await self._find_payment_for_intent(intent)
         if not payment:
             logger.warning(
-                f"Payment not found for PaymentIntent {intent.get('id')}"
+                f"Payment not found for PaymentIntent {intent.id}"
             )
             return
 
@@ -143,13 +145,13 @@ class StripeWebhookService:
         if payment.status == PaymentStatus.FAILED:
             return  # idempotent
 
-        last_error = intent.get("last_payment_error") or {}
+        last_error = intent.last_payment_error
         await payment_crud.update_status(
             self.db,
             payment=payment,
             status=PaymentStatus.FAILED,
-            failure_code=last_error.get("code"),
-            failure_message=last_error.get("message"),
+            failure_code=last_error.code if last_error else None,
+            failure_message=last_error.message if last_error else None,
         )
 
         await self.db.commit()
@@ -157,7 +159,7 @@ class StripeWebhookService:
 
     async def _handle_charge_refunded(self, charge: stripe.Charge) -> None:
         """Handle charge.refunded webhook event."""
-        intent_id = charge.get("payment_intent")
+        intent_id = charge.payment_intent
         payment: Payment | None = None
         if intent_id:
             payment = await payment_crud.get_by_payment_intent_id(
@@ -183,7 +185,7 @@ class StripeWebhookService:
 
     async def _handle_account_updated(self, account: stripe.Account) -> None:
         """Handle account.updated webhook event for seller Connect accounts."""
-        account_id = account.get("id")
+        account_id = account.id
 
         if not account_id:
             return
@@ -196,9 +198,9 @@ class StripeWebhookService:
             logger.warning(f"Seller profile not found for account {account_id}")
             return
 
-        charges_enabled = bool(account.get("charges_enabled"))
-        payouts_enabled = bool(account.get("payouts_enabled"))
-        details_submitted = bool(account.get("details_submitted"))
+        charges_enabled = bool(account.charges_enabled)
+        payouts_enabled = bool(account.payouts_enabled)
+        details_submitted = bool(account.details_submitted)
 
         await seller_crud.update_account_status(
             self.db,
@@ -230,8 +232,9 @@ class StripeWebhookService:
         elif (
             seller_profile.verification_status == SellerVerificationStatus.PENDING
         ):
-            disabled_reason = (account.get("requirements") or {}).get(
-                "disabled_reason"
+            requirements = account.requirements
+            disabled_reason = (
+                requirements.disabled_reason if requirements else None
             )
 
             # Only treat "rejected.*" reasons as terminal. Other values like
