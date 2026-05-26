@@ -108,8 +108,6 @@ def mocks(monkeypatch):
 
     payment_crud = SimpleNamespace(
         get_by_payment_intent_id_for_update=AsyncMock(return_value=None),
-        get_by_id_for_update=AsyncMock(return_value=None),
-        get_by_id=AsyncMock(return_value=None),
         update_status=AsyncMock(),
         restore_to_successful=AsyncMock(),
     )

@@ -9,7 +9,7 @@
  * state. Verified sellers manage payouts on dashboard.stripe.com directly.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Container,
   Title,
@@ -30,14 +30,13 @@ import { useSellerStatus, useRegisterSellerMutation } from "@/hooks/useSeller";
 import { getOnboardingLink } from "@/api/seller";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { SellerVerificationRequest } from "@/api/types/seller";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import styles from "./BecomeSellerPage.module.css";
 
 export function BecomeSellerPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const search = useSearch({ strict: false }) as { refresh?: string };
   const [error, setError] = useState<string | null>(null);
   const { t } = useTranslation("common");
   const { t: tPolicies } = useTranslation("policies");
@@ -69,30 +68,6 @@ export function BecomeSellerPage() {
   const handleSubmit = (values: SellerVerificationRequest) => {
     registerMutation.mutate(values);
   };
-
-  // Stripe sends the user to the refresh URL (?refresh=true) when an onboarding
-  // link has expired. Only generate a fresh link and redirect if the seller
-  // still has onboarding left to complete — otherwise a verified (or rejected,
-  // or review-pending) seller would bounce straight back to Stripe and into an
-  // infinite redirect loop. This mirrors the backend's own gating for refresh
-  // links (pending + details not yet submitted).
-  useEffect(() => {
-    if (
-      search?.refresh &&
-      sellerStatus?.verification_status === "pending" &&
-      !sellerStatus?.details_submitted
-    ) {
-      getOnboardingLink()
-        .then((data) => {
-          window.location.href = data.onboarding_url;
-        })
-        .catch((err: Error) => setError(err.message));
-    }
-  }, [
-    search?.refresh,
-    sellerStatus?.verification_status,
-    sellerStatus?.details_submitted,
-  ]);
 
   // If already verified, show success state
   if (sellerStatus?.is_seller && sellerStatus?.verification_status === "verified") {

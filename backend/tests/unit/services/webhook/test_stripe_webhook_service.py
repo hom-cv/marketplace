@@ -148,35 +148,18 @@ class TestPaymentIntentFailed:
 
 
 class TestFindPaymentForIntent:
-    async def test_primary_lookup_used(self, service, mocks):
+    async def test_resolves_by_intent_id(self, service, mocks):
         payment = make_payment()
         mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
-        result = await service._find_payment_for_intent(make_payment_intent())
+        result = await service._find_payment_for_intent(make_payment_intent(id="pi_1"))
         assert result is payment
-        mocks.payment_crud.get_by_id_for_update.assert_not_awaited()
-
-    async def test_fallback_to_metadata_and_backfill(self, service, mocks):
-        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = None
-        payment = make_payment(stripe_payment_intent_id=None)
-        mocks.payment_crud.get_by_id_for_update.return_value = payment
-        intent = make_payment_intent(id="pi_xyz", metadata={"payment_id": "7"})
-
-        result = await service._find_payment_for_intent(intent)
-
-        mocks.payment_crud.get_by_id_for_update.assert_awaited_once_with(service.db, id=7)
-        assert result is payment
-        assert payment.stripe_payment_intent_id == "pi_xyz"  # backfilled
-        assert service.db.flush.await_count == 1
-
-    async def test_no_metadata_returns_none(self, service, mocks):
-        result = await service._find_payment_for_intent(make_payment_intent(metadata={}))
-        assert result is None
-        mocks.payment_crud.get_by_id_for_update.assert_not_awaited()
-
-    async def test_non_int_payment_id_returns_none(self, service, mocks):
-        result = await service._find_payment_for_intent(
-            make_payment_intent(metadata={"payment_id": "not-an-int"})
+        mocks.payment_crud.get_by_payment_intent_id_for_update.assert_awaited_once_with(
+            service.db, payment_intent_id="pi_1"
         )
+
+    async def test_not_found_returns_none(self, service, mocks):
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = None
+        result = await service._find_payment_for_intent(make_payment_intent())
         assert result is None
 
 

@@ -67,40 +67,17 @@ class StripeWebhookService:
         self, intent: stripe.PaymentIntent
     ) -> Payment | None:
         """
-        Look up a Payment row for a PaymentIntent webhook payload.
+        Look up the (row-locked) Payment for a PaymentIntent webhook payload.
 
-        Primary lookup is by ``stripe_payment_intent_id``. If that misses
-        (possible if the webhook arrives before the DB commit that stores the
-        intent ID landed — rare but observable under failure) we fall back to
-        ``metadata.payment_id``, which is always set at PaymentIntent creation.
+        Resolved solely by ``stripe_payment_intent_id``. The payment row and its
+        intent id are committed together at creation (see
+        ``PaymentService._create_payment_intent``), so a committed payment always
+        carries its intent id — there is no "row exists but intent id missing"
+        state to fall back from.
         """
-        intent_id = intent.id
-        payment: Payment | None = None
-        if intent_id:
-            payment = await payment_crud.get_by_payment_intent_id_for_update(
-                self.db, payment_intent_id=intent_id
-            )
-        if payment:
-            return payment
-
-        # metadata keys are user-defined, so payment_id may be absent — use
-        # .get() here rather than attribute access, which would raise.
-        metadata = intent.metadata or {}
-        payment_id_raw = metadata.get("payment_id")
-        if payment_id_raw is None:
-            return None
-        try:
-            payment_id = int(payment_id_raw)
-        except (TypeError, ValueError):
-            return None
-
-        payment = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
-        if payment and intent_id and not payment.stripe_payment_intent_id:
-            payment.stripe_payment_intent_id = intent_id
-
-            await self.db.flush()
-
-        return payment
+        return await payment_crud.get_by_payment_intent_id_for_update(
+            self.db, payment_intent_id=intent.id
+        )
 
     async def _handle_payment_intent_succeeded(
         self, intent: stripe.PaymentIntent
