@@ -1,14 +1,27 @@
 """Stripe service for interacting with Stripe payment API."""
 
+import functools
 import logging
+from collections.abc import Callable
 from typing import Annotated, Any
 
+import anyio
 import stripe
 from fastapi import Depends
 
 from app.core.settings import AnnotatedSettings, Settings
 
 logger = logging.getLogger(__name__)
+
+
+async def _to_thread(func: Callable[..., Any], **kwargs: Any) -> Any:
+    """Run a blocking Stripe SDK call in a worker thread.
+
+    Stripe's Python SDK performs synchronous, blocking network I/O. Calling it
+    directly from an async handler blocks the event loop, so network calls are
+    offloaded to AnyIO's thread pool.
+    """
+    return await anyio.to_thread.run_sync(functools.partial(func, **kwargs))
 
 
 class StripeService:
@@ -24,7 +37,7 @@ class StripeService:
         stripe.api_key = self._settings.STRIPE_SECRET_KEY
         stripe.api_version = self._settings.STRIPE_API_VERSION
 
-    def create_connect_account(
+    async def create_connect_account(
         self,
         email: str,
         idempotency_key: str | None = None,
@@ -40,7 +53,8 @@ class StripeService:
             Stripe Account object.
         """
         try:
-            account = stripe.Account.create(
+            account = await _to_thread(
+                stripe.Account.create,
                 type="standard",
                 country="TH",
                 email=email,
@@ -52,7 +66,7 @@ class StripeService:
             logger.error(f"Failed to create Stripe Connect account: {e}")
             raise
 
-    def create_account_link(
+    async def create_account_link(
         self,
         account_id: str,
         return_url: str,
@@ -72,7 +86,8 @@ class StripeService:
             Stripe AccountLink object with a short-lived URL.
         """
         try:
-            link = stripe.AccountLink.create(
+            link = await _to_thread(
+                stripe.AccountLink.create,
                 account=account_id,
                 return_url=return_url,
                 refresh_url=refresh_url,
@@ -84,23 +99,7 @@ class StripeService:
             logger.error(f"Failed to create Stripe account link: {e}")
             raise
 
-    def retrieve_account(self, account_id: str) -> stripe.Account:
-        """
-        Retrieve a Stripe Connect account by ID.
-
-        Args:
-            account_id: Stripe account ID.
-
-        Returns:
-            Stripe Account object.
-        """
-        try:
-            return stripe.Account.retrieve(account_id)
-        except stripe.StripeError as e:
-            logger.error(f"Failed to retrieve Stripe account {account_id}: {e}")
-            raise
-
-    def create_payment_intent(
+    async def create_payment_intent(
         self,
         amount: int,
         currency: str,
@@ -132,7 +131,8 @@ class StripeService:
             Stripe PaymentIntent object.
         """
         try:
-            intent = stripe.PaymentIntent.create(
+            intent = await _to_thread(
+                stripe.PaymentIntent.create,
                 amount=amount,
                 currency=currency,
                 payment_method_types=payment_method_types,
@@ -148,27 +148,6 @@ class StripeService:
             return intent
         except stripe.StripeError as e:
             logger.error(f"Failed to create Stripe PaymentIntent: {e}")
-            raise
-
-    def retrieve_payment_intent(self, payment_intent_id: str) -> stripe.PaymentIntent:
-        """
-        Retrieve a PaymentIntent with charge and next_action data expanded.
-
-        Args:
-            payment_intent_id: Stripe PaymentIntent ID.
-
-        Returns:
-            Stripe PaymentIntent object with expanded fields.
-        """
-        try:
-            return stripe.PaymentIntent.retrieve(
-                payment_intent_id,
-                expand=["latest_charge", "next_action"],
-            )
-        except stripe.StripeError as e:
-            logger.error(
-                f"Failed to retrieve Stripe PaymentIntent {payment_intent_id}: {e}"
-            )
             raise
 
     def construct_event(

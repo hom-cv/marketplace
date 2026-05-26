@@ -187,7 +187,7 @@ class PaymentService:
         application_fee_amount = fees["platform_fee"] + fees["processing_fee"]
 
         try:
-            intent = self.stripe_service.create_payment_intent(
+            intent = await self.stripe_service.create_payment_intent(
                 amount=amount,
                 currency=currency,
                 payment_method_types=payment_method_types,

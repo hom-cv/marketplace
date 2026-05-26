@@ -78,11 +78,11 @@ class SellerService:
         )
 
         try:
-            account = self.stripe_service.create_connect_account(
+            account = await self.stripe_service.create_connect_account(
                 email=user.email_address,
                 idempotency_key=f"acct-v7-{user.id}",
             )
-            link = self.stripe_service.create_account_link(
+            link = await self.stripe_service.create_account_link(
                 account_id=account.id,
                 return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
                 refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
@@ -170,7 +170,7 @@ class SellerService:
             raise bad_request_error("Seller has no Stripe account")
 
         try:
-            link = self.stripe_service.create_account_link(
+            link = await self.stripe_service.create_account_link(
                 account_id=seller_profile.stripe_account_id,
                 return_url=self._settings.STRIPE_CONNECT_RETURN_URL,
                 refresh_url=self._settings.STRIPE_CONNECT_REFRESH_URL,
