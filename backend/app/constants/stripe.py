@@ -15,5 +15,8 @@ WEBHOOK_EVENT_HANDLER_MAP: dict[str, str] = {
     "payment_intent.payment_failed": "payment_intent_failed",
     "payment_intent.canceled": "payment_intent_failed",
     "charge.refunded": "charge_refunded",
+    "charge.dispute.created": "charge_dispute_created",
+    "charge.dispute.closed": "charge_dispute_closed",
     "account.updated": "account_updated",
+    "account.application.deauthorized": "account_deauthorized",
 }

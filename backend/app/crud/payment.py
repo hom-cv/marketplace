@@ -55,6 +55,25 @@ class PaymentCRUD(
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_by_payment_intent_id_for_update(
+        self, db: AsyncSession, *, payment_intent_id: str
+    ) -> Payment | None:
+        """
+        Retrieve a payment by Stripe PaymentIntent ID with a row-level lock.
+
+        Use in webhook check-then-update paths to serialize concurrent
+        redeliveries of the same event and prevent lost updates. The lock is
+        held until the surrounding transaction commits, so the caller must not
+        commit before completing its update.
+        """
+        query = (
+            select(self.model)
+            .where(self.model.stripe_payment_intent_id == payment_intent_id)
+            .with_for_update()
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
     async def get_payments_by_buyer(
         self, db: AsyncSession, *, buyer_id: int
     ) -> list[Payment]:
@@ -215,6 +234,24 @@ class PaymentCRUD(
         elif status == PaymentStatus.FAILED:
             payment.failure_code = failure_code
             payment.failure_message = failure_message
+
+        await db.flush()
+        await db.refresh(payment)
+
+        return payment
+
+    async def restore_to_successful(
+        self, db: AsyncSession, *, payment: Payment
+    ) -> Payment:
+        """
+        Set a payment back to SUCCESSFUL without touching paid_at/fulfillment.
+
+        Used when a dispute is resolved in the seller's favor (won): the payment
+        was moved to DISPUTED but the order may already have shipped, so we must
+        not re-stamp paid_at or reset fulfillment_status to PACKING the way
+        ``update_status`` does.
+        """
+        payment.status = PaymentStatus.SUCCESSFUL
 
         await db.flush()
         await db.refresh(payment)

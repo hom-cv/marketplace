@@ -19,6 +19,7 @@ class PaymentStatus(AutoName):
     FAILED = auto()  # Payment failed
     REFUNDED = auto()  # Payment was refunded
     EXPIRED = auto()  # Payment expired (e.g., PromptPay QR)
+    DISPUTED = auto()  # Chargeback/dispute opened on a successful charge
 
 
 class PaymentMethod(AutoName):

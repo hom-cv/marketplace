@@ -51,11 +51,17 @@ class StripeWebhookService:
         data_object = event.data.object
 
         handler_name = WEBHOOK_EVENT_HANDLER_MAP.get(event_type)
-        if handler_name:
-            handler = getattr(self, f"_handle_{handler_name}")
-            await handler(data_object)
-        else:
+        if not handler_name:
             logger.debug(f"Unhandled Stripe event: {event_type}")
+            return
+
+        handler = getattr(self, f"_handle_{handler_name}")
+        if event_type == "account.application.deauthorized":
+            # The connected account id is on event.account for this event, not
+            # on the data object (which is the deauthorized Application).
+            await handler(event.account)
+        else:
+            await handler(data_object)
 
     async def _find_payment_for_intent(
         self, intent: stripe.PaymentIntent
@@ -71,7 +77,7 @@ class StripeWebhookService:
         intent_id = intent.id
         payment: Payment | None = None
         if intent_id:
-            payment = await payment_crud.get_by_payment_intent_id(
+            payment = await payment_crud.get_by_payment_intent_id_for_update(
                 self.db, payment_intent_id=intent_id
             )
         if payment:
@@ -88,7 +94,7 @@ class StripeWebhookService:
         except (TypeError, ValueError):
             return None
 
-        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        payment = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
         if payment and intent_id and not payment.stripe_payment_intent_id:
             payment.stripe_payment_intent_id = intent_id
 
@@ -112,6 +118,9 @@ class StripeWebhookService:
             return
         if payment.status == PaymentStatus.REFUNDED:
             # Don't walk backwards from a terminal state.
+            return
+        if payment.status == PaymentStatus.DISPUTED:
+            # A dispute is open; a late succeeded retry must not clear it.
             return
 
         await payment_crud.update_status(
@@ -140,6 +149,7 @@ class StripeWebhookService:
         if payment.status in (
             PaymentStatus.SUCCESSFUL,
             PaymentStatus.REFUNDED,
+            PaymentStatus.DISPUTED,
         ):
             return
         if payment.status == PaymentStatus.FAILED:
@@ -162,7 +172,7 @@ class StripeWebhookService:
         intent_id = charge.payment_intent
         payment: Payment | None = None
         if intent_id:
-            payment = await payment_crud.get_by_payment_intent_id(
+            payment = await payment_crud.get_by_payment_intent_id_for_update(
                 self.db, payment_intent_id=intent_id
             )
         if not payment:
@@ -182,6 +192,88 @@ class StripeWebhookService:
 
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as refunded via webhook")
+
+    async def _find_payment_for_dispute(
+        self, dispute: stripe.Dispute
+    ) -> Payment | None:
+        """Resolve the Payment a dispute refers to, via its PaymentIntent id."""
+        intent_id = dispute.payment_intent
+        if not intent_id:
+            logger.warning(
+                f"Dispute {dispute.id} has no payment_intent; cannot resolve payment"
+            )
+            return None
+        return await payment_crud.get_by_payment_intent_id_for_update(
+            self.db, payment_intent_id=intent_id
+        )
+
+    async def _handle_charge_dispute_created(
+        self, dispute: stripe.Dispute
+    ) -> None:
+        """Handle charge.dispute.created: a chargeback was opened."""
+        payment = await self._find_payment_for_dispute(dispute)
+        if not payment:
+            logger.warning(f"Payment not found for dispute {dispute.id}")
+            return
+
+        if payment.status == PaymentStatus.DISPUTED:
+            return  # idempotent
+        if payment.status == PaymentStatus.REFUNDED:
+            return  # terminal; don't walk back
+        if payment.status != PaymentStatus.SUCCESSFUL:
+            logger.warning(
+                f"Dispute on payment {payment.id} in unexpected status "
+                f"{payment.status}"
+            )
+            return
+
+        await payment_crud.update_status(
+            self.db, payment=payment, status=PaymentStatus.DISPUTED
+        )
+
+        await self.db.commit()
+        logger.info(f"Payment {payment.id} marked as disputed via webhook")
+
+    async def _handle_charge_dispute_closed(
+        self, dispute: stripe.Dispute
+    ) -> None:
+        """Handle charge.dispute.closed: resolve the dispute as won or lost."""
+        payment = await self._find_payment_for_dispute(dispute)
+        if not payment:
+            logger.warning(f"Payment not found for closed dispute {dispute.id}")
+            return
+
+        dispute_status = dispute.status
+
+        if dispute_status == "lost":
+            # A lost dispute reverses funds with no charge.refunded event.
+            if payment.status == PaymentStatus.REFUNDED:
+                return  # idempotent
+            await payment_crud.update_status(
+                self.db, payment=payment, status=PaymentStatus.REFUNDED
+            )
+            await self.db.commit()
+            logger.info(
+                f"Payment {payment.id} refunded via lost dispute {dispute.id}"
+            )
+            return
+
+        if dispute_status == "won":
+            # Only revert a payment we moved to DISPUTED; never resurrect one
+            # that was refunded separately. Preserve paid_at/fulfillment_status.
+            if payment.status == PaymentStatus.DISPUTED:
+                await payment_crud.restore_to_successful(self.db, payment=payment)
+                await self.db.commit()
+                logger.info(
+                    f"Payment {payment.id} restored to successful via won "
+                    f"dispute {dispute.id}"
+                )
+            return
+
+        # warning_closed and other non-terminal closures: no state change.
+        logger.info(
+            f"Dispute {dispute.id} closed with status {dispute_status}; no change"
+        )
 
     async def _handle_account_updated(self, account: stripe.Account) -> None:
         """Handle account.updated webhook event for seller Connect accounts."""
@@ -252,6 +344,53 @@ class StripeWebhookService:
                 )
 
         await self.db.commit()
+
+    async def _handle_account_deauthorized(self, account_id: str | None) -> None:
+        """Handle account.application.deauthorized: seller disconnected the platform.
+
+        The connected account can no longer accept charges or receive payouts,
+        so disable both flags and mark the profile REJECTED. The SELLER role is
+        left as-is — it is informational; all gating is on verification_status.
+        """
+        if not account_id:
+            return
+
+        seller_profile = await seller_crud.get_by_stripe_account_id(
+            self.db, stripe_account_id=account_id
+        )
+        if not seller_profile:
+            logger.warning(
+                f"Seller profile not found for deauthorized account {account_id}"
+            )
+            return
+
+        # Idempotent: nothing to do if already fully disabled and not verified.
+        if (
+            not seller_profile.charges_enabled
+            and not seller_profile.payouts_enabled
+            and seller_profile.verification_status
+            != SellerVerificationStatus.VERIFIED
+        ):
+            return
+
+        await seller_crud.update_account_status(
+            self.db,
+            seller_profile=seller_profile,
+            charges_enabled=False,
+            payouts_enabled=False,
+            details_submitted=seller_profile.details_submitted,
+        )
+        await seller_crud.update_verification_status(
+            self.db,
+            seller_profile=seller_profile,
+            status=SellerVerificationStatus.REJECTED,
+            rejection_reason="account_deauthorized",
+        )
+
+        await self.db.commit()
+        logger.info(
+            f"Seller {seller_profile.user_id} downgraded via account deauthorization"
+        )
 
 
 def _get_stripe_webhook_service(

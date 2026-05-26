@@ -142,6 +142,11 @@ class PaymentService:
         if not seller_profile.charges_enabled:
             raise bad_request_error("Seller is not currently able to accept payments")
 
+        if not seller_profile.payouts_enabled:
+            raise bad_request_error(
+                "Seller cannot currently receive payouts; their account needs attention"
+            )
+
         seller_stripe_account_id: str = seller_profile.stripe_account_id
 
         # Calculate total with all fees using pricing service
