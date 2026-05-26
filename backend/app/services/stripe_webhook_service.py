@@ -160,8 +160,8 @@ class StripeWebhookService:
             self.db,
             payment=payment,
             status=PaymentStatus.FAILED,
-            failure_code=last_error.code if last_error else None,
-            failure_message=last_error.message if last_error else None,
+            failure_code=getattr(last_error, "code", None),
+            failure_message=getattr(last_error, "message", None),
         )
 
         await self.db.commit()
@@ -304,7 +304,22 @@ class StripeWebhookService:
 
         fully_onboarded = charges_enabled and payouts_enabled and details_submitted
 
-        if (
+        requirements = getattr(account, "requirements", None)
+        disabled_reason = getattr(requirements, "disabled_reason", None)
+        is_rejected = bool(disabled_reason and disabled_reason.startswith("rejected"))
+
+        if is_rejected:
+            if seller_profile.verification_status != SellerVerificationStatus.REJECTED:
+                await seller_crud.update_verification_status(
+                    self.db,
+                    seller_profile=seller_profile,
+                    status=SellerVerificationStatus.REJECTED,
+                    rejection_reason=disabled_reason,
+                )
+                logger.info(
+                    f"Seller {seller_profile.user_id} rejected via account.updated webhook"
+                )
+        elif (
             fully_onboarded
             and seller_profile.verification_status != SellerVerificationStatus.VERIFIED
         ):
@@ -320,27 +335,6 @@ class StripeWebhookService:
                 await seller_crud.assign_seller_role(self.db, user=user)
                 logger.info(
                     f"Seller {seller_profile.user_id} verified via account.updated webhook"
-                )
-        elif (
-            seller_profile.verification_status == SellerVerificationStatus.PENDING
-        ):
-            requirements = account.requirements
-            disabled_reason = (
-                requirements.disabled_reason if requirements else None
-            )
-
-            # Only treat "rejected.*" reasons as terminal. Other values like
-            # "requirements.past_due" or "under_review" are transient — the
-            # seller can still complete onboarding or wait for Stripe review.
-            if disabled_reason and disabled_reason.startswith("rejected"):
-                await seller_crud.update_verification_status(
-                    self.db,
-                    seller_profile=seller_profile,
-                    status=SellerVerificationStatus.REJECTED,
-                    rejection_reason=disabled_reason,
-                )
-                logger.info(
-                    f"Seller {seller_profile.user_id} rejected via account.updated webhook"
                 )
 
         await self.db.commit()

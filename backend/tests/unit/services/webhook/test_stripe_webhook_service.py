@@ -5,6 +5,8 @@ cover the handlers' branch/guard logic and transaction discipline:
 commit on mutating paths, no commit on early returns.
 """
 
+import stripe
+
 from app.models.payment import PaymentStatus
 from app.models.seller import SellerVerificationStatus
 
@@ -117,6 +119,18 @@ class TestPaymentIntentFailed:
         kwargs = mocks.payment_crud.update_status.await_args.kwargs
         assert kwargs["failure_code"] is None
         assert kwargs["failure_message"] is None
+
+    async def test_error_object_without_code_uses_none(self, service, mocks):
+        # getattr safety: an error object missing 'code' must not raise.
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(status=PaymentStatus.PENDING)
+        )
+        await service._handle_payment_intent_failed(
+            make_payment_intent(last_payment_error={"message": "Declined"})
+        )
+        kwargs = mocks.payment_crud.update_status.await_args.kwargs
+        assert kwargs["failure_code"] is None
+        assert kwargs["failure_message"] == "Declined"
 
     async def test_no_downgrade_from_terminal(self, service, mocks):
         for terminal in (
@@ -312,6 +326,46 @@ class TestAccountUpdated:
         await service._handle_account_updated(
             make_account(charges_enabled=False, disabled_reason="requirements.past_due")
         )
+        mocks.seller_crud.update_verification_status.assert_not_awaited()
+
+    async def test_verified_seller_is_rejected(self, service, mocks):
+        # Regression: a previously VERIFIED seller flagged by Stripe must be
+        # rejected, not ignored by a status guard.
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = (
+            make_seller_profile(verification_status=SellerVerificationStatus.VERIFIED)
+        )
+        await service._handle_account_updated(
+            make_account(charges_enabled=False, disabled_reason="rejected.fraud")
+        )
+        assert (
+            mocks.seller_crud.update_verification_status.await_args.kwargs["status"]
+            == SellerVerificationStatus.REJECTED
+        )
+
+    async def test_already_rejected_is_idempotent(self, service, mocks):
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = (
+            make_seller_profile(verification_status=SellerVerificationStatus.REJECTED)
+        )
+        await service._handle_account_updated(
+            make_account(charges_enabled=False, disabled_reason="rejected.fraud")
+        )
+        mocks.seller_crud.update_verification_status.assert_not_awaited()
+
+    async def test_missing_requirements_does_not_raise(self, service, mocks):
+        # getattr safety: account with no `requirements` field must not crash.
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = (
+            make_seller_profile(verification_status=SellerVerificationStatus.PENDING)
+        )
+        account = stripe.Account.construct_from(
+            {
+                "id": "acct_1",
+                "charges_enabled": False,
+                "payouts_enabled": False,
+                "details_submitted": False,
+            },
+            key=None,
+        )
+        await service._handle_account_updated(account)
         mocks.seller_crud.update_verification_status.assert_not_awaited()
 
     async def test_seller_not_found(self, service, mocks):
