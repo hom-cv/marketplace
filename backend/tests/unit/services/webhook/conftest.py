@@ -114,7 +114,7 @@ def mocks(monkeypatch):
         restore_to_successful=AsyncMock(),
     )
     seller_crud = SimpleNamespace(
-        get_by_stripe_account_id=AsyncMock(return_value=None),
+        get_by_stripe_account_id_for_update=AsyncMock(return_value=None),
         update_account_status=AsyncMock(),
         update_verification_status=AsyncMock(),
         assign_seller_role=AsyncMock(),

@@ -33,21 +33,21 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_stripe_account_id(
+    async def get_by_stripe_account_id_for_update(
         self, db: AsyncSession, *, stripe_account_id: str
     ) -> SellerProfile | None:
         """
-        Retrieve a seller profile by Stripe Connect account ID.
+        Retrieve a seller profile by Stripe account ID with a row-level lock.
 
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            stripe_account_id (str): The Stripe Connect account ID.
-
-        Returns:
-            SellerProfile | None: The seller profile if found, or None.
+        Use in the account.updated / deauthorization webhook handlers so
+        concurrent deliveries for the same account serialize on this row,
+        preventing lost updates to capability flags and verification status.
+        The lock is held until the surrounding transaction commits.
         """
-        query = select(self.model).where(
-            self.model.stripe_account_id == stripe_account_id
+        query = (
+            select(self.model)
+            .where(self.model.stripe_account_id == stripe_account_id)
+            .with_for_update()
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()

@@ -41,14 +41,14 @@ class TestProcessWebhookDispatch:
             verification_status=SellerVerificationStatus.VERIFIED,
             charges_enabled=True,
         )
-        mocks.seller_crud.get_by_stripe_account_id.return_value = seller
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = seller
         event = make_event(
             type="account.application.deauthorized",
             data_object={"id": "ca_app"},
             account="acct_9",
         )
         await service.process_webhook(event)
-        mocks.seller_crud.get_by_stripe_account_id.assert_awaited_once_with(
+        mocks.seller_crud.get_by_stripe_account_id_for_update.assert_awaited_once_with(
             service.db, stripe_account_id="acct_9"
         )
 
@@ -282,7 +282,7 @@ class TestChargeDisputeClosed:
 
 class TestAccountUpdated:
     async def test_fully_onboarded_verifies_and_assigns_role(self, service, mocks):
-        mocks.seller_crud.get_by_stripe_account_id.return_value = make_seller_profile(
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(
             verification_status=SellerVerificationStatus.PENDING
         )
         mocks.user_crud.get_by_id_with_relations.return_value = object()
@@ -294,7 +294,7 @@ class TestAccountUpdated:
         mocks.seller_crud.assign_seller_role.assert_awaited_once()
 
     async def test_pending_rejected_on_terminal_reason(self, service, mocks):
-        mocks.seller_crud.get_by_stripe_account_id.return_value = make_seller_profile(
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(
             verification_status=SellerVerificationStatus.PENDING
         )
         await service._handle_account_updated(
@@ -306,7 +306,7 @@ class TestAccountUpdated:
         )
 
     async def test_pending_transient_reason_no_change(self, service, mocks):
-        mocks.seller_crud.get_by_stripe_account_id.return_value = make_seller_profile(
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(
             verification_status=SellerVerificationStatus.PENDING
         )
         await service._handle_account_updated(
@@ -321,7 +321,7 @@ class TestAccountUpdated:
 
 class TestAccountDeauthorized:
     async def test_disables_and_rejects_verified_seller(self, service, mocks):
-        mocks.seller_crud.get_by_stripe_account_id.return_value = make_seller_profile(
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(
             verification_status=SellerVerificationStatus.VERIFIED,
             charges_enabled=True,
             payouts_enabled=True,
@@ -337,7 +337,7 @@ class TestAccountDeauthorized:
         assert service.db.commit.await_count == 1
 
     async def test_idempotent_when_already_disabled(self, service, mocks):
-        mocks.seller_crud.get_by_stripe_account_id.return_value = make_seller_profile(
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(
             verification_status=SellerVerificationStatus.REJECTED,
             charges_enabled=False,
             payouts_enabled=False,
@@ -353,4 +353,4 @@ class TestAccountDeauthorized:
 
     async def test_none_account_id_noop(self, service, mocks):
         await service._handle_account_deauthorized(None)
-        mocks.seller_crud.get_by_stripe_account_id.assert_not_awaited()
+        mocks.seller_crud.get_by_stripe_account_id_for_update.assert_not_awaited()

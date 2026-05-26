@@ -36,25 +36,6 @@ class PaymentCRUD(
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_payment_intent_id(
-        self, db: AsyncSession, *, payment_intent_id: str
-    ) -> Payment | None:
-        """
-        Retrieve a payment by Stripe PaymentIntent ID.
-
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            payment_intent_id (str): The Stripe PaymentIntent ID.
-
-        Returns:
-            Payment | None: The payment if found, or None.
-        """
-        query = select(self.model).where(
-            self.model.stripe_payment_intent_id == payment_intent_id
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
-
     async def get_by_payment_intent_id_for_update(
         self, db: AsyncSession, *, payment_intent_id: str
     ) -> Payment | None:

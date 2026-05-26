@@ -282,7 +282,7 @@ class StripeWebhookService:
         if not account_id:
             return
 
-        seller_profile = await seller_crud.get_by_stripe_account_id(
+        seller_profile = await seller_crud.get_by_stripe_account_id_for_update(
             self.db, stripe_account_id=account_id
         )
 
@@ -355,7 +355,7 @@ class StripeWebhookService:
         if not account_id:
             return
 
-        seller_profile = await seller_crud.get_by_stripe_account_id(
+        seller_profile = await seller_crud.get_by_stripe_account_id_for_update(
             self.db, stripe_account_id=account_id
         )
         if not seller_profile:
