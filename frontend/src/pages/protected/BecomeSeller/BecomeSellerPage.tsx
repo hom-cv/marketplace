@@ -70,17 +70,29 @@ export function BecomeSellerPage() {
     registerMutation.mutate(values);
   };
 
-  // When Stripe redirects back with ?refresh=true, generate a fresh link
-  // and send the user back through onboarding.
+  // Stripe sends the user to the refresh URL (?refresh=true) when an onboarding
+  // link has expired. Only generate a fresh link and redirect if the seller
+  // still has onboarding left to complete — otherwise a verified (or rejected,
+  // or review-pending) seller would bounce straight back to Stripe and into an
+  // infinite redirect loop. This mirrors the backend's own gating for refresh
+  // links (pending + details not yet submitted).
   useEffect(() => {
-    if (search?.refresh) {
+    if (
+      search?.refresh &&
+      sellerStatus?.verification_status === "pending" &&
+      !sellerStatus?.details_submitted
+    ) {
       getOnboardingLink()
         .then((data) => {
           window.location.href = data.onboarding_url;
         })
         .catch((err: Error) => setError(err.message));
     }
-  }, [search?.refresh]);
+  }, [
+    search?.refresh,
+    sellerStatus?.verification_status,
+    sellerStatus?.details_submitted,
+  ]);
 
   // If already verified, show success state
   if (sellerStatus?.is_seller && sellerStatus?.verification_status === "verified") {
