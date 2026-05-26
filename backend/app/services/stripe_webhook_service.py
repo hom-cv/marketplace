@@ -313,6 +313,18 @@ class StripeWebhookService:
                 logger.info(
                     f"Seller {seller_profile.user_id} verified via account.updated webhook"
                 )
+        elif (
+            not fully_onboarded
+            and seller_profile.verification_status == SellerVerificationStatus.VERIFIED
+        ):
+            await seller_crud.update_verification_status(
+                self.db,
+                seller_profile=seller_profile,
+                status=SellerVerificationStatus.PENDING,
+            )
+            logger.info(
+                f"Seller {seller_profile.user_id} reverted to pending via account.updated webhook"
+            )
 
         await self.db.commit()
 

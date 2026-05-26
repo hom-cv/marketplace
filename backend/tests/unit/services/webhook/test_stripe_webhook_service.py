@@ -334,6 +334,19 @@ class TestAccountUpdated:
         )
         mocks.seller_crud.update_verification_status.assert_not_awaited()
 
+    async def test_verified_seller_reverts_to_pending_when_onboarding_lapses(
+        self, service, mocks
+    ):
+        # Capability lost (not fully onboarded) with no rejection → back to PENDING.
+        mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = (
+            make_seller_profile(verification_status=SellerVerificationStatus.VERIFIED)
+        )
+        await service._handle_account_updated(make_account(charges_enabled=False))
+        assert (
+            mocks.seller_crud.update_verification_status.await_args.kwargs["status"]
+            == SellerVerificationStatus.PENDING
+        )
+
     async def test_missing_requirements_does_not_raise(self, service, mocks):
         # getattr safety: account with no `requirements` field must not crash.
         mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = (
