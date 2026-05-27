@@ -81,7 +81,10 @@ export function CheckoutPage() {
   const { data: paymentStatus } = usePaymentStatus(
     paymentResponse?.payment_id ?? null,
     {
-      enabled: !!paymentResponse?.payment_id,
+      // Only poll while the payment is still pending. An inline card success
+      // already sets paymentResponse.status to "successful", so we skip the
+      // redundant initial fetch (the success screen reads paymentResponse).
+      enabled: !!paymentResponse?.payment_id && paymentResponse?.status === "pending",
       refetchInterval: (query) =>
         query.state.data?.status === "pending" ? 3000 : false,
     },
