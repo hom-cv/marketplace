@@ -71,7 +71,6 @@ export function PaymentForm({
         }
 
         const intent = await createCardPayment({ post_id: postId, shipping });
-        onIntentCreated(intent);
 
         const returnUrl = `${window.location.origin}/payment-return`;
         const { error, paymentIntent } = await stripe.confirmPayment({
@@ -86,9 +85,11 @@ export function PaymentForm({
           return;
         }
 
-        if (paymentIntent?.status === "succeeded") {
-          onIntentCreated({ ...intent, status: "successful" });
-        }
+        onIntentCreated(
+          paymentIntent?.status === "succeeded"
+            ? { ...intent, status: "successful" }
+            : intent,
+        );
       } else {
         // PromptPay: no PaymentElement to mount. Create the intent server-side,
         // then confirm directly with billing details from the shipping address
