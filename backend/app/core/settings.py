@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str | None = None
     STRIPE_CONNECT_RETURN_URL: str
     STRIPE_CONNECT_REFRESH_URL: str
-    STRIPE_API_VERSION: str = "2025-03-31.basil"
+    STRIPE_API_VERSION: str = "2025-04-22.dahlia"
 
     # Digital Ocean Spaces (optional - for image uploads)
     DO_SPACES_KEY: str | None = None
