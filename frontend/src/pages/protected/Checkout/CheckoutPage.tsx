@@ -3,20 +3,21 @@
  * Flat design matching homepage/auth/explore pages
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconArrowLeft, IconMapPin, IconCreditCard } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
+import { Elements } from "@stripe/react-stripe-js";
 import { usePost } from "@/hooks/usePosts";
-import {
-  usePriceBreakdown,
-  usePaymentStatus,
-  useCardPaymentMutation,
-  usePromptPayPaymentMutation,
-} from "@/hooks/usePayments";
-import type { ShippingAddress, PaymentResponse } from "@/api/types/payment";
+import { usePriceBreakdown, usePaymentStatus } from "@/hooks/usePayments";
+import type {
+  ShippingAddress,
+  PaymentResponse,
+  PromptPayQr,
+} from "@/api/types/payment";
+import { stripePromise } from "@/lib/stripe";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { Stepper } from "@/components/Stepper";
@@ -29,30 +30,7 @@ import {
 } from "./components";
 import styles from "./CheckoutPage.module.css";
 
-type PaymentMethod = "card" | "promptpay";
-
-declare global {
-  interface Window {
-    Omise: {
-      setPublicKey: (key: string) => void;
-      createToken: (
-        type: string,
-        data: {
-          name: string;
-          number: string;
-          expiration_month: string;
-          expiration_year: string;
-          security_code: string;
-        },
-        callback: (
-          statusCode: number,
-          response: { id?: string; message?: string }
-        ) => void
-      ) => void;
-    };
-    OmiseCard: unknown;
-  }
-}
+export type PaymentMethod = "card" | "promptpay";
 
 export function CheckoutPage() {
   const { postId } = useParams({ from: "/protected/checkout/$postId" });
@@ -63,34 +41,7 @@ export function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [paymentResponse, setPaymentResponse] =
     useState<PaymentResponse | null>(null);
-  const [isTokenizing, setIsTokenizing] = useState(false);
-
-  // Card form
-  const cardForm = useForm({
-    initialValues: {
-      name: "",
-      number: "",
-      expMonth: "",
-      expYear: "",
-      cvv: "",
-    },
-    validate: {
-      name: (value) =>
-        value.trim().length < 2 ? t("checkout.form.nameRequired") : null,
-      number: (value) =>
-        value.replace(/\s/g, "").length < 13
-          ? t("checkout.form.cardRequired")
-          : null,
-      expMonth: (value) =>
-        /^(0[1-9]|1[0-2]|[1-9])$/.test(value)
-          ? null
-          : t("checkout.form.validMonth"),
-      expYear: (value) =>
-        /^\d{2,4}$/.test(value) ? null : t("checkout.form.validYear"),
-      cvv: (value) =>
-        /^\d{3,4}$/.test(value) ? null : t("checkout.form.validCvv"),
-    },
-  });
+  const [promptpayQr, setPromptpayQr] = useState<PromptPayQr | null>(null);
 
   // Shipping form
   const shippingForm = useForm<ShippingAddress>({
@@ -131,100 +82,16 @@ export function CheckoutPage() {
     paymentResponse?.payment_id ?? null,
     {
       enabled:
-        !!paymentResponse?.payment_id &&
-        paymentResponse.status === "pending" &&
-        paymentMethod === "promptpay",
-      refetchInterval: 3000,
+        !!paymentResponse?.payment_id && paymentResponse?.status === "pending",
+      refetchInterval: (query) =>
+        query.state.data?.status === "pending" ? 3000 : false,
     },
   );
 
-  // Mutations
-  const cardPaymentMutation = useCardPaymentMutation({
-    onSuccess: (data) => {
-      setPaymentResponse(data);
-      if (data.authorize_uri) {
-        window.location.href = data.authorize_uri;
-      }
-    },
-    onError: (err: Error) => setError(err.message),
-  });
-
-  const promptPayMutation = usePromptPayPaymentMutation({
-    onSuccess: (data) => setPaymentResponse(data),
-    onError: (err: Error) => setError(err.message),
-  });
-
-  // Load Omise script and set public key
-  useEffect(() => {
-    const setOmiseKey = () => {
-      if (window.Omise) {
-        window.Omise.setPublicKey(import.meta.env.VITE_OMISE_PUBLIC_KEY || "");
-      }
-    };
-
-    if (window.Omise) {
-      setOmiseKey();
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://cdn.omise.co/omise.js";
-      script.async = true;
-      script.onload = setOmiseKey;
-      document.body.appendChild(script);
-    }
-  }, []);
-
-  // Handlers
   const handleNextStep = () => {
     if (!shippingForm.validate().hasErrors) {
       setStep(1);
     }
-  };
-
-  const handleCardSubmit = () => {
-    if (cardForm.validate().hasErrors) return;
-    if (!window.Omise || !post) {
-      setError(t("checkout.paymentSystemNotLoaded"));
-      return;
-    }
-
-    setIsTokenizing(true);
-    setError(null);
-
-    const { name, number, expMonth, expYear, cvv } = cardForm.values;
-
-    window.Omise.createToken(
-      "card",
-      {
-        name,
-        number: number.replace(/\s/g, ""),
-        expiration_month: expMonth.padStart(2, "0"),
-        expiration_year: expYear.length === 2 ? `20${expYear}` : expYear,
-        security_code: cvv,
-      },
-      (statusCode, response) => {
-        setIsTokenizing(false);
-        if (statusCode !== 200 || !response.id) {
-          setError(response.message || "Failed to process card");
-          return;
-        }
-        cardPaymentMutation.mutate({
-          post_id: post.id,
-          token: response.id,
-          return_uri: `${window.location.origin}/payment-return`,
-          shipping: shippingForm.values,
-        });
-      }
-    );
-  };
-
-  const handlePromptPay = () => {
-    if (!post) return;
-    setError(null);
-    promptPayMutation.mutate({
-      post_id: post.id,
-      return_uri: `${window.location.origin}/payment-return`,
-      shipping: shippingForm.values,
-    });
   };
 
   // Loading state
@@ -243,11 +110,7 @@ export function CheckoutPage() {
     return (
       <div className={styles.page}>
         <div className={styles.container}>
-          <Alert
-            variant="error"
-            title={t("status.error")}
-            margin="bottom"
-          >
+          <Alert variant="error" title={t("status.error")} margin="bottom">
             {t("checkout.failedToLoadProduct")}
           </Alert>
           <Button
@@ -263,12 +126,9 @@ export function CheckoutPage() {
     );
   }
 
-  const total = parseFloat(priceBreakdown?.total ?? "0");
+  const totalThb = parseFloat(priceBreakdown?.total ?? "0");
+  const amountSatang = Math.round(totalThb * 100);
   const hasPaymentResponse = !!paymentResponse;
-  const isLoading =
-    isTokenizing ||
-    cardPaymentMutation.isPending ||
-    promptPayMutation.isPending;
 
   return (
     <div className={styles.page}>
@@ -292,6 +152,7 @@ export function CheckoutPage() {
             <PaymentStatus
               paymentResponse={paymentResponse}
               paymentStatus={paymentStatus ?? null}
+              promptpayQr={promptpayQr}
               error={error}
             />
 
@@ -312,16 +173,28 @@ export function CheckoutPage() {
                   <ShippingForm form={shippingForm} onSubmit={handleNextStep} />
                 )}
 
-                {step === 1 && (
-                  <PaymentForm
-                    paymentMethod={paymentMethod}
-                    onPaymentMethodChange={setPaymentMethod}
-                    cardForm={cardForm}
-                    onCardSubmit={handleCardSubmit}
-                    onPromptPaySubmit={handlePromptPay}
-                    total={total}
-                    isLoading={isLoading}
-                  />
+                {step === 1 && amountSatang > 0 && (
+                  <Elements
+                    key={paymentMethod}
+                    stripe={stripePromise}
+                    options={{
+                      mode: "payment",
+                      amount: amountSatang,
+                      currency: "thb",
+                      paymentMethodTypes: [paymentMethod],
+                    }}
+                  >
+                    <PaymentForm
+                      paymentMethod={paymentMethod}
+                      onPaymentMethodChange={setPaymentMethod}
+                      postId={post.id}
+                      shipping={shippingForm.values}
+                      total={totalThb}
+                      onError={setError}
+                      onIntentCreated={setPaymentResponse}
+                      onPromptPayQr={setPromptpayQr}
+                    />
+                  </Elements>
                 )}
               </>
             )}

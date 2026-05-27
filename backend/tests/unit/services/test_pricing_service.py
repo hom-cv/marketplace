@@ -1,7 +1,8 @@
 """Unit tests for PricingService.
 
 Tests verify fee calculations, rounding behavior, and payout accuracy.
-Fee model: 10% platform fee + processing fee + transfer fee, all seller-side.
+Fee model: 10% platform fee + Stripe Thailand processing fee (percentage +
+fixed per-charge THB), all seller-side.
 """
 
 from decimal import Decimal
@@ -20,9 +21,10 @@ def mock_settings():
     settings.PLATFORM_FEE_PERCENT = Decimal("10.0")
     settings.VAT_PERCENT = Decimal("7.0")
     settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
-    settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
+    settings.CARD_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
+    settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("2.0")
+    settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
-    settings.TRANSFER_FEE = Decimal("30.0")
     return settings
 
 
@@ -51,7 +53,7 @@ class TestCalculateOrderTotal:
         assert result.total == Decimal("1100.00")
 
     def test_card_processing_fee_calculation(self, pricing_service):
-        """Card processing fee should be 3.65% + 7% VAT on that fee."""
+        """Card processing fee = (amount * 3.65% + 10 THB) + 7% VAT."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("0.00")
 
@@ -61,13 +63,13 @@ class TestCalculateOrderTotal:
             payment_method=PaymentMethodType.CARD,
         )
 
-        # Processing fee base: 1000 * 3.65% = 36.50
-        # Processing VAT: 36.50 * 7% = 2.555 -> 2.56 (ROUND_UP)
-        # Total processing: 36.50 + 2.56 = 39.06
-        assert result.processing_fee == Decimal("39.06")
+        # Processing fee base: 1000 * 3.65% + 10 = 46.50
+        # Processing VAT: 46.50 * 7% = 3.255 -> 3.26 (ROUND_UP)
+        # Total processing: 46.50 + 3.26 = 49.76
+        assert result.processing_fee == Decimal("49.76")
 
     def test_promptpay_processing_fee_lower_than_card(self, pricing_service):
-        """PromptPay should have lower processing fee (1.65% vs 3.65%)."""
+        """PromptPay should have lower processing fee (2% vs 3.65%)."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("0.00")
 
@@ -84,8 +86,30 @@ class TestCalculateOrderTotal:
 
         assert promptpay_result.processing_fee < card_result.processing_fee
 
+    def test_fixed_fee_is_added_once_per_charge(self, pricing_service):
+        """The fixed per-charge THB fee should be added once, not scaled with amount."""
+        small = pricing_service.calculate_order_total(
+            item_price=Decimal("100.00"),
+            shipping_cost=Decimal("0.00"),
+            payment_method=PaymentMethodType.CARD,
+        )
+        big = pricing_service.calculate_order_total(
+            item_price=Decimal("10000.00"),
+            shipping_cost=Decimal("0.00"),
+            payment_method=PaymentMethodType.CARD,
+        )
+
+        # For 100 THB: base = 100*3.65% + 10 = 13.65
+        # For 10000 THB: base = 10000*3.65% + 10 = 375.00
+        # The +10 flat is present in both; percentage scales with amount.
+        # Small-amount check: the +10 must be included (sanity bounds).
+        assert small.processing_fee > Decimal("13.0")
+        assert small.processing_fee < Decimal("15.0")
+        # Big-amount check: the +10 is only added once (would be 400+ if doubled).
+        assert big.processing_fee < Decimal("410.00")
+
     def test_platform_fee_calculation(self, pricing_service):
-        """Platform fee should be 10% + 7% VAT (transfer fee is separate)."""
+        """Platform fee should be 10% + 7% VAT (no separate transfer fee)."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("0.00")
 
@@ -99,7 +123,6 @@ class TestCalculateOrderTotal:
         # Platform VAT: 100 * 7% = 7.00
         # Total platform: 100.00 + 7.00 = 107.00
         assert result.platform_fee == Decimal("107.00")
-        assert result.transfer_fee == Decimal("30.00")
 
     def test_seller_payout_is_base_minus_fees(self, pricing_service):
         """Seller payout = base_amount - total_fees."""
@@ -115,8 +138,8 @@ class TestCalculateOrderTotal:
         base_amount = item_price + shipping_cost
         assert result.seller_payout == base_amount - result.total_fees
 
-    def test_total_fees_equals_platform_plus_transfer_plus_processing(self, pricing_service):
-        """Total fees = platform_fee + transfer_fee + processing_fee."""
+    def test_total_fees_equals_platform_plus_processing(self, pricing_service):
+        """Total fees = platform_fee + processing_fee (no transfer fee)."""
         item_price = Decimal("500.00")
         shipping_cost = Decimal("50.00")
 
@@ -126,7 +149,7 @@ class TestCalculateOrderTotal:
             payment_method=PaymentMethodType.CARD,
         )
 
-        assert result.total_fees == result.platform_fee + result.transfer_fee + result.processing_fee
+        assert result.total_fees == result.platform_fee + result.processing_fee
 
     def test_zero_shipping_cost(self, pricing_service):
         """Calculations should work with zero shipping cost."""
@@ -143,7 +166,7 @@ class TestCalculateOrderTotal:
         assert result.total == item_price
 
     def test_response_includes_all_required_fields(self, pricing_service):
-        """Result should contain all PriceBreakdown fields."""
+        """Result should contain all PriceBreakdown fields (transfer_fee removed)."""
         result = pricing_service.calculate_order_total(
             item_price=Decimal("100.00"),
             shipping_cost=Decimal("10.00"),
@@ -153,12 +176,12 @@ class TestCalculateOrderTotal:
         assert hasattr(result, "item_price")
         assert hasattr(result, "shipping_cost")
         assert hasattr(result, "platform_fee")
-        assert hasattr(result, "transfer_fee")
         assert hasattr(result, "processing_fee")
         assert hasattr(result, "total_fees")
         assert hasattr(result, "total_vat")
         assert hasattr(result, "total")
         assert hasattr(result, "seller_payout")
+        assert not hasattr(result, "transfer_fee")
 
     def test_rounding_uses_round_up(self, pricing_service):
         """Fees should round up to protect against underpayment."""
@@ -175,10 +198,9 @@ class TestCalculateOrderTotal:
         # Platform VAT: 33.34 * 7% = 2.3338 -> 2.34 (ROUND_UP)
         # Total platform fee: 33.34 + 2.34 = 35.68
         assert result.platform_fee == Decimal("35.68")
-        assert result.transfer_fee == Decimal("30.00")
 
     def test_total_vat_includes_platform_and_processing(self, pricing_service):
-        """Total VAT should include platform VAT + processing VAT."""
+        """Total VAT should include platform VAT + processing VAT (on full fee)."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("0.00")
 
@@ -189,6 +211,7 @@ class TestCalculateOrderTotal:
         )
 
         # Platform VAT: 100 * 7% = 7.00
-        # Processing VAT: 36.50 * 7% = 2.56 (ROUND_UP)
-        # Total VAT: 7.00 + 2.56 = 9.56
-        assert result.total_vat == Decimal("9.56")
+        # Processing base: 1000*3.65% + 10 = 46.50
+        # Processing VAT: 46.50 * 7% = 3.255 -> 3.26 (ROUND_UP)
+        # Total VAT: 7.00 + 3.26 = 10.26
+        assert result.total_vat == Decimal("10.26")

@@ -1,16 +1,18 @@
 /**
- * Seller API functions for registration and status
+ * Seller API functions for Stripe Connect onboarding and status
  */
 
 import { apiRequest, jsonRequest } from "@/api/api";
 import type {
+  OnboardingLinkResponse,
   SellerStatusResponse,
   SellerVerificationRequest,
   SellerVerificationResponse,
 } from "@/api/types/seller";
 
 /**
- * Register as a seller by providing bank account details
+ * Register as a seller by creating a Stripe Connect Standard account.
+ * Returns an onboarding URL the frontend should redirect to.
  */
 export async function registerSeller(
   data: SellerVerificationRequest
@@ -19,23 +21,16 @@ export async function registerSeller(
 }
 
 /**
- * Get the current seller status for the authenticated user
+ * Get the current seller status for the authenticated user.
  */
 export async function getSellerStatus(): Promise<SellerStatusResponse> {
   return apiRequest<SellerStatusResponse>("/seller/status");
 }
 
 /**
- * Available bank brands for seller registration
+ * Get a fresh Stripe Connect onboarding URL (used when a prior link expired
+ * or the user needs to resume onboarding).
  */
-export const BANK_BRANDS = [
-  { value: "bbl", label: "Bangkok Bank" },
-  { value: "kbank", label: "Kasikorn Bank" },
-  { value: "ktb", label: "Krung Thai Bank" },
-  { value: "scb", label: "Siam Commercial Bank" },
-  { value: "bay", label: "Bank of Ayudhya (Krungsri)" },
-  { value: "gsb", label: "Government Savings Bank" },
-  { value: "cimb", label: "CIMB Thai" },
-  { value: "tbank", label: "Thanachart Bank" },
-  { value: "uob", label: "United Overseas Bank" },
-] as const;
+export async function getOnboardingLink(): Promise<OnboardingLinkResponse> {
+  return apiRequest<OnboardingLinkResponse>("/seller/onboarding-link");
+}

@@ -33,20 +33,22 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_by_recipient_id(
-        self, db: AsyncSession, *, recipient_id: str
+    async def get_by_stripe_account_id_for_update(
+        self, db: AsyncSession, *, stripe_account_id: str
     ) -> SellerProfile | None:
         """
-        Retrieve a seller profile by Omise recipient ID.
+        Retrieve a seller profile by Stripe account ID with a row-level lock.
 
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            recipient_id (str): The Omise recipient ID.
-
-        Returns:
-            SellerProfile | None: The seller profile if found, or None.
+        Use in the account.updated / deauthorization webhook handlers so
+        concurrent deliveries for the same account serialize on this row,
+        preventing lost updates to capability flags and verification status.
+        The lock is held until the surrounding transaction commits.
         """
-        query = select(self.model).where(self.model.omise_recipient_id == recipient_id)
+        query = (
+            select(self.model)
+            .where(self.model.stripe_account_id == stripe_account_id)
+            .with_for_update()
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -55,10 +57,7 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         db: AsyncSession,
         *,
         user_id: int,
-        omise_recipient_id: str,
-        bank_brand: str,
-        bank_account_last_digits: str,
-        bank_account_name: str,
+        stripe_account_id: str,
     ) -> SellerProfile:
         """
         Create a new seller profile.
@@ -66,25 +65,51 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         Args:
             db (AsyncSession): The asynchronous database session.
             user_id (int): The user ID.
-            omise_recipient_id (str): The Omise recipient ID.
-            bank_brand (str): The bank brand code.
-            bank_account_last_digits (str): Last 4 digits of bank account.
-            bank_account_name (str): Name on bank account.
+            stripe_account_id (str): The Stripe Connect account ID.
 
         Returns:
             SellerProfile: The created seller profile.
         """
         seller_profile = SellerProfile(
             user_id=user_id,
-            omise_recipient_id=omise_recipient_id,
-            bank_brand=bank_brand,
-            bank_account_last_digits=bank_account_last_digits,
-            bank_account_name=bank_account_name,
+            stripe_account_id=stripe_account_id,
             verification_status=SellerVerificationStatus.PENDING,
         )
 
         db.add(seller_profile)
-        await db.commit()
+
+        await db.flush()
+        await db.refresh(seller_profile)
+
+        return seller_profile
+
+    async def update_account_status(
+        self,
+        db: AsyncSession,
+        *,
+        seller_profile: SellerProfile,
+        charges_enabled: bool,
+        payouts_enabled: bool,
+        details_submitted: bool,
+    ) -> SellerProfile:
+        """
+        Sync Stripe Account capability flags onto the seller profile.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            seller_profile (SellerProfile): The seller profile to update.
+            charges_enabled (bool): Whether the account can accept charges.
+            payouts_enabled (bool): Whether the account can receive payouts.
+            details_submitted (bool): Whether onboarding is complete.
+
+        Returns:
+            SellerProfile: The updated seller profile.
+        """
+        seller_profile.charges_enabled = charges_enabled
+        seller_profile.payouts_enabled = payouts_enabled
+        seller_profile.details_submitted = details_submitted
+
+        await db.flush()
         await db.refresh(seller_profile)
 
         return seller_profile
@@ -116,7 +141,7 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         elif status == SellerVerificationStatus.REJECTED:
             seller_profile.rejection_reason = rejection_reason
 
-        await db.commit()
+        await db.flush()
         await db.refresh(seller_profile)
 
         return seller_profile
@@ -146,7 +171,8 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         if not any(r.role == RoleType.SELLER for r in user.roles):
             user_role_assoc = UserToUserRole(user_id=user.id, role_id=seller_role.id)
             db.add(user_role_assoc)
-            await db.commit()
+
+            await db.flush()
 
             # Refresh user to get updated roles
             query = select(User).where(User.id == user.id).options(selectinload(User.roles))

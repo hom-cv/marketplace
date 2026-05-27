@@ -1,13 +1,14 @@
 import ssl
 from functools import lru_cache
 
-from app.core.settings import Settings, get_settings
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+
+from app.core.settings import Settings, get_settings
 
 settings: Settings = get_settings()
 

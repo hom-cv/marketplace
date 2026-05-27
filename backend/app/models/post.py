@@ -1,5 +1,6 @@
 """Post model for clothing marketplace listings."""
 
+from datetime import datetime
 from decimal import Decimal
 from enum import auto
 
@@ -9,7 +10,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
 from app.models._base import Base
-from datetime import datetime
 
 
 class PostType(AutoName):

@@ -2,9 +2,7 @@
 
 from datetime import datetime, timezone
 
-from typing import Sequence
-
-from sqlalchemy import ColumnElement, UnaryExpression, func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -25,33 +23,22 @@ class PaymentCRUD(
 ):
     """CRUD operations for Payment model."""
 
-    async def get_by_id_for_update(
-        self, db: AsyncSession, *, id: int
+    async def get_by_payment_intent_id_for_update(
+        self, db: AsyncSession, *, payment_intent_id: str
     ) -> Payment | None:
         """
-        Retrieve a payment by ID with a row-level lock (SELECT FOR UPDATE).
+        Retrieve a payment by Stripe PaymentIntent ID with a row-level lock.
 
-        Use this when performing check-then-act operations to prevent
-        race conditions (e.g., duplicate payouts).
+        Use in webhook check-then-update paths to serialize concurrent
+        redeliveries of the same event and prevent lost updates. The lock is
+        held until the surrounding transaction commits, so the caller must not
+        commit before completing its update.
         """
-        query = select(self.model).where(self.model.id == id).with_for_update()
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
-
-    async def get_by_charge_id(
-        self, db: AsyncSession, *, charge_id: str
-    ) -> Payment | None:
-        """
-        Retrieve a payment by Omise charge ID.
-
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            charge_id (str): The Omise charge ID.
-
-        Returns:
-            Payment | None: The payment if found, or None.
-        """
-        query = select(self.model).where(self.model.omise_charge_id == charge_id)
+        query = (
+            select(self.model)
+            .where(self.model.stripe_payment_intent_id == payment_intent_id)
+            .with_for_update()
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -115,11 +102,7 @@ class PaymentCRUD(
         amount: int,
         currency: str,
         payment_method: PaymentMethod,
-        omise_charge_id: str | None = None,
-        authorize_uri: str | None = None,
-        return_uri: str | None = None,
-        qr_code_uri: str | None = None,
-        expires_at: datetime | None = None,
+        stripe_payment_intent_id: str | None = None,
         description: str | None = None,
         # Fee breakdown (all in satang)
         item_price: int | None = None,
@@ -127,7 +110,6 @@ class PaymentCRUD(
         platform_fee: int | None = None,
         processing_fee: int | None = None,
         total_vat: int | None = None,
-        transfer_fee: int | None = None,
         seller_payout: int | None = None,
         # Shipping address
         shipping_name: str | None = None,
@@ -148,11 +130,7 @@ class PaymentCRUD(
             amount (int): Amount in smallest currency unit.
             currency (str): Currency code.
             payment_method (PaymentMethod): Payment method used.
-            omise_charge_id (str | None): Omise charge ID.
-            authorize_uri (str | None): 3DS authorization URL.
-            return_uri (str | None): Return URL after payment.
-            qr_code_uri (str | None): PromptPay QR code URL.
-            expires_at (datetime | None): Payment expiration time.
+            stripe_payment_intent_id (str | None): Stripe PaymentIntent ID.
             description (str | None): Payment description.
             Fee breakdown fields: item_price, shipping_cost, platform_fee, processing_fee, total_vat, seller_payout.
             shipping_*: Shipping address fields.
@@ -167,11 +145,7 @@ class PaymentCRUD(
             amount=amount,
             currency=currency,
             payment_method=payment_method,
-            omise_charge_id=omise_charge_id,
-            authorize_uri=authorize_uri,
-            return_uri=return_uri,
-            qr_code_uri=qr_code_uri,
-            expires_at=expires_at,
+            stripe_payment_intent_id=stripe_payment_intent_id,
             description=description,
             status=PaymentStatus.PENDING,
             # Fee breakdown
@@ -180,7 +154,6 @@ class PaymentCRUD(
             platform_fee=platform_fee,
             processing_fee=processing_fee,
             total_vat=total_vat,
-            transfer_fee=transfer_fee,
             seller_payout=seller_payout,
             # Shipping address
             shipping_name=shipping_name,
@@ -192,7 +165,8 @@ class PaymentCRUD(
         )
 
         db.add(payment)
-        await db.commit()
+
+        await db.flush()
         await db.refresh(payment)
 
         return payment
@@ -229,33 +203,26 @@ class PaymentCRUD(
             payment.failure_code = failure_code
             payment.failure_message = failure_message
 
-        await db.commit()
+        await db.flush()
         await db.refresh(payment)
 
         return payment
 
-    async def update_transfer(
-        self,
-        db: AsyncSession,
-        *,
-        payment: Payment,
-        transfer_id: str,
+    async def restore_to_successful(
+        self, db: AsyncSession, *, payment: Payment
     ) -> Payment:
         """
-        Update the payment with transfer information.
+        Set a payment back to SUCCESSFUL without touching paid_at/fulfillment.
 
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            payment (Payment): The payment to update.
-            transfer_id (str): The Omise transfer ID.
-
-        Returns:
-            Payment: The updated payment.
+        Used when a dispute is resolved in the seller's favor (won): the payment
+        was moved to DISPUTED but the order may already have shipped, so we must
+        not re-stamp paid_at or reset fulfillment_status to PACKING the way
+        ``update_status`` does.
         """
-        payment.omise_transfer_id = transfer_id
-        payment.transferred_at = datetime.now(timezone.utc)
+        payment.status = PaymentStatus.SUCCESSFUL
 
         await db.flush()
+        await db.refresh(payment)
 
         return payment
 
@@ -289,7 +256,7 @@ class PaymentCRUD(
         except KeyError:
             raise invalid_carrier_error(carrier)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(payment)
 
         return payment
@@ -315,77 +282,10 @@ class PaymentCRUD(
         payment.fulfillment_status = FulfillmentStatus.DELIVERED
         payment.delivered_at = datetime.now(timezone.utc)
 
-        await db.commit()
+        await db.flush()
         await db.refresh(payment)
 
         return payment
-
-
-    async def _get_payouts(
-        self,
-        db: AsyncSession,
-        *,
-        conditions: Sequence[ColumnElement[bool]],
-        order_by: UnaryExpression,
-        skip: int,
-        limit: int,
-    ) -> tuple[list[Payment], int]:
-        """Shared payout query: count + paginated fetch with relations."""
-        count_query = select(func.count(self.model.id)).where(*conditions)
-        total = (await db.execute(count_query)).scalar_one()
-
-        query = (
-            select(self.model)
-            .where(*conditions)
-            .order_by(order_by)
-            .offset(skip)
-            .limit(limit)
-            .options(
-                selectinload(self.model.post),
-                selectinload(self.model.buyer),
-                selectinload(self.model.seller),
-            )
-        )
-        result = await db.scalars(query)
-        return list(result.all()), total
-
-    async def get_pending_payouts(
-        self,
-        db: AsyncSession,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> tuple[list[Payment], int]:
-        """Retrieve payments eligible for payout: successful, delivered, not yet transferred."""
-        return await self._get_payouts(
-            db,
-            conditions=[
-                self.model.status == PaymentStatus.SUCCESSFUL,
-                self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
-                self.model.omise_transfer_id.is_(None),
-            ],
-            order_by=self.model.delivered_at.asc(),
-            skip=skip,
-            limit=limit,
-        )
-
-    async def get_completed_payouts(
-        self,
-        db: AsyncSession,
-        *,
-        skip: int = 0,
-        limit: int = 50,
-    ) -> tuple[list[Payment], int]:
-        """Retrieve payments that have been paid out (have a transfer ID)."""
-        return await self._get_payouts(
-            db,
-            conditions=[
-                self.model.omise_transfer_id.isnot(None),
-            ],
-            order_by=self.model.transferred_at.desc(),
-            skip=skip,
-            limit=limit,
-        )
 
 
 payment_crud = PaymentCRUD(Payment)

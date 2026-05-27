@@ -48,7 +48,6 @@ import {
   FlaggedMessagesPage,
   UserBansPage,
   PostBansPage,
-  PayoutsPage,
 } from "@/pages/admin";
 
 import styles from "./router.module.css";
@@ -260,12 +259,6 @@ const adminPostBansRoute = createRoute({
   component: PostBansPage,
 });
 
-const adminPayoutsRoute = createRoute({
-  getParentRoute: () => adminLayout,
-  path: "/payouts",
-  component: PayoutsPage,
-});
-
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -296,7 +289,6 @@ const routeTree = rootRoute.addChildren([
         adminFlaggedMessagesRoute,
         adminUserBansRoute,
         adminPostBansRoute,
-        adminPayoutsRoute,
       ]),
     ]),
   ]),

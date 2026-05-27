@@ -1,5 +1,12 @@
 /**
- * BecomeSeller page for seller registration and verification
+ * BecomeSeller page for Stripe Connect Standard onboarding.
+ *
+ * Seller registration is invite-gated. On submit, the backend creates a
+ * Stripe Connect Standard account and returns a one-time onboarding URL.
+ * We redirect the browser to that URL, where Stripe collects KYC and bank
+ * details. The user is returned to this page (or the refresh URL)
+ * afterwards, at which point we poll the backend for the latest account
+ * state. Verified sellers manage payouts on dashboard.stripe.com directly.
  */
 
 import { useState } from "react";
@@ -9,7 +16,6 @@ import {
   Text,
   Paper,
   TextInput,
-  Select,
   Button,
   Stack,
   Alert,
@@ -20,8 +26,8 @@ import {
 import { useForm } from "@mantine/form";
 import { IconBuildingBank, IconCheck, IconAlertCircle, IconTicket } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { BANK_BRANDS } from "@/api/seller";
 import { useSellerStatus, useRegisterSellerMutation } from "@/hooks/useSeller";
+import { getOnboardingLink } from "@/api/seller";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate } from "@tanstack/react-router";
@@ -32,7 +38,6 @@ export function BecomeSellerPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const { t } = useTranslation("common");
   const { t: tPolicies } = useTranslation("policies");
 
@@ -43,29 +48,20 @@ export function BecomeSellerPage() {
   const registerMutation = useRegisterSellerMutation({
     onSuccess: (data) => {
       setError(null);
-      setSuccess(data.message);
+      if (data.onboarding_url) {
+        window.location.href = data.onboarding_url;
+      }
     },
-    onError: (err: Error) => {
-      setError(err.message);
-      setSuccess(null);
-    },
+    onError: (err: Error) => setError(err.message),
   });
 
   const form = useForm<SellerVerificationRequest>({
     initialValues: {
       invite_code: "",
-      bank_brand: "",
-      bank_account_number: "",
-      bank_account_name: "",
     },
     validate: {
       invite_code: (value) =>
         value.trim().length >= 6 ? null : t("seller.validation.inviteCodeMin"),
-      bank_brand: (value) => (value ? null : t("seller.validation.selectBank")),
-      bank_account_number: (value) =>
-        value.length >= 10 ? null : t("seller.validation.accountNumberMin"),
-      bank_account_name: (value) =>
-        value.length >= 2 ? null : t("seller.validation.accountNameMin"),
     },
   });
 
@@ -82,10 +78,56 @@ export function BecomeSellerPage() {
             <IconCheck size={64} color="var(--mantine-color-green-6)" />
             <Title order={2}>{t("seller.verified")}</Title>
             <Text c="dimmed" ta="center">
-              {t("seller.verifiedMessage", { digits: sellerStatus.bank_last_digits })}
+              {t("seller.verifiedMessage")}
             </Text>
-            <Button onClick={() => navigate({ to: "/account/listings/new" })}>
-              {t("seller.createListing")}
+            <Group>
+              <Button onClick={() => navigate({ to: "/account/listings/new" })}>
+                {t("seller.createListing")}
+              </Button>
+              <Button
+                variant="light"
+                component="a"
+                href="https://dashboard.stripe.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t("seller.managePayoutAccount")}
+              </Button>
+            </Group>
+            {error && (
+              <Alert color="red" title={t("status.error")}>
+                {error}
+              </Alert>
+            )}
+          </Stack>
+        </Paper>
+      </Container>
+    );
+  }
+
+  // If onboarding has been submitted but review is still pending
+  if (
+    sellerStatus?.verification_status === "pending" &&
+    sellerStatus?.details_submitted
+  ) {
+    return (
+      <Container size="sm" py="xl">
+        <Paper shadow="sm" p="xl" radius="md" className={styles.paper}>
+          <Stack align="center" gap="lg">
+            <Loader />
+            <Title order={2}>{t("seller.reviewPending")}</Title>
+            <Text c="dimmed" ta="center">
+              {t("seller.pendingMessage")}
+            </Text>
+            <Button
+              variant="light"
+              onClick={() =>
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.seller.status,
+                })
+              }
+            >
+              {t("seller.checkStatus")}
             </Button>
           </Stack>
         </Paper>
@@ -93,20 +135,35 @@ export function BecomeSellerPage() {
     );
   }
 
-  // If verification is pending
-  if (sellerStatus?.verification_status === "pending") {
+  // If onboarding has been started but not yet completed
+  if (
+    sellerStatus?.verification_status === "pending" &&
+    !sellerStatus?.details_submitted
+  ) {
     return (
       <Container size="sm" py="xl">
         <Paper shadow="sm" p="xl" radius="md" className={styles.paper}>
           <Stack align="center" gap="lg">
-            <Loader />
-            <Title order={2}>{t("seller.pendingTitle")}</Title>
+            <Title order={2}>{t("seller.onboardingInProgress")}</Title>
             <Text c="dimmed" ta="center">
               {t("seller.pendingMessage")}
             </Text>
-            <Button variant="light" onClick={() => queryClient.invalidateQueries({ queryKey: queryKeys.seller.status })}>
-              {t("seller.checkStatus")}
+            <Button
+              onClick={() =>
+                getOnboardingLink()
+                  .then((data) => {
+                    window.location.href = data.onboarding_url;
+                  })
+                  .catch((err: Error) => setError(err.message))
+              }
+            >
+              {t("seller.continueToStripe")}
             </Button>
+            {error && (
+              <Alert color="red" title={t("status.error")}>
+                {error}
+              </Alert>
+            )}
           </Stack>
         </Paper>
       </Container>
@@ -160,40 +217,11 @@ export function BecomeSellerPage() {
                 </Alert>
               )}
 
-              {success && (
-                <Alert color="green" title={t("status.success")}>
-                  {success}
-                </Alert>
-              )}
-
               <TextInput
                 label={t("seller.inviteCode")}
                 placeholder={t("seller.invitePlaceholder")}
                 leftSection={<IconTicket size={16} />}
                 {...form.getInputProps("invite_code")}
-              />
-
-              <Select
-                label={t("seller.bank")}
-                placeholder={t("seller.selectBank")}
-                data={BANK_BRANDS.map((bank) => ({
-                  value: bank.value,
-                  label: bank.label,
-                }))}
-                searchable
-                {...form.getInputProps("bank_brand")}
-              />
-
-              <TextInput
-                label={t("seller.accountHolderName")}
-                placeholder={t("seller.accountNamePlaceholder")}
-                {...form.getInputProps("bank_account_name")}
-              />
-
-              <TextInput
-                label={t("seller.accountNumber")}
-                placeholder={t("seller.accountNumberPlaceholder")}
-                {...form.getInputProps("bank_account_number")}
               />
 
               <Button
@@ -202,7 +230,7 @@ export function BecomeSellerPage() {
                 mt="md"
                 loading={registerMutation.isPending}
               >
-                {t("seller.verifyBank")}
+                {t("seller.continueToStripe")}
               </Button>
 
               <Text size="xs" c="dimmed" ta="center">

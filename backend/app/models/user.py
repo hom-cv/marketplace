@@ -1,7 +1,7 @@
 """User model for application users and their relationships."""
 
-from enum import auto
 from datetime import datetime
+from enum import auto
 from typing import List, Optional
 
 from sqlalchemy import BigInteger, Enum, Index, String, Text

@@ -5,8 +5,6 @@ allowing the real service layer to be tested while mocking database access.
 This provides maximum coverage of the service business logic.
 """
 
-from app.core.settings import Settings
-from app.services.email_service import EmailService
 from datetime import timedelta
 from decimal import Decimal
 from typing import AsyncGenerator
@@ -17,7 +15,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user
-from app.core.settings import get_settings
+from app.core.settings import Settings, get_settings
 from app.crud.follow import FollowCRUD, get_follow_crud
 from app.crud.like import LikeCRUD, get_like_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
@@ -27,9 +25,8 @@ from app.db.utils import get_async_db
 from app.main import create_app
 from app.models.user import User, UserStatus
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
-from app.services.email_service import _get_email_service
+from app.services.email_service import EmailService, _get_email_service
 from app.services.pricing_service import PricingService
-
 
 # =============================================================================
 # Test Data Factory Functions
@@ -42,7 +39,9 @@ def _create_test_pricing_service() -> PricingService:
     mock_settings.PLATFORM_FEE_PERCENT = Decimal("10.0")
     mock_settings.VAT_PERCENT = Decimal("7.0")
     mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
+    mock_settings.CARD_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
+    mock_settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
     mock_settings.TRANSFER_FEE = Decimal("30.0")
     return PricingService(db=AsyncMock(), settings=mock_settings, post_crud_dep=MagicMock())
@@ -167,7 +166,9 @@ def create_mock_settings() -> MagicMock:
     mock_settings.PLATFORM_FEE_PERCENT = Decimal("10.0")
     mock_settings.VAT_PERCENT = Decimal("7.0")
     mock_settings.CARD_PROCESSING_FEE_PERCENT = Decimal("3.65")
+    mock_settings.CARD_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("1.65")
+    mock_settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
     mock_settings.TRANSFER_FEE = Decimal("30.0")
     return mock_settings

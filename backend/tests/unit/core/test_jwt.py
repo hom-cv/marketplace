@@ -17,7 +17,6 @@ from app.core.jwt import (
     verify_email_token,
 )
 
-
 # Test constants
 TEST_JWT_SECRET = "test-secret-key-for-testing"
 TEST_USER_ID = 12345

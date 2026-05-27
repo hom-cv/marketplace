@@ -1,6 +1,6 @@
 """Schemas for email verification."""
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class EmailVerificationResponse(BaseModel):

@@ -6,7 +6,6 @@ import {
   IconMessageReport,
   IconUserOff,
   IconPackageOff,
-  IconCash,
   IconArrowLeft,
 } from "@tabler/icons-react";
 import { SidebarNavLink } from "@/components/shared/SidebarNavLink";
@@ -46,17 +45,6 @@ function SidebarContent() {
       </div>
 
       <div className={styles.navSection}>
-        <div className={styles.navHeader}>Finance</div>
-        <SidebarNavLink
-          to="/admin/payouts"
-          icon={<IconCash size={18} />}
-          label="Payouts"
-          className={styles.navLink}
-          activeClassName={`${styles.navLink} ${styles.active}`}
-        />
-      </div>
-
-      <div className={styles.navSection}>
         <div className={styles.navHeader}>Moderation</div>
         <SidebarNavLink
           to="/admin/bans/users"
@@ -81,7 +69,6 @@ const MOBILE_NAV_LINKS = [
   { to: "/admin/reports" as const, icon: IconFlag, label: "Reports" },
   { to: "/admin/flagged-messages" as const, icon: IconMessageReport, label: "Flags" },
   { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
-  { to: "/admin/payouts" as const, icon: IconCash, label: "Payouts" },
   { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Users" },
   { to: "/admin/bans/posts" as const, icon: IconPackageOff, label: "Posts" },
 ];

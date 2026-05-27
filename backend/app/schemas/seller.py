@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 class SellerVerificationRequest(BaseModel):
-    """Schema for initiating seller verification with bank account details."""
+    """Schema for initiating seller verification via Stripe Connect onboarding."""
 
     invite_code: str = Field(
         ...,
@@ -14,31 +14,17 @@ class SellerVerificationRequest(BaseModel):
         max_length=16,
         description="Invite code required to become a seller",
     )
-    bank_brand: str = Field(
-        ...,
-        min_length=1,
-        max_length=64,
-        description="Bank brand code (e.g., 'kbank', 'bbl', 'scb')",
-    )
-    bank_account_number: str = Field(
-        ...,
-        min_length=10,
-        max_length=20,
-        description="Bank account number",
-    )
-    bank_account_name: str = Field(
-        ...,
-        min_length=1,
-        max_length=255,
-        description="Name on bank account",
-    )
 
 
 class SellerVerificationResponse(BaseModel):
     """Schema for seller verification response."""
 
     status: str
-    recipient_id: str | None = None
+    stripe_account_id: str | None = None
+    onboarding_url: str | None = Field(
+        default=None,
+        description="One-time URL to complete Stripe Connect onboarding",
+    )
     message: str
 
 
@@ -47,8 +33,19 @@ class SellerStatusResponse(BaseModel):
 
     is_seller: bool
     verification_status: str | None = None
-    bank_brand: str | None = None
-    bank_last_digits: str | None = None
+    charges_enabled: bool = False
+    payouts_enabled: bool = False
+    details_submitted: bool = False
     verified_at: datetime | None = None
+    onboarding_url: str | None = Field(
+        default=None,
+        description="One-time URL to resume Stripe Connect onboarding (pending sellers only)",
+    )
 
     model_config = {"from_attributes": True}
+
+
+class OnboardingLinkResponse(BaseModel):
+    """Schema returned when a fresh Stripe onboarding link is generated."""
+
+    onboarding_url: str

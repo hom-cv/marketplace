@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { followUser, unfollowUser } from "@/api/follows";
@@ -30,9 +30,15 @@ export function FollowButton({
   const [isFollowed, setIsFollowed] = useState(initialFollowed);
   const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
+  // Reset during render when the props that seed our optimistic state change.
+  // React docs: https://react.dev/reference/react/useState#storing-information-from-previous-renders
+  const [prevUserId, setPrevUserId] = useState(userId);
+  const [prevInitialFollowed, setPrevInitialFollowed] = useState(initialFollowed);
+  if (userId !== prevUserId || initialFollowed !== prevInitialFollowed) {
+    setPrevUserId(userId);
+    setPrevInitialFollowed(initialFollowed);
     setIsFollowed(initialFollowed);
-  }, [userId, initialFollowed]);
+  }
 
   const followMutation = useMutation({
     mutationFn: () => followUser(userId),

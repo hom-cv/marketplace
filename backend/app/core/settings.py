@@ -32,11 +32,13 @@ class Settings(BaseSettings):
 
     BASE_URL: str
 
-    # Omise configuration
-    OMISE_PUBLIC_KEY: str
-    OMISE_SECRET_KEY: str
-    OMISE_WEBHOOK_SECRET: str | None = None
-    OMISE_CONNECT_ENABLED: bool = False  # Enable when Omise Connect is set up
+    # Stripe configuration
+    STRIPE_SECRET_KEY: str
+    STRIPE_PUBLISHABLE_KEY: str
+    STRIPE_WEBHOOK_SECRET: str | None = None
+    STRIPE_CONNECT_RETURN_URL: str
+    STRIPE_CONNECT_REFRESH_URL: str
+    STRIPE_API_VERSION: str = "2025-04-22.dahlia"
 
     # Digital Ocean Spaces (optional - for image uploads)
     DO_SPACES_KEY: str | None = None
@@ -48,14 +50,15 @@ class Settings(BaseSettings):
     PLATFORM_FEE_PERCENT: Decimal = Decimal("10.0")  # Seller-side platform fee
     VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on fees
 
-    # Payment processing fees (Omise fees deducted from seller)
-    CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("3.65")  # Credit card processing fee
-    PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal(
-        "1.65"
-    )  # PromptPay processing fee
+    # Payment processing fees (Stripe Thailand rates — verify from Stripe dashboard)
+    CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("3.65")  # Thai cards percentage
+    CARD_PROCESSING_FEE_FIXED_THB: Decimal = Decimal("10.0")  # Fixed per-charge fee
+    PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal("2.0")  # PromptPay percentage
+    PROMPTPAY_PROCESSING_FEE_FIXED_THB: Decimal = Decimal(
+        "10.0"
+    )  # PromptPay fixed per-charge fee (set to 0 if none)
     PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
-    TRANSFER_FEE: Decimal = Decimal("30.0")  # Omise transfer fee per payout (THB)
-    MIN_PAYOUT_AMOUNT_SATANG: int = 200  # Omise minimum transfer amount (2 THB)
+    MIN_PAYOUT_AMOUNT_SATANG: int = 200  # Stripe minimum transfer amount (2 THB)
 
     @property
     def do_spaces_endpoint(self) -> str:

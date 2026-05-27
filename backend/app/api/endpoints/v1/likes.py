@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import AnnotatedValidPost
 from app.core.security import get_current_user
-from app.crud.like import LikeCRUD, get_like_crud, AnnotatedLikeCRUD
+from app.crud.like import AnnotatedLikeCRUD
 from app.db.utils import get_async_db
 from app.models import User
 from app.schemas.like import LikedPostsResponse

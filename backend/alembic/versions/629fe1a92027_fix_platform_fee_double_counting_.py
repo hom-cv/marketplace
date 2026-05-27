@@ -11,8 +11,9 @@ Create Date: 2026-03-14 14:53:57.926396
 """
 from typing import Sequence, Union
 
-from alembic import op
+import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '629fe1a92027'
@@ -27,14 +28,15 @@ TRANSFER_FEE_SATANG = 3000
 def upgrade() -> None:
     """Back-populate transfer_fee and fix platform_fee for historical rows."""
     op.execute(
-        """
-        UPDATE payments
-        SET transfer_fee = :transfer_fee,
-            platform_fee = platform_fee - :transfer_fee
-        WHERE transfer_fee IS NULL
-          AND platform_fee IS NOT NULL
-        """,
-        transfer_fee=TRANSFER_FEE_SATANG,
+        sa.text(
+            """
+            UPDATE payments
+            SET transfer_fee = :fee,
+                platform_fee = platform_fee - :fee
+            WHERE transfer_fee IS NULL
+              AND platform_fee IS NOT NULL
+            """
+        ).bindparams(fee=TRANSFER_FEE_SATANG)
     )
 
 

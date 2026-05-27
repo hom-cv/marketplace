@@ -57,18 +57,22 @@ class PricingService:
         )
         platform_fee = platform_fee_base + platform_vat
 
-        # Transfer fee: flat Omise payout fee — deducted from seller
-        transfer_fee = Decimal(str(self._settings.TRANSFER_FEE))
-
-        # Processing fee: Omise rate + VAT — deducted from seller
+        # Processing fee: Stripe Thailand rate (percentage + fixed) + VAT —
+        # deducted from seller
         if payment_method == PaymentMethodType.PROMPTPAY:
             base_rate = Decimal(str(self._settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
+            fixed_fee_thb = Decimal(
+                str(self._settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB)
+            )
         else:
             base_rate = Decimal(str(self._settings.CARD_PROCESSING_FEE_PERCENT))
+            fixed_fee_thb = Decimal(
+                str(self._settings.CARD_PROCESSING_FEE_FIXED_THB)
+            )
 
-        processing_fee_base = (base_amount * (base_rate / 100)).quantize(
-            Decimal("0.01"), rounding=ROUND_UP
-        )
+        processing_fee_base = (
+            (base_amount * base_rate / 100) + fixed_fee_thb
+        ).quantize(Decimal("0.01"), rounding=ROUND_UP)
         processing_vat_percent = Decimal(str(self._settings.PROCESSING_FEE_VAT_PERCENT))
         processing_vat = (processing_fee_base * processing_vat_percent / 100).quantize(
             Decimal("0.01"), rounding=ROUND_UP
@@ -77,7 +81,7 @@ class PricingService:
 
         # Totals
         total = base_amount  # What buyer pays
-        total_fees = platform_fee + transfer_fee + processing_fee  # Deducted from seller
+        total_fees = platform_fee + processing_fee  # Deducted from seller
         total_vat = platform_vat + processing_vat
         seller_payout = base_amount - total_fees
 
@@ -85,7 +89,6 @@ class PricingService:
             item_price=item_price,
             shipping_cost=shipping_cost,
             platform_fee=platform_fee,
-            transfer_fee=transfer_fee,
             processing_fee=processing_fee,
             total_fees=total_fees,
             total_vat=total_vat,

@@ -9,16 +9,10 @@ import {
   getPaymentStatus,
   getMyPurchases,
   getMySales,
-  createCardPayment,
-  createPromptPayPayment,
   confirmDelivery,
   addTracking,
 } from "@/api/payments";
-import type {
-  CreateCardPaymentRequest,
-  CreatePromptPayPaymentRequest,
-  PaymentStatusResponse,
-} from "@/api/types/payment";
+import type { PaymentStatusResponse } from "@/api/types/payment";
 import { queryKeys } from "./queryKeys";
 
 export function usePriceBreakdown(
@@ -76,31 +70,6 @@ export function useMySales() {
   return useQuery({
     queryKey: queryKeys.payments.mySales,
     queryFn: getMySales,
-  });
-}
-
-export function useCardPaymentMutation(options?: {
-  onSuccess?: (data: Awaited<ReturnType<typeof createCardPayment>>) => void;
-  onError?: (err: Error) => void;
-}) {
-  return useMutation({
-    mutationFn: (data: CreateCardPaymentRequest) => createCardPayment(data),
-    onSuccess: options?.onSuccess,
-    onError: options?.onError,
-  });
-}
-
-export function usePromptPayPaymentMutation(options?: {
-  onSuccess?: (
-    data: Awaited<ReturnType<typeof createPromptPayPayment>>,
-  ) => void;
-  onError?: (err: Error) => void;
-}) {
-  return useMutation({
-    mutationFn: (data: CreatePromptPayPaymentRequest) =>
-      createPromptPayPayment(data),
-    onSuccess: options?.onSuccess,
-    onError: options?.onError,
   });
 }
 

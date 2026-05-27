@@ -10,9 +10,6 @@ import {
   getInvites,
   getUserBans,
   getPostBans,
-  getPendingPayouts,
-  getPayoutHistory,
-  createPayout,
   reviewReport,
   generateInvites,
   revokeInvite,
@@ -26,7 +23,6 @@ import { getPost } from "@/api/posts";
 import type {
   BanUserRequest,
   BanPostRequest,
-  PayoutResponse,
 } from "@/api/types/admin";
 import { queryKeys } from "./queryKeys";
 
@@ -196,41 +192,6 @@ export function useLiftPostBanMutation() {
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPostBans }),
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
       ]);
-    },
-  });
-}
-
-export function useAdminPayouts() {
-  return useQuery({
-    queryKey: queryKeys.admin.payouts,
-    queryFn: () => getPendingPayouts(),
-  });
-}
-
-export function useAdminPayoutHistory() {
-  return useQuery({
-    queryKey: queryKeys.admin.payoutHistory,
-    queryFn: () => getPayoutHistory(),
-  });
-}
-
-export function useCreatePayoutMutation(options?: {
-  onSuccess?: (data: PayoutResponse, paymentId: number) => void;
-  onError?: (err: Error, paymentId: number) => void;
-  onSettled?: (paymentId: number) => void;
-}) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (paymentId: number) => createPayout(paymentId),
-    onSuccess: (data, paymentId) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPayouts });
-      options?.onSuccess?.(data, paymentId);
-    },
-    onError: (err, paymentId) => {
-      options?.onError?.(err, paymentId);
-    },
-    onSettled: (_data, _err, paymentId) => {
-      options?.onSettled?.(paymentId);
     },
   });
 }

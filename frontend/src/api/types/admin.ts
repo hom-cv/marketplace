@@ -8,7 +8,6 @@ export interface AdminStats {
   active_user_bans: number;
   active_post_bans: number;
   pending_flags: number;
-  pending_payouts: number;
 }
 
 export type InviteStatus = "active" | "used" | "revoked";
@@ -146,46 +145,6 @@ export interface MessageFlagListResponse {
   total: number;
   skip: number;
   limit: number;
-}
-
-export interface PayoutItem {
-  payment_id: number;
-  seller_id: number;
-  seller_username: string;
-  buyer_username: string;
-  post_title: string;
-  amount: number;
-  seller_payout: number;
-  currency: string;
-  payment_method: string;
-  paid_at: string | null;
-  delivered_at: string | null;
-}
-
-export interface PayoutListResponse {
-  items: PayoutItem[];
-  total: number;
-  skip: number;
-  limit: number;
-}
-
-export interface PayoutHistoryItem extends PayoutItem {
-  transferred_at: string | null;
-  omise_transfer_id: string | null;
-}
-
-export interface PayoutHistoryListResponse {
-  items: PayoutHistoryItem[];
-  total: number;
-  skip: number;
-  limit: number;
-}
-
-export interface PayoutResponse {
-  payment_id: number;
-  transfer_id: string;
-  amount: number;
-  status: string;
 }
 
 export interface ConversationGroup {
