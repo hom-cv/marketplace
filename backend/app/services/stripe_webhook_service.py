@@ -1,20 +1,23 @@
-"""Stripe webhook dispatch and event handlers.
+"""Stripe webhook verification, dispatch, and event handlers.
 
-Signature verification happens at the endpoint (`construct_event`); this
-service receives already-trusted Stripe events and applies their effects
-to the database. All handlers are idempotent — Stripe may redeliver the
-same event and we must converge to the same state regardless of order or
-duplication.
+`verify_event` checks the signature and builds the Event; the dispatchers
+(`process_account_event` / `process_connect_event`) route already-trusted
+events to handlers that apply their effects to the database. All handlers are
+idempotent — Stripe may redeliver the same event and we must converge to the
+same state regardless of order or duplication.
 """
 
 import logging
 from typing import Annotated
 
 import stripe
-from fastapi import Depends
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.stripe import WEBHOOK_EVENT_HANDLER_MAP
+from app.constants.stripe import (
+    ACCOUNT_WEBHOOK_EVENT_HANDLER_MAP,
+    CONNECT_WEBHOOK_EVENT_HANDLER_MAP,
+)
 from app.crud.payment import payment_crud
 from app.crud.seller import seller_crud
 from app.crud.user import user_crud
@@ -31,9 +34,72 @@ class StripeWebhookService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def process_webhook(self, event: stripe.Event) -> None:
+    async def verify_event(
+        self, request: Request, secret: str | None
+    ) -> stripe.Event:
+        """Read the request body and verify a Stripe webhook signature.
+
+        Both webhook endpoints delegate here; only the signing secret differs
+        between them. Raises HTTP 500 if the secret is unconfigured and HTTP 400
+        on an invalid payload or signature.
+
+        Args:
+            request: The incoming webhook request.
+            secret: The signing secret for this endpoint's scope.
+
+        Returns:
+            The verified Stripe Event.
         """
-        Process a Stripe webhook event (signature already verified upstream).
+        if not secret:
+            logger.error(
+                "Stripe webhook secret is not configured — rejecting webhook"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Webhook secret not configured",
+            )
+
+        payload = await request.body()
+        sig_header = request.headers.get("Stripe-Signature", "")
+
+        try:
+            return stripe.Webhook.construct_event(payload, sig_header, secret)
+        except ValueError as e:
+            logger.warning(f"Webhook payload parse error: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid payload",
+            ) from e
+        except stripe.SignatureVerificationError as e:
+            logger.warning("Webhook signature verification failed")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid signature",
+            ) from e
+
+    async def process_account_event(self, event: stripe.Event) -> None:
+        """Process a platform-account webhook event (payment_intent.*, charge.*).
+
+        Verified upstream with ``STRIPE_WEBHOOK_SECRET``.
+        """
+        await self._dispatch(event, ACCOUNT_WEBHOOK_EVENT_HANDLER_MAP)
+
+    async def process_connect_event(self, event: stripe.Event) -> None:
+        """Process a Connect webhook event for connected accounts (account.*).
+
+        Verified upstream with ``STRIPE_CONNECT_WEBHOOK_SECRET``.
+        """
+        await self._dispatch(event, CONNECT_WEBHOOK_EVENT_HANDLER_MAP)
+
+    async def _dispatch(
+        self, event: stripe.Event, handler_map: dict[str, str]
+    ) -> None:
+        """
+        Route a verified Stripe event to its handler via ``handler_map``.
+
+        An event type absent from the given map is ignored — this is also what
+        keeps the two endpoints isolated: a connect event arriving on the
+        account endpoint (or vice versa) is a no-op rather than mis-handled.
 
         All handlers are idempotent: Stripe may redeliver the same event
         multiple times and we must converge to the same state regardless of
@@ -41,6 +107,7 @@ class StripeWebhookService:
 
         Args:
             event: Verified Stripe Event object.
+            handler_map: Event-type → handler-name map for this endpoint's scope.
         """
         event_type = event.type
         logger.info(f"Processing Stripe webhook: {event_type}")
@@ -50,7 +117,7 @@ class StripeWebhookService:
 
         data_object = event.data.object
 
-        handler_name = WEBHOOK_EVENT_HANDLER_MAP.get(event_type)
+        handler_name = handler_map.get(event_type)
         if not handler_name:
             logger.debug(f"Unhandled Stripe event: {event_type}")
             return

@@ -23,16 +23,18 @@ from .conftest import (
 
 class TestProcessWebhookDispatch:
     async def test_unknown_event_is_noop(self, service, mocks):
-        await service.process_webhook(make_event(type="invoice.created", data_object={}))
+        await service.process_account_event(
+            make_event(type="invoice.created", data_object={})
+        )
         mocks.payment_crud.update_status.assert_not_awaited()
         assert service.db.commit.await_count == 0
 
-    async def test_known_event_routes_to_handler(self, service, mocks):
+    async def test_account_event_routes_to_handler(self, service, mocks):
         mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
             make_payment(status=PaymentStatus.PENDING)
         )
         intent = make_payment_intent()
-        await service.process_webhook(
+        await service.process_account_event(
             make_event(type="payment_intent.succeeded", data_object=intent)
         )
         mocks.payment_crud.update_status.assert_awaited_once()
@@ -49,10 +51,31 @@ class TestProcessWebhookDispatch:
             data_object={"id": "ca_app"},
             account="acct_9",
         )
-        await service.process_webhook(event)
+        await service.process_connect_event(event)
         mocks.seller_crud.get_by_stripe_account_id_for_update.assert_awaited_once_with(
             service.db, stripe_account_id="acct_9"
         )
+
+    async def test_account_endpoint_ignores_connect_events(self, service, mocks):
+        # A connect-scoped event arriving on the account endpoint is a no-op,
+        # not a mis-dispatch.
+        await service.process_account_event(
+            make_event(type="account.updated", data_object=make_account())
+        )
+        mocks.seller_crud.update_verification_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_connect_endpoint_ignores_account_events(self, service, mocks):
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(status=PaymentStatus.PENDING)
+        )
+        await service.process_connect_event(
+            make_event(
+                type="payment_intent.succeeded", data_object=make_payment_intent()
+            )
+        )
+        mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
 
 
 class TestPaymentIntentSucceeded:

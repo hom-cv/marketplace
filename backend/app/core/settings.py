@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str
     STRIPE_PUBLISHABLE_KEY: str
     STRIPE_WEBHOOK_SECRET: str | None = None
+    STRIPE_CONNECT_WEBHOOK_SECRET: str | None = None
     STRIPE_CONNECT_RETURN_URL: str
     STRIPE_CONNECT_REFRESH_URL: str
     STRIPE_API_VERSION: str = "2025-11-17.clover"

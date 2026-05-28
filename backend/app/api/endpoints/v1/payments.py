@@ -1,8 +1,6 @@
-import logging
 from typing import Annotated
 
-import stripe
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request, status
 
 from app.core.security import get_current_user
 from app.core.settings import AnnotatedSettings
@@ -18,10 +16,7 @@ from app.schemas.payment import (
 )
 from app.services.listing_service import AnnotatedListingService
 from app.services.payment_service import AnnotatedPaymentService
-from app.services.stripe_service import AnnotatedStripeService
 from app.services.stripe_webhook_service import AnnotatedStripeWebhookService
-
-logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -172,51 +167,48 @@ async def get_payment_status(
 )
 async def stripe_webhook(
     request: Request,
-    stripe_service: AnnotatedStripeService,
     webhook_service: AnnotatedStripeWebhookService,
     settings: AnnotatedSettings,
 ) -> WebhookResponse:
     """
-    Handle Stripe webhook events.
+    Handle Stripe **platform-account** webhook events (our destination charges).
 
-    Configure this URL in the Stripe dashboard (Developers → Webhooks).
-    Events handled: payment_intent.succeeded, payment_intent.payment_failed,
-    charge.refunded, account.updated.
+    Configure in the Stripe Dashboard with the endpoint scoped to *Your account*
+    and verify with STRIPE_WEBHOOK_SECRET. Events handled:
+    payment_intent.succeeded, payment_intent.payment_failed,
+    payment_intent.canceled, charge.refunded, charge.dispute.created,
+    charge.dispute.closed.
     """
-    if not settings.STRIPE_WEBHOOK_SECRET:
-        logger.error("STRIPE_WEBHOOK_SECRET is not configured — rejecting webhook")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Webhook secret not configured",
-        )
+    event = await webhook_service.verify_event(
+        request, settings.STRIPE_WEBHOOK_SECRET
+    )
 
-    payload = await request.body()
-    sig_header = request.headers.get("Stripe-Signature", "")
+    await webhook_service.process_account_event(event)
 
-    try:
-        event = stripe_service.construct_event(
-            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
-        )
-    except ValueError as e:
-        logger.warning(f"Webhook payload parse error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid payload",
-        ) from e
-    except stripe.SignatureVerificationError as e:
-        logger.warning("Webhook signature verification failed")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid signature",
-        ) from e
+    return WebhookResponse(status="ok")
 
-    try:
-        await webhook_service.process_webhook(event)
-    except Exception as e:
-        logger.error(f"Stripe webhook processing error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Webhook processing error",
-        ) from e
+
+@router.post(
+    "/webhook/stripe/connect",
+    status_code=status.HTTP_200_OK,
+    response_model=WebhookResponse,
+)
+async def stripe_connect_webhook(
+    request: Request,
+    webhook_service: AnnotatedStripeWebhookService,
+    settings: AnnotatedSettings,
+) -> WebhookResponse:
+    """
+    Handle Stripe **Connect** webhook events for connected seller accounts.
+
+    Configure in the Stripe Dashboard with the endpoint scoped to *Connected
+    accounts* and verify with STRIPE_CONNECT_WEBHOOK_SECRET. Events handled:
+    account.updated, account.application.deauthorized.
+    """
+    event = await webhook_service.verify_event(
+        request, settings.STRIPE_CONNECT_WEBHOOK_SECRET
+    )
+
+    await webhook_service.process_connect_event(event)
 
     return WebhookResponse(status="ok")
