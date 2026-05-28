@@ -146,32 +146,6 @@ class StripeService:
             logger.error(f"Failed to create Stripe PaymentIntent: {e}")
             raise
 
-    def construct_event(
-        self,
-        payload: bytes,
-        sig_header: str,
-        secret: str,
-    ) -> stripe.Event:
-        """
-        Verify a Stripe webhook signature and construct the Event object.
-
-        Local CPU work (HMAC verification + JSON parse), not network I/O, and a
-        key-less utility — stays synchronous and independent of the client.
-
-        Args:
-            payload: Raw request body bytes.
-            sig_header: Value of the `Stripe-Signature` header.
-            secret: Stripe webhook signing secret.
-
-        Returns:
-            Stripe Event object.
-
-        Raises:
-            ValueError: If the payload cannot be parsed.
-            stripe.SignatureVerificationError: If the signature is invalid.
-        """
-        return stripe.Webhook.construct_event(payload, sig_header, secret)
-
 
 def _get_stripe_service(
     settings: AnnotatedSettings,
