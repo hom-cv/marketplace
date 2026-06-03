@@ -24,24 +24,19 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
 
+    fastapi_kwargs: dict = {
+        "title": "Tallad",
+        "description": "API for Tallad",
+        "version": "0.1.0-alpha",
+        "lifespan": lifespan,
+    }
     if settings.is_production:
-        app_ = FastAPI(
-            title="Tallad",
-            description="API for Tallad",
-            version="0.1.0-alpha",
-            lifespan=lifespan,
-            docs_url=None,
-            redoc_url=None,
-            openapi_url=None,
-        )
+        fastapi_kwargs |= {"docs_url": None, "redoc_url": None, "openapi_url": None}
+
+    app_ = FastAPI(**fastapi_kwargs)
+
+    if settings.is_production:
         mount_protected_docs(app_, settings)
-    else:
-        app_ = FastAPI(
-            title="Tallad",
-            description="API for Tallad",
-            version="0.1.0-alpha",
-            lifespan=lifespan,
-        )
 
     # CORS middleware for frontend
     app_.add_middleware(
