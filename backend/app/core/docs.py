@@ -1,0 +1,45 @@
+import secrets
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+
+from app.core.settings import Settings
+
+
+def mount_protected_docs(app: FastAPI, settings: Settings) -> None:
+    """Mount /docs, /redoc, and /openapi.json behind HTTP Basic Auth.
+
+    The caller is responsible for constructing `app` with
+    `docs_url=None, redoc_url=None, openapi_url=None` so the built-in
+    routes don't shadow these.
+    """
+    basic = HTTPBasic()
+    expected_user = settings.DOCS_USERNAME.encode("utf-8")
+    expected_pass = settings.DOCS_PASSWORD.encode("utf-8")
+
+    def _verify(credentials: HTTPBasicCredentials = Depends(basic)) -> None:
+        ok_user = secrets.compare_digest(
+            credentials.username.encode("utf-8"), expected_user
+        )
+        ok_pass = secrets.compare_digest(
+            credentials.password.encode("utf-8"), expected_pass
+        )
+        if not (ok_user and ok_pass):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Unauthorized",
+                headers={"WWW-Authenticate": "Basic"},
+            )
+
+    @app.get("/openapi.json", include_in_schema=False)
+    async def openapi(_: None = Depends(_verify)):
+        return app.openapi()
+
+    @app.get("/docs", include_in_schema=False)
+    async def docs(_: None = Depends(_verify)):
+        return get_swagger_ui_html(openapi_url="/openapi.json", title="Tallad — docs")
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc(_: None = Depends(_verify)):
+        return get_redoc_html(openapi_url="/openapi.json", title="Tallad — redoc")

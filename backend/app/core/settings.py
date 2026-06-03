@@ -32,6 +32,10 @@ class Settings(BaseSettings):
 
     BASE_URL: str
 
+    ENVIRONMENT: str = "development"
+    DOCS_USERNAME: str | None = None
+    DOCS_PASSWORD: str | None = None
+
     # Stripe configuration
     STRIPE_SECRET_KEY: str
     STRIPE_PUBLISHABLE_KEY: str
@@ -60,6 +64,18 @@ class Settings(BaseSettings):
     )  # PromptPay fixed per-charge fee (set to 0 if none)
     PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
     MIN_PAYOUT_AMOUNT_SATANG: int = 200  # Stripe minimum transfer amount (2 THB)
+
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT == "production"
+
+    @model_validator(mode="after")
+    def require_docs_credentials_in_production(self) -> Self:
+        if self.is_production and not (self.DOCS_USERNAME and self.DOCS_PASSWORD):
+            raise ValueError(
+                "DOCS_USERNAME and DOCS_PASSWORD must be set when ENVIRONMENT=production"
+            )
+        return self
 
     @property
     def do_spaces_endpoint(self) -> str:

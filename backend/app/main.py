@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.api_v1 import api_router as v1_router
+from app.core.docs import mount_protected_docs
 from app.core.settings import get_settings
 from app.db.redis import close_redis, init_redis
 
@@ -23,12 +24,24 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = get_settings()
 
-    app_ = FastAPI(
-        title="Tallad",
-        description="API for Tallad",
-        version="0.1.0-alpha",
-        lifespan=lifespan,
-    )
+    if settings.is_production:
+        app_ = FastAPI(
+            title="Tallad",
+            description="API for Tallad",
+            version="0.1.0-alpha",
+            lifespan=lifespan,
+            docs_url=None,
+            redoc_url=None,
+            openapi_url=None,
+        )
+        mount_protected_docs(app_, settings)
+    else:
+        app_ = FastAPI(
+            title="Tallad",
+            description="API for Tallad",
+            version="0.1.0-alpha",
+            lifespan=lifespan,
+        )
 
     # CORS middleware for frontend
     app_.add_middleware(
