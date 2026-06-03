@@ -2,6 +2,7 @@ import secrets
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
 from app.core.settings import Settings
@@ -14,6 +15,11 @@ def mount_protected_docs(app: FastAPI, settings: Settings) -> None:
     `docs_url=None, redoc_url=None, openapi_url=None` so the built-in
     routes don't shadow these.
     """
+    if not (settings.DOCS_USERNAME and settings.DOCS_PASSWORD):
+        raise RuntimeError(
+            "mount_protected_docs requires DOCS_USERNAME and DOCS_PASSWORD to be set"
+        )
+
     basic = HTTPBasic()
     expected_user = settings.DOCS_USERNAME.encode("utf-8")
     expected_pass = settings.DOCS_PASSWORD.encode("utf-8")
@@ -38,7 +44,7 @@ def mount_protected_docs(app: FastAPI, settings: Settings) -> None:
 
     @app.get("/openapi.json", include_in_schema=False)
     async def openapi(_: None = Depends(_verify)):
-        return app.openapi()
+        return JSONResponse(app.openapi())
 
     @app.get("/docs", include_in_schema=False)
     async def docs(request: Request, _: None = Depends(_verify)):
