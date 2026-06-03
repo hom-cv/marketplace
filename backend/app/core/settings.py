@@ -69,9 +69,15 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
 
+    @property
+    def docs_credentials(self) -> tuple[str, str] | None:
+        if self.DOCS_USERNAME and self.DOCS_PASSWORD:
+            return self.DOCS_USERNAME, self.DOCS_PASSWORD
+        return None
+
     @model_validator(mode="after")
     def require_docs_credentials_in_production(self) -> Self:
-        if self.is_production and not (self.DOCS_USERNAME and self.DOCS_PASSWORD):
+        if self.is_production and self.docs_credentials is None:
             raise ValueError(
                 "DOCS_USERNAME and DOCS_PASSWORD must be set when ENVIRONMENT=production"
             )

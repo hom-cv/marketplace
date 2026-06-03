@@ -23,6 +23,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    docs_credentials = settings.docs_credentials
 
     fastapi_kwargs: dict = {
         "title": "Tallad",
@@ -30,13 +31,13 @@ def create_app() -> FastAPI:
         "version": "0.1.0-alpha",
         "lifespan": lifespan,
     }
-    if settings.is_production:
+    if docs_credentials is not None:
         fastapi_kwargs |= {"docs_url": None, "redoc_url": None, "openapi_url": None}
 
     app_ = FastAPI(**fastapi_kwargs)
 
-    if settings.is_production:
-        mount_protected_docs(app_, settings)
+    if docs_credentials is not None:
+        mount_protected_docs(app_, *docs_credentials)
 
     # CORS middleware for frontend
     app_.add_middleware(
