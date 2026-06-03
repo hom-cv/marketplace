@@ -1,6 +1,6 @@
 import secrets
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 
@@ -32,14 +32,22 @@ def mount_protected_docs(app: FastAPI, settings: Settings) -> None:
                 headers={"WWW-Authenticate": "Basic"},
             )
 
+    def _openapi_url(request: Request) -> str:
+        root_path = request.scope.get("root_path", "").rstrip("/")
+        return f"{root_path}/openapi.json"
+
     @app.get("/openapi.json", include_in_schema=False)
     async def openapi(_: None = Depends(_verify)):
         return app.openapi()
 
     @app.get("/docs", include_in_schema=False)
-    async def docs(_: None = Depends(_verify)):
-        return get_swagger_ui_html(openapi_url="/openapi.json", title="Tallad — docs")
+    async def docs(request: Request, _: None = Depends(_verify)):
+        return get_swagger_ui_html(
+            openapi_url=_openapi_url(request), title="Tallad — docs"
+        )
 
     @app.get("/redoc", include_in_schema=False)
-    async def redoc(_: None = Depends(_verify)):
-        return get_redoc_html(openapi_url="/openapi.json", title="Tallad — redoc")
+    async def redoc(request: Request, _: None = Depends(_verify)):
+        return get_redoc_html(
+            openapi_url=_openapi_url(request), title="Tallad — redoc"
+        )
