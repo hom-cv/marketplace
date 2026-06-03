@@ -13,7 +13,8 @@ def mount_protected_docs(app: FastAPI, username: str, password: str) -> None:
     `docs_url=None, redoc_url=None, openapi_url=None` so the built-in
     routes don't shadow these.
     """
-    basic = HTTPBasic()
+    realm = "Tallad API docs"
+    basic = HTTPBasic(realm=realm)
     expected_user = username.encode("utf-8")
     expected_pass = password.encode("utf-8")
 
@@ -28,7 +29,7 @@ def mount_protected_docs(app: FastAPI, username: str, password: str) -> None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Unauthorized",
-                headers={"WWW-Authenticate": "Basic"},
+                headers={"WWW-Authenticate": f'Basic realm="{realm}"'},
             )
 
     def _openapi_url(request: Request) -> str:
