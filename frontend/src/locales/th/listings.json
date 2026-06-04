@@ -30,6 +30,7 @@
       "descriptionRequired": "กรุณาระบุรายละเอียด",
       "categoryRequired": "กรุณาเลือกหมวดหมู่",
       "priceMin": "ราคาขั้นต่ำ ฿50",
+      "priceMax": "ราคาสูงสุด ฿1,000,000",
       "sizeRequired": "กรุณาเลือกไซส์",
       "submit": "เผยแพร่รายการ",
       "submitting": "กำลังเผยแพร่...",

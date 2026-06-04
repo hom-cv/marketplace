@@ -30,6 +30,7 @@
       "descriptionRequired": "Description is required",
       "categoryRequired": "Category is required",
       "priceMin": "Price must be at least ฿50",
+      "priceMax": "Price must not exceed ฿1,000,000",
       "sizeRequired": "Size is required",
       "submit": "Publish Listing",
       "submitting": "Publishing...",
