@@ -127,17 +127,16 @@ async def update_my_profile(
     - bio: User's bio text (max 500 chars)
     - show_full_name: Whether to show full name on public profile
     """
-    update_kwargs = profile_data.model_dump(exclude_unset=True)
+    update_kwargs = profile_data.model_dump()
 
-    if "username" in update_kwargs:
-        new_username = update_kwargs["username"].lower()
-        update_kwargs["username"] = new_username
+    new_username = update_kwargs["username"].lower()
+    update_kwargs["username"] = new_username
 
-        if new_username != current_user.username.lower():
-            user_with_username = await user_crud.get_by_username(db, username=new_username)
+    if new_username != current_user.username.lower():
+        user_with_username = await user_crud.get_by_username(db, username=new_username)
 
-            if user_with_username is not None and user_with_username.id != current_user.id:
-                raise conflict_error("A user with this username already exists")
+        if user_with_username is not None and user_with_username.id != current_user.id:
+            raise conflict_error("A user with this username already exists")
 
     updated_user = await user_crud.update_profile(
         db,
