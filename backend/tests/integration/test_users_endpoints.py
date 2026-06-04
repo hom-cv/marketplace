@@ -128,6 +128,49 @@ class TestUpdateMyProfileEndpoint:
         assert response.status_code == 200
         assert mock_user_crud.update_profile.call_args.kwargs["bio"] is None
 
+    async def test_string_fields_are_trimmed(
+        self,
+        async_client: AsyncClient,
+        mock_user_crud: MagicMock,
+    ):
+        """Surrounding whitespace is stripped at the API boundary before saving."""
+        mock_user_crud.get_by_username = AsyncMock(return_value=None)
+        updated = create_mock_user(user_id=1, username="newname")
+        mock_user_crud.update_profile = AsyncMock(return_value=updated)
+
+        response = await async_client.patch(
+            "/api/v1/users/me/profile",
+            json=_profile_payload(
+                username="  NewName  ",
+                first_name="  Jane  ",
+                last_name="  Doe  ",
+                bio="  hi there  ",
+            ),
+        )
+
+        assert response.status_code == 200
+        kwargs = mock_user_crud.update_profile.call_args.kwargs
+        assert kwargs["username"] == "newname"  # trimmed then lowercased
+        assert kwargs["first_name"] == "Jane"
+        assert kwargs["last_name"] == "Doe"
+        assert kwargs["bio"] == "hi there"
+
+    async def test_blank_first_name_is_rejected(
+        self,
+        async_client: AsyncClient,
+        mock_user_crud: MagicMock,
+    ):
+        """A whitespace-only first name is trimmed to "" and fails min-length."""
+        mock_user_crud.update_profile = AsyncMock()
+
+        response = await async_client.patch(
+            "/api/v1/users/me/profile",
+            json=_profile_payload(first_name="   "),
+        )
+
+        assert response.status_code == 422
+        mock_user_crud.update_profile.assert_not_called()
+
     async def test_null_username_returns_422(
         self,
         async_client: AsyncClient,

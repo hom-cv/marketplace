@@ -89,6 +89,8 @@ class UserProfileUpdateSchema(BaseModel):
     (stored as ""), and ``bio`` is nullable so a null clears it.
     """
 
+    model_config = {"str_strip_whitespace": True}
+
     username: str = Field(
         ...,
         min_length=3,

@@ -29,7 +29,7 @@ export function ProfileEditPage() {
     },
     validate: {
       username: (value) => {
-        const v = value ?? "";
+        const v = (value ?? "").trim();
         if (v.length < 3 || v.length > 64)
           return t("validation.usernameLength");
         if (!/^[a-zA-Z0-9_]+$/.test(v)) return t("validation.usernameInvalid");
@@ -46,6 +46,14 @@ export function ProfileEditPage() {
       bio: (value) =>
         value && value.length > 500 ? t("validation.bioTooLong") : null,
     },
+    // Trim user input before it is sent; a blank bio becomes null (stored NULL).
+    transformValues: (values) => ({
+      ...values,
+      username: values.username.trim(),
+      first_name: values.first_name.trim(),
+      last_name: (values.last_name ?? "").trim(),
+      bio: values.bio?.trim() || null,
+    }),
   });
 
   const updateMutation = useUpdateProfileMutation();
