@@ -6,6 +6,12 @@ from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
+from app.constants.post import (
+    MAX_LISTING_PRICE,
+    MAX_SHIPPING_COST,
+    MIN_LISTING_PRICE,
+    MIN_SHIPPING_COST,
+)
 from app.schemas.user import UserResponseSchema
 
 
@@ -116,15 +122,15 @@ class PostCreateSchema(BaseModel):
     )
     price: Decimal = Field(
         ...,
-        ge=50,
-        le=1000000,
+        ge=MIN_LISTING_PRICE,
+        le=MAX_LISTING_PRICE,
         decimal_places=2,
-        description="Price in the marketplace currency (minimum ฿50)",
+        description=f"Price in THB (minimum ฿{MIN_LISTING_PRICE})",
     )
     shipping_cost: Decimal = Field(
         default=Decimal("0"),
-        ge=0,
-        le=10000,
+        ge=MIN_SHIPPING_COST,
+        le=MAX_SHIPPING_COST,
         decimal_places=2,
         description="Shipping cost set by seller",
     )
@@ -152,8 +158,12 @@ class PostUpdateSchema(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1, max_length=5000)
     type: PostType | None = None
-    price: Decimal | None = Field(None, ge=50, le=1000000, decimal_places=2)
-    shipping_cost: Decimal | None = Field(None, ge=0, le=10000, decimal_places=2)
+    price: Decimal | None = Field(
+        None, ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
+    )
+    shipping_cost: Decimal | None = Field(
+        None, ge=MIN_SHIPPING_COST, le=MAX_SHIPPING_COST, decimal_places=2
+    )
     size: str | None = Field(None, min_length=1, max_length=20)
     measurements: dict[str, Any] | None = None
 

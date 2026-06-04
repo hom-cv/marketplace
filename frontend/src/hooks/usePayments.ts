@@ -19,8 +19,7 @@ export function usePriceBreakdown(
   postId: number | string | null,
   method?: "card" | "promptpay",
 ) {
-  const numericId =
-    typeof postId === "string" ? parseInt(postId, 10) : postId;
+  const numericId = typeof postId === "string" ? parseInt(postId, 10) : postId;
   return useQuery({
     queryKey: method
       ? queryKeys.payments.priceBreakdown(postId!, method)
@@ -34,10 +33,11 @@ export function useEarningsPreview(
   itemPrice: number | undefined,
   shippingCost = 0,
 ) {
+  const isQueryable = typeof itemPrice === "number" && itemPrice >= 50;
   return useQuery({
     queryKey: queryKeys.payments.earningsPreview(itemPrice!, shippingCost),
     queryFn: () => getEarningsPreview(itemPrice!, shippingCost, "card"),
-    enabled: !!itemPrice,
+    enabled: isQueryable,
   });
 }
 
@@ -48,7 +48,9 @@ export function usePaymentStatus(
     refetchInterval?:
       | number
       | false
-      | ((query: { state: { data: PaymentStatusResponse | undefined } }) => number | false);
+      | ((query: {
+          state: { data: PaymentStatusResponse | undefined };
+        }) => number | false);
   },
 ) {
   return useQuery({
@@ -78,7 +80,9 @@ export function useConfirmDeliveryMutation() {
   return useMutation({
     mutationFn: (paymentId: number) => confirmDelivery(paymentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.payments.myPurchases });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.payments.myPurchases,
+      });
     },
   });
 }
