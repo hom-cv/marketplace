@@ -50,10 +50,14 @@ async def create_post(
     title: Annotated[str, Form(min_length=1, max_length=200)],
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
-    price: Annotated[Decimal, Form(ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE)],
+    price: Annotated[
+        Decimal,
+        Form(ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2),
+    ],
     size: Annotated[str, Form(min_length=1, max_length=20)],
     shipping_cost: Annotated[
-        Decimal, Form(ge=MIN_SHIPPING_COST, le=MAX_SHIPPING_COST)
+        Decimal,
+        Form(ge=MIN_SHIPPING_COST, le=MAX_SHIPPING_COST, decimal_places=2),
     ] = Decimal("0"),
     measurements: Annotated[str | None, Form()] = None,
     images: Annotated[list[UploadFile], File()] = [],
@@ -137,8 +141,8 @@ async def list_posts(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     types: Annotated[list[PostTypeSchema] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
-    min_price: Annotated[Decimal | None, Query(ge=0)] = None,
-    max_price: Annotated[Decimal | None, Query(ge=0)] = None,
+    min_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
+    max_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     search: Annotated[str | None, Query(max_length=200)] = None,
 ) -> PaginatedPostsResponse:
     """
@@ -331,6 +335,7 @@ async def preview_earnings(
         Query(
             ge=MIN_LISTING_PRICE,
             le=MAX_LISTING_PRICE,
+            decimal_places=2,
             description="Item price in THB",
         ),
     ],
@@ -339,6 +344,7 @@ async def preview_earnings(
         Query(
             ge=MIN_SHIPPING_COST,
             le=MAX_SHIPPING_COST,
+            decimal_places=2,
             description="Shipping cost in THB",
         ),
     ] = Decimal("0"),
