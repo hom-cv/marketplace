@@ -116,10 +116,10 @@ class PostCreateSchema(BaseModel):
     )
     price: Decimal = Field(
         ...,
-        gt=0,
+        ge=50,
         le=1000000,
         decimal_places=2,
-        description="Price in the marketplace currency",
+        description="Price in the marketplace currency (minimum ฿50)",
     )
     shipping_cost: Decimal = Field(
         default=Decimal("0"),
@@ -152,7 +152,7 @@ class PostUpdateSchema(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1, max_length=5000)
     type: PostType | None = None
-    price: Decimal | None = Field(None, gt=0, le=1000000, decimal_places=2)
+    price: Decimal | None = Field(None, ge=50, le=1000000, decimal_places=2)
     shipping_cost: Decimal | None = Field(None, ge=0, le=10000, decimal_places=2)
     size: str | None = Field(None, min_length=1, max_length=20)
     measurements: dict[str, Any] | None = None

@@ -83,8 +83,8 @@ export function ListingDetailsForm({
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <NumberInput
             label={t("create.form.price")}
-            placeholder="0.00"
-            min={0.01}
+            placeholder="50.00"
+            min={50}
             max={1000000}
             decimalScale={2}
             required

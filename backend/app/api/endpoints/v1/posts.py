@@ -44,7 +44,7 @@ async def create_post(
     title: Annotated[str, Form(min_length=1, max_length=200)],
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
-    price: Annotated[Decimal, Form(gt=0, le=1000000)],
+    price: Annotated[Decimal, Form(ge=50, le=1000000)],
     size: Annotated[str, Form(min_length=1, max_length=20)],
     shipping_cost: Annotated[Decimal, Form(ge=0, le=10000)] = Decimal("0"),
     measurements: Annotated[str | None, Form()] = None,
