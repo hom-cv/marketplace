@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserCreateSchema(BaseModel):
@@ -16,7 +16,7 @@ class UserCreateSchema(BaseModel):
         description="Unique username (alphanumeric and underscores only)",
     )
     first_name: str = Field(..., min_length=1, max_length=64)
-    last_name: str = Field(..., min_length=1, max_length=64)
+    last_name: str = Field("", max_length=64)
     email_address: EmailStr = Field(..., description="Unique email address")
     password: str = Field(
         ...,
@@ -80,12 +80,36 @@ class UserResponseSchema(BaseModel):
 
 
 class UserProfileUpdateSchema(BaseModel):
-    """Schema for updating user profile (bio and privacy settings)."""
+    """The full set of editable profile fields, submitted on every save.
 
-    bio: str | None = Field(None, max_length=500, description="User bio")
-    show_full_name: bool | None = Field(
-        None, description="Whether to show full name on profile"
+    This is a full replacement: send the current value for any field that is
+    not changing. Per-field null handling mirrors the database columns:
+    ``username``/``first_name``/``show_full_name`` are required and non-nullable
+    (null or omitted -> 422), ``last_name`` is required but a null clears it
+    (stored as ""), and ``bio`` is nullable so a null clears it.
+    """
+
+    model_config = {"str_strip_whitespace": True}
+
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=64,
+        pattern=r"^[a-zA-Z0-9_]+$",
+        description="Unique username (alphanumeric and underscores only)",
     )
+    first_name: str = Field(..., min_length=1, max_length=64)
+    last_name: str | None = Field(..., max_length=64)
+    bio: str | None = Field(..., max_length=500, description="User bio")
+    show_full_name: bool = Field(
+        ..., description="Whether to show full name on profile"
+    )
+
+    @field_validator("last_name")
+    @classmethod
+    def _normalize_last_name(cls, value: str | None) -> str:
+        """A null last name clears the field; stored as "" (column is NOT NULL)."""
+        return "" if value is None else value
 
 
 class PublicUserProfileSchema(BaseModel):

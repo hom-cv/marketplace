@@ -27,6 +27,13 @@
     "subtitle": "Update your profile information and privacy settings",
     "profileDetails": "Profile Details",
     "profileDescription": "Customize your public profile information and privacy settings.",
+    "usernameLabel": "Username",
+    "usernameDescription": "Your unique handle (letters, numbers, and underscores)",
+    "usernamePlaceholder": "Your username",
+    "firstNameLabel": "First name",
+    "firstNamePlaceholder": "Your first name",
+    "lastNameLabel": "Last name",
+    "lastNamePlaceholder": "Your last name",
     "bioLabel": "Bio",
     "bioDescription": "Tell others a bit about yourself (max 500 characters)",
     "bioPlaceholder": "Write something about yourself...",
@@ -34,7 +41,11 @@
     "showNameDescription": "When enabled, your first and last name will be visible on your public profile"
   },
   "validation": {
-    "bioTooLong": "Bio must be 500 characters or less"
+    "bioTooLong": "Bio must be 500 characters or less",
+    "usernameLength": "Username must be between 3 and 64 characters",
+    "usernameInvalid": "Username can only contain letters, numbers, and underscores",
+    "firstNameRequired": "First name is required",
+    "nameTooLong": "Must be 64 characters or less"
   },
   "messages": {
     "profileUpdated": "Profile updated successfully"

@@ -36,7 +36,7 @@ async def register_user(
 
     - **username**: Unique username (alphanumeric and underscores only, 3-64 chars)
     - **first_name**: User's first name (1-64 chars)
-    - **last_name**: User's last name (1-64 chars)
+    - **last_name**: User's last name (optional, up to 64 chars)
     - **email_address**: Unique email address
     - **password**: Password (minimum 8 characters)
 

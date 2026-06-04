@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.user import AnnotatedValidUserByUsername
+from app.core.exceptions import conflict_error
 from app.core.security import get_current_user, get_current_user_optional
 from app.crud.follow import AnnotatedFollowCRUD
 from app.crud.like import AnnotatedLikeCRUD
@@ -121,10 +122,22 @@ async def update_my_profile(
     Update the current user's profile.
 
     Allows updating:
+    - username: Unique username (alphanumeric/underscore, stored lowercase)
+    - first_name / last_name: Display name
     - bio: User's bio text (max 500 chars)
     - show_full_name: Whether to show full name on public profile
     """
-    update_kwargs = profile_data.model_dump(exclude_unset=True)
+    update_kwargs = profile_data.model_dump()
+
+    new_username = update_kwargs["username"].lower()
+    update_kwargs["username"] = new_username
+
+    if new_username != current_user.username.lower():
+        user_with_username = await user_crud.get_by_username(db, username=new_username)
+
+        if user_with_username is not None and user_with_username.id != current_user.id:
+            raise conflict_error("A user with this username already exists")
+
     updated_user = await user_crud.update_profile(
         db,
         user=current_user,

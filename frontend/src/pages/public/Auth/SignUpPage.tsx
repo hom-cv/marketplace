@@ -46,8 +46,6 @@ export function SignUpPage() {
         value.trim().length > 0 ? null : t("validation.usernameRequired"),
       firstName: (value) =>
         value.trim().length > 0 ? null : t("validation.firstNameRequired"),
-      lastName: (value) =>
-        value.trim().length > 0 ? null : t("validation.lastNameRequired"),
       email: (value) =>
         /^\S+@\S+$/.test(value) ? null : t("validation.invalidEmail"),
       password: (value) =>
@@ -123,7 +121,6 @@ export function SignUpPage() {
               <TextInput
                 label={t("signup.lastName")}
                 placeholder={t("signup.lastNamePlaceholder")}
-                required
                 radius="xs"
                 {...form.getInputProps("lastName")}
               />
