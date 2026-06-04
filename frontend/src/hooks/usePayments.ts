@@ -13,6 +13,7 @@ import {
   addTracking,
 } from "@/api/payments";
 import type { PaymentStatusResponse } from "@/api/types/payment";
+import { MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "./queryKeys";
 
 export function usePriceBreakdown(
@@ -33,7 +34,8 @@ export function useEarningsPreview(
   itemPrice: number | undefined,
   shippingCost = 0,
 ) {
-  const isQueryable = typeof itemPrice === "number" && itemPrice >= 50;
+  const isQueryable =
+    typeof itemPrice === "number" && itemPrice >= MIN_LISTING_PRICE;
   return useQuery({
     queryKey: queryKeys.payments.earningsPreview(itemPrice!, shippingCost),
     queryFn: () => getEarningsPreview(itemPrice!, shippingCost, "card"),

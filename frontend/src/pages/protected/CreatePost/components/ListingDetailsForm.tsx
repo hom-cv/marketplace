@@ -13,6 +13,12 @@ import {
 } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
+import {
+  MAX_LISTING_PRICE,
+  MAX_SHIPPING_COST,
+  MIN_LISTING_PRICE,
+  MIN_SHIPPING_COST,
+} from "@/constants/listing";
 import type {
   CreatePostFormValues,
   SelectOption,
@@ -95,9 +101,9 @@ export function ListingDetailsForm({
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <NumberInput
             label={t("create.form.price")}
-            placeholder="50.00"
-            min={50}
-            max={1000000}
+            placeholder={`${MIN_LISTING_PRICE}.00`}
+            min={MIN_LISTING_PRICE}
+            max={MAX_LISTING_PRICE}
             decimalScale={2}
             required
             radius="xs"
@@ -109,8 +115,8 @@ export function ListingDetailsForm({
             <NumberInput
               label={t("create.form.shippingCost")}
               placeholder="0.00"
-              min={0}
-              max={10000}
+              min={MIN_SHIPPING_COST}
+              max={MAX_SHIPPING_COST}
               decimalScale={2}
               radius="xs"
               rightSection={<span className={formStyles.unit}>฿</span>}

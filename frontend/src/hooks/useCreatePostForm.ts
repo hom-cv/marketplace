@@ -11,6 +11,7 @@ import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
+import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
@@ -79,8 +80,12 @@ export function useCreatePostForm() {
         value.trim().length < 1 ? t("create.form.descriptionRequired") : null,
       type: (value) => (!value ? t("create.form.categoryRequired") : null),
       price: (value) => {
-        if (!value || value < 50) return t("create.form.priceMin");
-        if (value > 1000000) return t("create.form.priceMax");
+        if (!value || value < MIN_LISTING_PRICE)
+          return t("create.form.priceMin", { min: MIN_LISTING_PRICE });
+        if (value > MAX_LISTING_PRICE)
+          return t("create.form.priceMax", {
+            max: MAX_LISTING_PRICE.toLocaleString(),
+          });
         return null;
       },
       size: (value, values) =>
