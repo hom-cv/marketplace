@@ -29,11 +29,11 @@ export interface PublicUserProfile {
 }
 
 export interface UpdateProfileRequest {
-  username?: string;
-  first_name?: string;
-  last_name?: string;
-  bio?: string | null;
-  show_full_name?: boolean;
+  username: string;
+  first_name: string;
+  last_name: string | null;
+  bio: string | null;
+  show_full_name: boolean;
 }
 
 export interface RegisterRequest {

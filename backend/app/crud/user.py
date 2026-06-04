@@ -62,7 +62,12 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
 
     async def get_by_username(self, db: AsyncSession, *, username: str) -> User | None:
         """
-        Retrieve a user by their username (case-insensitive).
+        Retrieve a user by their username.
+
+        Usernames are normalized to lowercase on registration and profile
+        update, so this matches the lowercased input exactly. That keeps the
+        query on the unique index on ``username`` — a ``LOWER(username)``
+        comparison would force a full table scan instead.
 
         Args:
             db (AsyncSession): The asynchronous database session.
@@ -71,9 +76,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         Returns:
             User | None: The user if found, or None if not found.
         """
-        query = select(self.model).where(
-            func.lower(self.model.username) == username.lower()
-        )
+        query = select(self.model).where(self.model.username == username.lower())
         result = await db.execute(query)
 
         return result.scalar_one_or_none()
