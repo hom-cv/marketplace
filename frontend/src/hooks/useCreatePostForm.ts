@@ -11,6 +11,7 @@ import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
+import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { PostType, Measurements } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
@@ -63,6 +64,7 @@ export function useCreatePostForm() {
 
   // Form state using Mantine useForm
   const form = useForm<CreatePostFormValues>({
+    validateInputOnBlur: true,
     initialValues: {
       title: "",
       description: "",
@@ -77,8 +79,15 @@ export function useCreatePostForm() {
       description: (value) =>
         value.trim().length < 1 ? t("create.form.descriptionRequired") : null,
       type: (value) => (!value ? t("create.form.categoryRequired") : null),
-      price: (value) =>
-        !value || value <= 0 ? t("create.form.priceRequired") : null,
+      price: (value) => {
+        if (!value || value < MIN_LISTING_PRICE)
+          return t("create.form.priceMin", { min: MIN_LISTING_PRICE });
+        if (value > MAX_LISTING_PRICE)
+          return t("create.form.priceMax", {
+            max: MAX_LISTING_PRICE.toLocaleString(),
+          });
+        return null;
+      },
       size: (value, values) =>
         values.type && !value ? t("create.form.sizeRequired") : null,
     },

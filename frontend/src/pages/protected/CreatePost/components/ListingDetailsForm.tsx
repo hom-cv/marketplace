@@ -3,10 +3,26 @@
  * Typography-forward design with generous spacing
  */
 
-import { TextInput, Textarea, Select, NumberInput, Stack, SimpleGrid } from "@mantine/core";
+import {
+  TextInput,
+  Textarea,
+  Select,
+  NumberInput,
+  Stack,
+  SimpleGrid,
+} from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import type { CreatePostFormValues, SelectOption } from "@/hooks/useCreatePostForm";
+import {
+  MAX_LISTING_PRICE,
+  MAX_SHIPPING_COST,
+  MIN_LISTING_PRICE,
+  MIN_SHIPPING_COST,
+} from "@/constants/listing";
+import type {
+  CreatePostFormValues,
+  SelectOption,
+} from "@/hooks/useCreatePostForm";
 import formStyles from "@/styles/forms.module.css";
 import styles from "./ListingDetailsForm.module.css";
 
@@ -53,7 +69,9 @@ export function ListingDetailsForm({
 
       {/* Classification Section */}
       <div className={styles.section}>
-        <h3 className={styles.sectionLabel}>{t("create.sections.classification")}</h3>
+        <h3 className={styles.sectionLabel}>
+          {t("create.sections.classification")}
+        </h3>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Select
             label={t("create.form.category")}
@@ -83,12 +101,13 @@ export function ListingDetailsForm({
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <NumberInput
             label={t("create.form.price")}
-            placeholder="0.00"
-            min={0.01}
-            max={1000000}
+            placeholder={`${MIN_LISTING_PRICE}.00`}
+            min={MIN_LISTING_PRICE}
+            max={MAX_LISTING_PRICE}
             decimalScale={2}
             required
             radius="xs"
+            clampBehavior="none"
             rightSection={<span className={formStyles.unit}>฿</span>}
             {...form.getInputProps("price")}
           />
@@ -96,8 +115,8 @@ export function ListingDetailsForm({
             <NumberInput
               label={t("create.form.shippingCost")}
               placeholder="0.00"
-              min={0}
-              max={10000}
+              min={MIN_SHIPPING_COST}
+              max={MAX_SHIPPING_COST}
               decimalScale={2}
               radius="xs"
               rightSection={<span className={formStyles.unit}>฿</span>}

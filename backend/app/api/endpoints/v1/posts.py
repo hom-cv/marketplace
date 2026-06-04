@@ -7,6 +7,12 @@ from typing import Annotated, Literal, Optional
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.post import (
+    MAX_LISTING_PRICE,
+    MAX_SHIPPING_COST,
+    MIN_LISTING_PRICE,
+    MIN_SHIPPING_COST,
+)
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
@@ -44,9 +50,15 @@ async def create_post(
     title: Annotated[str, Form(min_length=1, max_length=200)],
     description: Annotated[str, Form(min_length=1, max_length=5000)],
     type: Annotated[PostTypeSchema, Form()],
-    price: Annotated[Decimal, Form(gt=0, le=1000000)],
+    price: Annotated[
+        Decimal,
+        Form(ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2),
+    ],
     size: Annotated[str, Form(min_length=1, max_length=20)],
-    shipping_cost: Annotated[Decimal, Form(ge=0, le=10000)] = Decimal("0"),
+    shipping_cost: Annotated[
+        Decimal,
+        Form(ge=MIN_SHIPPING_COST, le=MAX_SHIPPING_COST, decimal_places=2),
+    ] = Decimal("0"),
     measurements: Annotated[str | None, Form()] = None,
     images: Annotated[list[UploadFile], File()] = [],
 ) -> PostResponseSchema:
@@ -129,8 +141,8 @@ async def list_posts(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     types: Annotated[list[PostTypeSchema] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
-    min_price: Annotated[Decimal | None, Query(ge=0)] = None,
-    max_price: Annotated[Decimal | None, Query(ge=0)] = None,
+    min_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
+    max_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     search: Annotated[str | None, Query(max_length=200)] = None,
 ) -> PaginatedPostsResponse:
     """
@@ -319,10 +331,22 @@ async def delete_post(
 async def preview_earnings(
     pricing_service: AnnotatedPricingService,
     item_price: Annotated[
-        Decimal, Query(gt=0, le=1000000, description="Item price in THB")
+        Decimal,
+        Query(
+            ge=MIN_LISTING_PRICE,
+            le=MAX_LISTING_PRICE,
+            decimal_places=2,
+            description="Item price in THB",
+        ),
     ],
     shipping_cost: Annotated[
-        Decimal, Query(ge=0, le=10000, description="Shipping cost in THB")
+        Decimal,
+        Query(
+            ge=MIN_SHIPPING_COST,
+            le=MAX_SHIPPING_COST,
+            decimal_places=2,
+            description="Shipping cost in THB",
+        ),
     ] = Decimal("0"),
     payment_method: Literal["card", "promptpay"] = Query(
         "card", description="Payment method"
