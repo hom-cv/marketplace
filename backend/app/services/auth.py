@@ -57,8 +57,9 @@ class AuthService:
         Raises:
             HTTPException: If email or username already exists (409 Conflict).
         """
-        # Normalize email to lowercase for consistent storage
+        # Normalize email and username to lowercase for consistent storage
         normalized_email = obj_in.email_address.lower()
+        normalized_username = obj_in.username.lower()
 
         # Check if email already exists
         existing_email = await self._user_crud.get_by_email(
@@ -67,16 +68,16 @@ class AuthService:
         if existing_email:
             raise conflict_error("A user with this email address already exists")
 
-        # Check if username already exists
+        # Check if username already exists (case-insensitive)
         existing_username = await self._user_crud.get_by_username(
-            db=self.db, username=obj_in.username
+            db=self.db, username=normalized_username
         )
         if existing_username:
             raise conflict_error("A user with this username already exists")
 
         # Create the user instance
         user = User(
-            username=obj_in.username,
+            username=normalized_username,
             first_name=obj_in.first_name,
             last_name=obj_in.last_name,
             email_address=normalized_email,

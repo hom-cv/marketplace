@@ -62,7 +62,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
 
     async def get_by_username(self, db: AsyncSession, *, username: str) -> User | None:
         """
-        Retrieve a user by their username.
+        Retrieve a user by their username (case-insensitive).
 
         Args:
             db (AsyncSession): The asynchronous database session.
@@ -71,7 +71,9 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         Returns:
             User | None: The user if found, or None if not found.
         """
-        query = select(self.model).where(self.model.username == username)
+        query = select(self.model).where(
+            func.lower(self.model.username) == username.lower()
+        )
         result = await db.execute(query)
 
         return result.scalar_one_or_none()
@@ -144,21 +146,36 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         db: AsyncSession,
         *,
         user: User,
+        username: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
         bio: str | None = None,
         show_full_name: bool | None = None,
     ) -> User:
         """
         Update user profile fields.
 
+        Any argument left as None is skipped (not written). Username uniqueness
+        must be validated by the caller before invoking this method.
+
         Args:
             db (AsyncSession): The asynchronous database session.
             user (User): The user to update.
+            username (str | None): New username, or None to skip update.
+            first_name (str | None): New first name, or None to skip update.
+            last_name (str | None): New last name, or None to skip update.
             bio (str | None): New bio value, or None to skip update.
             show_full_name (bool | None): New visibility setting, or None to skip.
 
         Returns:
             User: The updated user.
         """
+        if username is not None:
+            user.username = username
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
         if bio is not None:
             user.bio = bio
         if show_full_name is not None:

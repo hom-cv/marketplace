@@ -2,7 +2,7 @@
  * Profile edit page - Flat design
  */
 
-import { Textarea, Switch, Stack } from "@mantine/core";
+import { TextInput, Textarea, Switch, Stack } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
@@ -21,10 +21,28 @@ export function ProfileEditPage() {
 
   const form = useForm<UpdateProfileRequest>({
     initialValues: {
+      username: user?.username ?? "",
+      first_name: user?.first_name ?? "",
+      last_name: user?.last_name ?? "",
       bio: user?.bio ?? "",
       show_full_name: user?.show_full_name ?? true,
     },
     validate: {
+      username: (value) => {
+        const v = value ?? "";
+        if (v.length < 3 || v.length > 64)
+          return t("validation.usernameLength");
+        if (!/^[a-zA-Z0-9_]+$/.test(v)) return t("validation.usernameInvalid");
+        return null;
+      },
+      first_name: (value) => {
+        const v = (value ?? "").trim();
+        if (!v) return t("validation.firstNameRequired");
+        if (v.length > 64) return t("validation.nameTooLong");
+        return null;
+      },
+      last_name: (value) =>
+        (value ?? "").trim().length > 64 ? t("validation.nameTooLong") : null,
       bio: (value) =>
         value && value.length > 500 ? t("validation.bioTooLong") : null,
     },
@@ -59,6 +77,30 @@ export function ProfileEditPage() {
         <div className={styles.card}>
           <form onSubmit={form.onSubmit(handleSubmit)}>
             <Stack gap="lg">
+              <TextInput
+                label={t("edit.usernameLabel")}
+                description={t("edit.usernameDescription")}
+                placeholder={t("edit.usernamePlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("username")}
+              />
+
+              <TextInput
+                label={t("edit.firstNameLabel")}
+                placeholder={t("edit.firstNamePlaceholder")}
+                required
+                radius="xs"
+                {...form.getInputProps("first_name")}
+              />
+
+              <TextInput
+                label={t("edit.lastNameLabel")}
+                placeholder={t("edit.lastNamePlaceholder")}
+                radius="xs"
+                {...form.getInputProps("last_name")}
+              />
+
               <Textarea
                 label={t("edit.bioLabel")}
                 description={t("edit.bioDescription")}

@@ -135,8 +135,8 @@ class User(Base):
 
     @property
     def full_name(self) -> str:
-        """Get user's full name."""
-        return f"{self.first_name} {self.last_name}"
+        """Get user's full name (last name is optional)."""
+        return f"{self.first_name} {self.last_name}".strip()
 
     # Soft delete
     deleted_at: Mapped[datetime | None] = mapped_column(

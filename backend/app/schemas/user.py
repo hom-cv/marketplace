@@ -16,7 +16,7 @@ class UserCreateSchema(BaseModel):
         description="Unique username (alphanumeric and underscores only)",
     )
     first_name: str = Field(..., min_length=1, max_length=64)
-    last_name: str = Field(..., min_length=1, max_length=64)
+    last_name: str = Field("", max_length=64)
     email_address: EmailStr = Field(..., description="Unique email address")
     password: str = Field(
         ...,
@@ -80,8 +80,17 @@ class UserResponseSchema(BaseModel):
 
 
 class UserProfileUpdateSchema(BaseModel):
-    """Schema for updating user profile (bio and privacy settings)."""
+    """Schema for updating user profile (name, username, bio, privacy)."""
 
+    username: str | None = Field(
+        None,
+        min_length=3,
+        max_length=64,
+        pattern=r"^[a-zA-Z0-9_]+$",
+        description="Unique username (alphanumeric and underscores only)",
+    )
+    first_name: str | None = Field(None, min_length=1, max_length=64)
+    last_name: str | None = Field(None, max_length=64)
     bio: str | None = Field(None, max_length=500, description="User bio")
     show_full_name: bool | None = Field(
         None, description="Whether to show full name on profile"

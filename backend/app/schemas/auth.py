@@ -26,7 +26,7 @@ class AuthRegisterSchema(BaseModel):
         description="Unique username (alphanumeric and underscores only)",
     )
     first_name: str = Field(..., min_length=1, max_length=64)
-    last_name: str = Field(..., min_length=1, max_length=64)
+    last_name: str = Field("", max_length=64)
     email_address: EmailStr = Field(..., description="Unique email address")
     password: str = Field(
         ...,
