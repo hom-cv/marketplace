@@ -78,7 +78,7 @@ export function useCreatePostForm() {
         value.trim().length < 1 ? t("create.form.descriptionRequired") : null,
       type: (value) => (!value ? t("create.form.categoryRequired") : null),
       price: (value) =>
-        !value || value <= 0 ? t("create.form.priceRequired") : null,
+        !value || value < 50 ? t("create.form.priceMin") : null,
       size: (value, values) =>
         values.type && !value ? t("create.form.sizeRequired") : null,
     },

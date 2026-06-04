@@ -29,7 +29,7 @@
       "titleRequired": "กรุณาระบุชื่อสินค้า",
       "descriptionRequired": "กรุณาระบุรายละเอียด",
       "categoryRequired": "กรุณาเลือกหมวดหมู่",
-      "priceRequired": "ราคาต้องมากกว่า 0",
+      "priceMin": "ราคาขั้นต่ำ ฿50",
       "sizeRequired": "กรุณาเลือกไซส์",
       "submit": "เผยแพร่รายการ",
       "submitting": "กำลังเผยแพร่...",
