@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -46,6 +46,10 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         """
         Retrieve a user by their email address.
 
+        Emails are normalized to lowercase on registration, so this matches the
+        lowercased input exactly — keeping the query on the unique index on
+        ``email_address`` (a ``LOWER()`` comparison would force a full scan).
+
         Args:
             db (AsyncSession): The asynchronous database session.
             email (str): The email address to search for.
@@ -53,9 +57,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         Returns:
             User | None: The user if found, or None if not found.
         """
-        query = select(self.model).where(
-            func.lower(self.model.email_address) == email.lower()
-        )
+        query = select(self.model).where(self.model.email_address == email.lower())
         result = await db.execute(query)
 
         return result.scalar_one_or_none()
@@ -87,7 +89,9 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         """
         Retrieve a user by username with roles and seller_profile loaded.
 
-        Used for public profile viewing.
+        Used for public profile viewing. Usernames are stored lowercase, so the
+        lowercased input is matched exactly to keep this on the unique index on
+        ``username`` (this runs on every public profile view).
 
         Args:
             db (AsyncSession): The asynchronous database session.
@@ -98,7 +102,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         """
         query = (
             select(self.model)
-            .where(func.lower(self.model.username) == username.lower())
+            .where(self.model.username == username.lower())
             .where(self.model.deleted_at.is_(None))
             .options(
                 selectinload(User.roles),

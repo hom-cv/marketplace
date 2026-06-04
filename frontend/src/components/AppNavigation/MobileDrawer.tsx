@@ -58,7 +58,7 @@ export function MobileDrawer({
             </Avatar>
             <div>
               <strong>
-                {user?.first_name} {user?.last_name}
+                {[user?.first_name, user?.last_name].filter(Boolean).join(" ")}
               </strong>
               <Text size="sm" c="dimmed">
                 @{user?.username}
