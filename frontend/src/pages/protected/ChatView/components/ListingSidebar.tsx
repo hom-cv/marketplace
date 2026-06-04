@@ -108,7 +108,9 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
             </div>
             {post.user.show_full_name && post.user.first_name && (
               <span className={styles.sellerFullName}>
-                {post.user.first_name} {post.user.last_name}
+                {[post.user.first_name, post.user.last_name]
+                  .filter(Boolean)
+                  .join(" ")}
               </span>
             )}
             {post.user.bio && (

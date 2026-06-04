@@ -50,6 +50,35 @@ class TestRegisterEndpoint:
         # Verify CRUD was called (service layer ran)
         mock_user_crud.create_user.assert_called_once()
 
+    async def test_register_trims_whitespace_from_name_fields(
+        self,
+        async_client: AsyncClient,
+        mock_user_crud: MagicMock,
+    ):
+        """Surrounding whitespace is stripped from name/username at registration."""
+        mock_user_crud.get_by_email.return_value = None
+        mock_user_crud.get_by_username.return_value = None
+        mock_user_crud.create_user.return_value = create_mock_user(
+            user_id=1, username="newuser"
+        )
+
+        response = await async_client.post(
+            "/api/v1/auth/register",
+            json={
+                "username": "  NewUser  ",
+                "first_name": "  New  ",
+                "last_name": "  User  ",
+                "email_address": "new@example.com",
+                "password": "securepassword123",
+            },
+        )
+
+        assert response.status_code == 201
+        created = mock_user_crud.create_user.call_args.kwargs["user"]
+        assert created.username == "newuser"  # trimmed then lowercased
+        assert created.first_name == "New"
+        assert created.last_name == "User"
+
     async def test_register_duplicate_email_returns_409(
         self,
         async_client: AsyncClient,

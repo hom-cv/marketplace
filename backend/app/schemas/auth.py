@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
+from typing import Annotated
+
+from pydantic import BaseModel, EmailStr, Field, StringConstraints
 
 
 class AuthLoginSchema(BaseModel):
@@ -16,17 +18,29 @@ class AuthLoginResponse(BaseModel):
 
 
 class AuthRegisterSchema(BaseModel):
-    """Schema for user registration."""
+    """Schema for user registration.
 
-    username: str = Field(
-        ...,
-        min_length=3,
-        max_length=64,
-        pattern=r"^[a-zA-Z0-9_]+$",
-        description="Unique username (alphanumeric and underscores only)",
-    )
-    first_name: str = Field(..., min_length=1, max_length=64)
-    last_name: str = Field("", max_length=64)
+    The name/username fields are whitespace-trimmed (common with mobile
+    autocomplete). The password is intentionally left untouched — we never
+    alter what the user typed, and login does not strip either.
+    """
+
+    username: Annotated[
+        str,
+        StringConstraints(
+            strip_whitespace=True,
+            to_lower=True,
+            min_length=3,
+            max_length=64,
+            pattern=r"^[a-zA-Z0-9_]+$",
+        ),
+    ] = Field(..., description="Unique username (alphanumeric and underscores only)")
+    first_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)
+    ]
+    last_name: Annotated[
+        str, StringConstraints(strip_whitespace=True, max_length=64)
+    ] = ""
     email_address: EmailStr = Field(..., description="Unique email address")
     password: str = Field(
         ...,

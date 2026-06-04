@@ -55,10 +55,9 @@ export function ProfilePage() {
     );
   }
 
-  const displayName =
-    profile.first_name && profile.last_name
-      ? `${profile.first_name} ${profile.last_name}`
-      : null;
+  const displayName = profile.first_name
+    ? [profile.first_name, profile.last_name].filter(Boolean).join(" ")
+    : null;
 
   const isOwnProfile = currentUser?.username === profile.username;
 
