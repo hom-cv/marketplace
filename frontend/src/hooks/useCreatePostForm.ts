@@ -63,6 +63,7 @@ export function useCreatePostForm() {
 
   // Form state using Mantine useForm
   const form = useForm<CreatePostFormValues>({
+    validateInputOnBlur: true,
     initialValues: {
       title: "",
       description: "",
