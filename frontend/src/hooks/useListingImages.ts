@@ -29,7 +29,6 @@ export function useListingImages(initialUrls: string[] = []) {
     [slots],
   );
 
-  // Latest slots for handlers/cleanup (avoids stale closures).
   const slotsRef = useRef(slots);
   useEffect(() => {
     slotsRef.current = slots;
@@ -45,7 +44,7 @@ export function useListingImages(initialUrls: string[] = []) {
   // Create object URLs outside the updater (keeps it pure / StrictMode-safe).
   const handleAddImages = useCallback(
     (files: File[]) => {
-      const available = MAX_IMAGES - slotsRef.current.length;
+      const available = MAX_IMAGES - slots.length;
       const accepted = files.slice(0, Math.max(0, available));
       const rejected = files.length - accepted.length;
 
@@ -65,41 +64,46 @@ export function useListingImages(initialUrls: string[] = []) {
         setSlots((prev) => [...prev, ...added]);
       }
     },
-    [t],
+    [slots, t],
   );
 
-  const handleRemoveImage = useCallback((index: number) => {
-    const removed = slotsRef.current[index];
-    if (removed?.kind === "new") URL.revokeObjectURL(removed.previewUrl);
-    setSlots((prev) => prev.filter((_, i) => i !== index));
-    setSelectedImageIndex((prev) => {
-      if (index < prev) return prev - 1;
-      if (index === prev) return Math.max(0, prev - 1);
-      return prev;
-    });
-  }, []);
+  const handleRemoveImage = useCallback(
+    (index: number) => {
+      const removed = slots[index];
+      if (removed?.kind === "new") URL.revokeObjectURL(removed.previewUrl);
+      setSlots((prev) => prev.filter((_, i) => i !== index));
+      setSelectedImageIndex((prev) => {
+        if (index < prev) return prev - 1;
+        if (index === prev) return Math.max(0, prev - 1);
+        return prev;
+      });
+    },
+    [slots],
+  );
 
   const handleSelectImage = useCallback((index: number) => {
     setSelectedImageIndex(index);
   }, []);
 
-  const handleMoveImage = useCallback((from: number, to: number) => {
-    const len = slotsRef.current.length;
-    if (from < 0 || from >= len || to < 0 || to >= len) return;
-    setSlots((prev) => moveItem(prev, from, to));
-    setSelectedImageIndex(to);
-  }, []);
+  const handleMoveImage = useCallback(
+    (from: number, to: number) => {
+      if (from < 0 || from >= slots.length || to < 0 || to >= slots.length)
+        return;
+      setSlots((prev) => moveItem(prev, from, to));
+      setSelectedImageIndex(to);
+    },
+    [slots],
+  );
 
   /** Upload new files and return the final ordered list of public image URLs. */
   const resolveImageUrls = useCallback(async (): Promise<string[]> => {
-    const current = slotsRef.current;
-    const newFiles = current
+    const newFiles = slots
       .filter((s): s is Extract<ImageSlot, { kind: "new" }> => s.kind === "new")
       .map((s) => s.file);
     const uploaded = newFiles.length ? await uploadImages(newFiles) : [];
     let next = 0;
-    return current.map((s) => (s.kind === "existing" ? s.url : uploaded[next++]));
-  }, []);
+    return slots.map((s) => (s.kind === "existing" ? s.url : uploaded[next++]));
+  }, [slots]);
 
   return {
     imageCount: slots.length,
