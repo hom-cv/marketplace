@@ -24,7 +24,7 @@ export function useEditPostForm(post: Post) {
       description: post.description,
       type: post.type,
       price: parseFloat(post.price),
-      shippingCost: parseFloat(post.shipping_cost),
+      shippingCost: parseFloat(post.shipping_cost || "0"),
       size: post.size,
     },
     submit: (data) => updatePost(post.id, data),
