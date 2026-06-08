@@ -7,6 +7,7 @@ import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import { uploadImages } from "@/api/uploads";
+import { moveItem } from "@/utils/array";
 
 /** Maximum number of images allowed per listing. */
 export const MAX_IMAGES = 5;
@@ -83,13 +84,9 @@ export function useListingImages(initialUrls: string[] = []) {
   }, []);
 
   const handleMoveImage = useCallback((from: number, to: number) => {
-    setSlots((prev) => {
-      if (to < 0 || to >= prev.length) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
-    });
+    const len = slotsRef.current.length;
+    if (from < 0 || from >= len || to < 0 || to >= len) return;
+    setSlots((prev) => moveItem(prev, from, to));
     setSelectedImageIndex(to);
   }, []);
 

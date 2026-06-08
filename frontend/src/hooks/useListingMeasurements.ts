@@ -8,6 +8,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import type { Measurements, Post } from "@/api/types/post";
 import { MEASUREMENT_FIELDS } from "@/api/types/post";
+import { updateAt } from "@/utils/array";
 
 export interface ExtraMeasurement {
   id: string;
@@ -95,11 +96,9 @@ export function useListingMeasurements(post?: Post) {
 
   const handleExtraMeasurementChange = useCallback(
     (index: number, field: "label" | "value", newValue: string) => {
-      setExtraMeasurements((prev) => {
-        const updated = [...prev];
-        updated[index] = { ...updated[index], [field]: newValue };
-        return updated;
-      });
+      setExtraMeasurements((prev) =>
+        updateAt(prev, index, (row) => ({ ...row, [field]: newValue })),
+      );
     },
     [],
   );
