@@ -194,9 +194,9 @@ class ListingService:
         if not cdn_url:
             raise bad_request_error("Image storage is not configured")
         prefix = f"{cdn_url.rstrip('/')}/posts/"
-        for url in image_urls:
-            if not url.startswith(prefix):
-                raise bad_request_error(f"Invalid image URL: {url}")
+for url in image_urls:
+    if not url.startswith(prefix) or "/../" in url:
+        raise bad_request_error(f"Invalid image URL: {url}")
 
     async def create_listing(
         self,
