@@ -10,15 +10,6 @@ import { createPost } from "@/api/posts";
 import { queryKeys } from "@/hooks/queryKeys";
 import { useListingForm } from "@/hooks/useListingForm";
 
-// Re-exported for the form components that import these from here.
-export type {
-  CreatePostFormValues,
-  SelectOption,
-  MeasurementField,
-} from "@/hooks/useListingForm";
-export type { ExtraMeasurement } from "@/hooks/useListingMeasurements";
-export { MAX_IMAGES } from "@/hooks/useListingImages";
-
 export function useCreatePostForm() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();

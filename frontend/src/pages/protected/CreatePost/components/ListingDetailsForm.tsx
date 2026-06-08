@@ -22,7 +22,7 @@ import {
 import type {
   CreatePostFormValues,
   SelectOption,
-} from "@/hooks/useCreatePostForm";
+} from "@/hooks/useListingForm";
 import formStyles from "@/styles/forms.module.css";
 import styles from "./ListingDetailsForm.module.css";
 
