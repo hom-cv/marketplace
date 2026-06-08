@@ -234,7 +234,8 @@ export interface CreatePostRequest {
   shipping_cost?: number;
   size: string;
   measurements?: Measurements;
-  images?: File[];
+  /** Public CDN URLs of images uploaded beforehand (first = cover). */
+  image_urls: string[];
 }
 
 export interface UpdatePostRequest {
@@ -245,14 +246,8 @@ export interface UpdatePostRequest {
   shipping_cost?: number;
   size: string;
   measurements?: Measurements;
-  /**
-   * Ordered manifest describing the final image order. Each entry is either an
-   * existing image URL to keep or a "new:<index>" token referencing the i-th
-   * file in `newImages`. The first entry becomes the cover.
-   */
-  imageOrder: string[];
-  /** Newly uploaded files, referenced by "new:<index>" tokens in imageOrder. */
-  newImages: File[];
+  /** Final ordered list of public CDN image URLs (first = cover). */
+  image_urls: string[];
 }
 
 export interface PostFilters {

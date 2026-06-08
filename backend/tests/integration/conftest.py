@@ -169,12 +169,25 @@ def create_mock_email_service() -> MagicMock:
     return mock_service
 
 
+# CDN base used by the mock storage service; image URLs in tests must live
+# under "<TEST_CDN_URL>/posts/" to pass the listing service's URL validation.
+TEST_CDN_URL = "https://test-bucket.sgp1.cdn.digitaloceanspaces.com"
+
+
 def create_mock_storage_service() -> MagicMock:
-    """Create a mock StorageService with async methods (no real network/boto3)."""
+    """Create a mock StorageService (no real network/boto3)."""
     mock_service = MagicMock(spec=StorageService)
+    mock_service.cdn_url = TEST_CDN_URL
     mock_service.upload_image = AsyncMock(return_value=None)
     mock_service.upload_images = AsyncMock(return_value=[])
     mock_service.delete_image = AsyncMock(return_value=None)
+    # generate_presigned_url is local signing (sync), not async.
+    mock_service.create_presigned_upload = MagicMock(
+        return_value={
+            "upload_url": "https://upload.example/signed",
+            "file_url": f"{TEST_CDN_URL}/posts/new-image.jpg",
+        }
+    )
     return mock_service
 
 

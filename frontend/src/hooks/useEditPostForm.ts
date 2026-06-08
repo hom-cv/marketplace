@@ -3,8 +3,9 @@
  *
  * Mirrors useCreatePostForm but initializes from an existing post and manages
  * a mix of existing (already-uploaded) and newly added images so the seller can
- * reorder, remove, and add images. On submit it builds the `imageOrder`
- * manifest consumed by the update endpoint.
+ * reorder, remove, and add images. On submit it uploads any new files via
+ * presigned URLs and sends the final ordered `image_urls` list to the update
+ * endpoint.
  */
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
@@ -15,9 +16,15 @@ import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { updatePost } from "@/api/posts";
+import { uploadImages } from "@/api/uploads";
 import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
-import type { Post, PostType, Measurements } from "@/api/types/post";
+import type {
+  Post,
+  PostType,
+  Measurements,
+  UpdatePostRequest,
+} from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
 import type {
   CreatePostFormValues,
@@ -188,8 +195,23 @@ export function useEditPostForm(post: Post) {
   }, [imagePreviews]);
 
   const mutation = useMutation({
-    mutationFn: (vars: Parameters<typeof updatePost>[1]) =>
-      updatePost(post.id, vars),
+    // Upload any new images directly to storage, then send the final ordered
+    // list of URLs (existing kept in place, new ones uploaded) as JSON.
+    mutationFn: async (vars: {
+      data: Omit<UpdatePostRequest, "image_urls">;
+      slots: ImageSlot[];
+    }) => {
+      const newFiles: File[] = [];
+      for (const slot of vars.slots) {
+        if (slot.kind === "new") newFiles.push(slot.file);
+      }
+      const uploaded = await uploadImages(newFiles);
+      let next = 0;
+      const image_urls = vars.slots.map((slot) =>
+        slot.kind === "existing" ? slot.url : uploaded[next++],
+      );
+      return updatePost(post.id, { ...vars.data, image_urls });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       queryClient.invalidateQueries({
@@ -326,28 +348,17 @@ export function useEditPostForm(post: Post) {
           ? (allMeasurements as Measurements)
           : undefined;
 
-      // Build the ordered image manifest.
-      const imageOrder: string[] = [];
-      const newImages: File[] = [];
-      for (const slot of imageSlots) {
-        if (slot.kind === "existing") {
-          imageOrder.push(slot.url);
-        } else {
-          imageOrder.push(`new:${newImages.length}`);
-          newImages.push(slot.file);
-        }
-      }
-
       mutation.mutate({
-        title: values.title,
-        description: values.description,
-        type: values.type!,
-        price: values.price as number,
-        shipping_cost: (values.shippingCost as number) || 0,
-        size: values.size!,
-        measurements: finalMeasurements,
-        imageOrder,
-        newImages,
+        data: {
+          title: values.title,
+          description: values.description,
+          type: values.type!,
+          price: values.price as number,
+          shipping_cost: (values.shippingCost as number) || 0,
+          size: values.size!,
+          measurements: finalMeasurements,
+        },
+        slots: imageSlots,
       });
     },
     [measurements, extraMeasurements, imageSlots, mutation, t],

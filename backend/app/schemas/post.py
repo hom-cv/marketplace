@@ -4,8 +4,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 
-from fastapi import UploadFile
-from pydantic import BaseModel, Field, Json, ValidationError, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from app.constants.post import (
     MAX_LISTING_PRICE,
@@ -13,6 +12,7 @@ from app.constants.post import (
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
 )
+from app.constants.storage import MAX_IMAGES_PER_POST
 from app.schemas.user import UserResponseSchema
 
 
@@ -145,6 +145,14 @@ class PostCreateSchema(BaseModel):
         default=None,
         description="Optional measurements in cm",
     )
+    image_urls: list[str] = Field(
+        default_factory=list,
+        max_length=MAX_IMAGES_PER_POST,
+        description=(
+            "Public CDN URLs of images already uploaded via presigned URLs. "
+            "The first URL becomes the cover image."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_measurements_for_type(self) -> "PostCreateSchema":
@@ -171,12 +179,11 @@ class PostUpdateSchema(BaseModel):
 
 class PostUpdateRequest(BaseModel):
     """
-    Schema for a full listing update via multipart/form-data (PUT).
+    Schema for a full listing update (JSON body, PUT).
 
-    Bundles every editable field plus the image reconciliation inputs. The JSON
-    string fields (`measurements`, `image_order`) are decoded by Pydantic's
-    ``Json`` type, and `images` carries any newly uploaded files referenced by
-    ``"new:<index>"`` tokens in `image_order`.
+    Images are uploaded separately via presigned URLs; ``image_urls`` is the
+    final ordered set of public CDN URLs (first = cover). Adding, removing, and
+    reordering images is expressed entirely by this list.
     """
 
     title: str = Field(..., min_length=1, max_length=200)
@@ -192,19 +199,16 @@ class PostUpdateRequest(BaseModel):
         decimal_places=2,
     )
     size: str = Field(..., min_length=1, max_length=20)
-    measurements: Json[dict[str, Any]] | None = Field(
-        default=None, description="Optional measurements as a JSON object string"
+    measurements: dict[str, Any] | None = Field(
+        default=None, description="Optional measurements in cm"
     )
-    image_order: Json[list[str]] | None = Field(
-        default=None,
+    image_urls: list[str] = Field(
+        default_factory=list,
+        max_length=MAX_IMAGES_PER_POST,
         description=(
-            "Ordered manifest as a JSON array string. Each entry is an existing "
-            'image URL to keep or a "new:<index>" token referencing `images`. '
-            "Omit or send [] to keep no existing images."
+            "Final ordered list of public CDN image URLs (first = cover). "
+            "Uploaded beforehand via presigned URLs."
         ),
-    )
-    images: list[UploadFile] = Field(
-        default_factory=list, description="Newly uploaded image files"
     )
 
     @model_validator(mode="after")
@@ -212,6 +216,21 @@ class PostUpdateRequest(BaseModel):
         """Validate measurements structure based on post type."""
         validate_measurements_for_post_type(self.type, self.measurements)
         return self
+
+
+class PresignUploadRequest(BaseModel):
+    """Request a presigned URL for a direct image upload to object storage."""
+
+    content_type: str = Field(
+        ..., description="Image MIME type, e.g. 'image/jpeg'"
+    )
+
+
+class PresignUploadResponse(BaseModel):
+    """Presigned upload target plus the resulting public URL."""
+
+    upload_url: str = Field(..., description="Signed PUT URL to upload the bytes to")
+    file_url: str = Field(..., description="Public CDN URL to reference once uploaded")
 
 
 class PostResponseSchema(BaseModel):

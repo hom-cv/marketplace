@@ -2,7 +2,7 @@
  * Posts API client
  */
 
-import { apiRequest, API_BASE_URL } from "@/api/api";
+import { apiRequest, jsonRequest } from "@/api/api";
 import type {
   Post,
   CreatePostRequest,
@@ -10,48 +10,13 @@ import type {
   PostFilters,
   PaginatedPostsResponse,
 } from "@/api/types/post";
-import { useAuthStore } from "@/stores/authStore";
 
 /**
- * Create a new post with optional multiple image uploads
+ * Create a new post. Images must already be uploaded via presigned URLs
+ * (see @/api/uploads); pass their public URLs in `image_urls`.
  */
 export async function createPost(data: CreatePostRequest): Promise<Post> {
-  const token = useAuthStore.getState().token;
-  const formData = new FormData();
-
-  formData.append("title", data.title);
-  formData.append("description", data.description);
-  formData.append("type", data.type);
-  formData.append("price", data.price.toString());
-  formData.append("shipping_cost", (data.shipping_cost ?? 0).toString());
-  formData.append("size", data.size);
-
-  // Append measurements as JSON if provided
-  if (data.measurements && Object.keys(data.measurements).length > 0) {
-    formData.append("measurements", JSON.stringify(data.measurements));
-  }
-
-  // Append multiple images
-  if (data.images && data.images.length > 0) {
-    data.images.forEach((image) => {
-      formData.append("images", image);
-    });
-  }
-
-  const response = await fetch(`${API_BASE_URL}/posts`, {
-    method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ detail: "Request failed" }));
-    throw new Error(errorData.detail || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+  return jsonRequest<Post>("/posts", "POST", data);
 }
 
 /**
@@ -100,46 +65,14 @@ export async function getMyPosts(skip = 0, limit = 50): Promise<Post[]> {
 }
 
 /**
- * Update an existing post. Supports reordering existing images and uploading
- * new ones via the `imageOrder` manifest (see UpdatePostRequest).
+ * Update an existing post. `image_urls` is the final ordered list of public CDN
+ * URLs (first = cover); new images must be uploaded via presigned URLs first.
  */
 export async function updatePost(
   id: number,
   data: UpdatePostRequest,
 ): Promise<Post> {
-  const token = useAuthStore.getState().token;
-  const formData = new FormData();
-
-  formData.append("title", data.title);
-  formData.append("description", data.description);
-  formData.append("type", data.type);
-  formData.append("price", data.price.toString());
-  formData.append("shipping_cost", (data.shipping_cost ?? 0).toString());
-  formData.append("size", data.size);
-
-  if (data.measurements && Object.keys(data.measurements).length > 0) {
-    formData.append("measurements", JSON.stringify(data.measurements));
-  }
-
-  formData.append("image_order", JSON.stringify(data.imageOrder));
-  data.newImages.forEach((image) => {
-    formData.append("images", image);
-  });
-
-  const response = await fetch(`${API_BASE_URL}/posts/${id}`, {
-    method: "PUT",
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-    body: formData,
-  });
-
-  if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ detail: "Request failed" }));
-    throw new Error(errorData.detail || `HTTP ${response.status}`);
-  }
-
-  return response.json();
+  return jsonRequest<Post>(`/posts/${id}`, "PUT", data);
 }
 
 /**

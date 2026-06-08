@@ -18,12 +18,13 @@ from app.db.utils import get_async_db
 from app.models.payment import Payment
 from app.models.post import Post, PostType
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
-from app.schemas.post import PostResponseSchema, PostUpdateRequest, PostUpdateSchema
+from app.schemas.post import (
+    PostCreateSchema,
+    PostResponseSchema,
+    PostUpdateRequest,
+    PostUpdateSchema,
+)
 from app.services.storage_service import StorageService, _get_storage_service
-
-# Manifest token prefix used in `image_order` to reference a freshly uploaded
-# file by its position in the `images` list, e.g. "new:0" -> first upload.
-NEW_IMAGE_PREFIX = "new:"
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
@@ -172,6 +173,70 @@ class ListingService:
         post, is_banned, is_user_banned, is_sold = result
         return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
 
+    def _validate_image_urls(self, image_urls: list[str]) -> None:
+        """
+        Ensure submitted image URLs are ours (uploaded via presigned URLs).
+
+        Guards against storing arbitrary external URLs: every URL must live
+        under our CDN's ``posts/`` prefix.
+
+        Raises:
+            HTTPException: 400 if any URL is outside our storage, or storage is
+                not configured but URLs were provided; 400 if too many images.
+        """
+        if len(image_urls) > MAX_IMAGES_PER_POST:
+            raise too_many_images_error(
+                f"Maximum {MAX_IMAGES_PER_POST} images allowed"
+            )
+        if not image_urls:
+            return
+        cdn_url = self._storage.cdn_url
+        if not cdn_url:
+            raise bad_request_error("Image storage is not configured")
+        prefix = f"{cdn_url}/posts/"
+        for url in image_urls:
+            if not url.startswith(prefix):
+                raise bad_request_error(f"Invalid image URL: {url}")
+
+    async def create_listing(
+        self,
+        *,
+        owner_id: int,
+        data: PostCreateSchema,
+    ) -> PostResponseSchema:
+        """
+        Create a listing for the given owner.
+
+        Images must already be uploaded (via presigned URLs); ``data.image_urls``
+        holds the public CDN URLs in display order (first = cover).
+
+        Args:
+            owner_id: The id of the user creating the listing.
+            data: The validated create payload.
+
+        Returns:
+            The created PostResponseSchema.
+
+        Raises:
+            HTTPException: 400 if any image URL is not ours / too many images.
+        """
+        self._validate_image_urls(data.image_urls)
+
+        post = Post(
+            title=data.title,
+            description=data.description,
+            type=PostType[data.type.value],
+            price=data.price,
+            shipping_cost=data.shipping_cost,
+            size=data.size,
+            measurements=data.measurements,
+            image_url=data.image_urls[0] if data.image_urls else None,
+            image_urls=data.image_urls,
+            user_id=owner_id,
+        )
+        created_post = await self._post_crud.create_post(self.db, post=post)
+        return PostResponseSchema.model_validate(created_post)
+
     async def update_listing(
         self,
         *,
@@ -182,26 +247,22 @@ class ListingService:
         """
         Update a listing owned by the current user.
 
-        Image reconciliation is driven by ``data.image_order``, an ordered
-        manifest where each entry is either an existing image URL to keep or a
-        ``"new:<index>"`` token referencing the i-th file in ``data.images``.
-        This lets the seller freely reorder, add, and remove images (the first
-        entry becomes the cover). Images dropped from the listing are left in
-        storage; reclaiming them is handled out-of-band (see the storage-gc
-        note below).
+        ``data.image_urls`` is the final ordered set of (already-uploaded) image
+        URLs — adding, removing, and reordering are all expressed by this list,
+        with the first entry as the cover. Images dropped from the listing are
+        left in storage; reclaiming them is handled out-of-band.
 
         Args:
             post_id: The post to update.
             owner_id: The id of the user attempting the update.
-            data: The validated update payload (fields, manifest, and uploads).
+            data: The validated update payload.
 
         Returns:
             The updated PostResponseSchema with ban/sold status.
 
         Raises:
             HTTPException: 404 if not found, 403 if not the owner, 400 if the
-                listing is already sold, the image count exceeds the limit, or
-                the manifest is inconsistent with the uploaded files.
+                listing is already sold or an image URL is invalid.
         """
         result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
         if result is None:
@@ -215,48 +276,16 @@ class ListingService:
         if is_sold:
             raise bad_request_error("Sold listings cannot be edited")
 
-        current_urls = list(post.image_urls or [])
-        valid_new_images = [f for f in data.images if f and f.filename]
-        image_order = data.image_order or []
-
-        if len(image_order) > MAX_IMAGES_PER_POST:
-            raise too_many_images_error(
-                f"Maximum {MAX_IMAGES_PER_POST} images allowed"
-            )
-
-        # The manifest must reference exactly the uploaded files, no more or less.
-        new_token_count = sum(
-            1 for token in image_order if token.startswith(NEW_IMAGE_PREFIX)
-        )
-        if new_token_count != len(valid_new_images):
-            raise bad_request_error(
-                "Uploaded images do not match the image order manifest"
-            )
-
-        # Upload new images before mutating the post so a storage failure
-        # leaves the existing listing untouched.
-        new_urls = await self._storage.upload_images(valid_new_images, folder="posts")
-
-        final_urls: list[str] = []
-        for token in image_order:
-            if token.startswith(NEW_IMAGE_PREFIX):
-                try:
-                    idx = int(token[len(NEW_IMAGE_PREFIX) :])
-                    final_urls.append(new_urls[idx])
-                except (ValueError, IndexError):
-                    raise bad_request_error(f"Invalid image reference: {token}")
-            elif token in current_urls:
-                final_urls.append(token)
+        self._validate_image_urls(data.image_urls)
 
         # TODO(storage-gc): reclaim unreferenced Spaces objects out-of-band, via
         # a bucket lifecycle/TTL rule or a periodic sweep that deletes keys not
         # referenced by any post's image_urls.
 
-        # Fields needing service-side handling: type (schema -> model enum) and
-        # the image fields (computed from the manifest + uploads).
+        # type needs schema -> model enum conversion; image fields are set here.
         post.type = PostType[data.type.value]
-        post.image_urls = final_urls
-        post.image_url = final_urls[0] if final_urls else None
+        post.image_urls = data.image_urls
+        post.image_url = data.image_urls[0] if data.image_urls else None
 
         # Plain scalar edits flow through the CRUD via the update schema.
         obj_in = PostUpdateSchema(

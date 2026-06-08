@@ -10,7 +10,11 @@ import boto3
 from botocore.exceptions import ClientError
 from fastapi import Depends, UploadFile
 
-from app.constants.storage import ALLOWED_IMAGE_EXTENSIONS, MAX_IMAGES_PER_POST
+from app.constants.storage import (
+    ALLOWED_IMAGE_EXTENSIONS,
+    CONTENT_TYPE_TO_EXTENSION,
+    MAX_IMAGES_PER_POST,
+)
 from app.core.exceptions import (
     delete_error,
     invalid_file_type_error,
@@ -146,6 +150,61 @@ class StorageService:
         tasks = [self.upload_image(f, folder) for f in valid_files]
         results = await asyncio.gather(*tasks)
         return [url for url in results if url]
+
+    def create_presigned_upload(
+        self,
+        content_type: str,
+        folder: str = "posts",
+        expires_in: int = 600,
+    ) -> dict[str, str]:
+        """
+        Create a presigned URL for a direct browser-to-Spaces image upload.
+
+        The client PUTs the file bytes to ``upload_url`` (sending matching
+        ``Content-Type`` and ``x-amz-acl: public-read`` headers, which are part
+        of the signature) and then references ``file_url`` (the public CDN URL)
+        when creating/updating a listing.
+
+        Args:
+            content_type: The image MIME type (e.g. "image/jpeg").
+            folder: The key prefix/folder to store the object under.
+            expires_in: Seconds until the presigned URL expires.
+
+        Returns:
+            ``{"upload_url": <signed PUT url>, "file_url": <public CDN url>}``.
+
+        Raises:
+            UploadError: If storage is not configured or signing fails.
+            InvalidFileTypeError: If the content type is not an allowed image.
+        """
+        if not self.enabled:
+            raise upload_error("Image storage is not configured")
+
+        file_ext = CONTENT_TYPE_TO_EXTENSION.get(content_type.lower())
+        if not file_ext:
+            raise invalid_file_type_error(
+                f"Invalid content type '{content_type}'. Allowed: "
+                f"{', '.join(sorted(CONTENT_TYPE_TO_EXTENSION))}"
+            )
+
+        key = f"{folder}/{uuid.uuid4()}.{file_ext}"
+
+        try:
+            upload_url = self.client.generate_presigned_url(
+                "put_object",
+                Params={
+                    "Bucket": self.bucket,
+                    "Key": key,
+                    "ContentType": content_type,
+                    "ACL": "public-read",
+                },
+                ExpiresIn=expires_in,
+            )
+        except ClientError as e:
+            logger.error(f"Failed to create presigned upload URL: {e}")
+            raise upload_error("Failed to create upload URL") from e
+
+        return {"upload_url": upload_url, "file_url": f"{self.cdn_url}/{key}"}
 
     async def delete_image(self, image_url: str) -> None:
         """

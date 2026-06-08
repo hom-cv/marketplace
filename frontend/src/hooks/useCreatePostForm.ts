@@ -11,9 +11,14 @@ import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { createPost } from "@/api/posts";
+import { uploadImages } from "@/api/uploads";
 import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
-import type { PostType, Measurements } from "@/api/types/post";
+import type {
+  PostType,
+  Measurements,
+  CreatePostRequest,
+} from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
 
 /** Maximum number of images allowed per listing */
@@ -151,9 +156,15 @@ export function useCreatePostForm() {
     };
   }, [imagePreviews]);
 
-  // Mutation
+  // Mutation: upload images directly to storage, then create the listing.
   const mutation = useMutation({
-    mutationFn: createPost,
+    mutationFn: async (vars: {
+      data: Omit<CreatePostRequest, "image_urls">;
+      images: File[];
+    }) => {
+      const image_urls = await uploadImages(vars.images);
+      return createPost({ ...vars.data, image_urls });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       navigate({ to: "/account/listings" });
@@ -273,14 +284,16 @@ export function useCreatePostForm() {
           : undefined;
 
       mutation.mutate({
-        title: values.title,
-        description: values.description,
-        type: values.type!,
-        price: values.price as number,
-        shipping_cost: (values.shippingCost as number) || 0,
-        size: values.size!,
-        measurements: finalMeasurements,
-        images: images.length > 0 ? images : undefined,
+        data: {
+          title: values.title,
+          description: values.description,
+          type: values.type!,
+          price: values.price as number,
+          shipping_cost: (values.shippingCost as number) || 0,
+          size: values.size!,
+          measurements: finalMeasurements,
+        },
+        images,
       });
     },
     [measurements, extraMeasurements, images, mutation, t],
