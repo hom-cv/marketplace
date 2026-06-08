@@ -177,7 +177,7 @@ class StorageService:
             UploadError: If storage is not configured or signing fails.
             InvalidFileTypeError: If the content type is not an allowed image.
         """
-        if not self.enabled:
+        if not self.enabled or not self.cdn_url:
             raise upload_error("Image storage is not configured")
 
         file_ext = CONTENT_TYPE_TO_EXTENSION.get(content_type.lower())
