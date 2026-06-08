@@ -7,7 +7,7 @@ import { useRef, useState, useCallback } from "react";
 import { FileButton, Stack } from "@mantine/core";
 import {
   IconPlus,
-  IconX,
+  IconTrash,
   IconPhoto,
   IconUpload,
   IconChevronLeft,
@@ -146,7 +146,43 @@ export function ImageUploadSection({
         )}
       </div>
 
-      {/* Thumbnail Filmstrip */}
+      {/* Toolbar acting on the currently selected image */}
+      {hasImages && (
+        <div className={styles.heroToolbar}>
+          {onMoveImage && (
+            <button
+              type="button"
+              className={`${styles.toolbarButton} ${styles.toolbarMove}`}
+              aria-label={t("images.moveLeft")}
+              disabled={selectedImageIndex === 0}
+              onClick={() => onMoveImage(selectedImageIndex, selectedImageIndex - 1)}
+            >
+              <IconChevronLeft size={18} />
+            </button>
+          )}
+          <button
+            type="button"
+            className={`${styles.toolbarButton} ${styles.toolbarDelete}`}
+            onClick={() => onRemoveImage(selectedImageIndex)}
+          >
+            <IconTrash size={16} />
+            <span>{t("images.remove")}</span>
+          </button>
+          {onMoveImage && (
+            <button
+              type="button"
+              className={`${styles.toolbarButton} ${styles.toolbarMove}`}
+              aria-label={t("images.moveRight")}
+              disabled={selectedImageIndex === imagePreviews.length - 1}
+              onClick={() => onMoveImage(selectedImageIndex, selectedImageIndex + 1)}
+            >
+              <IconChevronRight size={18} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Thumbnail Filmstrip (selection only) */}
       <div className={styles.filmstrip}>
         {imagePreviews.map((previewUrl, index) => (
           <div
@@ -158,44 +194,6 @@ export function ImageUploadSection({
             {index === 0 && (
               <span className={styles.coverBadge}>{t("images.cover")}</span>
             )}
-            {onMoveImage && (
-              <div className={styles.thumbnailReorder}>
-                <button
-                  type="button"
-                  className={styles.reorderButton}
-                  aria-label={t("images.moveLeft")}
-                  disabled={index === 0}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveImage(index, index - 1);
-                  }}
-                >
-                  <IconChevronLeft size={12} />
-                </button>
-                <button
-                  type="button"
-                  className={styles.reorderButton}
-                  aria-label={t("images.moveRight")}
-                  disabled={index === imagePreviews.length - 1}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveImage(index, index + 1);
-                  }}
-                >
-                  <IconChevronRight size={12} />
-                </button>
-              </div>
-            )}
-            <button
-              type="button"
-              className={styles.thumbnailRemove}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveImage(index);
-              }}
-            >
-              <IconX size={10} />
-            </button>
           </div>
         ))}
 

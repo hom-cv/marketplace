@@ -93,7 +93,58 @@
   }
 }
 
-/* Filmstrip */
+/* Toolbar under the hero image (acts on the selected image) */
+.heroToolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.toolbarButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.toolbarButton:hover:not(:disabled) {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.toolbarButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Compact square move buttons flanking the delete button */
+.toolbarMove {
+  flex: 0 0 auto;
+  width: 44px;
+  padding: 0;
+}
+
+.toolbarDelete {
+  flex: 1;
+}
+
+.toolbarDelete:hover:not(:disabled) {
+  background: var(--color-error);
+  border-color: var(--color-error);
+  color: white;
+}
+
+/* Filmstrip (selection only) */
 .filmstrip {
   display: flex;
   gap: 8px;
@@ -109,19 +160,15 @@
   cursor: pointer;
   border: 2px solid transparent;
   border-radius: var(--radius-sm);
-  overflow: visible;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
 }
 
 .thumbnail:hover {
   border-color: var(--color-border-hover);
-  transform: translateY(-2px);
 }
 
-.thumbnailActive {
-  border-color: var(--color-primary);
-}
-
+.thumbnailActive,
 .thumbnailActive:hover {
   border-color: var(--color-primary);
 }
@@ -147,72 +194,6 @@
   border-radius: var(--radius-sm);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-}
-
-.thumbnailRemove {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 18px;
-  height: 18px;
-  background: var(--color-error);
-  border: 2px solid var(--color-bg-card);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: white;
-  z-index: 10;
-  opacity: 0;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.thumbnail:hover .thumbnailRemove {
-  opacity: 1;
-}
-
-.thumbnailRemove:hover {
-  transform: scale(1.1);
-}
-
-/* Reorder controls */
-.thumbnailReorder {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  z-index: 10;
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-
-.thumbnail:hover .thumbnailReorder {
-  opacity: 1;
-}
-
-.reorderButton {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  border-radius: var(--radius-sm);
-  color: white;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.reorderButton:hover:not(:disabled) {
-  background: var(--color-primary);
-}
-
-.reorderButton:disabled {
-  opacity: 0.3;
-  cursor: default;
 }
 
 /* Add Button */

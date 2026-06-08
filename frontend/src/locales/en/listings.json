@@ -94,7 +94,8 @@
     "dropHere": "Drop images here",
     "limitExceeded": "Image limit reached (max {{max}}). {{rejected}} image(s) not added.",
     "moveLeft": "Move image left",
-    "moveRight": "Move image right"
+    "moveRight": "Move image right",
+    "remove": "Remove image"
   },
   "seller": {
     "verificationRequired": "Seller Verification Required",
