@@ -8,13 +8,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import type { Measurements, Post } from "@/api/types/post";
 import { MEASUREMENT_FIELDS } from "@/api/types/post";
+import type { ExtraMeasurement } from "@/api/types/listingForm";
 import { updateAt } from "@/utils/array";
-
-export interface ExtraMeasurement {
-  id: string;
-  label: string;
-  value: string;
-}
 
 /** Reverse the form slug ("total_length" -> "total length") for display. */
 function keyToLabel(key: string): string {

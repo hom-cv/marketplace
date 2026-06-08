@@ -22,30 +22,16 @@ import {
   formatSize,
   MEASUREMENT_FIELDS,
 } from "@/api/types/post";
+import type {
+  CreatePostFormValues,
+  MeasurementField,
+  SelectOption,
+} from "@/api/types/listingForm";
 import { useListingImages } from "@/hooks/useListingImages";
 import { useListingMeasurements } from "@/hooks/useListingMeasurements";
 
-export interface CreatePostFormValues {
-  title: string;
-  description: string;
-  type: PostType | null;
-  price: number | "";
-  shippingCost: number | "";
-  size: string | null;
-}
-
-export interface MeasurementField {
-  key: string;
-  label: string;
-}
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
 /** Listing payload sans image URLs (added at submit time). */
-export type ListingData = Omit<CreatePostRequest, "image_urls">;
+type ListingData = Omit<CreatePostRequest, "image_urls">;
 
 interface UseListingFormOptions {
   post?: Post;
