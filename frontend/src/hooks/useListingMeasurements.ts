@@ -84,10 +84,8 @@ export function useListingMeasurements(post?: Post) {
   }, []);
 
   const handleAddExtraMeasurement = useCallback(() => {
-    setExtraMeasurements((prev) => [
-      ...prev,
-      { id: String(++extraIdCounter.current), label: "", value: "" },
-    ]);
+    const id = String(++extraIdCounter.current);
+    setExtraMeasurements((prev) => [...prev, { id, label: "", value: "" }]);
   }, []);
 
   const handleExtraMeasurementChange = useCallback(
