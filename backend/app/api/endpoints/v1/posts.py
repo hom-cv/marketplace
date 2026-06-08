@@ -50,7 +50,7 @@ async def create_post(
     data: PostCreateSchema,
 ) -> PostResponseSchema:
     """
-    Create a new listing (JSON body).
+    Create a new listing in the marketplace.
 
     Images are uploaded separately via presigned URLs
     (POST /posts/uploads/presign); pass the resulting public CDN URLs in
@@ -285,7 +285,7 @@ async def update_post(
     data: PostUpdateRequest,
 ) -> PostResponseSchema:
     """
-    Update an existing listing (JSON body).
+    Update an existing listing.
 
     Only the owner can edit their listing, and sold listings cannot be edited.
 

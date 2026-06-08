@@ -9,9 +9,7 @@
 import { jsonRequest } from "@/api/api";
 
 export interface PresignResponse {
-  /** Signed PUT URL to upload the raw bytes to. */
   upload_url: string;
-  /** Public CDN URL to reference once the upload succeeds. */
   file_url: string;
 }
 

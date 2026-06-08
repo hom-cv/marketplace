@@ -15,10 +15,6 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
     Generic CRUD base.
 
-    Transaction convention: write methods (create/update/delete) flush but do
-    NOT commit — the service layer owns the transaction boundary (commit on
-    success, rollback on failure). See the `feedback_crud_flush` note.
-
     TODO: several CRUD overrides predate this convention and still commit
     internally; they (and their callers) should be migrated to flush +
     service-owned commit. Find the stragglers with:
@@ -94,10 +90,6 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         Returns:
             ModelType: The created instance of the model.
-
-        Note:
-            Flushes but does not commit; the service layer owns the transaction
-            boundary (commit on success, rollback on failure).
         """
         obj_in_dict = obj_in.model_dump()
         created_obj = self.model(**obj_in_dict)
@@ -121,10 +113,6 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         Returns:
             ModelType: The updated instance of the model.
-
-        Note:
-            Flushes but does not commit; the service layer owns the transaction
-            boundary (commit on success, rollback on failure).
         """
         update_data = obj_in.model_dump(exclude_unset=True)
         for field in update_data:
@@ -143,10 +131,6 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Args:
             db (AsyncSession): The asynchronous database session dependency.
             id (int): The ID of the resource to be deleted.
-
-        Note:
-            Flushes but does not commit; the service layer owns the transaction
-            boundary (commit on success, rollback on failure).
         """
         obj = await self.get_by_id(db=db, id=id)
 

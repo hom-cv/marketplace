@@ -17,7 +17,6 @@ interface ConfirmDeleteListingModalProps {
   onClose: () => void;
   postId: number;
   postTitle: string;
-  /** Called after a successful delete (e.g. to navigate away). */
   onDeleted?: () => void;
 }
 

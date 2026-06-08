@@ -24,11 +24,37 @@ export const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 export type LetterSize = (typeof LETTER_SIZES)[number] | "ONE_SIZE";
 
 // Pants waist sizes (even numbers 26-44)
-export const PANTS_SIZES = ["26", "28", "30", "32", "34", "36", "38", "40", "42", "44"] as const;
+export const PANTS_SIZES = [
+  "26",
+  "28",
+  "30",
+  "32",
+  "34",
+  "36",
+  "38",
+  "40",
+  "42",
+  "44",
+] as const;
 export type PantsSize = (typeof PANTS_SIZES)[number];
 
 // Italian (EU) shoe sizes 35-48
-export const SHOE_SIZES = ["35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48"] as const;
+export const SHOE_SIZES = [
+  "35",
+  "36",
+  "37",
+  "38",
+  "39",
+  "40",
+  "41",
+  "42",
+  "43",
+  "44",
+  "45",
+  "46",
+  "47",
+  "48",
+] as const;
 export type ShoeSize = (typeof SHOE_SIZES)[number];
 
 // Measurement interfaces per category
@@ -53,7 +79,10 @@ export interface ShoesMeasurements {
   [key: string]: number | undefined;
 }
 
-export type Measurements = TopMeasurements | PantsMeasurements | ShoesMeasurements;
+export type Measurements =
+  | TopMeasurements
+  | PantsMeasurements
+  | ShoesMeasurements;
 
 /**
  * Measurement field configuration per category.
@@ -81,7 +110,10 @@ const TOP_MEASUREMENT_FIELDS: readonly MeasurementFieldConfig[] = [
  * - OTHER: No default fields - users add custom measurements only
  * - ACCESSORIES: No measurements supported
  */
-export const MEASUREMENT_FIELDS: Record<PostType, readonly MeasurementFieldConfig[]> = {
+export const MEASUREMENT_FIELDS: Record<
+  PostType,
+  readonly MeasurementFieldConfig[]
+> = {
   SHIRT: TOP_MEASUREMENT_FIELDS,
   JACKET: TOP_MEASUREMENT_FIELDS,
   OTHER: [], // No default measurements - users add custom measurements as needed
@@ -91,9 +123,7 @@ export const MEASUREMENT_FIELDS: Record<PostType, readonly MeasurementFieldConfi
     { key: "rise", translationKey: "rise" },
     { key: "hip", translationKey: "hip" },
   ],
-  SHOES: [
-    { key: "insole_length", translationKey: "insoleLength" },
-  ],
+  SHOES: [{ key: "insole_length", translationKey: "insoleLength" }],
   ACCESSORIES: [],
 };
 
@@ -101,12 +131,16 @@ export const MEASUREMENT_FIELDS: Record<PostType, readonly MeasurementFieldConfi
  * Map from snake_case measurement keys to i18n translation keys.
  * Used for displaying measurement values with translated labels.
  */
-export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> = Object.values(
-  MEASUREMENT_FIELDS
-).flat().reduce((acc, field) => {
-  acc[field.key] = field.translationKey;
-  return acc;
-}, {} as Record<string, string>);
+export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> =
+  Object.values(MEASUREMENT_FIELDS)
+    .flat()
+    .reduce(
+      (acc, field) => {
+        acc[field.key] = field.translationKey;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
 /**
  * Size category identifiers used for filtering and display.
@@ -170,12 +204,15 @@ export const SIZE_CATEGORY_CONFIG: readonly SizeCategoryConfig[] = [
  * Derived from SIZE_CATEGORY_CONFIG.
  */
 export const POST_TYPE_TO_SIZE_CATEGORY: Record<PostType, SizeCategory> =
-  SIZE_CATEGORY_CONFIG.reduce((acc, config) => {
-    for (const postType of config.postTypes) {
-      acc[postType] = config.category;
-    }
-    return acc;
-  }, {} as Record<PostType, SizeCategory>);
+  SIZE_CATEGORY_CONFIG.reduce(
+    (acc, config) => {
+      for (const postType of config.postTypes) {
+        acc[postType] = config.category;
+      }
+      return acc;
+    },
+    {} as Record<PostType, SizeCategory>,
+  );
 
 /**
  * Helper to ensure exhaustive type checking at compile time.
@@ -234,7 +271,6 @@ export interface CreatePostRequest {
   shipping_cost?: number;
   size: string;
   measurements?: Measurements;
-  /** Public CDN URLs of images uploaded beforehand (first = cover). */
   image_urls: string[];
 }
 
@@ -246,7 +282,6 @@ export interface UpdatePostRequest {
   shipping_cost?: number;
   size: string;
   measurements?: Measurements;
-  /** Final ordered list of public CDN image URLs (first = cover). */
   image_urls: string[];
 }
 

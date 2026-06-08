@@ -100,8 +100,6 @@ export function useCreatePostForm() {
     },
   });
 
-  // Image state: each item pairs the file with a stable object URL created
-  // once at add time (so reorder/select never recreate URLs).
   const [imageItems, setImageItems] = useState<
     { file: File; previewUrl: string }[]
   >([]);
