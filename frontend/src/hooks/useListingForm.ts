@@ -102,10 +102,11 @@ export function useListingForm({
   const measurements = useListingMeasurements(post);
 
   const sizeOptions = useMemo<SelectOption[]>(() => {
-    if (!form.values.type) return [];
-    return getSizesForType(form.values.type).map((s) => ({
+    const type = form.values.type;
+    if (!type) return [];
+    return getSizesForType(type).map((s) => ({
       value: s,
-      label: formatSize(s),
+      label: formatSize(s, type),
     }));
   }, [form.values.type]);
 

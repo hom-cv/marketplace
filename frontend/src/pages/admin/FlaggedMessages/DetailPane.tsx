@@ -217,7 +217,9 @@ function ListingPreview({ post }: { post: Post }) {
         {post.size && (
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Size</span>
-            <span className={styles.sizeBadge}>{formatSize(post.size)}</span>
+            <span className={styles.sizeBadge}>
+              {formatSize(post.size, post.type)}
+            </span>
           </div>
         )}
 

@@ -75,7 +75,9 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
           <div className={styles.sectionLabel}>
             {tCommon("postCard.size")}
           </div>
-          <span className={styles.sizeBadge}>{formatSize(post.size)}</span>
+          <span className={styles.sizeBadge}>
+            {formatSize(post.size, post.type)}
+          </span>
         </div>
       )}
 

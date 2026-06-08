@@ -232,13 +232,16 @@ function assertNever(value: never): never {
  * single source of truth (e.g. "ONE_SIZE" -> "One Size", "42" (shoes) -> "EU 42").
  * Falls back to the raw value for categories without a formatter.
  */
-export function formatSize(size: string): string {
-  for (const config of SIZE_CATEGORY_CONFIG) {
-    if (config.sizes.includes(size)) {
-      return config.formatLabel ? config.formatLabel(size) : size;
-    }
-  }
-  return size;
+export function formatSize(size: string, type?: PostType): string {
+  // Prefer the category for the given type — pants and shoes share sizes
+  // (e.g. "42"), so a bare first-match would mislabel overlapping shoe sizes.
+  const config = type
+    ? SIZE_CATEGORY_CONFIG.find(
+        (c) => c.category === POST_TYPE_TO_SIZE_CATEGORY[type],
+      )
+    : SIZE_CATEGORY_CONFIG.find((c) => c.sizes.includes(size));
+  if (!config) return size;
+  return config.formatLabel ? config.formatLabel(size) : size;
 }
 
 export function getSizesForType(type: PostType): readonly string[] {
