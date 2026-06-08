@@ -7,10 +7,10 @@
  */
 
 import { Modal, Group, Button, Text } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { useTranslation } from "react-i18next";
 import { useDeletePost } from "@/hooks/usePosts";
 import { getErrorMessage } from "@/utils/error";
+import { notifySuccess, notifyError } from "@/utils/notify";
 
 interface ConfirmDeleteListingModalProps {
   opened: boolean;
@@ -35,19 +35,12 @@ export function ConfirmDeleteListingModal({
   const handleConfirm = () => {
     deleteMutation.mutate(postId, {
       onSuccess: () => {
-        notifications.show({
-          message: t("delete.success"),
-          color: "green",
-        });
+        notifySuccess(t("delete.success"));
         onClose();
         onDeleted?.();
       },
       onError: (error) => {
-        notifications.show({
-          title: tCommon("status.error"),
-          message: getErrorMessage(error, t("delete.error")),
-          color: "red",
-        });
+        notifyError(getErrorMessage(error, t("delete.error")));
       },
     });
   };

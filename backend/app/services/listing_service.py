@@ -193,7 +193,7 @@ class ListingService:
         cdn_url = self._storage.cdn_url
         if not cdn_url:
             raise bad_request_error("Image storage is not configured")
-        prefix = f"{cdn_url}/posts/"
+        prefix = f"{cdn_url.rstrip('/')}/posts/"
         for url in image_urls:
             if not url.startswith(prefix):
                 raise bad_request_error(f"Invalid image URL: {url}")

@@ -42,7 +42,7 @@
   "edit": {
     "title": "Edit Listing",
     "subtitle": "Update your listing details",
-    "success": "Listing updated successfully!",
+    "success": "Listing updated successfully",
     "error": "Failed to update listing",
     "notOwner": "You can only edit your own listings.",
     "soldLocked": "This listing has been sold and can no longer be edited.",

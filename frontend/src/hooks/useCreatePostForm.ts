@@ -14,6 +14,8 @@ import { createPost } from "@/api/posts";
 import { uploadImages } from "@/api/uploads";
 import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
+import { notifySuccess, notifyError } from "@/utils/notify";
+import { getErrorMessage } from "@/utils/error";
 import type {
   PostType,
   Measurements,
@@ -98,8 +100,11 @@ export function useCreatePostForm() {
     },
   });
 
-  // Image state
-  const [images, setImages] = useState<File[]>([]);
+  // Image state: each item pairs the file with a stable object URL created
+  // once at add time (so reorder/select never recreate URLs).
+  const [imageItems, setImageItems] = useState<
+    { file: File; previewUrl: string }[]
+  >([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Measurements state
@@ -144,17 +149,23 @@ export function useCreatePostForm() {
     }));
   }, [form.values.type, t]);
 
-  // Image previews with cleanup
-  const imagePreviews = useMemo(() => {
-    return images.map((file) => URL.createObjectURL(file));
-  }, [images]);
+  // Pure mapping; URLs are created once in handleAddImages and revoked on
+  // removal/unmount — never recreated here.
+  const imagePreviews = useMemo(
+    () => imageItems.map((item) => item.previewUrl),
+    [imageItems],
+  );
 
+  // Track current items so the unmount cleanup can revoke their URLs.
+  const itemsRef = useRef(imageItems);
   useEffect(() => {
-    const urls = imagePreviews;
+    itemsRef.current = imageItems;
+  }, [imageItems]);
+  useEffect(() => {
     return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url));
+      itemsRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl));
     };
-  }, [imagePreviews]);
+  }, []);
 
   // Mutation: upload images directly to storage, then create the listing.
   const mutation = useMutation({
@@ -166,44 +177,53 @@ export function useCreatePostForm() {
       return createPost({ ...vars.data, image_urls });
     },
     onSuccess: () => {
+      notifySuccess(t("create.success"));
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       navigate({ to: "/account/listings" });
     },
+    onError: (err) => {
+      notifyError(getErrorMessage(err, t("create.error")));
+    },
   });
 
-  // Image handlers
+  // Image handlers. Object URLs are created here (once per file), outside the
+  // state updater, so the updater stays pure and StrictMode can't double-create.
   const handleAddImages = useCallback(
     (files: File[]) => {
-      const available = MAX_IMAGES - images.length;
+      const available = MAX_IMAGES - itemsRef.current.length;
       const accepted = files.slice(0, Math.max(0, available));
       const rejected = files.length - accepted.length;
 
-      if (accepted.length > 0) {
-        setImages((prev) => [...prev, ...accepted]);
-      }
-
       if (rejected > 0) {
         notifications.show({
-          message: t("images.limitExceeded", {
-            max: MAX_IMAGES,
-            rejected,
-          }),
+          message: t("images.limitExceeded", { max: MAX_IMAGES, rejected }),
           color: "orange",
         });
       }
+
+      if (accepted.length > 0) {
+        const added = accepted.map((file) => ({
+          file,
+          previewUrl: URL.createObjectURL(file),
+        }));
+        setImageItems((prev) => [...prev, ...added]);
+      }
     },
-    [images.length, t],
+    [t],
   );
 
   const handleRemoveImage = useCallback((index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
+    setImageItems((prev) => {
+      const removed = prev[index];
+      if (removed) URL.revokeObjectURL(removed.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
     setSelectedImageIndex((prev) => {
-      if (images.length - 1 === 0) return 0;
       if (index < prev) return prev - 1;
-      if (index === prev) return Math.min(prev, images.length - 2);
+      if (index === prev) return Math.max(0, prev - 1);
       return prev;
     });
-  }, [images.length]);
+  }, []);
 
   const handleSelectImage = useCallback((index: number) => {
     setSelectedImageIndex(index);
@@ -293,10 +313,10 @@ export function useCreatePostForm() {
           size: values.size!,
           measurements: finalMeasurements,
         },
-        images,
+        images: imageItems.map((item) => item.file),
       });
     },
-    [measurements, extraMeasurements, images, mutation, t],
+    [measurements, extraMeasurements, imageItems, mutation, t],
   );
 
   return {
@@ -307,7 +327,7 @@ export function useCreatePostForm() {
     handleTypeChange,
 
     // Images
-    images,
+    imageCount: imageItems.length,
     imagePreviews,
     selectedImageIndex,
     maxImages: MAX_IMAGES,

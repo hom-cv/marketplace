@@ -19,6 +19,8 @@ import { updatePost } from "@/api/posts";
 import { uploadImages } from "@/api/uploads";
 import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
+import { notifySuccess, notifyError } from "@/utils/notify";
+import { getErrorMessage } from "@/utils/error";
 import type {
   Post,
   PostType,
@@ -34,10 +36,9 @@ import type {
 } from "@/hooks/useCreatePostForm";
 import { MAX_IMAGES } from "@/hooks/useCreatePostForm";
 
-/** An image slot is either an already-uploaded URL or a newly added file. */
 type ImageSlot =
   | { kind: "existing"; url: string }
-  | { kind: "new"; file: File };
+  | { kind: "new"; file: File; previewUrl: string };
 
 /** Reverse the create-form slug ("total_length" -> "total length"). */
 function keyToLabel(key: string): string {
@@ -138,8 +139,7 @@ export function useEditPostForm(post: Post) {
   const extraIdCounter = useRef(initial.extra.length);
   const [measurements, setMeasurements] = useState<Measurements>(initial.known);
   const [measurementsOpen, { toggle: toggleMeasurements }] = useDisclosure(
-    initial.extra.length > 0 ||
-      Object.keys(initial.known as object).length > 0,
+    initial.extra.length > 0 || Object.keys(initial.known as object).length > 0,
   );
   const [extraMeasurements, setExtraMeasurements] = useState<
     ExtraMeasurement[]
@@ -175,24 +175,25 @@ export function useEditPostForm(post: Post) {
     }));
   }, [form.values.type, t]);
 
-  // Previews: existing slots use their URL, new slots get an object URL.
   const imagePreviews = useMemo(
     () =>
       imageSlots.map((slot) =>
-        slot.kind === "existing" ? slot.url : URL.createObjectURL(slot.file),
+        slot.kind === "existing" ? slot.url : slot.previewUrl,
       ),
     [imageSlots],
   );
 
+  const slotsRef = useRef(imageSlots);
   useEffect(() => {
-    const urls = imagePreviews;
+    slotsRef.current = imageSlots;
+  }, [imageSlots]);
+  useEffect(() => {
     return () => {
-      // Only revoke the object URLs we created for new files.
-      urls.forEach((url) => {
-        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+      slotsRef.current.forEach((slot) => {
+        if (slot.kind === "new") URL.revokeObjectURL(slot.previewUrl);
       });
     };
-  }, [imagePreviews]);
+  }, []);
 
   const mutation = useMutation({
     // Upload any new images directly to storage, then send the final ordered
@@ -213,6 +214,7 @@ export function useEditPostForm(post: Post) {
       return updatePost(post.id, { ...vars.data, image_urls });
     },
     onSuccess: () => {
+      notifySuccess(t("edit.success"));
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.detail(post.id),
@@ -222,37 +224,44 @@ export function useEditPostForm(post: Post) {
         params: { postId: String(post.id) },
       });
     },
+    onError: (err) => {
+      notifyError(getErrorMessage(err, t("edit.error")));
+    },
   });
 
-  // Image handlers
+  // Image handlers. Object URLs are created here (once per file), outside the
+  // state updater, so the updater stays pure and StrictMode can't double-create.
   const handleAddImages = useCallback(
     (files: File[]) => {
-      setImageSlots((prev) => {
-        const available = MAX_IMAGES - prev.length;
-        const accepted = files.slice(0, Math.max(0, available));
-        const rejected = files.length - accepted.length;
+      const available = MAX_IMAGES - slotsRef.current.length;
+      const accepted = files.slice(0, Math.max(0, available));
+      const rejected = files.length - accepted.length;
 
-        if (rejected > 0) {
-          notifications.show({
-            message: t("images.limitExceeded", {
-              max: MAX_IMAGES,
-              rejected,
-            }),
-            color: "orange",
-          });
-        }
+      if (rejected > 0) {
+        notifications.show({
+          message: t("images.limitExceeded", { max: MAX_IMAGES, rejected }),
+          color: "orange",
+        });
+      }
 
-        return [
-          ...prev,
-          ...accepted.map((file) => ({ kind: "new" as const, file })),
-        ];
-      });
+      if (accepted.length > 0) {
+        const added = accepted.map((file) => ({
+          kind: "new" as const,
+          file,
+          previewUrl: URL.createObjectURL(file),
+        }));
+        setImageSlots((prev) => [...prev, ...added]);
+      }
     },
     [t],
   );
 
   const handleRemoveImage = useCallback((index: number) => {
-    setImageSlots((prev) => prev.filter((_, i) => i !== index));
+    setImageSlots((prev) => {
+      const removed = prev[index];
+      if (removed?.kind === "new") URL.revokeObjectURL(removed.previewUrl);
+      return prev.filter((_, i) => i !== index);
+    });
     setSelectedImageIndex((prev) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);

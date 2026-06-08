@@ -14,7 +14,6 @@ import { usePost } from "@/hooks/usePosts";
 import { useEditPostForm } from "@/hooks/useEditPostForm";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
-import { getErrorMessage } from "@/utils/error";
 import type { Post } from "@/api/types/post";
 import {
   ImageUploadSection,
@@ -26,6 +25,7 @@ import styles from "../CreatePost/CreatePostPage.module.css";
 
 function EditPostForm({ post }: { post: Post }) {
   const { t } = useTranslation("listings");
+  const { t: tCommon } = useTranslation("common");
 
   const {
     form,
@@ -52,8 +52,6 @@ function EditPostForm({ post }: { post: Post }) {
     handleRemoveExtraMeasurement,
     handleSubmit,
     isPending,
-    isSuccess,
-    error,
   } = useEditPostForm(post);
 
   return (
@@ -64,21 +62,9 @@ function EditPostForm({ post }: { post: Post }) {
           <p className={styles.subtitle}>{t("edit.subtitle")}</p>
         </header>
 
-        {error && (
-          <Alert variant="error" title="Error" margin="bottom">
-            {getErrorMessage(error, t("edit.error"))}
-          </Alert>
-        )}
-
         {measurementError && (
-          <Alert variant="error" title="Error" margin="bottom">
+          <Alert variant="error" title={tCommon("status.error")} margin="bottom">
             {measurementError}
-          </Alert>
-        )}
-
-        {isSuccess && (
-          <Alert variant="success" title="Success" margin="bottom">
-            {t("edit.success")}
           </Alert>
         )}
 
@@ -141,7 +127,8 @@ export function EditPostPage() {
   const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
   const params = useParams({ strict: false });
-  const postId = params.postId ? parseInt(params.postId, 10) : null;
+  const parsedId = params.postId ? Number(params.postId) : NaN;
+  const postId = Number.isInteger(parsedId) ? parsedId : null;
   const currentUser = useAuthStore((state) => state.user);
 
   const { data: post, isLoading, error } = usePost(postId);
