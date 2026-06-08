@@ -196,6 +196,7 @@ export const SIZE_CATEGORY_CONFIG: readonly SizeCategoryConfig[] = [
     sizes: ["ONE_SIZE"],
     postTypes: ["ACCESSORIES"],
     labelKey: "sizeCategories.accessories",
+    formatLabel: () => "One Size",
   },
 ];
 
@@ -226,6 +227,20 @@ function assertNever(value: never): never {
  * Get valid sizes for a post type category.
  * Uses SIZE_CATEGORY_CONFIG as the single source of truth.
  */
+/**
+ * Format a stored size value for display, using SIZE_CATEGORY_CONFIG as the
+ * single source of truth (e.g. "ONE_SIZE" -> "One Size", "42" (shoes) -> "EU 42").
+ * Falls back to the raw value for categories without a formatter.
+ */
+export function formatSize(size: string): string {
+  for (const config of SIZE_CATEGORY_CONFIG) {
+    if (config.sizes.includes(size)) {
+      return config.formatLabel ? config.formatLabel(size) : size;
+    }
+  }
+  return size;
+}
+
 export function getSizesForType(type: PostType): readonly string[] {
   switch (type) {
     case "SHIRT":

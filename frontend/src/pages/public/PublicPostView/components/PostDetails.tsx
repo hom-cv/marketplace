@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { LikeButton } from "@/components/LikeButton";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { Post } from "@/api/types/post";
+import { formatSize } from "@/api/types/post";
 import styles from "../PublicPostViewPage.module.css";
 
 interface PostDetailsProps {
@@ -74,7 +75,7 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
           <div className={styles.sectionLabel}>
             {tCommon("postCard.size")}
           </div>
-          <span className={styles.sizeBadge}>{post.size}</span>
+          <span className={styles.sizeBadge}>{formatSize(post.size)}</span>
         </div>
       )}
 
