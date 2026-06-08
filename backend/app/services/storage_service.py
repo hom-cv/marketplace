@@ -204,7 +204,7 @@ class StorageService:
             logger.error(f"Failed to create presigned upload URL: {e}")
             raise upload_error("Failed to create upload URL") from e
 
-        return {"upload_url": upload_url, "file_url": f"{self.cdn_url}/{key}"}
+        return {"upload_url": upload_url, "file_url": f"{self.cdn_url.rstrip('/')}/{key}"}
 
     async def delete_image(self, image_url: str) -> None:
         """
