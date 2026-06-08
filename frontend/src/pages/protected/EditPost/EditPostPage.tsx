@@ -187,5 +187,5 @@ export function EditPostPage() {
     );
   }
 
-  return <EditPostForm post={post} />;
+  return <EditPostForm key={post.id} post={post} />;
 }
