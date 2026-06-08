@@ -2,8 +2,13 @@
  * Post-related query hooks
  */
 
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { getPosts, getPost, getMyPosts } from "@/api/posts";
+import {
+  useQuery,
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { getPosts, getPost, getMyPosts, deletePost } from "@/api/posts";
 import { getLikedPosts } from "@/api/likes";
 import type { PostFilters } from "@/api/types/post";
 import { queryKeys } from "./queryKeys";
@@ -41,6 +46,16 @@ export function useMyPosts() {
   return useQuery({
     queryKey: queryKeys.posts.my,
     queryFn: () => getMyPosts(),
+  });
+}
+
+export function useDeletePost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (postId: number) => deletePost(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
+    },
   });
 }
 

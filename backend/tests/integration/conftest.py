@@ -27,6 +27,7 @@ from app.models.user import User, UserStatus
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
 from app.services.email_service import EmailService, _get_email_service
 from app.services.pricing_service import PricingService
+from app.services.storage_service import StorageService, _get_storage_service
 
 # =============================================================================
 # Test Data Factory Functions
@@ -108,6 +109,13 @@ def create_mock_user_crud() -> MagicMock:
     return mock_crud
 
 
+async def _apply_post_update(db, *, db_obj, obj_in):
+    """Mimic BaseCRUD.update: copy obj_in fields onto db_obj."""
+    for field, value in obj_in.model_dump(exclude_unset=True).items():
+        setattr(db_obj, field, value)
+    return db_obj
+
+
 def create_mock_post_crud() -> MagicMock:
     """Create a mock PostCRUD with async methods."""
     mock_crud = MagicMock(spec=PostCRUD)
@@ -117,6 +125,7 @@ def create_mock_post_crud() -> MagicMock:
     mock_crud.get_by_id_with_status = AsyncMock(return_value=None)
     mock_crud.get_by_user_id_with_status = AsyncMock(return_value=[])
     mock_crud.create_post = AsyncMock()
+    mock_crud.update = AsyncMock(side_effect=_apply_post_update)
     mock_crud.soft_delete = AsyncMock()
     return mock_crud
 
@@ -157,6 +166,15 @@ def create_mock_email_service() -> MagicMock:
     """Create a mock EmailService."""
     mock_service = MagicMock(spec=EmailService)
     mock_service.send_verification_email.return_value = True
+    return mock_service
+
+
+def create_mock_storage_service() -> MagicMock:
+    """Create a mock StorageService with async methods (no real network/boto3)."""
+    mock_service = MagicMock(spec=StorageService)
+    mock_service.upload_image = AsyncMock(return_value=None)
+    mock_service.upload_images = AsyncMock(return_value=[])
+    mock_service.delete_image = AsyncMock(return_value=None)
     return mock_service
 
 
@@ -216,6 +234,12 @@ def mock_email_service() -> MagicMock:
 
 
 @pytest.fixture
+def mock_storage_service() -> MagicMock:
+    """Provide a mock StorageService."""
+    return create_mock_storage_service()
+
+
+@pytest.fixture
 def mock_settings() -> MagicMock:
     """Fixture for mock Settings."""
     return create_mock_settings()
@@ -262,6 +286,7 @@ async def async_client(
     mock_like_crud: MagicMock,
     mock_follow_crud: MagicMock,
     mock_email_service: MagicMock,
+    mock_storage_service: MagicMock,
     mock_settings: MagicMock,
     mock_user: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
@@ -281,6 +306,7 @@ async def async_client(
 
     # Override external services
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service
+    app.dependency_overrides[_get_storage_service] = lambda: mock_storage_service
     app.dependency_overrides[get_settings] = lambda: mock_settings
 
     # Override database dependency
@@ -308,6 +334,7 @@ async def unauthenticated_client(
     mock_like_crud: MagicMock,
     mock_follow_crud: MagicMock,
     mock_email_service: MagicMock,
+    mock_storage_service: MagicMock,
     mock_settings: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client without auth override (for testing 401s)."""
@@ -322,6 +349,7 @@ async def unauthenticated_client(
 
     # Override external services
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service
+    app.dependency_overrides[_get_storage_service] = lambda: mock_storage_service
     app.dependency_overrides[get_settings] = lambda: mock_settings
 
     app.dependency_overrides[get_async_db] = lambda: AsyncMock()

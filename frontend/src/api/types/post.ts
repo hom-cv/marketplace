@@ -237,6 +237,24 @@ export interface CreatePostRequest {
   images?: File[];
 }
 
+export interface UpdatePostRequest {
+  title: string;
+  description: string;
+  type: PostType;
+  price: number;
+  shipping_cost?: number;
+  size: string;
+  measurements?: Measurements;
+  /**
+   * Ordered manifest describing the final image order. Each entry is either an
+   * existing image URL to keep or a "new:<index>" token referencing the i-th
+   * file in `newImages`. The first entry becomes the cover.
+   */
+  imageOrder: string[];
+  /** Newly uploaded files, referenced by "new:<index>" tokens in imageOrder. */
+  newImages: File[];
+}
+
 export interface PostFilters {
   types?: PostType[];
   sizes?: string[];

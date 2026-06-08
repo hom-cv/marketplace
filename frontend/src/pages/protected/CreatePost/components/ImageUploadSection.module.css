@@ -176,6 +176,45 @@
   transform: scale(1.1);
 }
 
+/* Reorder controls */
+.thumbnailReorder {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  z-index: 10;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.thumbnail:hover .thumbnailReorder {
+  opacity: 1;
+}
+
+.reorderButton {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.reorderButton:hover:not(:disabled) {
+  background: var(--color-primary);
+}
+
+.reorderButton:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /* Add Button */
 .addButton {
   width: 72px;

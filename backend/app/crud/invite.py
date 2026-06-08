@@ -47,6 +47,10 @@ class InviteCRUD:
             db.add(invite)
 
             try:
+                # TODO(crud-flush): commits internally — migrate to flush +
+                # service-owned commit (invite_service). Note the retry loop
+                # relies on commit to surface IntegrityError on duplicate codes,
+                # so a flush here must still trigger that check. See BaseCRUD.
                 await db.commit()
                 await db.refresh(invite)
                 

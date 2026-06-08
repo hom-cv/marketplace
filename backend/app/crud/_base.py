@@ -12,6 +12,22 @@ UpdateSchemaType = TypeVar("UpdateSchemaType", bound=Base)  # type: ignore
 
 
 class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
+    """
+    Generic CRUD base.
+
+    Transaction convention: write methods (create/update/delete) flush but do
+    NOT commit — the service layer owns the transaction boundary (commit on
+    success, rollback on failure). See the `feedback_crud_flush` note.
+
+    TODO: several CRUD overrides predate this convention and still commit
+    internally; they (and their callers) should be migrated to flush +
+    service-owned commit. Find the stragglers with:
+        grep -rn "await db.commit()" app/crud/
+    Known examples: InviteCRUD.create (-> invite_service),
+    ReportCRUD.create / update_status (-> moderation_service),
+    PostCRUD.create_post (-> create_post endpoint).
+    """
+
     def __init__(self, model: Type[ModelType]) -> None:
         """
         Initialize a generic Base CRUD class for interacting with the database.
@@ -79,14 +95,15 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Returns:
             ModelType: The created instance of the model.
 
-        Raises:
-            Exception: If there is an error while creating the instance.
+        Note:
+            Flushes but does not commit; the service layer owns the transaction
+            boundary (commit on success, rollback on failure).
         """
         obj_in_dict = obj_in.model_dump()
         created_obj = self.model(**obj_in_dict)
 
         db.add(created_obj)
-        await db.commit()
+        await db.flush()
         await db.refresh(created_obj)
 
         return created_obj
@@ -105,15 +122,16 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Returns:
             ModelType: The updated instance of the model.
 
-        Raises:
-            Exception: If there is an error while updating the instance.
+        Note:
+            Flushes but does not commit; the service layer owns the transaction
+            boundary (commit on success, rollback on failure).
         """
         update_data = obj_in.model_dump(exclude_unset=True)
         for field in update_data:
             setattr(db_obj, field, update_data[field])
 
         db.add(db_obj)
-        await db.commit()
+        await db.flush()
         await db.refresh(db_obj)
 
         return db_obj
@@ -126,13 +144,14 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             db (AsyncSession): The asynchronous database session dependency.
             id (int): The ID of the resource to be deleted.
 
-        Raises:
-            Exception: If there is an error while deleting the instance.
+        Note:
+            Flushes but does not commit; the service layer owns the transaction
+            boundary (commit on success, rollback on failure).
         """
         obj = await self.get_by_id(db=db, id=id)
 
         if obj:
             await db.delete(obj)
-            await db.commit()
+            await db.flush()
         else:
             raise not_found_error("Resource not found")

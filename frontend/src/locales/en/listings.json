@@ -39,6 +39,27 @@
     "success": "Listing created successfully!",
     "error": "Failed to create listing"
   },
+  "edit": {
+    "title": "Edit Listing",
+    "subtitle": "Update your listing details",
+    "success": "Listing updated successfully!",
+    "error": "Failed to update listing",
+    "notOwner": "You can only edit your own listings.",
+    "soldLocked": "This listing has been sold and can no longer be edited.",
+    "backToListings": "Back to My Listings",
+    "form": {
+      "submit": "Save Changes",
+      "submitting": "Saving...",
+      "saveHint": "Changes will be visible to buyers immediately"
+    }
+  },
+  "delete": {
+    "title": "Delete Listing",
+    "confirm": "Are you sure you want to delete \"{{title}}\"? This cannot be undone.",
+    "action": "Delete",
+    "success": "Listing deleted",
+    "error": "Failed to delete listing"
+  },
   "measurements": {
     "shoulder": "Shoulder",
     "length": "Length",
@@ -71,7 +92,9 @@
     "dragOrClick": "Drag images here or click to browse",
     "maxImages": "Up to {{max}} images",
     "dropHere": "Drop images here",
-    "limitExceeded": "Image limit reached (max {{max}}). {{rejected}} image(s) not added."
+    "limitExceeded": "Image limit reached (max {{max}}). {{rejected}} image(s) not added.",
+    "moveLeft": "Move image left",
+    "moveRight": "Move image right"
   },
   "seller": {
     "verificationRequired": "Seller Verification Required",
@@ -98,7 +121,9 @@
     "itemSold": "This item has been sold",
     "shipping": "shipping",
     "freeShipping": "Free shipping",
-    "viewListing": "View Listing"
+    "viewListing": "View Listing",
+    "editListing": "Edit Listing",
+    "deleteListing": "Delete Listing"
   },
   "myListings": {
     "title": "My Listings",

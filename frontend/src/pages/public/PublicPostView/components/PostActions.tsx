@@ -2,11 +2,20 @@
  * PostActions - Buy button, sold state, and earnings preview for owners
  */
 
-import { IconShoppingCart, IconMessage } from "@tabler/icons-react";
+import {
+  IconShoppingCart,
+  IconMessage,
+  IconEdit,
+  IconTrash,
+} from "@tabler/icons-react";
+import { Box } from "@mantine/core";
+import { useNavigate } from "@tanstack/react-router";
+import { useDisclosure } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { EarningsPreview } from "@/components/EarningsPreview";
+import { ConfirmDeleteListingModal } from "@/components/ConfirmDeleteListingModal";
 import type { Post } from "@/api/types/post";
 import styles from "../PublicPostViewPage.module.css";
 
@@ -31,6 +40,9 @@ export function PostActions({
 }: PostActionsProps) {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
+  const navigate = useNavigate();
+  const [deleteOpened, { open: openDelete, close: closeDelete }] =
+    useDisclosure(false);
 
   const price = parseFloat(post.price);
 
@@ -74,12 +86,56 @@ export function PostActions({
         </Button>
       )}
 
-      {/* Earnings Preview - only show for owners */}
+      {/* Owner actions: edit / delete / earnings */}
       {isOwner && (
-        <EarningsPreview
-          postId={postId ?? undefined}
-          title={t("view.yourEarnings")}
-        />
+        <>
+          <div className={styles.ownerActions}>
+            {!post.is_sold && (
+              <Button
+                variant="secondary"
+                size="md"
+                leftIcon={<IconEdit size={18} />}
+                onClick={() =>
+                  navigate({
+                    to: "/account/listings/$postId/edit",
+                    params: { postId: String(post.id) },
+                  })
+                }
+              >
+                <Box component="span" visibleFrom="sm">
+                  {t("view.editListing")}
+                </Box>
+                <Box component="span" hiddenFrom="sm">
+                  {tCommon("buttons.edit")}
+                </Box>
+              </Button>
+            )}
+            <Button
+              variant="danger"
+              size="md"
+              leftIcon={<IconTrash size={18} />}
+              onClick={openDelete}
+            >
+              <Box component="span" visibleFrom="sm">
+                {t("view.deleteListing")}
+              </Box>
+              <Box component="span" hiddenFrom="sm">
+                {tCommon("buttons.delete")}
+              </Box>
+            </Button>
+          </div>
+          <EarningsPreview
+            postId={postId ?? undefined}
+            title={t("view.yourEarnings")}
+          />
+          <ConfirmDeleteListingModal
+            opened={deleteOpened}
+            onClose={closeDelete}
+            postId={post.id}
+            postTitle={post.title}
+            onDeleted={() => navigate({ to: "/account/listings" })}
+          />
+        </>
       )}
     </>
   );

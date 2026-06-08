@@ -5,16 +5,29 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.storage import MAX_IMAGES_PER_POST
+from app.core.exceptions import (
+    bad_request_error,
+    forbidden_error,
+    post_not_found_error,
+    too_many_images_error,
+)
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
-from app.models.post import Post
+from app.models.post import Post, PostType
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
-from app.schemas.post import PostResponseSchema
+from app.schemas.post import PostResponseSchema, PostUpdateRequest, PostUpdateSchema
+from app.services.storage_service import StorageService, _get_storage_service
+
+# Manifest token prefix used in `image_order` to reference a freshly uploaded
+# file by its position in the `images` list, e.g. "new:0" -> first upload.
+NEW_IMAGE_PREFIX = "new:"
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
+AnnotatedStorageService = Annotated[StorageService, Depends(_get_storage_service)]
 
 
 def _payment_to_list_item(
@@ -88,10 +101,12 @@ class ListingService:
         db: AsyncSession,
         post_crud_dep: PostCRUD,
         payment_crud_dep: PaymentCRUD,
+        storage_service: StorageService,
     ) -> None:
         self.db = db
         self._post_crud = post_crud_dep
         self._payment_crud = payment_crud_dep
+        self._storage = storage_service
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
@@ -157,14 +172,146 @@ class ListingService:
         post, is_banned, is_user_banned, is_sold = result
         return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
 
+    async def update_listing(
+        self,
+        *,
+        post_id: int,
+        owner_id: int,
+        data: PostUpdateRequest,
+    ) -> PostResponseSchema:
+        """
+        Update a listing owned by the current user.
+
+        Image reconciliation is driven by ``data.image_order``, an ordered
+        manifest where each entry is either an existing image URL to keep or a
+        ``"new:<index>"`` token referencing the i-th file in ``data.images``.
+        This lets the seller freely reorder, add, and remove images (the first
+        entry becomes the cover). Images dropped from the listing are left in
+        storage; reclaiming them is handled out-of-band (see the storage-gc
+        note below).
+
+        Args:
+            post_id: The post to update.
+            owner_id: The id of the user attempting the update.
+            data: The validated update payload (fields, manifest, and uploads).
+
+        Returns:
+            The updated PostResponseSchema with ban/sold status.
+
+        Raises:
+            HTTPException: 404 if not found, 403 if not the owner, 400 if the
+                listing is already sold, the image count exceeds the limit, or
+                the manifest is inconsistent with the uploaded files.
+        """
+        result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
+        if result is None:
+            raise post_not_found_error(post_id)
+
+        post, _, _, is_sold = result
+
+        if post.user_id != owner_id:
+            raise forbidden_error("You can only edit your own listings")
+
+        if is_sold:
+            raise bad_request_error("Sold listings cannot be edited")
+
+        current_urls = list(post.image_urls or [])
+        valid_new_images = [f for f in data.images if f and f.filename]
+        image_order = data.image_order or []
+
+        if len(image_order) > MAX_IMAGES_PER_POST:
+            raise too_many_images_error(
+                f"Maximum {MAX_IMAGES_PER_POST} images allowed"
+            )
+
+        # The manifest must reference exactly the uploaded files, no more or less.
+        new_token_count = sum(
+            1 for token in image_order if token.startswith(NEW_IMAGE_PREFIX)
+        )
+        if new_token_count != len(valid_new_images):
+            raise bad_request_error(
+                "Uploaded images do not match the image order manifest"
+            )
+
+        # Upload new images before mutating the post so a storage failure
+        # leaves the existing listing untouched.
+        new_urls = await self._storage.upload_images(valid_new_images, folder="posts")
+
+        final_urls: list[str] = []
+        for token in image_order:
+            if token.startswith(NEW_IMAGE_PREFIX):
+                try:
+                    idx = int(token[len(NEW_IMAGE_PREFIX) :])
+                    final_urls.append(new_urls[idx])
+                except (ValueError, IndexError):
+                    raise bad_request_error(f"Invalid image reference: {token}")
+            elif token in current_urls:
+                final_urls.append(token)
+
+        # TODO(storage-gc): reclaim unreferenced Spaces objects out-of-band, via
+        # a bucket lifecycle/TTL rule or a periodic sweep that deletes keys not
+        # referenced by any post's image_urls.
+
+        # Fields needing service-side handling: type (schema -> model enum) and
+        # the image fields (computed from the manifest + uploads).
+        post.type = PostType[data.type.value]
+        post.image_urls = final_urls
+        post.image_url = final_urls[0] if final_urls else None
+
+        # Plain scalar edits flow through the CRUD via the update schema.
+        obj_in = PostUpdateSchema(
+            title=data.title,
+            description=data.description,
+            price=data.price,
+            shipping_cost=data.shipping_cost,
+            size=data.size,
+            measurements=data.measurements,
+        )
+        await self._post_crud.update(self.db, db_obj=post, obj_in=obj_in)
+        await self.db.commit()
+
+        refreshed = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
+        if refreshed is None:
+            raise post_not_found_error(post_id)
+        updated_post, is_banned, is_user_banned, is_sold = refreshed
+        return _post_with_status_to_response(
+            updated_post, is_banned, is_user_banned, is_sold
+        )
+
+    async def delete_listing(self, *, post_id: int, owner_id: int) -> None:
+        """
+        Soft delete a listing owned by the current user.
+
+        The post is soft-deleted (``deleted_at`` set) to preserve payment
+        records for accounting; images are intentionally left in storage.
+        Sold listings may still be deleted.
+
+        Args:
+            post_id: The post to delete.
+            owner_id: The id of the user attempting the deletion.
+
+        Raises:
+            HTTPException: 404 if not found, 403 if not the owner.
+        """
+        post = await self._post_crud.get_by_id_with_user(self.db, id=post_id)
+        if not post:
+            raise post_not_found_error(post_id)
+
+        if post.user_id != owner_id:
+            raise forbidden_error("You can only delete your own listings")
+
+        await self._post_crud.soft_delete(self.db, post=post)
+        await self.db.commit()
+
 
 def _get_listing_service(
     post_crud_dep: AnnotatedPostCRUD,
     payment_crud_dep: AnnotatedPaymentCRUD,
+    storage_service: AnnotatedStorageService,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
-    return ListingService(db, post_crud_dep, payment_crud_dep)
+    return ListingService(db, post_crud_dep, payment_crud_dep, storage_service)
 
 
 AnnotatedListingService = Annotated[ListingService, Depends(_get_listing_service)]

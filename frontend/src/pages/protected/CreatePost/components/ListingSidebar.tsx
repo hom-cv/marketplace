@@ -14,6 +14,10 @@ interface ListingSidebarProps {
   shippingCost: number | "";
   isPending: boolean;
   isFormValid: boolean;
+  /** Override the submit button / helper text (defaults to create labels). */
+  submitLabel?: string;
+  submittingLabel?: string;
+  helperText?: string;
 }
 
 export function ListingSidebar({
@@ -21,10 +25,16 @@ export function ListingSidebar({
   shippingCost,
   isPending,
   isFormValid,
+  submitLabel,
+  submittingLabel,
+  helperText,
 }: ListingSidebarProps) {
   const { t } = useTranslation("listings");
 
   const showEarnings = typeof price === "number" && price > 0;
+  const idleLabel = submitLabel ?? t("create.form.submit");
+  const busyLabel = submittingLabel ?? t("create.form.submitting");
+  const hint = helperText ?? t("create.form.publishHint");
 
   return (
     <Stack gap="md">
@@ -45,12 +55,12 @@ export function ListingSidebar({
         disabled={!isFormValid || isPending}
         className={styles.submitButton}
       >
-        {isPending ? t("create.form.submitting") : t("create.form.submit")}
+        {isPending ? busyLabel : idleLabel}
       </Button>
 
       {/* Helper text */}
       <p className={styles.helperText}>
-        {t("create.form.publishHint")}
+        {hint}
       </p>
     </Stack>
   );

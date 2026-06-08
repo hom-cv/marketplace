@@ -4,7 +4,8 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from fastapi import UploadFile
+from pydantic import BaseModel, Field, Json, ValidationError, model_validator
 
 from app.constants.post import (
     MAX_LISTING_PRICE,
@@ -73,17 +74,17 @@ def validate_measurements_for_post_type(
 ) -> None:
     """
     Validate measurements structure based on post type.
-    
+
     This function can be called directly from endpoints without
     needing to instantiate the full PostCreateSchema.
-    
+
     Validation rules:
     - SHIRT, JACKET: Validates against TopMeasurements schema
     - PANTS: Validates against PantsMeasurements schema
     - SHOES: Validates against ShoesMeasurements schema
     - OTHER: No schema validation - allows any custom measurements
     - ACCESSORIES: Measurements not supported
-    
+
     Raises:
         ValueError: If measurements are invalid for the given post type.
     """
@@ -166,6 +167,51 @@ class PostUpdateSchema(BaseModel):
     )
     size: str | None = Field(None, min_length=1, max_length=20)
     measurements: dict[str, Any] | None = None
+
+
+class PostUpdateRequest(BaseModel):
+    """
+    Schema for a full listing update via multipart/form-data (PUT).
+
+    Bundles every editable field plus the image reconciliation inputs. The JSON
+    string fields (`measurements`, `image_order`) are decoded by Pydantic's
+    ``Json`` type, and `images` carries any newly uploaded files referenced by
+    ``"new:<index>"`` tokens in `image_order`.
+    """
+
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=1, max_length=5000)
+    type: PostType
+    price: Decimal = Field(
+        ..., ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
+    )
+    shipping_cost: Decimal = Field(
+        default=Decimal("0"),
+        ge=MIN_SHIPPING_COST,
+        le=MAX_SHIPPING_COST,
+        decimal_places=2,
+    )
+    size: str = Field(..., min_length=1, max_length=20)
+    measurements: Json[dict[str, Any]] | None = Field(
+        default=None, description="Optional measurements as a JSON object string"
+    )
+    image_order: Json[list[str]] | None = Field(
+        default=None,
+        description=(
+            "Ordered manifest as a JSON array string. Each entry is an existing "
+            'image URL to keep or a "new:<index>" token referencing `images`. '
+            "Omit or send [] to keep no existing images."
+        ),
+    )
+    images: list[UploadFile] = Field(
+        default_factory=list, description="Newly uploaded image files"
+    )
+
+    @model_validator(mode="after")
+    def validate_measurements_for_type(self) -> "PostUpdateRequest":
+        """Validate measurements structure based on post type."""
+        validate_measurements_for_post_type(self.type, self.measurements)
+        return self
 
 
 class PostResponseSchema(BaseModel):

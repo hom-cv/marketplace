@@ -5,7 +5,14 @@
 
 import { useRef, useState, useCallback } from "react";
 import { FileButton, Stack } from "@mantine/core";
-import { IconPlus, IconX, IconPhoto, IconUpload } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconX,
+  IconPhoto,
+  IconUpload,
+  IconChevronLeft,
+  IconChevronRight,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import styles from "./ImageUploadSection.module.css";
 
@@ -26,23 +33,26 @@ function filterSafeImages(files: File[]): File[] {
 }
 
 interface ImageUploadSectionProps {
-  images: File[];
+  imageCount: number;
   imagePreviews: string[];
   selectedImageIndex: number;
   maxImages: number;
   onAddImages: (files: File[]) => void;
   onRemoveImage: (index: number) => void;
   onSelectImage: (index: number) => void;
+  /** When provided, renders reorder controls on each thumbnail. */
+  onMoveImage?: (from: number, to: number) => void;
 }
 
 export function ImageUploadSection({
-  images,
+  imageCount,
   imagePreviews,
   selectedImageIndex,
   maxImages,
   onAddImages,
   onRemoveImage,
   onSelectImage,
+  onMoveImage,
 }: ImageUploadSectionProps) {
   const { t } = useTranslation("listings");
   const [isDragging, setIsDragging] = useState(false);
@@ -87,7 +97,7 @@ export function ImageUploadSection({
     [onAddImages],
   );
 
-  const hasImages = images.length > 0;
+  const hasImages = imageCount > 0;
 
   return (
     <Stack gap={12}>
@@ -148,6 +158,34 @@ export function ImageUploadSection({
             {index === 0 && (
               <span className={styles.coverBadge}>{t("images.cover")}</span>
             )}
+            {onMoveImage && (
+              <div className={styles.thumbnailReorder}>
+                <button
+                  type="button"
+                  className={styles.reorderButton}
+                  aria-label={t("images.moveLeft")}
+                  disabled={index === 0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveImage(index, index - 1);
+                  }}
+                >
+                  <IconChevronLeft size={12} />
+                </button>
+                <button
+                  type="button"
+                  className={styles.reorderButton}
+                  aria-label={t("images.moveRight")}
+                  disabled={index === imagePreviews.length - 1}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveImage(index, index + 1);
+                  }}
+                >
+                  <IconChevronRight size={12} />
+                </button>
+              </div>
+            )}
             <button
               type="button"
               className={styles.thumbnailRemove}
@@ -161,7 +199,7 @@ export function ImageUploadSection({
           </div>
         ))}
 
-        {images.length < maxImages && (
+        {imageCount < maxImages && (
           <FileButton
             onChange={handleFilesSelected}
             accept={ACCEPT_IMAGES}

@@ -27,6 +27,7 @@ from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
     PostResponseSchema,
+    PostUpdateRequest,
     validate_measurements_for_post_type,
 )
 from app.schemas.post import PostType as PostTypeSchema
@@ -296,13 +297,43 @@ async def get_price_breakdown(
     return PriceBreakdownResponse.model_validate(breakdown)
 
 
+@router.put(
+    "/{post_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=PostResponseSchema,
+)
+async def update_post(
+    listing_service: AnnotatedListingService,
+    current_user: Annotated[User, Depends(get_current_user)],
+    post_id: int,
+    data: Annotated[PostUpdateRequest, Form()],
+) -> PostResponseSchema:
+    """
+    Update an existing listing (multipart/form-data).
+
+    Only the owner can edit their listing, and sold listings cannot be edited.
+
+    The body is a `PostUpdateRequest`: the listing fields plus `measurements`
+    (JSON object string) and `image_order` (JSON array string). `image_order`
+    describes the final image order, where each entry is either an existing
+    image URL to keep or a `"new:<index>"` token referencing the i-th uploaded
+    file in `images`. This supports reordering, adding, and removing images; the
+    first entry becomes the cover and dropped images are removed from storage.
+    Maximum 5 images.
+    """
+    return await listing_service.update_listing(
+        post_id=post_id,
+        owner_id=current_user.id,
+        data=data,
+    )
+
+
 @router.delete(
     "/{post_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    post_crud_dep: AnnotatedPostCRUD,
+    listing_service: AnnotatedListingService,
     current_user: Annotated[User, Depends(get_current_user)],
     post_id: int,
 ) -> None:
@@ -310,17 +341,10 @@ async def delete_post(
     Delete a post (soft delete).
 
     Only the owner can delete their post. The post is soft-deleted
-    to preserve payment records for accounting purposes.
+    to preserve payment records for accounting purposes. Sold listings
+    may still be deleted.
     """
-    post = await post_crud_dep.get_by_id_with_user(db, id=post_id)
-
-    if not post:
-        raise not_found_error("Post not found")
-
-    if post.user_id != current_user.id:
-        raise bad_request_error("You can only delete your own posts")
-
-    await post_crud_dep.soft_delete(db, post=post)
+    await listing_service.delete_listing(post_id=post_id, owner_id=current_user.id)
 
 
 @router.get(

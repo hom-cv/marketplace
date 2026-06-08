@@ -272,6 +272,16 @@
   letter-spacing: 0.05em;
 }
 
+/* Owner edit/delete actions, side by side */
+.ownerActions {
+  display: flex;
+  gap: 12px;
+}
+
+.ownerActions > button {
+  flex: 1;
+}
+
 /* Mobile sticky buy bar */
 .buyBar {
   position: fixed;

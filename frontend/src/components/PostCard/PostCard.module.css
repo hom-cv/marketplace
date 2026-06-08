@@ -50,13 +50,17 @@
   font-weight: 600;
 }
 
-/* Menu */
-.menu {
+/* Menu
+ * Scoped under .imageWrap so this beats Mantine's unlayered ActionIcon root
+ * rule (.m_8d3f4000 { position: relative }) on specificity, not source order —
+ * otherwise the button drops into normal flow and lands top-left. */
+.imageWrap .menu {
   position: absolute;
   top: 8px;
   right: 8px;
   opacity: 0;
   transition: opacity 0.15s ease;
+  z-index: 1;
 }
 
 .card:hover .menu {
