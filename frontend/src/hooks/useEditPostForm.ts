@@ -257,11 +257,10 @@ export function useEditPostForm(post: Post) {
   );
 
   const handleRemoveImage = useCallback((index: number) => {
-    setImageSlots((prev) => {
-      const removed = prev[index];
-      if (removed?.kind === "new") URL.revokeObjectURL(removed.previewUrl);
-      return prev.filter((_, i) => i !== index);
-    });
+    // Revoke in the handler (once), not inside the pure state updater.
+    const removed = slotsRef.current[index];
+    if (removed?.kind === "new") URL.revokeObjectURL(removed.previewUrl);
+    setImageSlots((prev) => prev.filter((_, i) => i !== index));
     setSelectedImageIndex((prev) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);
