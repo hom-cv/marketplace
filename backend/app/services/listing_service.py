@@ -5,16 +5,30 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.storage import MAX_IMAGES_PER_POST
+from app.core.exceptions import (
+    bad_request_error,
+    forbidden_error,
+    post_not_found_error,
+    too_many_images_error,
+)
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
-from app.models.post import Post
+from app.models.post import Post, PostType
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
-from app.schemas.post import PostResponseSchema
+from app.schemas.post import (
+    PostCreateSchema,
+    PostResponseSchema,
+    PostUpdateRequest,
+    PostUpdateSchema,
+)
+from app.services.storage_service import StorageService, _get_storage_service
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
+AnnotatedStorageService = Annotated[StorageService, Depends(_get_storage_service)]
 
 
 def _payment_to_list_item(
@@ -88,10 +102,12 @@ class ListingService:
         db: AsyncSession,
         post_crud_dep: PostCRUD,
         payment_crud_dep: PaymentCRUD,
+        storage_service: StorageService,
     ) -> None:
         self.db = db
         self._post_crud = post_crud_dep
         self._payment_crud = payment_crud_dep
+        self._storage = storage_service
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
@@ -157,14 +173,174 @@ class ListingService:
         post, is_banned, is_user_banned, is_sold = result
         return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
 
+    def _validate_image_urls(self, image_urls: list[str]) -> None:
+        """
+        Ensure submitted image URLs are ours (uploaded via presigned URLs).
+
+        Guards against storing arbitrary external URLs: every URL must live
+        under our CDN's ``posts/`` prefix.
+
+        Raises:
+            HTTPException: 400 if any URL is outside our storage, or storage is
+                not configured but URLs were provided; 400 if too many images.
+        """
+        if len(image_urls) > MAX_IMAGES_PER_POST:
+            raise too_many_images_error(
+                f"Maximum {MAX_IMAGES_PER_POST} images allowed"
+            )
+        if not image_urls:
+            return
+        cdn_url = self._storage.cdn_url
+        if not cdn_url:
+            raise bad_request_error("Image storage is not configured")
+        prefix = f"{cdn_url.rstrip('/')}/posts/"
+        for url in image_urls:
+            if not url.startswith(prefix) or "/../" in url:
+                raise bad_request_error(f"Invalid image URL: {url}")
+
+    async def create_listing(
+        self,
+        *,
+        owner_id: int,
+        data: PostCreateSchema,
+    ) -> PostResponseSchema:
+        """
+        Create a listing for the given owner.
+
+        Images must already be uploaded (via presigned URLs); ``data.image_urls``
+        holds the public CDN URLs in display order (first = cover).
+
+        Args:
+            owner_id: The id of the user creating the listing.
+            data: The validated create payload.
+
+        Returns:
+            The created PostResponseSchema.
+
+        Raises:
+            HTTPException: 400 if any image URL is not ours / too many images.
+        """
+        self._validate_image_urls(data.image_urls)
+
+        post = Post(
+            title=data.title,
+            description=data.description,
+            type=PostType[data.type.value],
+            price=data.price,
+            shipping_cost=data.shipping_cost,
+            size=data.size,
+            measurements=data.measurements,
+            image_url=data.image_urls[0] if data.image_urls else None,
+            image_urls=data.image_urls,
+            user_id=owner_id,
+        )
+        created_post = await self._post_crud.create_post(self.db, post=post)
+        return PostResponseSchema.model_validate(created_post)
+
+    async def update_listing(
+        self,
+        *,
+        post_id: int,
+        owner_id: int,
+        data: PostUpdateRequest,
+    ) -> PostResponseSchema:
+        """
+        Update a listing owned by the current user.
+
+        ``data.image_urls`` is the final ordered set of (already-uploaded) image
+        URLs — adding, removing, and reordering are all expressed by this list,
+        with the first entry as the cover. Images dropped from the listing are
+        left in storage; reclaiming them is handled out-of-band.
+
+        Args:
+            post_id: The post to update.
+            owner_id: The id of the user attempting the update.
+            data: The validated update payload.
+
+        Returns:
+            The updated PostResponseSchema with ban/sold status.
+
+        Raises:
+            HTTPException: 404 if not found, 403 if not the owner, 400 if the
+                listing is already sold or an image URL is invalid.
+        """
+        result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
+        if result is None:
+            raise post_not_found_error(post_id)
+
+        post, _, _, is_sold = result
+
+        if post.user_id != owner_id:
+            raise forbidden_error("You can only edit your own listings")
+
+        if is_sold:
+            raise bad_request_error("Sold listings cannot be edited")
+
+        self._validate_image_urls(data.image_urls)
+
+        # TODO(storage-gc): reclaim unreferenced Spaces objects out-of-band, via
+        # a bucket lifecycle/TTL rule or a periodic sweep that deletes keys not
+        # referenced by any post's image_urls.
+
+        # type needs schema -> model enum conversion; image fields are set here.
+        post.type = PostType[data.type.value]
+        post.image_urls = data.image_urls
+        post.image_url = data.image_urls[0] if data.image_urls else None
+
+        # Plain scalar edits flow through the CRUD via the update schema.
+        obj_in = PostUpdateSchema(
+            title=data.title,
+            description=data.description,
+            price=data.price,
+            shipping_cost=data.shipping_cost,
+            size=data.size,
+            measurements=data.measurements,
+        )
+        await self._post_crud.update(self.db, db_obj=post, obj_in=obj_in)
+        await self.db.commit()
+
+        refreshed = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
+        if refreshed is None:
+            raise post_not_found_error(post_id)
+        updated_post, is_banned, is_user_banned, is_sold = refreshed
+        return _post_with_status_to_response(
+            updated_post, is_banned, is_user_banned, is_sold
+        )
+
+    async def delete_listing(self, *, post_id: int, owner_id: int) -> None:
+        """
+        Soft delete a listing owned by the current user.
+
+        The post is soft-deleted (``deleted_at`` set) to preserve payment
+        records for accounting; images are intentionally left in storage.
+        Sold listings may still be deleted.
+
+        Args:
+            post_id: The post to delete.
+            owner_id: The id of the user attempting the deletion.
+
+        Raises:
+            HTTPException: 404 if not found, 403 if not the owner.
+        """
+        post = await self._post_crud.get_by_id_with_user(self.db, id=post_id)
+        if not post:
+            raise post_not_found_error(post_id)
+
+        if post.user_id != owner_id:
+            raise forbidden_error("You can only delete your own listings")
+
+        await self._post_crud.soft_delete(self.db, post=post)
+        await self.db.commit()
+
 
 def _get_listing_service(
     post_crud_dep: AnnotatedPostCRUD,
     payment_crud_dep: AnnotatedPaymentCRUD,
+    storage_service: AnnotatedStorageService,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
-    return ListingService(db, post_crud_dep, payment_crud_dep)
+    return ListingService(db, post_crud_dep, payment_crud_dep, storage_service)
 
 
 AnnotatedListingService = Annotated[ListingService, Depends(_get_listing_service)]

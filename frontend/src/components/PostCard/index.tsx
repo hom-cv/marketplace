@@ -5,6 +5,8 @@ import {
   IconDotsVertical,
   IconFlag,
   IconUserExclamation,
+  IconEdit,
+  IconTrash,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/api/types/post";
@@ -12,6 +14,7 @@ import type { ReportType } from "@/api/types/admin";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { ConfirmDeleteListingModal } from "@/components/ConfirmDeleteListingModal";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import styles from "./PostCard.module.css";
 
@@ -39,6 +42,16 @@ export function PostCard({
   const { t } = useTranslation("common");
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
+  const [deleteOpened, { open: openDelete, close: closeDelete }] =
+    useDisclosure(false);
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate({
+      to: "/account/listings/$postId/edit",
+      params: { postId: String(post.id) },
+    });
+  };
 
   const handleClick = () => {
     navigate({
@@ -122,6 +135,41 @@ export function PostCard({
             </Menu.Dropdown>
           </Menu>
         )}
+
+        {isOwner && (
+          <Menu shadow="sm" width={160} position="bottom-end">
+            <Menu.Target>
+              <ActionIcon
+                className={styles.menu}
+                variant="white"
+                size="xs"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <IconDotsVertical size={14} />
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown onClick={(e) => e.stopPropagation()}>
+              {!post.is_sold && (
+                <Menu.Item
+                  leftSection={<IconEdit size={14} />}
+                  onClick={handleEdit}
+                >
+                  {t("buttons.edit")}
+                </Menu.Item>
+              )}
+              <Menu.Item
+                color="red"
+                leftSection={<IconTrash size={14} />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openDelete();
+                }}
+              >
+                {t("buttons.delete")}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        )}
       </div>
 
       <Box className={styles.info}>
@@ -156,6 +204,17 @@ export function PostCard({
         onClose={closeLoginModal}
         action={t("likes.likeAction")}
       />
+
+      {isOwner && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <ConfirmDeleteListingModal
+            opened={deleteOpened}
+            onClose={closeDelete}
+            postId={post.id}
+            postTitle={post.title}
+          />
+        </div>
+      )}
     </div>
   );
 }

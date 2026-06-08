@@ -7,7 +7,6 @@ import { Stack } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
-import { getErrorMessage } from "@/utils/error";
 import { useCreatePostForm } from "@/hooks/useCreatePostForm";
 import {
   NotSellerGate,
@@ -21,13 +20,14 @@ import styles from "./CreatePostPage.module.css";
 export function CreatePostPage() {
   const user = useAuthStore((state) => state.user);
   const { t } = useTranslation("listings");
+  const { t: tCommon } = useTranslation("common");
 
   const {
     form,
     postTypeOptions,
     sizeOptions,
     handleTypeChange,
-    images,
+    imageCount,
     imagePreviews,
     selectedImageIndex,
     maxImages,
@@ -46,8 +46,6 @@ export function CreatePostPage() {
     handleRemoveExtraMeasurement,
     handleSubmit,
     isPending,
-    isSuccess,
-    error,
   } = useCreatePostForm();
 
   // Non-seller gate
@@ -64,22 +62,13 @@ export function CreatePostPage() {
           <p className={styles.subtitle}>{t("create.subtitle")}</p>
         </header>
 
-        {/* Alerts */}
-        {error && (
-          <Alert variant="error" title="Error" margin="bottom">
-            {getErrorMessage(error, t("create.error"))}
-          </Alert>
-        )}
-
         {measurementError && (
-          <Alert variant="error" title="Error" margin="bottom">
+          <Alert
+            variant="error"
+            title={tCommon("status.error")}
+            margin="bottom"
+          >
             {measurementError}
-          </Alert>
-        )}
-
-        {isSuccess && (
-          <Alert variant="success" title="Success" margin="bottom">
-            {t("create.success")}
           </Alert>
         )}
 
@@ -89,7 +78,7 @@ export function CreatePostPage() {
             {/* Left Column: Image Section */}
             <div className={styles.imageColumn}>
               <ImageUploadSection
-                images={images}
+                imageCount={imageCount}
                 imagePreviews={imagePreviews}
                 selectedImageIndex={selectedImageIndex}
                 maxImages={maxImages}

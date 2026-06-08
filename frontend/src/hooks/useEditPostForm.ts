@@ -1,6 +1,11 @@
 /**
- * useCreatePostForm - Extracted form logic for CreatePostPage
- * Handles form state, image management, measurements, and submission
+ * useEditPostForm - Form logic for editing an existing listing.
+ *
+ * Mirrors useCreatePostForm but initializes from an existing post and manages
+ * a mix of existing (already-uploaded) and newly added images so the seller can
+ * reorder, remove, and add images. On submit it uploads any new files via
+ * presigned URLs and sends the final ordered `image_urls` list to the update
+ * endpoint.
  */
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
@@ -10,53 +15,77 @@ import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { createPost } from "@/api/posts";
+import { updatePost } from "@/api/posts";
 import { uploadImages } from "@/api/uploads";
 import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
 import { notifySuccess, notifyError } from "@/utils/notify";
 import { getErrorMessage } from "@/utils/error";
 import type {
+  Post,
   PostType,
   Measurements,
-  CreatePostRequest,
+  UpdatePostRequest,
 } from "@/api/types/post";
 import { getSizesForType, MEASUREMENT_FIELDS } from "@/api/types/post";
+import type {
+  CreatePostFormValues,
+  ExtraMeasurement,
+  MeasurementField,
+  SelectOption,
+} from "@/hooks/useCreatePostForm";
+import { MAX_IMAGES } from "@/hooks/useCreatePostForm";
 
-/** Maximum number of images allowed per listing */
-export const MAX_IMAGES = 5;
+type ImageSlot =
+  | { kind: "existing"; url: string }
+  | { kind: "new"; file: File; previewUrl: string };
 
-export interface CreatePostFormValues {
-  title: string;
-  description: string;
-  type: PostType | null;
-  price: number | "";
-  shippingCost: number | "";
-  size: string | null;
+/** Reverse the create-form slug ("total_length" -> "total length"). */
+function keyToLabel(key: string): string {
+  return key.replace(/_/g, " ");
 }
 
-export interface ExtraMeasurement {
-  id: string;
-  label: string;
-  value: string;
+function buildInitialMeasurements(post: Post): {
+  known: Measurements;
+  extra: ExtraMeasurement[];
+} {
+  const known: Record<string, number> = {};
+  const extra: ExtraMeasurement[] = [];
+  const fieldKeys = new Set(
+    (MEASUREMENT_FIELDS[post.type] ?? []).map((f) => f.key),
+  );
+
+  let counter = 0;
+  for (const [key, value] of Object.entries(post.measurements ?? {})) {
+    if (value === undefined || value === null) continue;
+    if (fieldKeys.has(key)) {
+      known[key] = value as number;
+    } else {
+      extra.push({
+        id: String(++counter),
+        label: keyToLabel(key),
+        value: String(value),
+      });
+    }
+  }
+  return { known: known as Measurements, extra };
 }
 
-export interface MeasurementField {
-  key: string;
-  label: string;
+function buildInitialSlots(post: Post): ImageSlot[] {
+  const urls =
+    post.image_urls && post.image_urls.length > 0
+      ? post.image_urls
+      : post.image_url
+        ? [post.image_url]
+        : [];
+  return urls.map((url) => ({ kind: "existing", url }));
 }
 
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export function useCreatePostForm() {
+export function useEditPostForm(post: Post) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useTranslation("listings");
 
-  // Category options with translations
   const postTypeOptions = useMemo<SelectOption[]>(
     () => [
       { value: "SHIRT", label: t("categories.shirt") },
@@ -69,16 +98,15 @@ export function useCreatePostForm() {
     [t],
   );
 
-  // Form state using Mantine useForm
   const form = useForm<CreatePostFormValues>({
     validateInputOnBlur: true,
     initialValues: {
-      title: "",
-      description: "",
-      type: null,
-      price: "",
-      shippingCost: 0,
-      size: null,
+      title: post.title,
+      description: post.description,
+      type: post.type,
+      price: parseFloat(post.price),
+      shippingCost: parseFloat(post.shipping_cost),
+      size: post.size,
     },
     validate: {
       title: (value) =>
@@ -100,22 +128,24 @@ export function useCreatePostForm() {
     },
   });
 
-  const [imageItems, setImageItems] = useState<
-    { file: File; previewUrl: string }[]
-  >([]);
+  // Image slots (existing + new), initialized from the post.
+  const [imageSlots, setImageSlots] = useState<ImageSlot[]>(() =>
+    buildInitialSlots(post),
+  );
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Measurements state
-  const extraIdCounter = useRef(0);
-  const [measurements, setMeasurements] = useState<Measurements>({});
-  const [measurementsOpen, { toggle: toggleMeasurements }] =
-    useDisclosure(false);
+  // Measurements
+  const initial = useMemo(() => buildInitialMeasurements(post), [post]);
+  const extraIdCounter = useRef(initial.extra.length);
+  const [measurements, setMeasurements] = useState<Measurements>(initial.known);
+  const [measurementsOpen, { toggle: toggleMeasurements }] = useDisclosure(
+    initial.extra.length > 0 || Object.keys(initial.known as object).length > 0,
+  );
   const [extraMeasurements, setExtraMeasurements] = useState<
     ExtraMeasurement[]
-  >([]);
+  >(initial.extra);
   const [measurementError, setMeasurementError] = useState<string | null>(null);
 
-  // Get available sizes based on selected category
   const sizeOptions = useMemo<SelectOption[]>(() => {
     if (!form.values.type) return [];
     const sizes = getSizesForType(form.values.type);
@@ -127,7 +157,6 @@ export function useCreatePostForm() {
     });
   }, [form.values.type]);
 
-  // Handle category type change - resets dependent fields
   const handleTypeChange = useCallback(
     (value: string | null) => {
       form.setFieldValue("type", value as PostType | null);
@@ -138,7 +167,6 @@ export function useCreatePostForm() {
     [form],
   );
 
-  // Get measurement fields based on category
   const measurementFields = useMemo<MeasurementField[]>(() => {
     if (!form.values.type) return [];
     return (MEASUREMENT_FIELDS[form.values.type] ?? []).map((field) => ({
@@ -147,40 +175,57 @@ export function useCreatePostForm() {
     }));
   }, [form.values.type, t]);
 
-  // Pure mapping; URLs are created once in handleAddImages and revoked on
-  // removal/unmount — never recreated here.
   const imagePreviews = useMemo(
-    () => imageItems.map((item) => item.previewUrl),
-    [imageItems],
+    () =>
+      imageSlots.map((slot) =>
+        slot.kind === "existing" ? slot.url : slot.previewUrl,
+      ),
+    [imageSlots],
   );
 
-  // Track current items so the unmount cleanup can revoke their URLs.
-  const itemsRef = useRef(imageItems);
+  const slotsRef = useRef(imageSlots);
   useEffect(() => {
-    itemsRef.current = imageItems;
-  }, [imageItems]);
+    slotsRef.current = imageSlots;
+  }, [imageSlots]);
   useEffect(() => {
     return () => {
-      itemsRef.current.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      slotsRef.current.forEach((slot) => {
+        if (slot.kind === "new") URL.revokeObjectURL(slot.previewUrl);
+      });
     };
   }, []);
 
-  // Mutation: upload images directly to storage, then create the listing.
   const mutation = useMutation({
+    // Upload any new images directly to storage, then send the final ordered
+    // list of URLs (existing kept in place, new ones uploaded) as JSON.
     mutationFn: async (vars: {
-      data: Omit<CreatePostRequest, "image_urls">;
-      images: File[];
+      data: Omit<UpdatePostRequest, "image_urls">;
+      slots: ImageSlot[];
     }) => {
-      const image_urls = await uploadImages(vars.images);
-      return createPost({ ...vars.data, image_urls });
+      const newFiles: File[] = [];
+      for (const slot of vars.slots) {
+        if (slot.kind === "new") newFiles.push(slot.file);
+      }
+      const uploaded = await uploadImages(newFiles);
+      let next = 0;
+      const image_urls = vars.slots.map((slot) =>
+        slot.kind === "existing" ? slot.url : uploaded[next++],
+      );
+      return updatePost(post.id, { ...vars.data, image_urls });
     },
     onSuccess: () => {
-      notifySuccess(t("create.success"));
+      notifySuccess(t("edit.success"));
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
-      navigate({ to: "/account/listings" });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.detail(post.id),
+      });
+      navigate({
+        to: "/explore/$postId",
+        params: { postId: String(post.id) },
+      });
     },
     onError: (err) => {
-      notifyError(getErrorMessage(err, t("create.error")));
+      notifyError(getErrorMessage(err, t("edit.error")));
     },
   });
 
@@ -188,7 +233,7 @@ export function useCreatePostForm() {
   // state updater, so the updater stays pure and StrictMode can't double-create.
   const handleAddImages = useCallback(
     (files: File[]) => {
-      const available = MAX_IMAGES - itemsRef.current.length;
+      const available = MAX_IMAGES - slotsRef.current.length;
       const accepted = files.slice(0, Math.max(0, available));
       const rejected = files.length - accepted.length;
 
@@ -201,10 +246,11 @@ export function useCreatePostForm() {
 
       if (accepted.length > 0) {
         const added = accepted.map((file) => ({
+          kind: "new" as const,
           file,
           previewUrl: URL.createObjectURL(file),
         }));
-        setImageItems((prev) => [...prev, ...added]);
+        setImageSlots((prev) => [...prev, ...added]);
       }
     },
     [t],
@@ -212,9 +258,9 @@ export function useCreatePostForm() {
 
   const handleRemoveImage = useCallback((index: number) => {
     // Revoke in the handler (once), not inside the pure state updater.
-    const removed = itemsRef.current[index];
-    if (removed) URL.revokeObjectURL(removed.previewUrl);
-    setImageItems((prev) => prev.filter((_, i) => i !== index));
+    const removed = slotsRef.current[index];
+    if (removed?.kind === "new") URL.revokeObjectURL(removed.previewUrl);
+    setImageSlots((prev) => prev.filter((_, i) => i !== index));
     setSelectedImageIndex((prev) => {
       if (index < prev) return prev - 1;
       if (index === prev) return Math.max(0, prev - 1);
@@ -226,7 +272,18 @@ export function useCreatePostForm() {
     setSelectedImageIndex(index);
   }, []);
 
-  // Measurement handlers
+  const handleMoveImage = useCallback((from: number, to: number) => {
+    setImageSlots((prev) => {
+      if (to < 0 || to >= prev.length) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    setSelectedImageIndex(to);
+  }, []);
+
+  // Measurement handlers (identical to create)
   const handleMeasurementChange = useCallback((key: string, value: string) => {
     const numValue = parseFloat(value);
     setMeasurements((prev) => ({
@@ -257,7 +314,6 @@ export function useCreatePostForm() {
     setExtraMeasurements((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  // Submit handler
   const handleSubmit = useCallback(
     (values: CreatePostFormValues) => {
       setMeasurementError(null);
@@ -310,10 +366,10 @@ export function useCreatePostForm() {
           size: values.size!,
           measurements: finalMeasurements,
         },
-        images: imageItems.map((item) => item.file),
+        slots: imageSlots,
       });
     },
-    [measurements, extraMeasurements, imageItems, mutation, t],
+    [measurements, extraMeasurements, imageSlots, mutation, t],
   );
 
   return {
@@ -324,13 +380,14 @@ export function useCreatePostForm() {
     handleTypeChange,
 
     // Images
-    imageCount: imageItems.length,
+    imageCount: imageSlots.length,
     imagePreviews,
     selectedImageIndex,
     maxImages: MAX_IMAGES,
     handleAddImages,
     handleRemoveImage,
     handleSelectImage,
+    handleMoveImage,
 
     // Measurements
     measurements,

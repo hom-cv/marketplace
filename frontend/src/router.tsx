@@ -31,6 +31,7 @@ import {
   MyListingsPage,
   SoldListingsPage,
   CreatePostPage,
+  EditPostPage,
   BecomeSellerPage,
   PaymentReturnPage,
   CheckoutPage,
@@ -176,6 +177,12 @@ const accountListingsNewRoute = createRoute({
   component: CreatePostPage,
 });
 
+const accountListingsEditRoute = createRoute({
+  getParentRoute: () => protectedLayout,
+  path: "/account/listings/$postId/edit",
+  component: EditPostPage,
+});
+
 const accountSalesRoute = createRoute({
   getParentRoute: () => protectedLayout,
   path: "/account/sales",
@@ -276,6 +283,7 @@ const routeTree = rootRoute.addChildren([
     accountLikedRoute,
     accountListingsRoute,
     accountListingsNewRoute,
+    accountListingsEditRoute,
     accountSalesRoute,
     accountSettingsRoute,
     accountBecomeSellerRoute,

@@ -35,6 +35,8 @@ class ReportCRUD:
             status=ReportStatus.PENDING,
         )
         db.add(report)
+        # TODO(crud-flush): commits internally — migrate to flush + service-owned
+        # commit (moderation_service). See the BaseCRUD transaction note.
         await db.commit()
         await db.refresh(report)
         return report

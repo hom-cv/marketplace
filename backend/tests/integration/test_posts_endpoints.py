@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from httpx import AsyncClient
 
 from app.models.post import Post, PostType
-from tests.integration.conftest import create_mock_user
+from tests.integration.conftest import TEST_CDN_URL, create_mock_user
 
 
 class TestListPostsEndpoint:
@@ -221,5 +221,353 @@ class TestGetMyPostsEndpoint:
     ):
         """Unauthenticated request should return 401."""
         response = await unauthenticated_client.get("/api/v1/posts/me")
+
+        assert response.status_code == 401
+
+
+def _make_mock_post(
+    post_id: int = 1,
+    owner_id: int = 1,
+    image_urls: list[str] | None = None,
+) -> MagicMock:
+    """Build a mock Post suitable for response serialization."""
+    mock_post = MagicMock(spec=Post)
+    mock_post.id = post_id
+    mock_post.title = "Original Title"
+    mock_post.description = "Original description"
+    mock_post.type = PostType.SHIRT
+    mock_post.price = Decimal("500.00")
+    mock_post.shipping_cost = Decimal("50.00")
+    mock_post.image_url = (image_urls or [None])[0]
+    mock_post.image_urls = image_urls if image_urls is not None else []
+    mock_post.size = "M"
+    mock_post.measurements = None
+    mock_post.user_id = owner_id
+    mock_post.user = create_mock_user(user_id=owner_id)
+    return mock_post
+
+
+VALID_UPDATE_JSON = {
+    "title": "Updated Title",
+    "description": "Updated description",
+    "type": "SHIRT",
+    "price": "600.00",
+    "size": "L",
+    "image_urls": [],
+}
+
+
+class TestUpdatePostEndpoint:
+    """Tests for PUT /api/v1/posts/{post_id} endpoint."""
+
+    async def test_update_post_success_returns_200(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Owner updating a non-sold listing should return 200 with new data."""
+        post = _make_mock_post(owner_id=1)
+        # Called once for the ownership/sold check, once to build the response.
+        mock_post_crud.get_by_id_with_status.side_effect = [
+            (post, False, False, False),
+            (post, False, False, False),
+        ]
+
+        response = await async_client.put("/api/v1/posts/1", json=VALID_UPDATE_JSON)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["title"] == "Updated Title"
+        assert body["price"] == "600.00"
+        mock_post_crud.update.assert_awaited_once()
+
+    async def test_update_post_not_owner_returns_403(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Non-owner should not be able to edit the listing."""
+        post = _make_mock_post(owner_id=999)
+        mock_post_crud.get_by_id_with_status.return_value = (
+            post,
+            False,
+            False,
+            False,
+        )
+
+        response = await async_client.put("/api/v1/posts/1", json=VALID_UPDATE_JSON)
+
+        assert response.status_code == 403
+        mock_post_crud.update.assert_not_called()
+
+    async def test_update_post_sold_returns_400(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Sold listings cannot be edited."""
+        post = _make_mock_post(owner_id=1)
+        mock_post_crud.get_by_id_with_status.return_value = (
+            post,
+            False,
+            False,
+            True,  # is_sold
+        )
+
+        response = await async_client.put("/api/v1/posts/1", json=VALID_UPDATE_JSON)
+
+        assert response.status_code == 400
+        mock_post_crud.update.assert_not_called()
+
+    async def test_update_post_not_found_returns_404(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Updating a missing post should return 404."""
+        mock_post_crud.get_by_id_with_status.return_value = None
+
+        response = await async_client.put("/api/v1/posts/1", json=VALID_UPDATE_JSON)
+
+        assert response.status_code == 404
+
+    async def test_update_post_reorders_images(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """image_urls order is the final order (first = cover)."""
+        urls = [
+            f"{TEST_CDN_URL}/posts/a.jpg",
+            f"{TEST_CDN_URL}/posts/b.jpg",
+            f"{TEST_CDN_URL}/posts/c.jpg",
+        ]
+        post = _make_mock_post(owner_id=1, image_urls=urls)
+        mock_post_crud.get_by_id_with_status.side_effect = [
+            (post, False, False, False),
+            (post, False, False, False),
+        ]
+        reordered = [urls[2], urls[0], urls[1]]
+
+        response = await async_client.put(
+            "/api/v1/posts/1",
+            json={**VALID_UPDATE_JSON, "image_urls": reordered},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["image_urls"] == reordered
+        assert body["image_url"] == reordered[0]
+
+    async def test_update_post_foreign_image_url_returns_400(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """An image URL outside our CDN should be rejected."""
+        post = _make_mock_post(owner_id=1)
+        mock_post_crud.get_by_id_with_status.return_value = (
+            post,
+            False,
+            False,
+            False,
+        )
+
+        response = await async_client.put(
+            "/api/v1/posts/1",
+            json={**VALID_UPDATE_JSON, "image_urls": ["https://evil.example/x.jpg"]},
+        )
+
+        assert response.status_code == 400
+        mock_post_crud.update.assert_not_called()
+
+    async def test_update_post_invalid_price_returns_422(
+        self,
+        async_client: AsyncClient,
+    ):
+        """Price below the minimum should fail validation."""
+        response = await async_client.put(
+            "/api/v1/posts/1", json={**VALID_UPDATE_JSON, "price": "1.00"}
+        )
+
+        assert response.status_code == 422
+
+    async def test_update_post_unauthorized_returns_401(
+        self,
+        unauthenticated_client: AsyncClient,
+    ):
+        """Unauthenticated update should return 401."""
+        response = await unauthenticated_client.put(
+            "/api/v1/posts/1", json=VALID_UPDATE_JSON
+        )
+
+        assert response.status_code == 401
+
+
+class TestDeletePostEndpoint:
+    """Tests for DELETE /api/v1/posts/{post_id} endpoint."""
+
+    async def test_delete_post_success_returns_204(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Owner should be able to soft delete their listing."""
+        post = _make_mock_post(owner_id=1)
+        mock_post_crud.get_by_id_with_user.return_value = post
+
+        response = await async_client.delete("/api/v1/posts/1")
+
+        assert response.status_code == 204
+        mock_post_crud.soft_delete.assert_awaited_once()
+
+    async def test_delete_post_not_owner_returns_403(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Non-owner should not be able to delete the listing."""
+        post = _make_mock_post(owner_id=999)
+        mock_post_crud.get_by_id_with_user.return_value = post
+
+        response = await async_client.delete("/api/v1/posts/1")
+
+        assert response.status_code == 403
+        mock_post_crud.soft_delete.assert_not_called()
+
+    async def test_delete_post_not_found_returns_404(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """Deleting a missing post should return 404."""
+        mock_post_crud.get_by_id_with_user.return_value = None
+
+        response = await async_client.delete("/api/v1/posts/1")
+
+        assert response.status_code == 404
+
+    async def test_delete_post_unauthorized_returns_401(
+        self,
+        unauthenticated_client: AsyncClient,
+    ):
+        """Unauthenticated delete should return 401."""
+        response = await unauthenticated_client.delete("/api/v1/posts/1")
+
+        assert response.status_code == 401
+
+
+VALID_CREATE_JSON = {
+    "title": "New Item",
+    "description": "A brand new listing",
+    "type": "SHIRT",
+    "price": "600.00",
+    "size": "L",
+    "image_urls": [],
+}
+
+
+class TestCreatePostEndpoint:
+    """Tests for POST /api/v1/posts endpoint (JSON)."""
+
+    async def test_create_post_success_returns_201(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+        mock_user: MagicMock,
+    ):
+        """A verified seller can create a listing."""
+        mock_user.is_seller = True
+        mock_post_crud.create_post.return_value = _make_mock_post(owner_id=1)
+
+        response = await async_client.post("/api/v1/posts", json=VALID_CREATE_JSON)
+
+        assert response.status_code == 201
+        mock_post_crud.create_post.assert_awaited_once()
+
+    async def test_create_post_non_seller_returns_400(
+        self,
+        async_client: AsyncClient,
+        mock_user: MagicMock,
+    ):
+        """Non-sellers cannot create listings."""
+        mock_user.is_seller = False
+
+        response = await async_client.post("/api/v1/posts", json=VALID_CREATE_JSON)
+
+        assert response.status_code == 400
+
+    async def test_create_post_foreign_image_url_returns_400(
+        self,
+        async_client: AsyncClient,
+        mock_user: MagicMock,
+    ):
+        """Image URLs outside our CDN are rejected."""
+        mock_user.is_seller = True
+
+        response = await async_client.post(
+            "/api/v1/posts",
+            json={**VALID_CREATE_JSON, "image_urls": ["https://evil.example/x.jpg"]},
+        )
+
+        assert response.status_code == 400
+
+    async def test_create_post_unauthorized_returns_401(
+        self,
+        unauthenticated_client: AsyncClient,
+    ):
+        """Unauthenticated create should return 401."""
+        response = await unauthenticated_client.post(
+            "/api/v1/posts", json=VALID_CREATE_JSON
+        )
+
+        assert response.status_code == 401
+
+
+class TestPresignUploadEndpoint:
+    """Tests for POST /api/v1/posts/uploads/presign endpoint."""
+
+    async def test_presign_success_returns_urls(
+        self,
+        async_client: AsyncClient,
+        mock_user: MagicMock,
+    ):
+        """A verified seller gets an upload URL and a public file URL."""
+        mock_user.is_seller = True
+
+        response = await async_client.post(
+            "/api/v1/posts/uploads/presign",
+            json={"content_type": "image/jpeg"},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert "upload_url" in body
+        assert body["file_url"].startswith(TEST_CDN_URL)
+
+    async def test_presign_non_seller_returns_400(
+        self,
+        async_client: AsyncClient,
+        mock_user: MagicMock,
+    ):
+        """Non-sellers cannot request upload URLs."""
+        mock_user.is_seller = False
+
+        response = await async_client.post(
+            "/api/v1/posts/uploads/presign",
+            json={"content_type": "image/jpeg"},
+        )
+
+        assert response.status_code == 400
+
+    async def test_presign_unauthorized_returns_401(
+        self,
+        unauthenticated_client: AsyncClient,
+    ):
+        """Unauthenticated presign should return 401."""
+        response = await unauthenticated_client.post(
+            "/api/v1/posts/uploads/presign",
+            json={"content_type": "image/jpeg"},
+        )
 
         assert response.status_code == 401

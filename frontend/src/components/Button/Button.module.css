@@ -89,3 +89,20 @@
 .ghost:disabled {
   color: var(--color-text-muted);
 }
+
+/* Danger variant (destructive actions, e.g. delete) */
+.danger {
+  background: none;
+  border: 1px solid var(--color-error);
+  color: var(--color-error);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--color-error);
+  color: white;
+}
+
+.danger:disabled {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}

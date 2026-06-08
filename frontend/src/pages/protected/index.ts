@@ -4,6 +4,7 @@ export { LikedListingsPage } from "./LikedListings";
 export { MyListingsPage } from "./MyListings";
 export { SoldListingsPage } from "./SoldListings";
 export { CreatePostPage } from "./CreatePost";
+export { EditPostPage } from "./EditPost";
 export { BecomeSellerPage } from "./BecomeSeller";
 export { PaymentReturnPage } from "./PaymentReturn";
 export { CheckoutPage } from "./Checkout";

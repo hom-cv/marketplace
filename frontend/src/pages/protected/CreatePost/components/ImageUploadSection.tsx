@@ -5,7 +5,14 @@
 
 import { useRef, useState, useCallback } from "react";
 import { FileButton, Stack } from "@mantine/core";
-import { IconPlus, IconX, IconPhoto, IconUpload } from "@tabler/icons-react";
+import {
+  IconPlus,
+  IconTrash,
+  IconPhoto,
+  IconUpload,
+  IconChevronLeft,
+  IconChevronRight,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import styles from "./ImageUploadSection.module.css";
 
@@ -26,23 +33,26 @@ function filterSafeImages(files: File[]): File[] {
 }
 
 interface ImageUploadSectionProps {
-  images: File[];
+  imageCount: number;
   imagePreviews: string[];
   selectedImageIndex: number;
   maxImages: number;
   onAddImages: (files: File[]) => void;
   onRemoveImage: (index: number) => void;
   onSelectImage: (index: number) => void;
+  /** When provided, renders reorder controls on each thumbnail. */
+  onMoveImage?: (from: number, to: number) => void;
 }
 
 export function ImageUploadSection({
-  images,
+  imageCount,
   imagePreviews,
   selectedImageIndex,
   maxImages,
   onAddImages,
   onRemoveImage,
   onSelectImage,
+  onMoveImage,
 }: ImageUploadSectionProps) {
   const { t } = useTranslation("listings");
   const [isDragging, setIsDragging] = useState(false);
@@ -87,7 +97,7 @@ export function ImageUploadSection({
     [onAddImages],
   );
 
-  const hasImages = images.length > 0;
+  const hasImages = imageCount > 0;
 
   return (
     <Stack gap={12}>
@@ -136,7 +146,43 @@ export function ImageUploadSection({
         )}
       </div>
 
-      {/* Thumbnail Filmstrip */}
+      {/* Toolbar acting on the currently selected image */}
+      {hasImages && (
+        <div className={styles.heroToolbar}>
+          {onMoveImage && (
+            <button
+              type="button"
+              className={`${styles.toolbarButton} ${styles.toolbarMove}`}
+              aria-label={t("images.moveLeft")}
+              disabled={selectedImageIndex === 0}
+              onClick={() => onMoveImage(selectedImageIndex, selectedImageIndex - 1)}
+            >
+              <IconChevronLeft size={18} />
+            </button>
+          )}
+          <button
+            type="button"
+            className={`${styles.toolbarButton} ${styles.toolbarDelete}`}
+            onClick={() => onRemoveImage(selectedImageIndex)}
+          >
+            <IconTrash size={16} />
+            <span>{t("images.remove")}</span>
+          </button>
+          {onMoveImage && (
+            <button
+              type="button"
+              className={`${styles.toolbarButton} ${styles.toolbarMove}`}
+              aria-label={t("images.moveRight")}
+              disabled={selectedImageIndex === imagePreviews.length - 1}
+              onClick={() => onMoveImage(selectedImageIndex, selectedImageIndex + 1)}
+            >
+              <IconChevronRight size={18} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Thumbnail Filmstrip (selection only) */}
       <div className={styles.filmstrip}>
         {imagePreviews.map((previewUrl, index) => (
           <div
@@ -148,20 +194,10 @@ export function ImageUploadSection({
             {index === 0 && (
               <span className={styles.coverBadge}>{t("images.cover")}</span>
             )}
-            <button
-              type="button"
-              className={styles.thumbnailRemove}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemoveImage(index);
-              }}
-            >
-              <IconX size={10} />
-            </button>
           </div>
         ))}
 
-        {images.length < maxImages && (
+        {imageCount < maxImages && (
           <FileButton
             onChange={handleFilesSelected}
             accept={ACCEPT_IMAGES}

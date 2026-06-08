@@ -343,6 +343,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             The created post with user info.
         """
         db.add(post)
+        # TODO(crud-flush): commits internally — migrate to flush + service-owned
+        # commit (create_post endpoint / a listing service). See BaseCRUD note.
         await db.commit()
 
         # Re-fetch with proper eager loading
@@ -368,8 +370,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             The soft-deleted post.
         """
         post.deleted_at = datetime.now(timezone.utc)
-        await db.commit()
-        await db.refresh(post)
+
+        await db.flush()
+
         return post
 
 

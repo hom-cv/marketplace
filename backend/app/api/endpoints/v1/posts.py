@@ -1,10 +1,9 @@
 """Posts API endpoints for the marketplace."""
 
-import json
 from decimal import Decimal
 from typing import Annotated, Literal, Optional
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.post import (
@@ -21,13 +20,16 @@ from app.core.security import get_current_user, get_current_user_optional
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
-from app.models import Post, User
+from app.models import User
 from app.models.post import PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
+    PostCreateSchema,
     PostResponseSchema,
-    validate_measurements_for_post_type,
+    PostUpdateRequest,
+    PresignUploadRequest,
+    PresignUploadResponse,
 )
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
@@ -43,31 +45,16 @@ router = APIRouter(prefix="/posts", tags=["posts"])
     response_model=PostResponseSchema,
 )
 async def create_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    post_crud_dep: AnnotatedPostCRUD,
+    listing_service: AnnotatedListingService,
     current_user: Annotated[User, Depends(get_current_user)],
-    storage_service: AnnotatedStorageService,
-    title: Annotated[str, Form(min_length=1, max_length=200)],
-    description: Annotated[str, Form(min_length=1, max_length=5000)],
-    type: Annotated[PostTypeSchema, Form()],
-    price: Annotated[
-        Decimal,
-        Form(ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2),
-    ],
-    size: Annotated[str, Form(min_length=1, max_length=20)],
-    shipping_cost: Annotated[
-        Decimal,
-        Form(ge=MIN_SHIPPING_COST, le=MAX_SHIPPING_COST, decimal_places=2),
-    ] = Decimal("0"),
-    measurements: Annotated[str | None, Form()] = None,
-    images: Annotated[list[UploadFile], File()] = [],
+    data: PostCreateSchema,
 ) -> PostResponseSchema:
     """
-    Create a new post in the marketplace.
+    Create a new listing in the marketplace.
 
-    Accepts multipart/form-data with optional multiple image uploads.
-    The first image will be used as the cover/display image.
-    Maximum 5 images allowed. Supported formats: jpg, jpeg, png, gif, webp.
+    Images are uploaded separately via presigned URLs
+    (POST /posts/uploads/presign); pass the resulting public CDN URLs in
+    `image_urls` (first = cover, max 5).
 
     Size is required. Valid sizes depend on category:
     - Shirts/Jackets/Other: XS, S, M, L, XL, XXL, XXXL
@@ -75,56 +62,46 @@ async def create_post(
     - Shoes: 35-48 (Italian/EU sizing)
     - Accessories: ONE_SIZE
 
-    Measurements is an optional JSON string with cm values.
-    - Shirts/Jackets: shoulder, length, bust, sleeve
-    - Pants: total_length, inseam, rise, hip
-    - Shoes: insole_length
-    - Other: custom measurements only (no predefined fields)
-    - Accessories: not supported
+    `measurements` is an optional object validated against the post type.
 
     Requires the user to be a verified seller.
     """
-    # Check if user is a verified seller
     if not current_user.is_seller:
         raise bad_request_error(
             "You must be a verified seller to create listings. "
             "Please complete seller verification first."
         )
 
-    # Parse measurements JSON if provided
-    measurements_dict = None
-    if measurements:
-        try:
-            measurements_dict = json.loads(measurements)
-        except json.JSONDecodeError:
-            raise bad_request_error("Invalid measurements JSON format")
+    return await listing_service.create_listing(owner_id=current_user.id, data=data)
 
-    # Validate measurements for the post type
-    # (Other field validations are handled by FastAPI Form() constraints)
-    try:
-        validate_measurements_for_post_type(type, measurements_dict)
-    except ValueError as e:
-        raise bad_request_error(str(e))
 
-    image_urls = await storage_service.upload_images(images, folder="posts")
+@router.post(
+    "/uploads/presign",
+    status_code=status.HTTP_200_OK,
+    response_model=PresignUploadResponse,
+)
+async def create_upload_url(
+    storage_service: AnnotatedStorageService,
+    current_user: Annotated[User, Depends(get_current_user)],
+    data: PresignUploadRequest,
+) -> PresignUploadResponse:
+    """
+    Issue a presigned URL for a direct image upload to object storage.
 
-    image_url = image_urls[0] if image_urls else None
+    The client PUTs the file bytes to `upload_url` with matching `Content-Type`
+    and `x-amz-acl: public-read` headers (both are part of the signature), then
+    references the returned `file_url` when creating/updating a listing.
 
-    post = Post(
-        title=title,
-        description=description,
-        type=PostType[type.value],
-        price=price,
-        shipping_cost=shipping_cost,
-        size=size,
-        measurements=measurements_dict,
-        image_url=image_url,
-        image_urls=image_urls,
-        user_id=current_user.id,
+    Requires the user to be a verified seller.
+    """
+    if not current_user.is_seller:
+        raise bad_request_error(
+            "You must be a verified seller to upload images."
+        )
+
+    return PresignUploadResponse(
+        **storage_service.create_presigned_upload(data.content_type)
     )
-
-    created_post = await post_crud_dep.create_post(db, post=post)
-    return PostResponseSchema.model_validate(created_post)
 
 
 @router.get(
@@ -296,13 +273,40 @@ async def get_price_breakdown(
     return PriceBreakdownResponse.model_validate(breakdown)
 
 
+@router.put(
+    "/{post_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=PostResponseSchema,
+)
+async def update_post(
+    listing_service: AnnotatedListingService,
+    current_user: Annotated[User, Depends(get_current_user)],
+    post_id: int,
+    data: PostUpdateRequest,
+) -> PostResponseSchema:
+    """
+    Update an existing listing.
+
+    Only the owner can edit their listing, and sold listings cannot be edited.
+
+    `image_urls` is the final ordered list of public CDN URLs (first = cover),
+    uploaded beforehand via presigned URLs (POST /posts/uploads/presign).
+    Adding, removing, and reordering images are all expressed by this list.
+    Max 5 images.
+    """
+    return await listing_service.update_listing(
+        post_id=post_id,
+        owner_id=current_user.id,
+        data=data,
+    )
+
+
 @router.delete(
     "/{post_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    post_crud_dep: AnnotatedPostCRUD,
+    listing_service: AnnotatedListingService,
     current_user: Annotated[User, Depends(get_current_user)],
     post_id: int,
 ) -> None:
@@ -310,17 +314,10 @@ async def delete_post(
     Delete a post (soft delete).
 
     Only the owner can delete their post. The post is soft-deleted
-    to preserve payment records for accounting purposes.
+    to preserve payment records for accounting purposes. Sold listings
+    may still be deleted.
     """
-    post = await post_crud_dep.get_by_id_with_user(db, id=post_id)
-
-    if not post:
-        raise not_found_error("Post not found")
-
-    if post.user_id != current_user.id:
-        raise bad_request_error("You can only delete your own posts")
-
-    await post_crud_dep.soft_delete(db, post=post)
+    await listing_service.delete_listing(post_id=post_id, owner_id=current_user.id)
 
 
 @router.get(

@@ -12,6 +12,7 @@ from app.constants.post import (
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
 )
+from app.constants.storage import MAX_IMAGES_PER_POST
 from app.schemas.user import UserResponseSchema
 
 
@@ -73,17 +74,17 @@ def validate_measurements_for_post_type(
 ) -> None:
     """
     Validate measurements structure based on post type.
-    
+
     This function can be called directly from endpoints without
     needing to instantiate the full PostCreateSchema.
-    
+
     Validation rules:
     - SHIRT, JACKET: Validates against TopMeasurements schema
     - PANTS: Validates against PantsMeasurements schema
     - SHOES: Validates against ShoesMeasurements schema
     - OTHER: No schema validation - allows any custom measurements
     - ACCESSORIES: Measurements not supported
-    
+
     Raises:
         ValueError: If measurements are invalid for the given post type.
     """
@@ -144,6 +145,14 @@ class PostCreateSchema(BaseModel):
         default=None,
         description="Optional measurements in cm",
     )
+    image_urls: list[str] = Field(
+        default_factory=list,
+        max_length=MAX_IMAGES_PER_POST,
+        description=(
+            "Public CDN URLs of images already uploaded via presigned URLs. "
+            "The first URL becomes the cover image."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_measurements_for_type(self) -> "PostCreateSchema":
@@ -166,6 +175,62 @@ class PostUpdateSchema(BaseModel):
     )
     size: str | None = Field(None, min_length=1, max_length=20)
     measurements: dict[str, Any] | None = None
+
+
+class PostUpdateRequest(BaseModel):
+    """
+    Schema for a full listing update (JSON body, PUT).
+
+    Images are uploaded separately via presigned URLs; ``image_urls`` is the
+    final ordered set of public CDN URLs (first = cover). Adding, removing, and
+    reordering images is expressed entirely by this list.
+    """
+
+    title: str = Field(..., min_length=1, max_length=200)
+    description: str = Field(..., min_length=1, max_length=5000)
+    type: PostType
+    price: Decimal = Field(
+        ..., ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
+    )
+    shipping_cost: Decimal = Field(
+        default=Decimal("0"),
+        ge=MIN_SHIPPING_COST,
+        le=MAX_SHIPPING_COST,
+        decimal_places=2,
+    )
+    size: str = Field(..., min_length=1, max_length=20)
+    measurements: dict[str, Any] | None = Field(
+        default=None, description="Optional measurements in cm"
+    )
+    image_urls: list[str] = Field(
+        default_factory=list,
+        max_length=MAX_IMAGES_PER_POST,
+        description=(
+            "Final ordered list of public CDN image URLs (first = cover). "
+            "Uploaded beforehand via presigned URLs."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def validate_measurements_for_type(self) -> "PostUpdateRequest":
+        """Validate measurements structure based on post type."""
+        validate_measurements_for_post_type(self.type, self.measurements)
+        return self
+
+
+class PresignUploadRequest(BaseModel):
+    """Request a presigned URL for a direct image upload to object storage."""
+
+    content_type: str = Field(
+        ..., description="Image MIME type, e.g. 'image/jpeg'"
+    )
+
+
+class PresignUploadResponse(BaseModel):
+    """Presigned upload target plus the resulting public URL."""
+
+    upload_url: str = Field(..., description="Signed PUT URL to upload the bytes to")
+    file_url: str = Field(..., description="Public CDN URL to reference once uploaded")
 
 
 class PostResponseSchema(BaseModel):
