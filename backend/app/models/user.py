@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import auto
 from typing import List, Optional
 
-from sqlalchemy import BigInteger, Enum, Index, String, Text
+from sqlalchemy import BigInteger, DateTime, Enum, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
@@ -140,6 +140,7 @@ class User(Base):
 
     # Soft delete
     deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
         default=None,
         index=True,

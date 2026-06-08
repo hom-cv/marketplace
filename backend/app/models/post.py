@@ -4,7 +4,15 @@ from datetime import datetime
 from decimal import Decimal
 from enum import auto
 
-from sqlalchemy import BigInteger, Enum, ForeignKey, Numeric, String, Text
+from sqlalchemy import (
+    BigInteger,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -116,6 +124,7 @@ class Post(Base):
 
     # Soft delete
     deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
         nullable=True,
         default=None,
         index=True,
