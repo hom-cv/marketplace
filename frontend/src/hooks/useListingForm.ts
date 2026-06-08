@@ -8,7 +8,12 @@ import { useMemo, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
-import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
+import {
+  MAX_LISTING_PRICE,
+  MIN_LISTING_PRICE,
+  MAX_SHIPPING_COST,
+  MIN_SHIPPING_COST,
+} from "@/constants/listing";
 import { notifySuccess, notifyError } from "@/utils/notify";
 import { getErrorMessage } from "@/utils/error";
 import type { Post, PostType, CreatePostRequest } from "@/api/types/post";
@@ -94,6 +99,16 @@ export function useListingForm({
         if (value > MAX_LISTING_PRICE)
           return t("create.form.priceMax", {
             max: MAX_LISTING_PRICE.toLocaleString(),
+          });
+        return null;
+      },
+      shippingCost: (value) => {
+        if (value === "") return null;
+        if (value < MIN_SHIPPING_COST)
+          return t("create.form.shippingMin", { min: MIN_SHIPPING_COST });
+        if (value > MAX_SHIPPING_COST)
+          return t("create.form.shippingMax", {
+            max: MAX_SHIPPING_COST.toLocaleString(),
           });
         return null;
       },

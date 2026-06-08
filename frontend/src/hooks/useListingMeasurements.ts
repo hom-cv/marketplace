@@ -65,9 +65,9 @@ export function useListingMeasurements(post?: Post) {
 
   const extraIdCounter = useRef(initial.extra.length);
   const [measurements, setMeasurements] = useState<Measurements>(initial.known);
-  const [extraMeasurements, setExtraMeasurements] = useState<ExtraMeasurement[]>(
-    initial.extra,
-  );
+  const [extraMeasurements, setExtraMeasurements] = useState<
+    ExtraMeasurement[]
+  >(initial.extra);
   const [measurementsOpen, { toggle: toggleMeasurements }] = useDisclosure(
     initial.extra.length > 0 || Object.keys(initial.known as object).length > 0,
   );
@@ -77,6 +77,7 @@ export function useListingMeasurements(post?: Post) {
   const reset = useCallback(() => {
     setMeasurements({});
     setExtraMeasurements([]);
+    setMeasurementError(null);
   }, []);
 
   const handleMeasurementChange = useCallback((key: string, value: string) => {
@@ -124,22 +125,32 @@ export function useListingMeasurements(post?: Post) {
     const seenKeys = new Set(Object.keys(cleanMeasurements));
 
     for (const extra of extraMeasurements) {
-      if (extra.label && extra.value) {
-        const key = extra.label.trim().toLowerCase().replace(/\s+/g, "_");
-        const numValue = parseFloat(extra.value);
+      const label = extra.label.trim();
+      const rawValue = extra.value.trim();
 
-        if (!key || isNaN(numValue)) continue;
+      if (!label && !rawValue) continue;
 
-        if (seenKeys.has(key)) {
-          setMeasurementError(
-            t("create.form.duplicateMeasurement", { label: extra.label.trim() }),
-          );
-          return { ok: false };
-        }
-
-        seenKeys.add(key);
-        allMeasurements[key] = numValue;
+      if (!label || !rawValue) {
+        setMeasurementError(t("create.form.incompleteMeasurement"));
+        return { ok: false };
       }
+
+      const numValue = parseFloat(rawValue);
+      if (isNaN(numValue)) {
+        setMeasurementError(
+          t("create.form.invalidMeasurementValue", { label }),
+        );
+        return { ok: false };
+      }
+
+      const key = label.toLowerCase().replace(/\s+/g, "_");
+      if (seenKeys.has(key)) {
+        setMeasurementError(t("create.form.duplicateMeasurement", { label }));
+        return { ok: false };
+      }
+
+      seenKeys.add(key);
+      allMeasurements[key] = numValue;
     }
 
     return {
