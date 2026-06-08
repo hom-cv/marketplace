@@ -33,8 +33,7 @@ export function usePublicPosts(filters: PostFilters, itemsPerPage: number) {
 }
 
 export function usePost(postId: number | string | null) {
-  const numericId =
-    typeof postId === "string" ? parseInt(postId, 10) : postId;
+  const numericId = typeof postId === "string" ? parseInt(postId, 10) : postId;
   return useQuery({
     queryKey: queryKeys.posts.detail(postId),
     queryFn: () => (numericId ? getPost(numericId) : null),
@@ -53,8 +52,9 @@ export function useDeletePost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (postId: number) => deletePost(postId),
-    onSuccess: () => {
+    onSuccess: (_data, postId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all });
+      queryClient.removeQueries({ queryKey: queryKeys.posts.detail(postId) });
     },
   });
 }
