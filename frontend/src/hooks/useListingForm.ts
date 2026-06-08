@@ -12,7 +12,11 @@ import { MAX_LISTING_PRICE, MIN_LISTING_PRICE } from "@/constants/listing";
 import { notifySuccess, notifyError } from "@/utils/notify";
 import { getErrorMessage } from "@/utils/error";
 import type { Post, PostType, CreatePostRequest } from "@/api/types/post";
-import { getSizesForType, formatSize, MEASUREMENT_FIELDS } from "@/api/types/post";
+import {
+  getSizesForType,
+  formatSize,
+  MEASUREMENT_FIELDS,
+} from "@/api/types/post";
 import { useListingImages } from "@/hooks/useListingImages";
 import { useListingMeasurements } from "@/hooks/useListingMeasurements";
 
@@ -100,6 +104,8 @@ export function useListingForm({
 
   const images = useListingImages(initialImageUrls(post));
   const measurements = useListingMeasurements(post);
+  const { reset: resetMeasurements, assemble: assembleMeasurements } =
+    measurements;
 
   const sizeOptions = useMemo<SelectOption[]>(() => {
     const type = form.values.type;
@@ -114,9 +120,9 @@ export function useListingForm({
     (value: string | null) => {
       form.setFieldValue("type", value as PostType | null);
       form.setFieldValue("size", null);
-      measurements.reset();
+      resetMeasurements();
     },
-    [form, measurements],
+    [form, resetMeasurements],
   );
 
   const measurementFields = useMemo<MeasurementField[]>(() => {
@@ -141,12 +147,13 @@ export function useListingForm({
     },
   });
 
+  const { mutate } = mutation;
   const handleSubmit = useCallback(
     (values: CreatePostFormValues) => {
-      const result = measurements.assemble();
+      const result = assembleMeasurements();
       if (!result.ok) return;
 
-      mutation.mutate({
+      mutate({
         title: values.title,
         description: values.description,
         type: values.type!,
@@ -156,7 +163,7 @@ export function useListingForm({
         measurements: result.measurements,
       });
     },
-    [measurements, mutation],
+    [assembleMeasurements, mutate],
   );
 
   return {

@@ -99,7 +99,7 @@ export function useListingImages(initialUrls: string[] = []) {
     const newFiles = current
       .filter((s): s is Extract<ImageSlot, { kind: "new" }> => s.kind === "new")
       .map((s) => s.file);
-    const uploaded = await uploadImages(newFiles);
+    const uploaded = newFiles.length ? await uploadImages(newFiles) : [];
     let next = 0;
     return current.map((s) => (s.kind === "existing" ? s.url : uploaded[next++]));
   }, []);
