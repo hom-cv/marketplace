@@ -133,7 +133,7 @@ export function useCreatePostForm() {
   // Get measurement fields based on category
   const measurementFields = useMemo<MeasurementField[]>(() => {
     if (!form.values.type) return [];
-    return MEASUREMENT_FIELDS[form.values.type].map((field) => ({
+    return (MEASUREMENT_FIELDS[form.values.type] ?? []).map((field) => ({
       key: field.key,
       label: t(`measurements.${field.translationKey}`),
     }));

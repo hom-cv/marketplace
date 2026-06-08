@@ -43,7 +43,9 @@ function buildInitialMeasurements(post: Post): {
 } {
   const known: Record<string, number> = {};
   const extra: ExtraMeasurement[] = [];
-  const fieldKeys = new Set(MEASUREMENT_FIELDS[post.type].map((f) => f.key));
+  const fieldKeys = new Set(
+    (MEASUREMENT_FIELDS[post.type] ?? []).map((f) => f.key),
+  );
 
   let counter = 0;
   for (const [key, value] of Object.entries(post.measurements ?? {})) {
@@ -160,7 +162,7 @@ export function useEditPostForm(post: Post) {
 
   const measurementFields = useMemo<MeasurementField[]>(() => {
     if (!form.values.type) return [];
-    return MEASUREMENT_FIELDS[form.values.type].map((field) => ({
+    return (MEASUREMENT_FIELDS[form.values.type] ?? []).map((field) => ({
       key: field.key,
       label: t(`measurements.${field.translationKey}`),
     }));
