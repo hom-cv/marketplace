@@ -58,13 +58,12 @@ export function SignUpPage() {
     });
 
     try {
-      setUser(user);
       await loginMutation.mutateAsync({
         email: values.email,
         password: values.password,
       });
+      setUser(user);
     } catch (error) {
-      setUser(null);
       notifications.show({
         title: t("signup.loginFailed"),
         message: getErrorMessage(error, t("signup.loginFailedMessage")),
