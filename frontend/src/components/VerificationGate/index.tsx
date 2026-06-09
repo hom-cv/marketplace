@@ -20,7 +20,7 @@ const ALLOWED_WHILE_UNVERIFIED = new Set<string>([
   "/privacy",
 ]);
 
-const AUTH_PAGES = new Set<string>(["/login", "/sign-up"]);
+const AUTH_PAGES = new Set<string>(["/login", "/sign-up", "/verify-email"]);
 
 export function VerificationGate() {
   const navigate = useNavigate();

@@ -68,13 +68,6 @@ export function VerifyEmailPage() {
     }
   }, [verifyQuery.isSuccess, refetchUser]);
 
-  // Redirect verified users to /app
-  useEffect(() => {
-    if (user?.email_verified) {
-      navigate({ to: "/explore", replace: true });
-    }
-  }, [user, navigate]);
-
   // Redirect to login if not logged in and no token
   useEffect(() => {
     if (!authToken && !token) {
