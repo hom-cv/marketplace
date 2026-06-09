@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useMemo } from "react";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   TextInput,
   PasswordInput,
@@ -14,14 +14,11 @@ import {
 import { useForm } from "@mantine/form";
 import { useTranslation } from "react-i18next";
 import { useLoginMutation } from "@/hooks/useAuth";
-import { useAuthStore } from "@/stores/authStore";
 import { getErrorMessage } from "@/utils/error";
 import styles from "./Auth.module.css";
 
 export function LoginPage() {
-  const navigate = useNavigate();
   const loginMutation = useLoginMutation();
-  const { token } = useAuthStore();
   const { t } = useTranslation("auth");
   const routerState = useRouterState();
 
@@ -29,12 +26,6 @@ export function LoginPage() {
     const searchParams = new URLSearchParams(routerState.location.searchStr);
     return searchParams.get("registered") === "true";
   }, [routerState.location.searchStr]);
-
-  useEffect(() => {
-    if (token) {
-      navigate({ to: "/explore" });
-    }
-  }, [token, navigate]);
 
   const form = useForm({
     initialValues: {
@@ -48,14 +39,7 @@ export function LoginPage() {
   });
 
   const handleSubmit = (values: typeof form.values) => {
-    loginMutation.mutate(
-      { email: values.email, password: values.password },
-      {
-        onSuccess: () => {
-          navigate({ to: "/explore" });
-        },
-      },
-    );
+    loginMutation.mutate({ email: values.email, password: values.password });
   };
 
   return (
@@ -87,7 +71,10 @@ export function LoginPage() {
               )}
               {loginMutation.isError && (
                 <Alert color="red" title={t("login.failed")} radius="xs">
-                  {getErrorMessage(loginMutation.error, t("login.invalidCredentials"))}
+                  {getErrorMessage(
+                    loginMutation.error,
+                    t("login.invalidCredentials"),
+                  )}
                 </Alert>
               )}
               <TextInput

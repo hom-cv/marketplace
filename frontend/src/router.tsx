@@ -41,6 +41,7 @@ import {
 } from "@/pages/protected";
 
 import { ChatSubscriptionProvider } from "@/components/ChatSubscriptionProvider";
+import { VerificationGate } from "@/components/VerificationGate";
 
 // Admin pages
 import {
@@ -56,6 +57,7 @@ import styles from "./router.module.css";
 const rootRoute = createRootRoute({
   component: () => (
     <ChatSubscriptionProvider>
+      <VerificationGate />
       <div className={styles.rootLayout}>
         <AppNavigation />
         <main className={styles.mainContent}>

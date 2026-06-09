@@ -83,8 +83,7 @@ async def get_user(
     """
     Get the currently authenticated user's information.
 
-    Allows unverified accounts so the frontend can route a freshly-registered
-    user to the email-verification screen instead of logging them out.
+    Allows unverified accounts so the frontend can route them to verification.
     """
     return UserResponseSchema.from_user(current_user)
 

@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   TextInput,
@@ -23,18 +22,8 @@ export function SignUpPage() {
   const navigate = useNavigate();
   const registerMutation = useRegisterMutation();
   const loginMutation = useLoginMutation();
-  const { token, user, setUser } = useAuthStore();
+  const { setUser } = useAuthStore();
   const { t } = useTranslation("auth");
-
-  useEffect(() => {
-    if (token) {
-      if (user && !user.email_verified) {
-        navigate({ to: "/verify-email", search: { token: undefined } });
-      } else {
-        navigate({ to: "/explore" });
-      }
-    }
-  }, [token, user, navigate]);
 
   const form = useForm({
     initialValues: {
@@ -74,7 +63,6 @@ export function SignUpPage() {
         email: values.email,
         password: values.password,
       });
-      navigate({ to: "/verify-email", search: { token: undefined } });
     } catch (error) {
       setUser(null);
       notifications.show({

@@ -39,8 +39,8 @@ def patched_lookups():
         yield decode, user_crud, ban_crud
 
 
-async def test_get_current_user_rejects_pending(patched_lookups):
-    """A verified-only endpoint must reject an unverified (PENDING) account."""
+async def test_get_current_user_rejects_pending_with_403(patched_lookups):
+    """Unverified (PENDING) accounts get 403."""
     _, user_crud, _ = patched_lookups
     user_crud.get_by_id_with_relations = AsyncMock(
         return_value=_make_user(UserStatus.PENDING)
@@ -49,8 +49,7 @@ async def test_get_current_user_rejects_pending(patched_lookups):
     with pytest.raises(HTTPException) as exc_info:
         await get_current_user(db=AsyncMock(), token="token")
 
-    assert exc_info.value.status_code == 401
-    assert "not active" in exc_info.value.detail
+    assert exc_info.value.status_code == 403
 
 
 async def test_allow_unverified_permits_pending(patched_lookups):

@@ -42,14 +42,12 @@ async def _resolve_user_from_token(
     token: str,
 ) -> User:
     """
-    Decode the token and load the associated user, rejecting invalid tokens and
-    deleted or banned accounts.
-
+    Decode the token and load the user, rejecting invalid tokens and deleted or
+    banned accounts. Does not check email verification.
 
     Raises:
         HTTPException:
-            - unauthorized_error: If the token is invalid, or the account has
-              been removed or banned.
+            - unauthorized_error (401): If the token is invalid, or the account has been removed or banned.
             - not_found_error: If the user associated with the token cannot be found.
     """
     try:
@@ -87,9 +85,7 @@ async def get_current_user(
     """
     Retrieve the currently authenticated user based on the provided JWT token.
 
-    Requires an active (email-verified) account. Use this for all endpoints
-    except those an unverified user must still reach (see
-    get_current_user_allow_unverified).
+    Requires a verified (active) account; raises 403 for unverified accounts.
 
     Args:
         db (AsyncSession): The asynchronous database session dependency.
@@ -100,14 +96,14 @@ async def get_current_user(
 
     Raises:
         HTTPException:
-            - unauthorized_error: If the token is invalid, the account is not
-              active, or credentials cannot be validated.
+            - unauthorized_error (401): If the token is invalid or credentials cannot be validated.
+            - forbidden_error (403): If the account is not yet verified.
             - not_found_error: If the user associated with the token cannot be found.
     """
     user = await _resolve_user_from_token(db, token)
 
     if not user.is_active:
-        raise unauthorized_error("Account is not active")
+        raise forbidden_error("Email not verified")
 
     return user
 
@@ -117,20 +113,8 @@ async def get_current_user_allow_unverified(
     token: str = Security(reusable_oauth2),
 ) -> User:
     """
-    Like get_current_user, but permits accounts that are pending email
-    verification (UserStatus.PENDING).
-
-    Use ONLY for endpoints an unverified user must reach to complete onboarding —
-    viewing their own profile (/auth/me) and resending the verification email.
-    Every other endpoint must use get_current_user so unverified accounts cannot
-    take real actions.
-
-    Args:
-        db (AsyncSession): The asynchronous database session dependency.
-        token (str): The JWT token provided for authentication.
-
-    Returns:
-        User: The authenticated user object, which may be unverified.
+    Like get_current_user, but permits unverified (PENDING) accounts. Use only
+    for onboarding endpoints: own profile (/auth/me) and resend verification.
     """
     return await _resolve_user_from_token(db, token)
 
