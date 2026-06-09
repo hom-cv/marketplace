@@ -14,7 +14,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.jwt import create_access_token
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_user_allow_unverified
 from app.core.settings import Settings, get_settings
 from app.crud.follow import FollowCRUD, get_follow_crud
 from app.crud.like import LikeCRUD, get_like_crud
@@ -330,6 +330,9 @@ async def async_client(
         return mock_user
 
     app.dependency_overrides[get_current_user] = override_get_current_user
+    app.dependency_overrides[get_current_user_allow_unverified] = (
+        override_get_current_user
+    )
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

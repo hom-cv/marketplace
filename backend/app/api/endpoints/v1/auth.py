@@ -7,7 +7,9 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.jwt import create_access_token
-from app.core.security import get_current_user
+from app.core.security import (
+    get_current_user_allow_unverified,
+)
 from app.models import User
 from app.schemas.auth import (
     AuthLoginResponse,
@@ -75,9 +77,14 @@ async def login_user(
 
 
 @router.get("/me", status_code=status.HTTP_200_OK, response_model=UserResponseSchema)
-async def get_user(current_user: Annotated[User, Depends(get_current_user)]):
+async def get_user(
+    current_user: Annotated[User, Depends(get_current_user_allow_unverified)],
+):
     """
     Get the currently authenticated user's information.
+
+    Allows unverified accounts so the frontend can route a freshly-registered
+    user to the email-verification screen instead of logging them out.
     """
     return UserResponseSchema.from_user(current_user)
 
@@ -107,7 +114,7 @@ async def verify_email(
     response_model=EmailVerificationResponse,
 )
 async def resend_verification_email(
-    current_user: Annotated[User, Depends(get_current_user)],
+    current_user: Annotated[User, Depends(get_current_user_allow_unverified)],
     auth_service: AnnotatedAuthService,
 ) -> EmailVerificationResponse:
     """

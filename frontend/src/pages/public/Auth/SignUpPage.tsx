@@ -23,14 +23,18 @@ export function SignUpPage() {
   const navigate = useNavigate();
   const registerMutation = useRegisterMutation();
   const loginMutation = useLoginMutation();
-  const { token, setUser } = useAuthStore();
+  const { token, user, setUser } = useAuthStore();
   const { t } = useTranslation("auth");
 
   useEffect(() => {
     if (token) {
-      navigate({ to: "/explore" });
+      if (user && !user.email_verified) {
+        navigate({ to: "/verify-email", search: { token: undefined } });
+      } else {
+        navigate({ to: "/explore" });
+      }
     }
-  }, [token, navigate]);
+  }, [token, user, navigate]);
 
   const form = useForm({
     initialValues: {
@@ -65,13 +69,14 @@ export function SignUpPage() {
     });
 
     try {
+      setUser(user);
       await loginMutation.mutateAsync({
         email: values.email,
         password: values.password,
       });
-      setUser(user);
       navigate({ to: "/verify-email", search: { token: undefined } });
     } catch (error) {
+      setUser(null);
       notifications.show({
         title: t("signup.loginFailed"),
         message: getErrorMessage(error, t("signup.loginFailedMessage")),
@@ -101,7 +106,10 @@ export function SignUpPage() {
             <Stack gap="md">
               {registerMutation.isError && (
                 <Alert color="red" title={t("signup.failed")} radius="xs">
-                  {getErrorMessage(registerMutation.error, t("signup.couldNotCreate"))}
+                  {getErrorMessage(
+                    registerMutation.error,
+                    t("signup.couldNotCreate"),
+                  )}
                 </Alert>
               )}
               <TextInput
