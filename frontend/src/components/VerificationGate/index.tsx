@@ -8,7 +8,7 @@
 
 import { useEffect } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Loader } from "@mantine/core";
+import { Center, Loader } from "@mantine/core";
 import { useAuthStore } from "@/stores/authStore";
 import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 
@@ -56,9 +56,9 @@ export function VerificationGate() {
 
   if (token && !user && !isError) {
     return (
-      <div className={styles.overlay}>
+      <Center className={styles.overlay}>
         <Loader size="lg" />
-      </div>
+      </Center>
     );
   }
 
