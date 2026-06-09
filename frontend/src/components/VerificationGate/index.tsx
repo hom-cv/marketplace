@@ -7,7 +7,7 @@
 import { useEffect } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useAuthStore } from "@/stores/authStore";
-import { useCurrentUser } from "@/hooks/useAuth";
+import { useCurrentUser, useLogout } from "@/hooks/useAuth";
 
 const ALLOWED_WHILE_UNVERIFIED = new Set<string>([
   "/verify-email",
@@ -21,8 +21,14 @@ export function VerificationGate() {
   const navigate = useNavigate();
   const { token, user } = useAuthStore();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { isError } = useCurrentUser();
+  const logout = useLogout();
 
-  useCurrentUser();
+  useEffect(() => {
+    if (token && isError) {
+      logout();
+    }
+  }, [token, isError, logout]);
 
   useEffect(() => {
     if (!token || !user) return;
