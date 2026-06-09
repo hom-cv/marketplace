@@ -7,6 +7,7 @@ import {
   useBanUserMutation,
 } from "@/hooks/useAdmin";
 import type { Post } from "@/api/types/post";
+import { formatSize } from "@/api/types/post";
 import { Button } from "@/components/Button";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
@@ -216,7 +217,9 @@ function ListingPreview({ post }: { post: Post }) {
         {post.size && (
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Size</span>
-            <span className={styles.sizeBadge}>{post.size}</span>
+            <span className={styles.sizeBadge}>
+              {formatSize(post.size, post.type)}
+            </span>
           </div>
         )}
 

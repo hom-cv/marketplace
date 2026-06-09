@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { Post } from "@/api/types/post";
+import { formatSize } from "@/api/types/post";
 import styles from "./ListingSidebar.module.css";
 
 interface ListingSidebarProps {
@@ -70,7 +71,9 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
         {post.size && (
           <div>
             <div className={styles.sectionLabel}>{tCommon("postCard.size")}</div>
-            <span className={styles.sizeBadge}>{post.size}</span>
+            <span className={styles.sizeBadge}>
+              {formatSize(post.size, post.type)}
+            </span>
           </div>
         )}
 

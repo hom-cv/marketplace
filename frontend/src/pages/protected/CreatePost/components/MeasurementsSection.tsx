@@ -13,7 +13,10 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { Measurements } from "@/api/types/post";
-import type { MeasurementField, ExtraMeasurement } from "@/hooks/useCreatePostForm";
+import type {
+  MeasurementField,
+  ExtraMeasurement,
+} from "@/api/types/listingForm";
 import formStyles from "@/styles/forms.module.css";
 import styles from "./MeasurementsSection.module.css";
 
