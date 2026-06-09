@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   TextInput,
@@ -23,14 +22,8 @@ export function SignUpPage() {
   const navigate = useNavigate();
   const registerMutation = useRegisterMutation();
   const loginMutation = useLoginMutation();
-  const { token, setUser } = useAuthStore();
+  const { setUser } = useAuthStore();
   const { t } = useTranslation("auth");
-
-  useEffect(() => {
-    if (token) {
-      navigate({ to: "/explore" });
-    }
-  }, [token, navigate]);
 
   const form = useForm({
     initialValues: {
@@ -70,7 +63,6 @@ export function SignUpPage() {
         password: values.password,
       });
       setUser(user);
-      navigate({ to: "/verify-email", search: { token: undefined } });
     } catch (error) {
       notifications.show({
         title: t("signup.loginFailed"),
@@ -101,7 +93,10 @@ export function SignUpPage() {
             <Stack gap="md">
               {registerMutation.isError && (
                 <Alert color="red" title={t("signup.failed")} radius="xs">
-                  {getErrorMessage(registerMutation.error, t("signup.couldNotCreate"))}
+                  {getErrorMessage(
+                    registerMutation.error,
+                    t("signup.couldNotCreate"),
+                  )}
                 </Alert>
               )}
               <TextInput

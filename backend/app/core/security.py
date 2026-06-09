@@ -37,23 +37,17 @@ def decode_access_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-async def get_current_user(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    token: str = Security(reusable_oauth2),
+async def _resolve_user_from_token(
+    db: AsyncSession,
+    token: str,
 ) -> User:
     """
-    Retrieve the currently authenticated user based on the provided JWT token.
-
-    Args:
-        db (AsyncSession): The asynchronous database session dependency.
-        token (str): The JWT token provided for authentication.
-
-    Returns:
-        User: The authenticated user object.
+    Decode the token and load the user, rejecting invalid tokens and deleted or
+    banned accounts. Does not check email verification.
 
     Raises:
         HTTPException:
-            - unauthorized_error: If the token is invalid or credentials cannot be validated.
+            - unauthorized_error (401): If the token is invalid, or the account has been removed or banned.
             - not_found_error: If the user associated with the token cannot be found.
     """
     try:
@@ -69,25 +63,68 @@ async def get_current_user(
     except jwt.PyJWTError as pyjwt_error:
         raise unauthorized_error("Could not validate credentials.") from pyjwt_error
 
-    if token_data.user_id:
-        user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
-        if not user:
-            raise not_found_error("User not found")
-        if user.is_deleted:
-            raise unauthorized_error("Account has been removed")
-        if not user.is_active:
-            raise unauthorized_error("Account is not active")
-        active_ban = await ban_crud.get_active_user_ban(db, user_id=user.id)
-        if active_ban:
-            raise unauthorized_error("Account has been banned")
-    else:
+    if not token_data.user_id:
         raise unauthorized_error("Could not validate credentials. (Invalid token)")
+
+    user = await user_crud.get_by_id_with_relations(db=db, id=token_data.user_id)
+    if not user:
+        raise not_found_error("User not found")
+    if user.is_deleted:
+        raise unauthorized_error("Account has been removed")
+    active_ban = await ban_crud.get_active_user_ban(db, user_id=user.id)
+    if active_ban:
+        raise unauthorized_error("Account has been banned")
 
     return user
 
 
+async def get_current_user(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    token: str = Security(reusable_oauth2),
+) -> User:
+    """
+    Retrieve the currently authenticated user based on the provided JWT token.
+
+    Requires a verified (active) account; raises 403 for unverified accounts.
+
+    Args:
+        db (AsyncSession): The asynchronous database session dependency.
+        token (str): The JWT token provided for authentication.
+
+    Returns:
+        User: The authenticated user object.
+
+    Raises:
+        HTTPException:
+            - unauthorized_error (401): If the token is invalid or credentials cannot be validated.
+            - forbidden_error (403): If the account is not yet verified.
+            - not_found_error: If the user associated with the token cannot be found.
+    """
+    user = await _resolve_user_from_token(db, token)
+
+    if not user.is_active:
+        raise forbidden_error("Email not verified")
+
+    return user
+
+
+async def get_current_user_allow_unverified(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    token: str = Security(reusable_oauth2),
+) -> User:
+    """
+    Like get_current_user, but permits unverified (PENDING) accounts. Use only
+    for onboarding endpoints: own profile (/auth/me) and resend verification.
+    """
+    return await _resolve_user_from_token(db, token)
+
+
 # Type alias for current user dependency
 AnnotatedCurrentUser = Annotated[User, Depends(get_current_user)]
+
+AnnotatedCurrentUserAllowUnverified = Annotated[
+    User, Depends(get_current_user_allow_unverified)
+]
 
 
 async def get_current_user_optional(
@@ -164,4 +201,3 @@ async def require_admin_user(
 
 # Type alias for admin user dependency - USE THIS FOR ALL ADMIN ENDPOINTS
 AnnotatedAdminUser = Annotated[User, Depends(require_admin_user)]
-

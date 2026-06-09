@@ -4,7 +4,7 @@
  */
 
 import type { ReactNode } from "react";
-import { useIsAuthenticated } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import {
   useChatSubscription,
   ChatWebSocketContext,
@@ -14,10 +14,14 @@ interface ChatSubscriptionProviderProps {
   children: ReactNode;
 }
 
-export function ChatSubscriptionProvider({ children }: ChatSubscriptionProviderProps) {
-  const isAuthenticated = useIsAuthenticated();
+export function ChatSubscriptionProvider({
+  children,
+}: ChatSubscriptionProviderProps) {
+  const isVerified = useAuthStore(
+    (state) => state.token !== null && state.user?.email_verified === true,
+  );
 
-  if (!isAuthenticated) return <>{children}</>;
+  if (!isVerified) return <>{children}</>;
 
   return <ChatSubscriptionInner>{children}</ChatSubscriptionInner>;
 }
