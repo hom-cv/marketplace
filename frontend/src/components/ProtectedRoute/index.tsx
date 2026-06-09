@@ -19,7 +19,7 @@ export function ProtectedRoute() {
   useEffect(() => {
     if (!token || isError) {
       logout();
-      navigate({ to: "/" });
+      navigate({ to: "/", replace: true });
     }
   }, [token, isError, navigate, logout]);
 

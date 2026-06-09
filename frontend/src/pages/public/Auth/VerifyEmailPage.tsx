@@ -71,14 +71,14 @@ export function VerifyEmailPage() {
   // Redirect verified users to /app
   useEffect(() => {
     if (user?.email_verified) {
-      navigate({ to: "/explore" });
+      navigate({ to: "/explore", replace: true });
     }
   }, [user, navigate]);
 
   // Redirect to login if not logged in and no token
   useEffect(() => {
     if (!authToken && !token) {
-      navigate({ to: "/login" });
+      navigate({ to: "/login", replace: true });
     }
   }, [authToken, token, navigate]);
 
@@ -90,7 +90,7 @@ export function VerifyEmailPage() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          navigate({ to: authToken ? "/explore" : "/login" });
+          navigate({ to: authToken ? "/explore" : "/login", replace: true });
           return 0;
         }
         return prev - 1;

@@ -35,13 +35,13 @@ export function VerificationGate() {
 
     if (!user.email_verified) {
       if (!ALLOWED_WHILE_UNVERIFIED.has(pathname)) {
-        navigate({ to: "/verify-email", search: { token: undefined } });
+        navigate({ to: "/verify-email", search: { token: undefined }, replace: true });
       }
       return;
     }
 
     if (AUTH_PAGES.has(pathname)) {
-      navigate({ to: "/explore" });
+      navigate({ to: "/explore", replace: true });
     }
   }, [token, user, pathname, navigate]);
 
