@@ -28,6 +28,7 @@ class InviteService:
         self,
         admin_user: User,
         count: int = 1,
+        fee_free_sales: int = 0,
     ) -> list[InviteResponse]:
         """
         Generate new invite codes.
@@ -35,6 +36,7 @@ class InviteService:
         Args:
             admin_user: The admin generating the invites.
             count: Number of invite codes to generate.
+            fee_free_sales: Platform-fee-free sales each code grants.
 
         Returns:
             List of generated invite responses.
@@ -44,6 +46,7 @@ class InviteService:
             invite = await invite_crud.create(
                 self.db,
                 created_by_user_id=admin_user.id,
+                fee_free_sales=fee_free_sales,
             )
             invites.append(self._to_response(invite))
 
@@ -162,6 +165,7 @@ class InviteService:
         return InviteResponse(
             code=invite.code,
             status=invite.status.value.lower(),
+            fee_free_sales=invite.fee_free_sales,
             created_date=invite.created_date,
             used_at=invite.used_at,
             created_by_username=invite.created_by.username if invite.created_by else None,

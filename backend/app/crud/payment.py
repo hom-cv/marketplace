@@ -111,6 +111,7 @@ class PaymentCRUD(
         processing_fee: int | None = None,
         total_vat: int | None = None,
         seller_payout: int | None = None,
+        platform_fee_waived: bool = False,
         # Shipping address
         shipping_name: str | None = None,
         shipping_phone: str | None = None,
@@ -155,6 +156,7 @@ class PaymentCRUD(
             processing_fee=processing_fee,
             total_vat=total_vat,
             seller_payout=seller_payout,
+            platform_fee_waived=platform_fee_waived,
             # Shipping address
             shipping_name=shipping_name,
             shipping_phone=shipping_phone,

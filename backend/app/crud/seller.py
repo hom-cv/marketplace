@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -58,6 +58,7 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         *,
         user_id: int,
         stripe_account_id: str,
+        fee_free_sales_remaining: int = 0,
     ) -> SellerProfile:
         """
         Create a new seller profile.
@@ -66,6 +67,8 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
             db (AsyncSession): The asynchronous database session.
             user_id (int): The user ID.
             stripe_account_id (str): The Stripe Connect account ID.
+            fee_free_sales_remaining (int): Platform-fee-free sales granted
+                by the redeemed invite.
 
         Returns:
             SellerProfile: The created seller profile.
@@ -74,6 +77,7 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
             user_id=user_id,
             stripe_account_id=stripe_account_id,
             verification_status=SellerVerificationStatus.PENDING,
+            fee_free_sales_remaining=fee_free_sales_remaining,
         )
 
         db.add(seller_profile)
@@ -82,6 +86,27 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         await db.refresh(seller_profile)
 
         return seller_profile
+
+    async def decrement_fee_free_sales(
+        self, db: AsyncSession, *, user_id: int
+    ) -> None:
+        """
+        Atomically consume one platform-fee-free sale credit, flooring at 0.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            user_id (int): The seller's user ID.
+        """
+        stmt = (
+            update(SellerProfile)
+            .where(SellerProfile.user_id == user_id)
+            .values(
+                fee_free_sales_remaining=func.greatest(
+                    SellerProfile.fee_free_sales_remaining - 1, 0
+                )
+            )
+        )
+        await db.execute(stmt)
 
     async def update_account_status(
         self,

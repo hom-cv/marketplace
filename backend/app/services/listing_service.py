@@ -63,6 +63,7 @@ def _payment_to_list_item(
         total_fees=(p.platform_fee or 0) + (p.processing_fee or 0),
         total_vat=p.total_vat,
         seller_payout=p.seller_payout,
+        platform_fee_waived=p.platform_fee_waived,
         fulfillment_status=p.fulfillment_status.value.lower()
         if p.fulfillment_status
         else None,

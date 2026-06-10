@@ -15,6 +15,7 @@ export type InviteStatus = "active" | "used" | "revoked";
 export interface Invite {
   code: string;
   status: InviteStatus;
+  fee_free_sales: number;
   created_date: string;
   used_at: string | null;
   created_by_username: string | null;
@@ -30,6 +31,7 @@ export interface InviteListResponse {
 
 export interface InviteCreateRequest {
   count: number;
+  fee_free_sales: number;
 }
 
 export type ReportType = "user" | "post";

@@ -72,7 +72,7 @@ class SellerService:
                 raise conflict_error("Seller verification is already in progress")
 
         # Validate and consume invite code
-        await self.invite_service.validate_and_consume(
+        invite = await self.invite_service.validate_and_consume(
             code=verification_request.invite_code,
             user_id=user.id,
         )
@@ -95,6 +95,7 @@ class SellerService:
             self.db,
             user_id=user.id,
             stripe_account_id=account.id,
+            fee_free_sales_remaining=invite.fee_free_sales,
         )
 
         await self.db.commit()
@@ -137,6 +138,7 @@ class SellerService:
             payouts_enabled=seller_profile.payouts_enabled,
             details_submitted=seller_profile.details_submitted,
             verified_at=seller_profile.verified_at,
+            fee_free_sales_remaining=seller_profile.fee_free_sales_remaining,
             onboarding_url=onboarding_url,
         )
 

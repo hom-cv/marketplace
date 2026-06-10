@@ -76,11 +76,20 @@ def make_event(*, type, data_object=None, account=None):
 
 # --- DB row stand-ins ------------------------------------------------------
 
-def make_payment(*, id=1, status=PaymentStatus.PENDING, stripe_payment_intent_id="pi_123"):
+def make_payment(
+    *,
+    id=1,
+    status=PaymentStatus.PENDING,
+    stripe_payment_intent_id="pi_123",
+    seller_id=10,
+    platform_fee_waived=False,
+):
     payment = MagicMock()
     payment.id = id
     payment.status = status
     payment.stripe_payment_intent_id = stripe_payment_intent_id
+    payment.seller_id = seller_id
+    payment.platform_fee_waived = platform_fee_waived
     return payment
 
 
@@ -116,6 +125,7 @@ def mocks(monkeypatch):
         update_account_status=AsyncMock(),
         update_verification_status=AsyncMock(),
         assign_seller_role=AsyncMock(),
+        decrement_fee_free_sales=AsyncMock(),
     )
     user_crud = SimpleNamespace(
         get_by_id_with_relations=AsyncMock(return_value=None),

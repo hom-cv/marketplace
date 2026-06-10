@@ -71,6 +71,7 @@ export interface PurchaseListItem {
   total_fees: number | null;
   total_vat: number | null;
   seller_payout: number | null;
+  platform_fee_waived: boolean;
   // Fulfillment tracking fields
   fulfillment_status: string | null;
   tracking_number: string | null;
@@ -95,6 +96,7 @@ export interface PriceBreakdownResponse {
   total_vat: string;
   total: string;
   seller_payout: string;
+  platform_fee_waived: boolean;
 }
 
 export interface PromptPayQr {

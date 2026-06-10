@@ -18,6 +18,7 @@ from app.constants.stripe import (
     ACCOUNT_WEBHOOK_EVENT_HANDLER_MAP,
     CONNECT_WEBHOOK_EVENT_HANDLER_MAP,
 )
+from app.core.exceptions import not_found_error
 from app.crud.payment import payment_crud
 from app.crud.seller import seller_crud
 from app.crud.user import user_crud
@@ -152,10 +153,15 @@ class StripeWebhookService:
         """Handle payment_intent.succeeded webhook event."""
         payment = await self._find_payment_for_intent(intent)
         if not payment:
-            logger.warning(
+            # Non-2xx so Stripe redelivers — a 200 here would permanently
+            # drop the event (Stripe never retries 2xx). Defense-in-depth:
+            # the client secret is only returned after the checkout commit,
+            # so this normally means an orphaned/foreign intent. Trade-off:
+            # a dashboard-created intent will 404-retry for ~3 days, harmless.
+            logger.warning(f"Payment not found for PaymentIntent {intent.id}")
+            raise not_found_error(
                 f"Payment not found for PaymentIntent {intent.id}"
             )
-            return
 
         if payment.status == PaymentStatus.SUCCESSFUL:
             # Idempotent: already processed.
@@ -173,6 +179,14 @@ class StripeWebhookService:
             status=PaymentStatus.SUCCESSFUL,
         )
 
+        # Founding-seller promo: consume one fee-free sale credit. Runs only
+        # on the transition to SUCCESSFUL (redeliveries early-return above),
+        # in the same transaction as the status flip.
+        if payment.platform_fee_waived:
+            await seller_crud.decrement_fee_free_sales(
+                self.db, user_id=payment.seller_id
+            )
+
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as successful via webhook")
 
@@ -182,10 +196,11 @@ class StripeWebhookService:
         """Handle payment_intent.payment_failed / payment_intent.canceled events."""
         payment = await self._find_payment_for_intent(intent)
         if not payment:
-            logger.warning(
+            # Non-2xx so Stripe redelivers (see _handle_payment_intent_succeeded).
+            logger.warning(f"Payment not found for PaymentIntent {intent.id}")
+            raise not_found_error(
                 f"Payment not found for PaymentIntent {intent.id}"
             )
-            return
 
         # Don't downgrade from a terminal state. If Stripe eventually captures
         # after an earlier failed attempt, we don't want a late retry event to

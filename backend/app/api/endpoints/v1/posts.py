@@ -260,15 +260,21 @@ async def get_price_breakdown(
     payment_method: Literal["card", "promptpay"] = Query(
         "card", description="Payment method"
     ),
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PriceBreakdownResponse:
     """
     Get price breakdown for a post.
 
     Returns the full price breakdown including item price, shipping,
-    VAT, platform fee, processing fee, and total.
+    VAT, platform fee, processing fee, and total. When the requester is
+    the post's owner, any fee-free sale promo is reflected.
     """
     method = PaymentMethodType(payment_method)
-    breakdown = await pricing_service.get_price_breakdown_for_post(post_id, method)
+    breakdown = await pricing_service.get_price_breakdown_for_post(
+        post_id,
+        method,
+        viewer_user_id=current_user.id if current_user else None,
+    )
 
     return PriceBreakdownResponse.model_validate(breakdown)
 
@@ -348,14 +354,21 @@ async def preview_earnings(
     payment_method: Literal["card", "promptpay"] = Query(
         "card", description="Payment method"
     ),
+    current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PriceBreakdownResponse:
     """
     Preview seller earnings for a given price and shipping cost.
 
     This endpoint calculates the price breakdown without requiring an existing post.
-    Useful for showing earnings preview during post creation.
+    Useful for showing earnings preview during post creation. When the caller
+    has fee-free sale credits, the waived breakdown is returned.
     """
     method = PaymentMethodType(payment_method)
-    breakdown = pricing_service.calculate_order_total(item_price, shipping_cost, method)
+    breakdown = await pricing_service.preview_earnings(
+        item_price,
+        shipping_cost,
+        method,
+        seller_user_id=current_user.id if current_user else None,
+    )
 
     return PriceBreakdownResponse.model_validate(breakdown)

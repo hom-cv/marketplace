@@ -20,6 +20,7 @@ export interface SellerStatusResponse {
   payouts_enabled: boolean;
   details_submitted: boolean;
   verified_at: string | null;
+  fee_free_sales_remaining: number;
   onboarding_url: string | null;
 }
 

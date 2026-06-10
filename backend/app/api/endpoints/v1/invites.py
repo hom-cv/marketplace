@@ -27,6 +27,7 @@ async def generate_invites(
     return await invite_service.generate_invites(
         admin_user=admin_user,
         count=request.count,
+        fee_free_sales=request.fee_free_sales,
     )
 
 

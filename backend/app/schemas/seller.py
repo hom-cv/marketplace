@@ -37,6 +37,7 @@ class SellerStatusResponse(BaseModel):
     payouts_enabled: bool = False
     details_submitted: bool = False
     verified_at: datetime | None = None
+    fee_free_sales_remaining: int = 0
     onboarding_url: str | None = Field(
         default=None,
         description="One-time URL to resume Stripe Connect onboarding (pending sellers only)",
