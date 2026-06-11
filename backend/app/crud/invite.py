@@ -32,7 +32,7 @@ class InviteCRUD:
         fee_free_sales: int = 0,
         max_retries: int = 5,
     ) -> SellerInvite:
-        """Create a new invite code. Flushes; the service owns the commit.
+        """Create a new invite code.
 
         Handles race conditions by catching IntegrityError on duplicate code
         and retrying with a new code. Each attempt runs in a SAVEPOINT so a
@@ -155,7 +155,7 @@ class InviteCRUD:
         *,
         invite: SellerInvite,
     ) -> SellerInvite:
-        """Revoke an invite code. Flushes; the service owns the commit."""
+        """Revoke an invite code."""
         invite.status = InviteStatus.REVOKED
 
         db.add(invite)
