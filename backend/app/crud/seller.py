@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import func, select, update
+from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -101,8 +101,12 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
             update(SellerProfile)
             .where(SellerProfile.user_id == user_id)
             .values(
-                fee_free_sales_remaining=func.greatest(
-                    SellerProfile.fee_free_sales_remaining - 1, 0
+                fee_free_sales_remaining=case(
+                    (
+                        SellerProfile.fee_free_sales_remaining > 0,
+                        SellerProfile.fee_free_sales_remaining - 1,
+                    ),
+                    else_=0,
                 )
             )
         )
