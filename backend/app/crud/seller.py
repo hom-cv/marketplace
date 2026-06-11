@@ -4,12 +4,9 @@ from datetime import datetime, timezone
 
 from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.crud._base import BaseCRUD
 from app.models.seller import SellerProfile, SellerVerificationStatus
-from app.models.user import User
-from app.models.user_role import RoleType, UserRole, UserToUserRole
 from app.schemas.seller import SellerVerificationRequest
 
 
@@ -174,41 +171,5 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         await db.refresh(seller_profile)
 
         return seller_profile
-
-    async def assign_seller_role(self, db: AsyncSession, *, user: User) -> User:
-        """
-        Assign the SELLER role to a user.
-
-        Args:
-            db (AsyncSession): The asynchronous database session.
-            user (User): The user to assign the role to.
-
-        Returns:
-            User: The updated user with SELLER role.
-        """
-        # Get or create SELLER role
-        query = select(UserRole).where(UserRole.role == RoleType.SELLER)
-        result = await db.execute(query)
-        seller_role = result.scalar_one_or_none()
-
-        if not seller_role:
-            seller_role = UserRole(role=RoleType.SELLER)
-            db.add(seller_role)
-            await db.flush()
-
-        # Check if user already has SELLER role
-        if not any(r.role == RoleType.SELLER for r in user.roles):
-            user_role_assoc = UserToUserRole(user_id=user.id, role_id=seller_role.id)
-            db.add(user_role_assoc)
-
-            await db.flush()
-
-            # Refresh user to get updated roles
-            query = select(User).where(User.id == user.id).options(selectinload(User.roles))
-            result = await db.execute(query)
-            user = result.scalar_one()
-
-        return user
-
 
 seller_crud = SellerCRUD(SellerProfile)

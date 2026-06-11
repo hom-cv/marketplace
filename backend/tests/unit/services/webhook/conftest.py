@@ -124,20 +124,12 @@ def mocks(monkeypatch):
         get_by_stripe_account_id_for_update=AsyncMock(return_value=None),
         update_account_status=AsyncMock(),
         update_verification_status=AsyncMock(),
-        assign_seller_role=AsyncMock(),
         decrement_fee_free_sales=AsyncMock(),
     )
-    user_crud = SimpleNamespace(
-        get_by_id_with_relations=AsyncMock(return_value=None),
-    )
-
     monkeypatch.setattr(mod, "payment_crud", payment_crud)
     monkeypatch.setattr(mod, "seller_crud", seller_crud)
-    monkeypatch.setattr(mod, "user_crud", user_crud)
 
-    return SimpleNamespace(
-        payment_crud=payment_crud, seller_crud=seller_crud, user_crud=user_crud
-    )
+    return SimpleNamespace(payment_crud=payment_crud, seller_crud=seller_crud)
 
 
 @pytest.fixture
