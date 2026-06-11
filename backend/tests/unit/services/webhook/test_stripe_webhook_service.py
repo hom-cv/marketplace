@@ -112,14 +112,25 @@ class TestPaymentIntentSucceeded:
         await service._handle_payment_intent_succeeded(make_payment_intent())
         mocks.payment_crud.update_status.assert_not_awaited()
 
-    async def test_payment_not_found_raises_for_redelivery(self, service, mocks):
-        # Unknown intent -> non-2xx so Stripe redelivers instead of dropping
-        # the event (Stripe never retries a 2xx response).
+    async def test_platform_intent_not_found_raises_for_redelivery(
+        self, service, mocks
+    ):
+        # Our intent (payment_id metadata) with no visible row -> non-2xx so
+        # Stripe redelivers instead of dropping the event (never retries 2xx).
         with pytest.raises(HTTPException) as exc_info:
             await service._handle_payment_intent_succeeded(
-                make_payment_intent(metadata={})
+                make_payment_intent(metadata={"payment_id": "7"})
             )
         assert exc_info.value.status_code == 404
+        mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_foreign_intent_is_acked_not_retried(self, service, mocks):
+        # No payment_id metadata -> dashboard/foreign intent; ack with 200 so
+        # Stripe doesn't retry it for days against our failure rate.
+        await service._handle_payment_intent_succeeded(
+            make_payment_intent(metadata={})
+        )
         mocks.payment_crud.update_status.assert_not_awaited()
         assert service.db.commit.await_count == 0
 
@@ -192,12 +203,21 @@ class TestPaymentIntentFailed:
         assert kwargs["failure_code"] is None
         assert kwargs["failure_message"] == "Declined"
 
-    async def test_payment_not_found_raises_for_redelivery(self, service, mocks):
+    async def test_platform_intent_not_found_raises_for_redelivery(
+        self, service, mocks
+    ):
         with pytest.raises(HTTPException) as exc_info:
             await service._handle_payment_intent_failed(
-                make_payment_intent(metadata={})
+                make_payment_intent(metadata={"payment_id": "7"})
             )
         assert exc_info.value.status_code == 404
+        mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_foreign_intent_is_acked_not_retried(self, service, mocks):
+        await service._handle_payment_intent_failed(
+            make_payment_intent(metadata={})
+        )
         mocks.payment_crud.update_status.assert_not_awaited()
         assert service.db.commit.await_count == 0
 

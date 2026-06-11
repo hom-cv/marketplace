@@ -147,21 +147,46 @@ class StripeWebhookService:
             self.db, payment_intent_id=intent.id
         )
 
+    async def _require_payment_for_intent(
+        self, intent: stripe.PaymentIntent
+    ) -> Payment | None:
+        """
+        Look up the Payment for a payment_intent.* event, applying the
+        missing-row policy.
+
+        Platform-created intents always carry ``payment_id`` in metadata
+        (set in ``PaymentService._create_payment_intent``), so:
+        - No ``payment_id`` metadata → dashboard-created/foreign intent.
+          Return None; the caller acks with 200 so Stripe stops delivering
+          (a 404 would be retried for ~3 days and count against the
+          endpoint's failure rate).
+        - ``payment_id`` present but row missing → ours, not visible yet.
+          Raise 404 so Stripe redelivers and the event isn't dropped
+          (Stripe never retries a 2xx).
+        """
+        payment = await self._find_payment_for_intent(intent)
+        if payment:
+            return payment
+
+        if not (intent.metadata or {}).get("payment_id"):
+            logger.info(
+                f"Ignoring foreign PaymentIntent {intent.id} "
+                "(no payment_id metadata)"
+            )
+            return None
+
+        logger.warning(f"Payment not found for PaymentIntent {intent.id}")
+        raise not_found_error(
+            f"Payment not found for PaymentIntent {intent.id}"
+        )
+
     async def _handle_payment_intent_succeeded(
         self, intent: stripe.PaymentIntent
     ) -> None:
         """Handle payment_intent.succeeded webhook event."""
-        payment = await self._find_payment_for_intent(intent)
+        payment = await self._require_payment_for_intent(intent)
         if not payment:
-            # Non-2xx so Stripe redelivers — a 200 here would permanently
-            # drop the event (Stripe never retries 2xx). Defense-in-depth:
-            # the client secret is only returned after the checkout commit,
-            # so this normally means an orphaned/foreign intent. Trade-off:
-            # a dashboard-created intent will 404-retry for ~3 days, harmless.
-            logger.warning(f"Payment not found for PaymentIntent {intent.id}")
-            raise not_found_error(
-                f"Payment not found for PaymentIntent {intent.id}"
-            )
+            return
 
         if payment.status == PaymentStatus.SUCCESSFUL:
             # Idempotent: already processed.
@@ -194,13 +219,9 @@ class StripeWebhookService:
         self, intent: stripe.PaymentIntent
     ) -> None:
         """Handle payment_intent.payment_failed / payment_intent.canceled events."""
-        payment = await self._find_payment_for_intent(intent)
+        payment = await self._require_payment_for_intent(intent)
         if not payment:
-            # Non-2xx so Stripe redelivers (see _handle_payment_intent_succeeded).
-            logger.warning(f"Payment not found for PaymentIntent {intent.id}")
-            raise not_found_error(
-                f"Payment not found for PaymentIntent {intent.id}"
-            )
+            return
 
         # Don't downgrade from a terminal state. If Stripe eventually captures
         # after an earlier failed attempt, we don't want a late retry event to
