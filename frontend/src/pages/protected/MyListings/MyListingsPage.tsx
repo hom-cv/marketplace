@@ -7,6 +7,7 @@ import { IconPlus, IconPackage } from "@tabler/icons-react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useMyPosts } from "@/hooks/usePosts";
+import { useSellerStatus } from "@/hooks/useSeller";
 import { Alert } from "@/components/Alert";
 import { PostCard } from "@/components/PostCard";
 import styles from "./MyListingsPage.module.css";
@@ -17,6 +18,8 @@ export function MyListingsPage() {
   const { t: tCommon } = useTranslation("common");
 
   const { data: posts, isLoading, error } = useMyPosts();
+  const { data: sellerStatus } = useSellerStatus();
+  const feeFreeSalesRemaining = sellerStatus?.fee_free_sales_remaining ?? 0;
 
   if (isLoading) {
     return (
@@ -44,6 +47,13 @@ export function MyListingsPage() {
         <div className={styles.header}>
           <h1 className={styles.title}>{t("myListings.title")}</h1>
           <p className={styles.subtitle}>{t("myListings.subtitle")}</p>
+          {feeFreeSalesRemaining > 0 && (
+            <p className={styles.promoNote}>
+              {tCommon("seller.feeFreeSalesRemaining", {
+                count: feeFreeSalesRemaining,
+              })}
+            </p>
+          )}
         </div>
 
         {!posts || posts.length === 0 ? (

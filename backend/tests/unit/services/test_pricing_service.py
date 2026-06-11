@@ -215,3 +215,61 @@ class TestCalculateOrderTotal:
         # Processing VAT: 46.50 * 7% = 3.255 -> 3.26 (ROUND_UP)
         # Total VAT: 7.00 + 3.26 = 10.26
         assert result.total_vat == Decimal("10.26")
+
+
+class TestPlatformFeeWaiver:
+    """Tests for the founding-seller platform fee waiver."""
+
+    def test_waived_card_breakdown(self, pricing_service):
+        """Waiver zeroes the platform fee (and its VAT); processing fee stays."""
+        result = pricing_service.calculate_order_total(
+            item_price=Decimal("1000.00"),
+            shipping_cost=Decimal("0.00"),
+            payment_method=PaymentMethodType.CARD,
+            waive_platform_fee=True,
+        )
+
+        assert result.platform_fee == Decimal("0.00")
+        assert result.processing_fee == Decimal("49.76")
+        assert result.total_fees == Decimal("49.76")
+        # Only processing VAT remains: 46.50 * 7% -> 3.26
+        assert result.total_vat == Decimal("3.26")
+        assert result.seller_payout == Decimal("950.24")
+        assert result.platform_fee_waived is True
+
+    def test_waived_promptpay_breakdown(self, pricing_service):
+        """PromptPay waiver: payout = base - promptpay processing fee."""
+        result = pricing_service.calculate_order_total(
+            item_price=Decimal("1000.00"),
+            shipping_cost=Decimal("0.00"),
+            payment_method=PaymentMethodType.PROMPTPAY,
+            waive_platform_fee=True,
+        )
+
+        assert result.platform_fee == Decimal("0.00")
+        # Processing base: 1000*2% + 10 = 30.00; VAT 2.10; total 32.10
+        assert result.processing_fee == Decimal("32.10")
+        assert result.seller_payout == Decimal("967.90")
+        assert result.platform_fee_waived is True
+
+    def test_waiver_does_not_change_buyer_total(self, pricing_service):
+        """Buyer pays item + shipping regardless of the waiver."""
+        result = pricing_service.calculate_order_total(
+            item_price=Decimal("1000.00"),
+            shipping_cost=Decimal("100.00"),
+            payment_method=PaymentMethodType.CARD,
+            waive_platform_fee=True,
+        )
+
+        assert result.total == Decimal("1100.00")
+
+    def test_default_is_not_waived(self, pricing_service):
+        """Without the flag the standard breakdown is returned."""
+        result = pricing_service.calculate_order_total(
+            item_price=Decimal("1000.00"),
+            shipping_cost=Decimal("0.00"),
+            payment_method=PaymentMethodType.CARD,
+        )
+
+        assert result.platform_fee == Decimal("107.00")
+        assert result.platform_fee_waived is False

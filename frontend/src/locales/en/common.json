@@ -105,6 +105,8 @@
     "shipping": "+ Shipping",
     "fees": "- Fees",
     "youReceive": "You receive",
+    "platformFeeWaived": "Platform fee waived",
+    "salesLeft": "{{count}} left",
     "feesExplanation": "Fees include platform fee, processing fee, transfer fee, and VAT"
   },
   "tracking": {
@@ -249,6 +251,7 @@
     "reviewPending": "Review Pending",
     "verified": "You're a Verified Seller!",
     "verifiedMessage": "Your Stripe payout account is verified. You can now create listings and receive payouts.",
+    "feeFreeSalesRemaining": "{{count}} sale(s) with no platform fee remaining",
     "createListing": "Create a Listing",
     "pendingTitle": "Verification in Progress",
     "pendingMessage": "Stripe is reviewing your information. This usually takes a few moments. Please check back shortly.",

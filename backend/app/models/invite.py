@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String
+from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, Integer, String, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.constants.invite import InviteStatus
@@ -36,6 +36,14 @@ class SellerInvite(Base):
         default=InviteStatus.ACTIVE,
         nullable=False,
         index=True,
+    )
+
+    # Founding-seller promo: number of platform-fee-free sales this code grants
+    fee_free_sales: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default=text("0"),
+        nullable=False,
     )
 
     # Who created the invite (admin)

@@ -32,6 +32,11 @@ export function usePriceBreakdown(
       : queryKeys.payments.priceBreakdown(postId!),
     queryFn: () => getPriceBreakdown(numericId!, method || "card"),
     enabled: !!numericId,
+    // Poll only while showing the waived state so an open page notices when
+    // a buyer's purchase consumes the seller's last fee-free credit. The API
+    // sets platform_fee_waived only for the post owner, so buyers never poll.
+    refetchInterval: (query) =>
+      query.state.data?.platform_fee_waived ? 30_000 : false,
   });
 }
 
@@ -49,6 +54,9 @@ export function useEarningsPreview(
     queryKey: queryKeys.payments.earningsPreview(itemPrice!, shippingCost),
     queryFn: () => getEarningsPreview(itemPrice!, shippingCost, "card"),
     enabled: isQueryable,
+    // Poll only while showing the waived state (see usePriceBreakdown).
+    refetchInterval: (query) =>
+      query.state.data?.platform_fee_waived ? 30_000 : false,
   });
 }
 

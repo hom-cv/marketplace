@@ -116,7 +116,13 @@ export function useReviewReportMutation() {
 export function useGenerateInvitesMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (count: number) => generateInvites(count),
+    mutationFn: ({
+      count,
+      feeFreeSales,
+    }: {
+      count: number;
+      feeFreeSales: number;
+    }) => generateInvites(count, feeFreeSales),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.admin.allInvites });
     },

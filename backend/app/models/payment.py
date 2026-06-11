@@ -3,7 +3,16 @@
 from datetime import datetime
 from enum import auto
 
-from sqlalchemy import BigInteger, DateTime, Enum, ForeignKey, String, Text
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    String,
+    Text,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
@@ -88,6 +97,13 @@ class Payment(Base):
     processing_fee: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     total_vat: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     seller_payout: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    # Founding-seller promo: platform fee waived for this sale
+    platform_fee_waived: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=text("false"),
+        nullable=False,
+    )
 
     # Payment method and status
     payment_method: Mapped[PaymentMethod] = mapped_column(

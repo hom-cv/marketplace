@@ -29,6 +29,7 @@ class InviteCRUD:
         db: AsyncSession,
         *,
         created_by_user_id: int,
+        fee_free_sales: int = 0,
         max_retries: int = 5,
     ) -> SellerInvite:
         """Create a new invite code.
@@ -43,6 +44,7 @@ class InviteCRUD:
                 code=code,
                 status=InviteStatus.ACTIVE,
                 created_by_user_id=created_by_user_id,
+                fee_free_sales=fee_free_sales,
             )
             db.add(invite)
 

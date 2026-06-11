@@ -11,6 +11,7 @@ import { Loader } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { usePriceBreakdown, useEarningsPreview } from "@/hooks/usePayments";
+import { useSellerStatus } from "@/hooks/useSeller";
 import styles from "./EarningsPreview.module.css";
 
 interface BreakdownData {
@@ -18,6 +19,7 @@ interface BreakdownData {
   shippingCost: number;
   totalFees: number;
   sellerPayout: number;
+  platformFeeWaived?: boolean;
 }
 
 interface EarningsPreviewProps {
@@ -66,6 +68,11 @@ export function EarningsPreview({
   const isError = postQuery.isError || previewQuery.isError;
   const apiData = postQuery.data || previewQuery.data;
 
+  // Remaining promo credits, shown alongside the waived row in the live
+  // preview modes (not for historical sales passed via `breakdown`).
+  const { data: sellerStatus } = useSellerStatus();
+  const feeFreeSalesRemaining = sellerStatus?.fee_free_sales_remaining ?? 0;
+
   // Use provided breakdown or convert API response (memoized to prevent re-creation)
   const data = useMemo<BreakdownData | null>(() => {
     if (breakdown) return breakdown;
@@ -75,6 +82,7 @@ export function EarningsPreview({
       shippingCost: parseFloat(apiData.shipping_cost),
       totalFees: parseFloat(apiData.total_fees),
       sellerPayout: parseFloat(apiData.seller_payout),
+      platformFeeWaived: apiData.platform_fee_waived,
     };
   }, [breakdown, apiData]);
 
@@ -141,6 +149,22 @@ export function EarningsPreview({
               -฿{format(data.totalFees)}
             </td>
           </tr>
+          {data.platformFeeWaived && (
+            <tr className={styles.row}>
+              <td className={`${styles.labelCell} ${styles.waived}`}>
+                {t("earnings.platformFeeWaived")}
+                {!breakdown && feeFreeSalesRemaining > 0 && (
+                  <span className={styles.waivedCount}>
+                    {" · "}
+                    {t("earnings.salesLeft", { count: feeFreeSalesRemaining })}
+                  </span>
+                )}
+              </td>
+              <td className={`${styles.valueCell} ${styles.waived}`}>
+                ฿0.00
+              </td>
+            </tr>
+          )}
           <tr className={styles.rowTotal}>
             <td className={styles.labelTotal}>{t("earnings.youReceive")}</td>
             <td className={styles.valueTotal}>฿{format(data.sellerPayout)}</td>

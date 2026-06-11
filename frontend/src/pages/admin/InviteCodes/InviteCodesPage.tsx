@@ -36,6 +36,7 @@ const STATUS_BADGE: Record<InviteStatus, { label: string; color: "green" | "blue
 export function InviteCodesPage() {
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [generateCount, setGenerateCount] = useState<number>(1);
+  const [generateFeeFreeSales, setGenerateFeeFreeSales] = useState<number>(0);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
 
   const { data: invitesData, isLoading, error } = useAdminInvites(statusFilter);
@@ -75,11 +76,26 @@ export function InviteCodesPage() {
           w={100}
           label="Count"
         />
+        <NumberInput
+          value={generateFeeFreeSales}
+          onChange={(val) =>
+            setGenerateFeeFreeSales(typeof val === "number" ? val : 0)
+          }
+          min={0}
+          max={100}
+          w={140}
+          label="Fee-free sales"
+        />
         <Button
           variant="primary"
           size="sm"
           leftIcon={<IconPlus size={14} />}
-          onClick={() => generateMutation.mutate(generateCount)}
+          onClick={() =>
+            generateMutation.mutate({
+              count: generateCount,
+              feeFreeSales: generateFeeFreeSales,
+            })
+          }
           disabled={generateMutation.isPending}
         >
           {generateMutation.isPending ? "Generating..." : "Generate"}
@@ -163,6 +179,7 @@ export function InviteCodesPage() {
                     <div className={shared.detailGrid}>
                       <DetailItem label="Created By">{invite.created_by_username || "-"}</DetailItem>
                       <DetailItem label="Created">{formatShortDate(invite.created_date)}</DetailItem>
+                      <DetailItem label="Fee-free sales">{invite.fee_free_sales}</DetailItem>
                       {invite.used_by_username && (
                         <>
                           <DetailItem label="Used By">{invite.used_by_username}</DetailItem>

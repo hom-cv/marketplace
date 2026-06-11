@@ -155,8 +155,21 @@ class PaymentService:
             if payment_method == PaymentMethod.PROMPTPAY
             else PaymentMethodType.CARD
         )
+        # Founding-seller promo: waive the platform fee while credits remain.
+        # The credit is consumed when the payment succeeds (webhook).
+        #
+        # Known accepted limitation: with 1 credit left, two concurrent
+        # checkouts for the same seller can both read remaining > 0 here and
+        # both get waived (the decrement happens on webhook success;
+        # GREATEST floors the counter at 0). Worst case is one extra waived
+        # platform fee, in the seller's favor — deemed not worth a locking
+        # scheme at MVP scale. Revisit if promo credits or traffic grow.
+        waive_platform_fee = seller_profile.fee_free_sales_remaining > 0
         price_breakdown = self.pricing_service.calculate_order_total(
-            post.price, post.shipping_cost, method_type
+            post.price,
+            post.shipping_cost,
+            method_type,
+            waive_platform_fee=waive_platform_fee,
         )
 
         # Convert to satang
@@ -176,6 +189,7 @@ class PaymentService:
             stripe_payment_intent_id=None,  # Will update after intent creation
             description=f"Purchase: {post.title}",
             **fees,
+            platform_fee_waived=waive_platform_fee,
             shipping_name=shipping.name,
             shipping_phone=shipping.phone,
             shipping_address=shipping.address,

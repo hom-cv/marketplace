@@ -61,6 +61,11 @@
   color: var(--color-error);
 }
 
+.waived {
+  color: var(--color-success);
+  font-weight: 500;
+}
+
 .rowTotal {
   border-bottom: none;
 }
@@ -80,6 +85,13 @@
   color: var(--color-success);
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.waivedCount {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-success);
+  white-space: nowrap;
 }
 
 .explanation {

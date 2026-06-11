@@ -50,8 +50,11 @@ export function getAdminStats(): Promise<AdminStats> {
   return apiRequest<AdminStats>("/admin/stats");
 }
 
-export function generateInvites(count: number): Promise<Invite[]> {
-  const request: InviteCreateRequest = { count };
+export function generateInvites(
+  count: number,
+  feeFreeSales = 0
+): Promise<Invite[]> {
+  const request: InviteCreateRequest = { count, fee_free_sales: feeFreeSales };
   return jsonRequest<Invite[]>("/invites", "POST", request);
 }
 

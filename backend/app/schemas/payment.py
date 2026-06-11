@@ -32,6 +32,7 @@ class PriceBreakdown(BaseModel):
     total_vat: Decimal
     total: Decimal
     seller_payout: Decimal
+    platform_fee_waived: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -145,6 +146,7 @@ class PurchaseListItem(BaseModel):
     total_fees: int | None = None
     total_vat: int | None = None
     seller_payout: int | None = None
+    platform_fee_waived: bool = False
     # Fulfillment tracking fields
     fulfillment_status: str | None = None
     tracking_number: str | None = None

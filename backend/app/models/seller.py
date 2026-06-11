@@ -3,7 +3,16 @@
 from datetime import datetime
 from enum import auto
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, String
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.utils import AutoName
@@ -59,6 +68,14 @@ class SellerProfile(Base):
     details_submitted: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
+        nullable=False,
+    )
+
+    # Founding-seller promo: platform-fee-free sales left (granted via invite)
+    fee_free_sales_remaining: Mapped[int] = mapped_column(
+        Integer,
+        default=0,
+        server_default=text("0"),
         nullable=False,
     )
 

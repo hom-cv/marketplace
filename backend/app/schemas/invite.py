@@ -14,6 +14,12 @@ class InviteCreateRequest(BaseModel):
         le=50,
         description="Number of invite codes to generate (1-50)",
     )
+    fee_free_sales: int = Field(
+        default=0,
+        ge=0,
+        le=100,
+        description="Number of platform-fee-free sales each code grants (0-100)",
+    )
 
 
 class InviteResponse(BaseModel):
@@ -21,6 +27,7 @@ class InviteResponse(BaseModel):
 
     code: str
     status: str
+    fee_free_sales: int = 0
     created_date: datetime
     used_at: datetime | None = None
     created_by_username: str | None = None

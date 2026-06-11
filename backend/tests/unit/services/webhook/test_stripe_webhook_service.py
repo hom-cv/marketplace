@@ -5,7 +5,9 @@ cover the handlers' branch/guard logic and transaction discipline:
 commit on mutating paths, no commit on early returns.
 """
 
+import pytest
 import stripe
+from fastapi import HTTPException
 
 from app.models.payment import PaymentStatus
 from app.models.seller import SellerVerificationStatus
@@ -110,10 +112,56 @@ class TestPaymentIntentSucceeded:
         await service._handle_payment_intent_succeeded(make_payment_intent())
         mocks.payment_crud.update_status.assert_not_awaited()
 
-    async def test_payment_not_found(self, service, mocks):
-        # primary lookup misses, no metadata -> None
-        await service._handle_payment_intent_succeeded(make_payment_intent(metadata={}))
+    async def test_platform_intent_not_found_raises_for_redelivery(
+        self, service, mocks
+    ):
+        # Our intent (payment_id metadata) with no visible row -> non-2xx so
+        # Stripe redelivers instead of dropping the event (never retries 2xx).
+        with pytest.raises(HTTPException) as exc_info:
+            await service._handle_payment_intent_succeeded(
+                make_payment_intent(metadata={"payment_id": "7"})
+            )
+        assert exc_info.value.status_code == 404
         mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_foreign_intent_is_acked_not_retried(self, service, mocks):
+        # No payment_id metadata -> dashboard/foreign intent; ack with 200 so
+        # Stripe doesn't retry it for days against our failure rate.
+        await service._handle_payment_intent_succeeded(
+            make_payment_intent(metadata={})
+        )
+        mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_waived_payment_consumes_fee_free_credit(self, service, mocks):
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(
+                status=PaymentStatus.PENDING,
+                platform_fee_waived=True,
+                seller_id=42,
+            )
+        )
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+        mocks.seller_crud.decrement_fee_free_sales.assert_awaited_once_with(
+            service.db, user_id=42
+        )
+        assert service.db.commit.await_count == 1
+
+    async def test_non_waived_payment_does_not_touch_credits(self, service, mocks):
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(status=PaymentStatus.PENDING, platform_fee_waived=False)
+        )
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+        mocks.seller_crud.decrement_fee_free_sales.assert_not_awaited()
+
+    async def test_redelivery_does_not_double_decrement(self, service, mocks):
+        # Already SUCCESSFUL -> early return before the decrement.
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(status=PaymentStatus.SUCCESSFUL, platform_fee_waived=True)
+        )
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+        mocks.seller_crud.decrement_fee_free_sales.assert_not_awaited()
         assert service.db.commit.await_count == 0
 
 
@@ -154,6 +202,24 @@ class TestPaymentIntentFailed:
         kwargs = mocks.payment_crud.update_status.await_args.kwargs
         assert kwargs["failure_code"] is None
         assert kwargs["failure_message"] == "Declined"
+
+    async def test_platform_intent_not_found_raises_for_redelivery(
+        self, service, mocks
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            await service._handle_payment_intent_failed(
+                make_payment_intent(metadata={"payment_id": "7"})
+            )
+        assert exc_info.value.status_code == 404
+        mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_foreign_intent_is_acked_not_retried(self, service, mocks):
+        await service._handle_payment_intent_failed(
+            make_payment_intent(metadata={})
+        )
+        mocks.payment_crud.update_status.assert_not_awaited()
+        assert service.db.commit.await_count == 0
 
     async def test_no_downgrade_from_terminal(self, service, mocks):
         for terminal in (
