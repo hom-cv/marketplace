@@ -84,10 +84,10 @@ class AuthService:
             hashed_password=get_password_hash(obj_in.password),
         )
 
-        # Persist to database via CRUD layer
         user = await self._user_crud.create_user(db=self.db, user=user)
 
-        # Send verification email
+        await self.db.commit()
+
         email_sent = self._email_service.send_verification_email(
             user_id=user.id,
             email=user.email_address,
@@ -151,6 +151,7 @@ class AuthService:
 
         # Update via CRUD layer
         user = await self._user_crud.update_email_verified(db=self.db, user=user)
+        await self.db.commit()
 
         return user
 

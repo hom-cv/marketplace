@@ -236,6 +236,7 @@ class ListingService:
             user_id=owner_id,
         )
         created_post = await self._post_crud.create_post(self.db, post=post)
+        await self.db.commit()
         return PostResponseSchema.model_validate(created_post)
 
     async def update_listing(

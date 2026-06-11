@@ -29,7 +29,7 @@ class BanCRUD:
             is_active=True,
         )
         db.add(ban)
-        await db.commit()
+        await db.flush()
         await db.refresh(ban)
         return ban
 
@@ -71,7 +71,7 @@ class BanCRUD:
         ban.lifted_by_user_id = lifted_by_user_id
 
         db.add(ban)
-        await db.commit()
+        await db.flush()
         await db.refresh(ban)
         return ban
 
@@ -127,7 +127,7 @@ class BanCRUD:
             is_active=True,
         )
         db.add(ban)
-        await db.commit()
+        await db.flush()
         await db.refresh(ban)
         return ban
 
@@ -169,7 +169,7 @@ class BanCRUD:
         ban.lifted_by_user_id = lifted_by_user_id
 
         db.add(ban)
-        await db.commit()
+        await db.flush()
         await db.refresh(ban)
         return ban
 

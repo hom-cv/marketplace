@@ -56,6 +56,12 @@ class User(Base):
         String(255),
         nullable=False,
     )
+    # INVARIANT: email_verified=True ⟺ status=ACTIVE (for now). Both fields
+    # are written together only by UserCRUD.update_email_verified (the single
+    # writer, called from AuthService.verify_email) — never set one without
+    # the other. UserStatus exists so account lifecycle can grow beyond
+    # verification (e.g. suspension) without overloading this boolean; until
+    # it does, is_active and email_verified mean the same thing.
     email_verified: Mapped[bool] = mapped_column(
         default=False,
         nullable=False,

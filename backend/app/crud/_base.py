@@ -15,13 +15,8 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
     Generic CRUD base.
 
-    TODO: several CRUD overrides predate this convention and still commit
-    internally; they (and their callers) should be migrated to flush +
-    service-owned commit. Find the stragglers with:
-        grep -rn "await db.commit()" app/crud/
-    Known examples: InviteCRUD.create (-> invite_service),
-    ReportCRUD.create / update_status (-> moderation_service),
-    PostCRUD.create_post (-> create_post endpoint).
+    Transaction convention: CRUD methods flush (never commit); the service
+    layer owns the commit so multi-step flows stay atomic.
     """
 
     def __init__(self, model: Type[ModelType]) -> None:

@@ -42,6 +42,7 @@ class FollowService:
         await self._follow_crud.follow_user(
             self.db, follower_id=follower_id, following_id=following_id
         )
+        await self.db.commit()
 
     async def unfollow_user(self, *, follower_id: int, following_id: int) -> None:
         """
@@ -52,6 +53,7 @@ class FollowService:
         await self._follow_crud.unfollow_user(
             self.db, follower_id=follower_id, following_id=following_id
         )
+        await self.db.commit()
 
 
 def _get_follow_service(

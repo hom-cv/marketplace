@@ -12,6 +12,7 @@ from app.db.utils import get_async_db
 from app.models import User
 from app.schemas.like import LikedPostsResponse
 from app.schemas.post import PostResponseSchema
+from app.services.like_service import AnnotatedLikeService
 
 router = APIRouter(prefix="/likes", tags=["likes"])
 
@@ -21,8 +22,7 @@ router = APIRouter(prefix="/likes", tags=["likes"])
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def like_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    like_crud_dep: AnnotatedLikeCRUD,
+    like_service: AnnotatedLikeService,
     current_user: Annotated[User, Depends(get_current_user)],
     post: AnnotatedValidPost,
 ) -> None:
@@ -33,7 +33,7 @@ async def like_post(
     Returns 204 No Content. Frontend should refetch post data for updated like info.
     Requires authentication.
     """
-    await like_crud_dep.like_post(db, user_id=current_user.id, post_id=post.id)
+    await like_service.like_post(user_id=current_user.id, post_id=post.id)
 
 
 @router.delete(
@@ -41,8 +41,7 @@ async def like_post(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def unlike_post(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
-    like_crud_dep: AnnotatedLikeCRUD,
+    like_service: AnnotatedLikeService,
     current_user: Annotated[User, Depends(get_current_user)],
     post: AnnotatedValidPost,
 ) -> None:
@@ -53,7 +52,7 @@ async def unlike_post(
     Returns 204 No Content. Frontend should refetch post data for updated like info.
     Requires authentication.
     """
-    await like_crud_dep.unlike_post(db, user_id=current_user.id, post_id=post.id)
+    await like_service.unlike_post(user_id=current_user.id, post_id=post.id)
 
 
 @router.get(

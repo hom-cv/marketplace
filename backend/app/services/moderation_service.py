@@ -89,6 +89,7 @@ class ModerationService:
             reported_user_id=reported_user_id,
             reported_post_id=reported_post_id,
         )
+        await self.db.commit()
 
         logger.info(f"User {reporter_user.id} submitted {report_type} report #{report.id}")
         return self._report_to_response(report)
@@ -164,6 +165,7 @@ class ModerationService:
             reviewed_by_user_id=admin_user.id,
             admin_notes=admin_notes,
         )
+        await self.db.commit()
 
         logger.info(f"Admin {admin_user.id} reviewed report #{report_id} as {status}")
         return self._report_to_response(report)
@@ -230,6 +232,7 @@ class ModerationService:
             banned_by_user_id=admin_user.id,
             reason=reason,
         )
+        await self.db.commit()
 
         logger.info(f"Admin {admin_user.id} banned user {user_id}")
         return self._user_ban_to_response(ban)
@@ -252,6 +255,7 @@ class ModerationService:
             ban=ban,
             lifted_by_user_id=admin_user.id,
         )
+        await self.db.commit()
 
         logger.info(f"Admin {admin_user.id} lifted ban #{ban_id}")
         return self._user_ban_to_response(ban)
@@ -305,6 +309,7 @@ class ModerationService:
             banned_by_user_id=admin_user.id,
             reason=reason,
         )
+        await self.db.commit()
 
         logger.info(f"Admin {admin_user.id} banned post {post_id}")
         return self._post_ban_to_response(ban)
@@ -327,6 +332,7 @@ class ModerationService:
             ban=ban,
             lifted_by_user_id=admin_user.id,
         )
+        await self.db.commit()
 
         logger.info(f"Admin {admin_user.id} lifted post ban #{ban_id}")
         return self._post_ban_to_response(ban)

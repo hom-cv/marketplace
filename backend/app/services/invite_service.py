@@ -50,6 +50,9 @@ class InviteService:
             )
             invites.append(self._to_response(invite))
 
+        # Commit the whole batch atomically (CRUD only flushes).
+        await self.db.commit()
+
         logger.info(f"Admin {admin_user.id} generated {count} invite codes")
         return invites
 
@@ -71,7 +74,7 @@ class InviteService:
         Raises:
             BadRequestError: If code is invalid or already used.
         """
-        invite = await invite_crud.get_by_code(self.db, code=code)
+        invite = await invite_crud.get_by_code_for_update(self.db, code=code)
 
         if not invite:
             raise bad_request_error("Invalid invite code")
@@ -82,12 +85,13 @@ class InviteService:
         if invite.status == InviteStatus.REVOKED:
             raise bad_request_error("Invite code has been revoked")
 
-        # Mark as used
+        # Mark as used and commit right away (burns the code; see docstring)
         invite = await invite_crud.mark_used(
             self.db,
             invite=invite,
             user_id=user_id,
         )
+        await self.db.commit()
 
         logger.info(f"User {user_id} redeemed invite code {code}")
         return invite
@@ -156,6 +160,7 @@ class InviteService:
             raise bad_request_error("Invite is already revoked")
 
         invite = await invite_crud.revoke(self.db, invite=invite)
+        await self.db.commit()
         logger.info(f"Invite code {code} revoked")
 
         return self._to_response(invite)

@@ -124,7 +124,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
             User: The created user with database-generated fields populated.
         """
         db.add(user)
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         return user
@@ -132,6 +132,9 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
     async def update_email_verified(self, db: AsyncSession, *, user: User) -> User:
         """
         Mark a user's email as verified and set status to ACTIVE.
+
+        Single writer of the email_verified/status pair — these two fields
+        must only ever change together, here (see models/user.py).
 
         Args:
             db (AsyncSession): The asynchronous database session.
@@ -143,7 +146,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         user.email_verified = True
         user.status = UserStatus.ACTIVE
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         return user
@@ -184,7 +187,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         user.bio = bio
         user.show_full_name = show_full_name
 
-        await db.commit()
+        await db.flush()
         await db.refresh(user)
 
         return user

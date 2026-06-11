@@ -343,9 +343,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             The created post with user info.
         """
         db.add(post)
-        # TODO(crud-flush): commits internally — migrate to flush + service-owned
-        # commit (create_post endpoint / a listing service). See BaseCRUD note.
-        await db.commit()
+        await db.flush()
 
         # Re-fetch with proper eager loading
         created_post = await self.get_by_id_with_user(db, id=post.id)

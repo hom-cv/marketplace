@@ -32,38 +32,35 @@ class InviteCRUD:
         fee_free_sales: int = 0,
         max_retries: int = 5,
     ) -> SellerInvite:
-        """Create a new invite code.
-        
+        """Create a new invite code. Flushes; the service owns the commit.
+
         Handles race conditions by catching IntegrityError on duplicate code
-        and retrying with a new code.
+        and retrying with a new code. Each attempt runs in a SAVEPOINT so a
+        duplicate-code rollback discards only that attempt — not earlier
+        uncommitted invites of the same batch.
         """
         for attempt in range(max_retries):
-            code = _generate_invite_code()
-
             invite = SellerInvite(
-                code=code,
+                code=_generate_invite_code(),
                 status=InviteStatus.ACTIVE,
                 created_by_user_id=created_by_user_id,
                 fee_free_sales=fee_free_sales,
             )
-            db.add(invite)
 
             try:
-                # TODO(crud-flush): commits internally — migrate to flush +
-                # service-owned commit (invite_service). Note the retry loop
-                # relies on commit to surface IntegrityError on duplicate codes,
-                # so a flush here must still trigger that check. See BaseCRUD.
-                await db.commit()
-                await db.refresh(invite)
-                
-                return invite
+                async with db.begin_nested():
+                    db.add(invite)
+                    await db.flush()
             except IntegrityError:
-                await db.rollback()
                 if attempt == max_retries - 1:
                     raise ValueError(
                         f"Failed to generate unique invite code after {max_retries} attempts"
                     )
                 continue
+
+            await db.refresh(invite)
+
+            return invite
 
     async def get_by_code(
         self,
@@ -73,6 +70,27 @@ class InviteCRUD:
     ) -> SellerInvite | None:
         """Get an invite by its code."""
         query = select(SellerInvite).where(SellerInvite.code == code.upper())
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    async def get_by_code_for_update(
+        self,
+        db: AsyncSession,
+        *,
+        code: str,
+    ) -> SellerInvite | None:
+        """Get an invite by its code with a row-level lock.
+
+        Use when redeeming, so concurrent redemptions of the same code
+        serialize on this row: the second redeemer blocks until the first
+        commits, then sees status USED and is rejected. The lock is held
+        until the surrounding transaction commits.
+        """
+        query = (
+            select(SellerInvite)
+            .where(SellerInvite.code == code.strip().upper())
+            .with_for_update()
+        )
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
@@ -125,9 +143,9 @@ class InviteCRUD:
         invite.status = InviteStatus.USED
         invite.used_by_user_id = user_id
         invite.used_at = datetime.now(timezone.utc)
-        
+
         db.add(invite)
-        await db.commit()
+        await db.flush()
         await db.refresh(invite)
         return invite
 
@@ -137,11 +155,11 @@ class InviteCRUD:
         *,
         invite: SellerInvite,
     ) -> SellerInvite:
-        """Revoke an invite code."""
+        """Revoke an invite code. Flushes; the service owns the commit."""
         invite.status = InviteStatus.REVOKED
-        
+
         db.add(invite)
-        await db.commit()
+        await db.flush()
         await db.refresh(invite)
         return invite
 
