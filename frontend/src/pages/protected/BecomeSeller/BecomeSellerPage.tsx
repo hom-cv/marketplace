@@ -80,7 +80,7 @@ export function BecomeSellerPage() {
             <Text c="dimmed" ta="center">
               {t("seller.verifiedMessage")}
             </Text>
-            {(sellerStatus.fee_free_sales_remaining ?? 0) > 0 && (
+            {(sellerStatus?.fee_free_sales_remaining ?? 0) > 0 && (
               <Text c="green" fw={500} ta="center">
                 {t("seller.feeFreeSalesRemaining", {
                   count: sellerStatus.fee_free_sales_remaining,
