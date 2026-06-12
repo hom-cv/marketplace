@@ -367,17 +367,15 @@ class TestChargeDisputeClosed:
 
 
 class TestAccountUpdated:
-    async def test_fully_onboarded_verifies_and_assigns_role(self, service, mocks):
+    async def test_fully_onboarded_verifies(self, service, mocks):
         mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(
             verification_status=SellerVerificationStatus.PENDING
         )
-        mocks.user_crud.get_by_id_with_relations.return_value = object()
         await service._handle_account_updated(make_account())
         assert (
             mocks.seller_crud.update_verification_status.await_args.kwargs["status"]
             == SellerVerificationStatus.VERIFIED
         )
-        mocks.seller_crud.assign_seller_role.assert_awaited_once()
 
     async def test_pending_rejected_on_terminal_reason(self, service, mocks):
         mocks.seller_crud.get_by_stripe_account_id_for_update.return_value = make_seller_profile(

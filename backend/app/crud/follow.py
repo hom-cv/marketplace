@@ -30,7 +30,6 @@ class FollowCRUD:
             .returning(Follow)
         )
         result = await db.execute(stmt)
-        await db.commit()
         return result.scalar_one_or_none()
 
     async def unfollow_user(
@@ -46,7 +45,6 @@ class FollowCRUD:
                 Follow.following_id == following_id,
             )
         )
-        await db.commit()
         return result.rowcount > 0
 
     async def is_following(

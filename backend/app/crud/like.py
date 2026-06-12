@@ -40,7 +40,6 @@ class LikeCRUD:
             .returning(Like)
         )
         result = await db.execute(stmt)
-        await db.commit()
 
         # If conflict occurred, returning() returns nothing
         like = result.scalar_one_or_none()
@@ -67,7 +66,6 @@ class LikeCRUD:
                 Like.post_id == post_id,
             )
         )
-        await db.commit()
         return result.rowcount > 0
 
     async def check_if_liked(

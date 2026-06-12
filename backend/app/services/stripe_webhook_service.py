@@ -21,7 +21,6 @@ from app.constants.stripe import (
 from app.core.exceptions import not_found_error
 from app.crud.payment import payment_crud
 from app.crud.seller import seller_crud
-from app.crud.user import user_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment, PaymentStatus
 from app.models.seller import SellerVerificationStatus
@@ -192,10 +191,8 @@ class StripeWebhookService:
             # Idempotent: already processed.
             return
         if payment.status == PaymentStatus.REFUNDED:
-            # Don't walk backwards from a terminal state.
             return
         if payment.status == PaymentStatus.DISPUTED:
-            # A dispute is open; a late succeeded retry must not clear it.
             return
 
         await payment_crud.update_status(
@@ -403,19 +400,14 @@ class StripeWebhookService:
             fully_onboarded
             and seller_profile.verification_status != SellerVerificationStatus.VERIFIED
         ):
-            user = await user_crud.get_by_id_with_relations(
-                self.db, id=seller_profile.user_id
+            await seller_crud.update_verification_status(
+                self.db,
+                seller_profile=seller_profile,
+                status=SellerVerificationStatus.VERIFIED,
             )
-            if user:
-                await seller_crud.update_verification_status(
-                    self.db,
-                    seller_profile=seller_profile,
-                    status=SellerVerificationStatus.VERIFIED,
-                )
-                await seller_crud.assign_seller_role(self.db, user=user)
-                logger.info(
-                    f"Seller {seller_profile.user_id} verified via account.updated webhook"
-                )
+            logger.info(
+                f"Seller {seller_profile.user_id} verified via account.updated webhook"
+            )
         elif (
             not fully_onboarded
             and seller_profile.verification_status == SellerVerificationStatus.VERIFIED
@@ -435,8 +427,8 @@ class StripeWebhookService:
         """Handle account.application.deauthorized: seller disconnected the platform.
 
         The connected account can no longer accept charges or receive payouts,
-        so disable both flags and mark the profile REJECTED. The SELLER role is
-        left as-is — it is informational; all gating is on verification_status.
+        so disable both flags and mark the profile REJECTED. All seller gating
+        is on verification_status.
         """
         if not account_id:
             return

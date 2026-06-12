@@ -8,7 +8,12 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.stripe import CURRENCY_SUBUNIT_MULTIPLIER, DEFAULT_CURRENCY
-from app.core.exceptions import bad_request_error, forbidden_error, not_found_error
+from app.core.exceptions import (
+    bad_request_error,
+    conflict_error,
+    forbidden_error,
+    not_found_error,
+)
 from app.core.settings import AnnotatedSettings, Settings
 from app.crud.payment import payment_crud
 from app.crud.post import post_crud
@@ -78,8 +83,9 @@ class PaymentService:
             PaymentResponse: The payment response with the Stripe client secret.
 
         Raises:
-            NotFoundError: If post not found.
+            NotFoundError: If post not found, soft-deleted, or banned.
             ForbiddenError: If trying to buy own post.
+            ConflictError: If the post has already been sold.
             BadRequestError: If seller not verified or payment fails.
         """
         return await self._create_payment_intent(
@@ -121,16 +127,22 @@ class PaymentService:
         payment_method_types: list[str],
     ) -> PaymentResponse:
         """Shared logic to validate, create a Payment row, and create a PaymentIntent."""
-        # Get the post
-        post = await post_crud.get_by_id(self.db, id=post_id)
-        if not post:
+        result = await post_crud.get_by_id_with_status(self.db, id=post_id)
+
+        if result is None:
             raise not_found_error("Post not found")
 
-        # Cannot buy own post
+        post, is_post_banned, is_user_banned, is_sold = result
+
+        if is_post_banned or is_user_banned:
+            raise not_found_error("Post not found")
+
         if post.user_id == buyer.id:
             raise forbidden_error("You cannot purchase your own listing")
 
-        # Check if seller is verified
+        if is_sold:
+            raise conflict_error("This item has already been sold")
+
         seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
         if (
             not seller_profile
@@ -176,6 +188,11 @@ class PaymentService:
         amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
         fees = _breakdown_to_satang(price_breakdown)
         currency = DEFAULT_CURRENCY
+
+        if fees["seller_payout"] < self._settings.MIN_PAYOUT_AMOUNT_SATANG:
+            raise bad_request_error(
+                "Order total is too low to process a seller payout"
+            )
 
         # Create payment record first to get the ID
         payment = await payment_crud.create_payment(

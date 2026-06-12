@@ -1,7 +1,7 @@
 """Unit tests for UserCRUD.update_profile.
 
 update_profile is a full replacement: it overwrites every editable field with
-the value it is given, then commits and refreshes.
+the value it is given, then flushes and refreshes (the caller owns the commit).
 """
 
 from unittest.mock import AsyncMock, MagicMock
@@ -49,7 +49,7 @@ class TestUpdateProfile:
         assert user.last_name == "Brown"
         assert user.bio == "new bio"
         assert user.show_full_name is False
-        db.commit.assert_awaited_once()
+        db.flush.assert_awaited_once()
         db.refresh.assert_awaited_once_with(user)
         assert result is user
 

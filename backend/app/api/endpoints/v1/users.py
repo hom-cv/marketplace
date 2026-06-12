@@ -6,12 +6,10 @@ from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.user import AnnotatedValidUserByUsername
-from app.core.exceptions import conflict_error
 from app.core.security import get_current_user, get_current_user_optional
 from app.crud.follow import AnnotatedFollowCRUD
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
-from app.crud.user import AnnotatedUserCRUD
 from app.db.utils import get_async_db
 from app.models import Post, User
 from app.schemas.post import PostResponseSchema
@@ -20,6 +18,7 @@ from app.schemas.user import (
     UserProfileUpdateSchema,
     UserResponseSchema,
 )
+from app.services.user_service import AnnotatedUserService
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -113,9 +112,8 @@ async def get_user_posts(
     response_model=UserResponseSchema,
 )
 async def update_my_profile(
-    db: Annotated[AsyncSession, Depends(get_async_db)],
+    user_service: AnnotatedUserService,
     current_user: Annotated[User, Depends(get_current_user)],
-    user_crud: AnnotatedUserCRUD,
     profile_data: UserProfileUpdateSchema,
 ) -> UserResponseSchema:
     """
@@ -127,21 +125,9 @@ async def update_my_profile(
     - bio: User's bio text (max 500 chars)
     - show_full_name: Whether to show full name on public profile
     """
-    update_kwargs = profile_data.model_dump()
-
-    new_username = update_kwargs["username"].lower()
-    update_kwargs["username"] = new_username
-
-    if new_username != current_user.username.lower():
-        user_with_username = await user_crud.get_by_username(db, username=new_username)
-
-        if user_with_username is not None and user_with_username.id != current_user.id:
-            raise conflict_error("A user with this username already exists")
-
-    updated_user = await user_crud.update_profile(
-        db,
+    updated_user = await user_service.update_profile(
         user=current_user,
-        **update_kwargs,
+        profile_data=profile_data,
     )
 
     return UserResponseSchema.from_user(updated_user)

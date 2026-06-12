@@ -26,6 +26,7 @@ def _make_settings():
     settings.PROMPTPAY_PROCESSING_FEE_PERCENT = Decimal("2.0")
     settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
+    settings.MIN_PAYOUT_AMOUNT_SATANG = 200
     return settings
 
 
@@ -71,7 +72,11 @@ def mocks(monkeypatch):
     payment_crud = SimpleNamespace(
         create_payment=AsyncMock(return_value=created_payment)
     )
-    post_crud = SimpleNamespace(get_by_id=AsyncMock(return_value=_make_post()))
+    post_crud = SimpleNamespace(
+        get_by_id_with_status=AsyncMock(
+            return_value=(_make_post(), False, False, False)
+        )
+    )
     seller_crud = SimpleNamespace(get_by_user_id=AsyncMock(return_value=None))
 
     monkeypatch.setattr(mod, "payment_crud", payment_crud)

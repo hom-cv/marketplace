@@ -17,7 +17,6 @@ class RoleType(AutoName):
     ADMIN = auto()
     USER = auto()
     MODERATOR = auto()
-    SELLER = auto()
 
 
 class UserRole(Base):
