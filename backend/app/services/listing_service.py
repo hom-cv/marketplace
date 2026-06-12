@@ -1,5 +1,6 @@
 """Listing service for purchase, sales, and user listings."""
 
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Depends
@@ -84,6 +85,15 @@ def _payment_to_list_item(
     )
 
 
+def _is_reservation_active(post: Post) -> bool:
+    """Whether the post's checkout reservation is currently held."""
+    return (
+        post.reserved_by_payment_id is not None
+        and post.reserved_until is not None
+        and post.reserved_until > datetime.now(timezone.utc)
+    )
+
+
 def _post_with_status_to_response(
     post: Post, is_banned: bool, is_user_banned: bool, is_sold: bool = False
 ) -> PostResponseSchema:
@@ -92,6 +102,7 @@ def _post_with_status_to_response(
     response.is_banned = is_banned
     response.is_user_banned = is_user_banned
     response.is_sold = is_sold
+    response.is_reserved = not is_sold and _is_reservation_active(post)
     return response
 
 
@@ -154,17 +165,24 @@ class ListingService:
             for post, is_banned, is_user_banned, is_sold in posts_with_ban_status
         ]
 
-    async def get_listing(self, post_id: int) -> PostResponseSchema | None:
+    async def get_listing(
+        self, post_id: int, viewer_user_id: int | None = None
+    ) -> PostResponseSchema | None:
         """
         Get a single listing by ID with ban status and sold status.
 
-        Uses an optimized single query to fetch post, ban status, and sold status.
+        Uses an optimized single query to fetch post, ban status, and sold
+        status. When the post is reserved and a viewer is given, also resolves
+        whether the active reservation is the viewer's own checkout (so the
+        reserving buyer keeps a working Buy flow while others see "reserved").
 
         Args:
             post_id: The post ID.
+            viewer_user_id: The requesting user's ID, if authenticated.
 
         Returns:
-            PostResponseSchema with is_banned, is_user_banned, and is_sold, or None if not found.
+            PostResponseSchema with is_banned, is_user_banned, is_sold,
+            is_reserved and is_reserved_by_viewer, or None if not found.
         """
         result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
 
@@ -172,7 +190,22 @@ class ListingService:
             return None
 
         post, is_banned, is_user_banned, is_sold = result
-        return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
+        response = _post_with_status_to_response(
+            post, is_banned, is_user_banned, is_sold
+        )
+
+        if (
+            response.is_reserved
+            and viewer_user_id is not None
+            and post.reserved_by_payment_id is not None
+        ):
+            holder = await self._payment_crud.get_by_id(
+                self.db, id=post.reserved_by_payment_id
+            )
+            if holder is not None and holder.buyer_id == viewer_user_id:
+                response.is_reserved_by_viewer = True
+
+        return response
 
     def _validate_image_urls(self, image_urls: list[str]) -> None:
         """

@@ -45,7 +45,8 @@
   "badges": {
     "sold": "ขายแล้ว",
     "removed": "ถูกลบ",
-    "yourListing": "รายการของคุณ"
+    "yourListing": "รายการของคุณ",
+    "reserved": "ติดจองแล้ว"
   },
   "postCard": {
     "reportListing": "รายงานรายการ",
@@ -177,7 +178,9 @@
       "district": "เขต/อำเภอ",
       "province": "จังหวัด",
       "postalCode": "รหัสไปรษณีย์"
-    }
+    },
+    "qrValidity": "คิวอาร์โค้ดใช้ได้ประมาณ 10 นาที",
+    "cancelAndChooseAnother": "ยกเลิกและเลือกวิธีชำระเงินอื่น"
   },
   "verifyEmail": {
     "loading": "กำลังโหลด...",

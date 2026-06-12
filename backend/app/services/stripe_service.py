@@ -146,6 +146,106 @@ class StripeService:
             logger.error(f"Failed to create Stripe PaymentIntent: {e}")
             raise
 
+    async def cancel_payment_intent(
+        self,
+        payment_intent_id: str,
+        idempotency_key: str | None = None,
+    ) -> stripe.PaymentIntent:
+        """
+        Cancel a PaymentIntent (e.g. a stale PromptPay QR).
+
+        Only intents not yet paid can be cancelled; an intent in
+        ``processing``/``succeeded`` raises ``InvalidRequestError`` with code
+        ``payment_intent_unexpected_state`` — callers must branch on that
+        (the money may have moved).
+
+        Args:
+            payment_intent_id: The intent to cancel.
+            idempotency_key: Optional idempotency key to safely retry.
+
+        Returns:
+            The cancelled Stripe PaymentIntent object.
+        """
+        try:
+            intent = await self.client.v1.payment_intents.cancel_async(
+                payment_intent_id,
+                options={"idempotency_key": idempotency_key},
+            )
+            logger.info(f"Cancelled Stripe PaymentIntent: {intent.id}")
+            return intent
+        except stripe.StripeError as e:
+            logger.warning(
+                f"Failed to cancel Stripe PaymentIntent {payment_intent_id}: {e}"
+            )
+            raise
+
+    async def retrieve_payment_intent(
+        self, payment_intent_id: str
+    ) -> stripe.PaymentIntent:
+        """
+        Retrieve a PaymentIntent (used to disambiguate a failed cancel).
+
+        Args:
+            payment_intent_id: The intent to retrieve.
+
+        Returns:
+            The Stripe PaymentIntent object.
+        """
+        try:
+            return await self.client.v1.payment_intents.retrieve_async(
+                payment_intent_id
+            )
+        except stripe.StripeError as e:
+            logger.error(
+                f"Failed to retrieve Stripe PaymentIntent {payment_intent_id}: {e}"
+            )
+            raise
+
+    async def create_refund(
+        self,
+        *,
+        payment_intent_id: str,
+        reverse_transfer: bool = True,
+        refund_application_fee: bool = True,
+        idempotency_key: str | None = None,
+    ) -> stripe.Refund:
+        """
+        Refund a destination charge in full.
+
+        With ``reverse_transfer`` the seller's portion is pulled back from the
+        connected account, and with ``refund_application_fee`` the platform's
+        cut is returned too, so the buyer is made whole. Reversal can fail if
+        the connected account balance is insufficient — callers must let the
+        error propagate (webhook redelivery retries it).
+
+        Args:
+            payment_intent_id: The paid intent to refund.
+            reverse_transfer: Pull the transferred funds back from the seller.
+            refund_application_fee: Return the platform fee to the buyer.
+            idempotency_key: Optional idempotency key to safely retry.
+
+        Returns:
+            The Stripe Refund object.
+        """
+        try:
+            refund = await self.client.v1.refunds.create_async(
+                params={
+                    "payment_intent": payment_intent_id,
+                    "reverse_transfer": reverse_transfer,
+                    "refund_application_fee": refund_application_fee,
+                },
+                options={"idempotency_key": idempotency_key},
+            )
+            logger.info(
+                f"Created Stripe refund {refund.id} for intent {payment_intent_id}"
+            )
+            return refund
+        except stripe.StripeError as e:
+            logger.error(
+                f"Failed to refund Stripe PaymentIntent {payment_intent_id}: {e}"
+            )
+            raise
+
 
 def _get_stripe_service(
     settings: AnnotatedSettings,

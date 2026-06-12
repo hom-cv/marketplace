@@ -10,8 +10,12 @@ import { useForm } from "@mantine/form";
 import { IconArrowLeft, IconMapPin, IconCreditCard } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Elements } from "@stripe/react-stripe-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { usePost } from "@/hooks/usePosts";
 import { usePriceBreakdown, usePaymentStatus } from "@/hooks/usePayments";
+import { queryKeys } from "@/hooks/queryKeys";
+import { cancelPayment } from "@/api/payments";
+import { getErrorMessage } from "@/utils/error";
 import type {
   ShippingAddress,
   PaymentResponse,
@@ -42,6 +46,8 @@ export function CheckoutPage() {
   const [paymentResponse, setPaymentResponse] =
     useState<PaymentResponse | null>(null);
   const [promptpayQr, setPromptpayQr] = useState<PromptPayQr | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const queryClient = useQueryClient();
 
   // Shipping form
   const shippingForm = useForm<ShippingAddress>({
@@ -91,6 +97,26 @@ export function CheckoutPage() {
   const handleNextStep = () => {
     if (!shippingForm.validate().hasErrors) {
       setStep(1);
+    }
+  };
+
+  // Cancel a pending PromptPay payment: frees the post's checkout
+  // reservation immediately and returns to the payment-method picker.
+  const handleCancelPayment = async () => {
+    if (!paymentResponse) return;
+    setIsCancelling(true);
+    try {
+      await cancelPayment(paymentResponse.payment_id);
+      setPaymentResponse(null);
+      setPromptpayQr(null);
+      setError(null);
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.detail(postId),
+      });
+    } catch (err) {
+      setError(getErrorMessage(err, t("checkout.paymentFailedMessage")));
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -154,6 +180,8 @@ export function CheckoutPage() {
               paymentStatus={paymentStatus ?? null}
               promptpayQr={promptpayQr}
               error={error}
+              onCancel={handleCancelPayment}
+              isCancelling={isCancelling}
             />
 
             {/* Checkout forms */}

@@ -20,10 +20,12 @@ from app.constants.stripe import (
 )
 from app.core.exceptions import not_found_error
 from app.crud.payment import payment_crud
+from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment, PaymentStatus
 from app.models.seller import SellerVerificationStatus
+from app.services.stripe_service import AnnotatedStripeService, StripeService
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +33,9 @@ logger = logging.getLogger(__name__)
 class StripeWebhookService:
     """Service for handling Stripe webhook events."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(self, db: AsyncSession, stripe_service: StripeService) -> None:
         self.db = db
+        self.stripe_service = stripe_service
 
     async def verify_event(
         self, request: Request, secret: str | None
@@ -136,11 +139,14 @@ class StripeWebhookService:
         """
         Look up the (row-locked) Payment for a PaymentIntent webhook payload.
 
-        Resolved solely by ``stripe_payment_intent_id``. The payment row and its
-        intent id are committed together at creation (see
-        ``PaymentService._create_payment_intent``), so a committed payment always
-        carries its intent id — there is no "row exists but intent id missing"
-        state to fall back from.
+        Resolved solely by ``stripe_payment_intent_id``. The payment row
+        commits (with the post reservation) just before the intent is created,
+        and the intent id commits in a follow-up transaction (see
+        ``PaymentService._create_payment_intent``), so there is a brief window
+        where the row exists without its intent id. A webhook arriving inside
+        it misses the lookup and falls into ``_require_payment_for_intent``'s
+        metadata policy: ``payment_id`` metadata present → 404 → Stripe
+        redelivers after the id has committed.
         """
         return await payment_crud.get_by_payment_intent_id_for_update(
             self.db, payment_intent_id=intent.id
@@ -182,7 +188,13 @@ class StripeWebhookService:
     async def _handle_payment_intent_succeeded(
         self, intent: stripe.PaymentIntent
     ) -> None:
-        """Handle payment_intent.succeeded webhook event."""
+        """Handle payment_intent.succeeded webhook event.
+
+        Decides the winner of the post: with the post row locked, either this
+        payment becomes the sale (and the reservation is cleared), or the post
+        was already sold to someone else and this charge is refunded in full
+        (the refund-the-loser safety net for QRs paid inside the race window).
+        """
         payment = await self._require_payment_for_intent(intent)
         if not payment:
             return
@@ -193,6 +205,36 @@ class StripeWebhookService:
         if payment.status == PaymentStatus.REFUNDED:
             return
         if payment.status == PaymentStatus.DISPUTED:
+            return
+        # PENDING, FAILED and EXPIRED all flow on: the money actually moved,
+        # so the payment must be honored — or refunded if the post is already
+        # sold. (EXPIRED happens when a stale QR was paid at the last moment.)
+
+        # Serialize winner determination on the post row. Lock order: payment
+        # row (taken in _require_payment_for_intent) before post row.
+        await post_crud.get_by_id_for_update(self.db, id=payment.post_id)
+
+        sold_to_other = await payment_crud.exists_successful_for_post(
+            self.db, post_id=payment.post_id, exclude_payment_id=payment.id
+        )
+        if sold_to_other:
+            # Refund-the-loser safety net. A StripeError propagates so the
+            # endpoint 500s and Stripe redelivers; the idempotency key makes
+            # the retried refund safe.
+            await self.stripe_service.create_refund(
+                payment_intent_id=intent.id,
+                reverse_transfer=True,
+                refund_application_fee=True,
+                idempotency_key=f"refund-{payment.id}",
+            )
+            await payment_crud.update_status(
+                self.db, payment=payment, status=PaymentStatus.REFUNDED
+            )
+            await self.db.commit()
+            logger.warning(
+                f"Payment {payment.id} succeeded after post "
+                f"{payment.post_id} was sold; auto-refunded"
+            )
             return
 
         await payment_crud.update_status(
@@ -209,8 +251,45 @@ class StripeWebhookService:
                 self.db, user_id=payment.seller_id
             )
 
+        # The post is sold; whatever reservation remains is moot.
+        await post_crud.clear_reservation(self.db, post_id=payment.post_id)
+
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as successful via webhook")
+
+        await self._cancel_other_pending_intents(
+            post_id=payment.post_id, winner_payment_id=payment.id
+        )
+
+    async def _cancel_other_pending_intents(
+        self, *, post_id: int, winner_payment_id: int
+    ) -> None:
+        """
+        Best-effort cancel of other live intents for a just-sold post.
+
+        Kills any other buyer's open QR immediately instead of letting it sit
+        payable until it expires. Runs after the sale has committed; failures
+        are only logged — an uncancellable intent that later gets paid is
+        caught by the refund safety net, and a cancelled one settles via its
+        own payment_intent.canceled webhook.
+        """
+        others = await payment_crud.get_pending_with_intent_by_post(
+            self.db, post_id=post_id, exclude_payment_id=winner_payment_id
+        )
+        intent_ids = [p.stripe_payment_intent_id for p in others]
+        # Close the read transaction before the network calls.
+        await self.db.commit()
+
+        for intent_id in intent_ids:
+            if not intent_id:
+                continue
+            try:
+                await self.stripe_service.cancel_payment_intent(intent_id)
+            except stripe.StripeError as e:
+                logger.warning(
+                    f"Best-effort cancel of intent {intent_id} for sold post "
+                    f"{post_id} failed: {e}"
+                )
 
     async def _handle_payment_intent_failed(
         self, intent: stripe.PaymentIntent
@@ -222,11 +301,15 @@ class StripeWebhookService:
 
         # Don't downgrade from a terminal state. If Stripe eventually captures
         # after an earlier failed attempt, we don't want a late retry event to
-        # mark a successful payment as failed.
+        # mark a successful payment as failed. EXPIRED is terminal here too:
+        # we cancelled the intent ourselves (buyer cancel or checkout
+        # takeover) and already released or re-assigned the reservation, so
+        # the resulting payment_intent.canceled event must not touch it.
         if payment.status in (
             PaymentStatus.SUCCESSFUL,
             PaymentStatus.REFUNDED,
             PaymentStatus.DISPUTED,
+            PaymentStatus.EXPIRED,
         ):
             return
         if payment.status == PaymentStatus.FAILED:
@@ -239,6 +322,12 @@ class StripeWebhookService:
             status=PaymentStatus.FAILED,
             failure_code=getattr(last_error, "code", None),
             failure_message=getattr(last_error, "message", None),
+        )
+
+        # Free the post for other buyers if this payment still holds it.
+        # Lock order: payment row (already held) before post row.
+        await post_crud.release_reservation(
+            self.db, post_id=payment.post_id, payment_id=payment.id
         )
 
         await self.db.commit()
@@ -472,10 +561,11 @@ class StripeWebhookService:
 
 
 def _get_stripe_webhook_service(
+    stripe_service: AnnotatedStripeService,
     db: AsyncSession = Depends(get_async_db),
 ) -> StripeWebhookService:
     """Factory function to create StripeWebhookService instance."""
-    return StripeWebhookService(db)
+    return StripeWebhookService(db, stripe_service)
 
 
 AnnotatedStripeWebhookService = Annotated[

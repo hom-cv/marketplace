@@ -45,7 +45,8 @@
   "badges": {
     "sold": "Sold",
     "removed": "Removed",
-    "yourListing": "Your listing"
+    "yourListing": "Your listing",
+    "reserved": "Reserved"
   },
   "postCard": {
     "reportListing": "Report Listing",
@@ -177,7 +178,9 @@
       "district": "District",
       "province": "Province",
       "postalCode": "Postal Code"
-    }
+    },
+    "qrValidity": "The QR code is valid for about 10 minutes",
+    "cancelAndChooseAnother": "Cancel and choose another method"
   },
   "verifyEmail": {
     "loading": "Loading...",

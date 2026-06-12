@@ -270,6 +270,10 @@ export interface Post {
   is_sold: boolean;
   is_banned?: boolean;
   is_user_banned?: boolean;
+  /** Another buyer holds an active checkout reservation on this post */
+  is_reserved?: boolean;
+  /** The active reservation is the viewer's own checkout (detail endpoint only) */
+  is_reserved_by_viewer?: boolean;
   like_count: number;
   is_liked: boolean;
 }

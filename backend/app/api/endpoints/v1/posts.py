@@ -223,7 +223,10 @@ async def get_post(
 
     Banned posts are only visible to their owner or administrators.
     """
-    post = await listing_service.get_listing(post_id)
+    post = await listing_service.get_listing(
+        post_id,
+        viewer_user_id=current_user.id if current_user else None,
+    )
 
     if not post:
         raise not_found_error("Post not found")

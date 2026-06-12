@@ -59,6 +59,16 @@ export async function getPaymentStatus(paymentId: number): Promise<PaymentStatus
 }
 
 /**
+ * Cancel a pending payment (buyer action)
+ *
+ * Frees the post's checkout reservation immediately instead of waiting for
+ * it to expire.
+ */
+export async function cancelPayment(paymentId: number): Promise<void> {
+  await jsonRequest(`/payments/${paymentId}/cancel`, "POST", {});
+}
+
+/**
  * Get current user's purchases
  */
 export async function getMyPurchases(): Promise<PurchaseListItem[]> {

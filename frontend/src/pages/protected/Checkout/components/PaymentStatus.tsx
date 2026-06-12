@@ -18,6 +18,8 @@ interface PaymentStatusProps {
   paymentStatus: PaymentStatusResponse | null;
   promptpayQr: PromptPayQr | null;
   error: string | null;
+  onCancel?: () => void;
+  isCancelling?: boolean;
 }
 
 export function PaymentStatus({
@@ -25,6 +27,8 @@ export function PaymentStatus({
   paymentStatus,
   promptpayQr,
   error,
+  onCancel,
+  isCancelling,
 }: PaymentStatusProps) {
   const navigate = useNavigate();
   const { t } = useTranslation("common");
@@ -100,6 +104,17 @@ export function PaymentStatus({
               <Loader size="xs" />
               <span>{t("checkout.waitingForPayment")}</span>
             </div>
+            <p className={styles.qrSubtitle}>{t("checkout.qrValidity")}</p>
+            {onCancel && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onCancel}
+                disabled={isCancelling}
+              >
+                {t("checkout.cancelAndChooseAnother")}
+              </Button>
+            )}
           </div>
         </Card>
       )}

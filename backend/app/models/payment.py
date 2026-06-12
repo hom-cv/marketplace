@@ -89,7 +89,7 @@ class Payment(Base):
         String(255),
         nullable=True,
     )
-    
+
     # Fee breakdown for accounting (all in satang)
     item_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     shipping_cost: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
@@ -232,5 +232,7 @@ class Payment(Base):
         back_populates="sales",
         foreign_keys=[seller_id],
     )
-    post: Mapped["Post"] = relationship(back_populates="payments")
-
+    post: Mapped["Post"] = relationship(
+        back_populates="payments",
+        foreign_keys=[post_id],
+    )

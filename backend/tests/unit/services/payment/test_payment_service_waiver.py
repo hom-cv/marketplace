@@ -37,6 +37,8 @@ def _make_post(*, user_id=10, price=Decimal("1000.00")):
     post.title = "Test item"
     post.price = price
     post.shipping_cost = Decimal("0.00")
+    post.reserved_until = None
+    post.reserved_by_payment_id = None
     return post
 
 
@@ -70,12 +72,17 @@ def mocks(monkeypatch):
     created_payment.status.value = "PENDING"
 
     payment_crud = SimpleNamespace(
-        create_payment=AsyncMock(return_value=created_payment)
+        create_payment=AsyncMock(return_value=created_payment),
+        get_by_id=AsyncMock(return_value=None),
+        get_by_id_for_update=AsyncMock(return_value=None),
+        update_status=AsyncMock(),
     )
     post_crud = SimpleNamespace(
         get_by_id_with_status=AsyncMock(
             return_value=(_make_post(), False, False, False)
-        )
+        ),
+        try_reserve=AsyncMock(return_value=True),
+        release_reservation=AsyncMock(),
     )
     seller_crud = SimpleNamespace(get_by_user_id=AsyncMock(return_value=None))
 

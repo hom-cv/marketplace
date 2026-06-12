@@ -1,6 +1,7 @@
 """Payment service for handling payment processing."""
 
 import logging
+from datetime import datetime, timezone
 from typing import Annotated
 
 import stripe
@@ -19,7 +20,8 @@ from app.crud.payment import payment_crud
 from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.models.payment import PaymentMethod, PaymentStatus
+from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.models.post import Post
 from app.models.seller import SellerVerificationStatus
 from app.models.user import User
 from app.schemas.payment import (
@@ -38,6 +40,12 @@ from app.services.pricing_service import (
 from app.services.stripe_service import AnnotatedStripeService, StripeService
 
 logger = logging.getLogger(__name__)
+
+ALREADY_SOLD_DETAIL = "This item has already been sold"
+RESERVED_BY_OTHER_DETAIL = (
+    "This item is currently being purchased by another buyer. "
+    "Please try again in a few minutes."
+)
 
 
 def _breakdown_to_satang(breakdown: PriceBreakdown) -> dict[str, int]:
@@ -141,7 +149,7 @@ class PaymentService:
             raise forbidden_error("You cannot purchase your own listing")
 
         if is_sold:
-            raise conflict_error("This item has already been sold")
+            raise conflict_error(ALREADY_SOLD_DETAIL)
 
         seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
         if (
@@ -194,17 +202,46 @@ class PaymentService:
                 "Order total is too low to process a seller payout"
             )
 
-        # Create payment record first to get the ID
+        seller_id = post.user_id
+        description = f"Purchase: {post.title}"
+
+        # --- Phase 1: reservation routing + stale-intent cancel (no locks) ---
+        takeover_target = await self._resolve_takeover_target(post, buyer)
+        takeover_payment_id = takeover_target.id if takeover_target else None
+        stale_intent_id = (
+            takeover_target.stripe_payment_intent_id if takeover_target else None
+        )
+
+        if stale_intent_id:
+            # Close the read transaction before the Stripe call — a DB
+            # transaction must never stay open across a network round-trip.
+            await self.db.commit()
+            await self._cancel_stale_intent(stale_intent_id)
+
+        # --- Phase 2: claim transaction (commits BEFORE the Stripe create) ---
+        old_payment: Payment | None = None
+        if takeover_payment_id is not None:
+            # Lock order: payment row before post row (same as the webhook
+            # handlers — reversing it can deadlock).
+            old_payment = await payment_crud.get_by_id_for_update(
+                self.db, id=takeover_payment_id
+            )
+
+        if old_payment is not None and old_payment.status == PaymentStatus.SUCCESSFUL:
+            # The previous holder's payment landed between phases.
+            await self.db.rollback()
+            raise conflict_error(ALREADY_SOLD_DETAIL)
+
         payment = await payment_crud.create_payment(
             self.db,
             buyer_id=buyer.id,
-            seller_id=post.user_id,
-            post_id=post.id,
+            seller_id=seller_id,
+            post_id=post_id,
             amount=amount,
             currency=currency,
             payment_method=payment_method,
             stripe_payment_intent_id=None,  # Will update after intent creation
-            description=f"Purchase: {post.title}",
+            description=description,
             **fees,
             platform_fee_waived=waive_platform_fee,
             shipping_name=shipping.name,
@@ -215,6 +252,29 @@ class PaymentService:
             shipping_postal_code=shipping.postal_code,
         )
 
+        reserved = await post_crud.try_reserve(
+            self.db,
+            post_id=post_id,
+            payment_id=payment.id,
+            buyer_id=buyer.id,
+            duration_minutes=self._settings.RESERVATION_DURATION_MINUTES,
+        )
+        if not reserved:
+            # Someone else claimed the post between phases; discard the
+            # uncommitted payment row.
+            await self.db.rollback()
+            raise conflict_error(RESERVED_BY_OTHER_DETAIL)
+
+        if old_payment is not None and old_payment.status == PaymentStatus.PENDING:
+            await payment_crud.update_status(
+                self.db, payment=old_payment, status=PaymentStatus.EXPIRED
+            )
+
+        await self.db.commit()
+
+        # --- Phase 3: Stripe intent create + finalize ---
+        # A crash from here on leaves a reservation with no intent; it expires
+        # lazily and the takeover path skips the Stripe cancel for it.
         application_fee_amount = fees["platform_fee"] + fees["processing_fee"]
 
         try:
@@ -226,15 +286,28 @@ class PaymentService:
                 application_fee_amount=application_fee_amount,
                 metadata={
                     "payment_id": str(payment.id),
-                    "post_id": str(post.id),
+                    "post_id": str(post_id),
                     "buyer_id": str(buyer.id),
-                    "seller_id": str(post.user_id),
+                    "seller_id": str(seller_id),
                 },
-                description=f"Purchase: {post.title}",
+                description=description,
                 idempotency_key=f"pi-{payment.id}",
             )
         except stripe.StripeError as e:
             logger.error(f"Stripe error creating PaymentIntent: {e}")
+            # Free the post immediately rather than letting the claim sit out
+            # its TTL. Payment row first, post row second (lock order).
+            await payment_crud.update_status(
+                self.db,
+                payment=payment,
+                status=PaymentStatus.FAILED,
+                failure_code="payment_intent_creation_failed",
+                failure_message=str(e),
+            )
+            await post_crud.release_reservation(
+                self.db, post_id=post_id, payment_id=payment.id
+            )
+            await self.db.commit()
             raise bad_request_error(f"Payment failed: {str(e)}")
 
         payment.stripe_payment_intent_id = intent.id
@@ -252,6 +325,154 @@ class PaymentService:
             client_secret=intent.client_secret,
             payment_intent_id=intent.id,
         )
+
+    async def _resolve_takeover_target(
+        self, post: Post, buyer: User
+    ) -> Payment | None:
+        """
+        Decide how a checkout interacts with the post's current reservation.
+
+        Read-only routing — the authoritative claim is the conditional UPDATE
+        in ``PostCRUD.try_reserve``; this just rejects obviously-blocked
+        checkouts early and identifies the stale holder to take over.
+
+        Returns:
+            The reservation-holding Payment to take over (expired, or this
+            buyer's own retry), or None when the post is unreserved.
+
+        Raises:
+            ConflictError: Actively reserved by another buyer.
+        """
+        if post.reserved_by_payment_id is None:
+            return None
+
+        holder = await payment_crud.get_by_id(
+            self.db, id=post.reserved_by_payment_id
+        )
+        if holder is None:
+            return None
+
+        reservation_active = (
+            post.reserved_until is not None
+            and post.reserved_until > datetime.now(timezone.utc)
+        )
+        if reservation_active and holder.buyer_id != buyer.id:
+            raise conflict_error(RESERVED_BY_OTHER_DETAIL)
+
+        return holder
+
+    async def _cancel_stale_intent(self, intent_id: str) -> None:
+        """
+        Cancel the previous reservation holder's PaymentIntent (kills its QR).
+
+        Call with no transaction open. Fails closed: unless Stripe confirms
+        the old intent can no longer be paid, the takeover is aborted with a
+        409 rather than risking two payable intents for one post.
+
+        Raises:
+            ConflictError: The old intent was paid (item is sold), or its
+                state could not be confirmed (try again later).
+        """
+        try:
+            await self.stripe_service.cancel_payment_intent(intent_id)
+            return
+        except stripe.InvalidRequestError as e:
+            if e.code == "payment_intent_unexpected_state":
+                try:
+                    intent = await self.stripe_service.retrieve_payment_intent(
+                        intent_id
+                    )
+                except stripe.StripeError:
+                    raise conflict_error(RESERVED_BY_OTHER_DETAIL)
+                if intent.status == "canceled":
+                    return  # Already dead — safe to take over.
+                if intent.status in ("succeeded", "processing"):
+                    # The previous buyer actually paid; their webhook will
+                    # finalize the sale.
+                    raise conflict_error(ALREADY_SOLD_DETAIL)
+            logger.warning(
+                f"Could not cancel stale PaymentIntent {intent_id}: {e}"
+            )
+            raise conflict_error(RESERVED_BY_OTHER_DETAIL)
+        except stripe.StripeError as e:
+            logger.warning(
+                f"Could not cancel stale PaymentIntent {intent_id}: {e}"
+            )
+            raise conflict_error(RESERVED_BY_OTHER_DETAIL)
+
+    async def cancel_payment(self, payment_id: int, user: User) -> None:
+        """
+        Buyer-initiated cancel of a pending payment (frees the post early).
+
+        Cancels the Stripe intent first (no transaction open across the
+        network call), then marks the payment EXPIRED and releases the post's
+        reservation.
+
+        Raises:
+            NotFoundError: Payment not found.
+            ForbiddenError: Caller is not the buyer.
+            ConflictError: Payment is not cancellable (already completed or
+                otherwise settled).
+        """
+        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        if not payment:
+            raise not_found_error("Payment not found")
+
+        if payment.buyer_id != user.id:
+            raise forbidden_error("Only the buyer can cancel this payment")
+
+        if payment.status != PaymentStatus.PENDING:
+            raise conflict_error("This payment can no longer be cancelled")
+
+        intent_id = payment.stripe_payment_intent_id
+        post_id = payment.post_id
+
+        # Close the read transaction before the Stripe call.
+        await self.db.commit()
+
+        if intent_id:
+            try:
+                await self.stripe_service.cancel_payment_intent(intent_id)
+            except stripe.InvalidRequestError as e:
+                if e.code == "payment_intent_unexpected_state":
+                    try:
+                        intent = await self.stripe_service.retrieve_payment_intent(
+                            intent_id
+                        )
+                    except stripe.StripeError:
+                        raise bad_request_error(
+                            "Unable to cancel the payment right now"
+                        )
+                    if intent.status in ("succeeded", "processing"):
+                        raise conflict_error(
+                            "This payment has already completed"
+                        )
+                    if intent.status != "canceled":
+                        raise bad_request_error(
+                            "Unable to cancel the payment right now"
+                        )
+                else:
+                    raise bad_request_error(
+                        "Unable to cancel the payment right now"
+                    )
+            except stripe.StripeError:
+                raise bad_request_error("Unable to cancel the payment right now")
+
+        # Lock order: payment row before post row.
+        locked = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
+        if locked is None or locked.status != PaymentStatus.PENDING:
+            # A webhook settled it between the cancel and here; leave it be.
+            await self.db.rollback()
+            return
+
+        await payment_crud.update_status(
+            self.db, payment=locked, status=PaymentStatus.EXPIRED
+        )
+        await post_crud.release_reservation(
+            self.db, post_id=post_id, payment_id=payment_id
+        )
+        await self.db.commit()
+        logger.info(f"Payment {payment_id} cancelled by buyer")
 
     async def get_payment_status(
         self, payment_id: int, user: User
