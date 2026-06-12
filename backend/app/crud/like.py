@@ -3,7 +3,7 @@
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import delete, exists, func, literal, select
+from sqlalchemy import delete, func, literal, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -83,7 +83,9 @@ class LikeCRUD:
             True if liked, False otherwise.
         """
         query = select(
-            exists().where(Like.user_id == user_id, Like.post_id == post_id)
+            select(Like.id)
+            .where(Like.user_id == user_id, Like.post_id == post_id)
+            .exists()
         )
         result = await db.scalar(query)
         return bool(result)

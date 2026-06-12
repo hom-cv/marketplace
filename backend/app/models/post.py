@@ -1,6 +1,6 @@
 """Post model for clothing marketplace listings."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import auto
 
@@ -160,3 +160,14 @@ class Post(Base):
     def is_deleted(self) -> bool:
         """Check if post has been soft deleted."""
         return self.deleted_at is not None
+
+    @property
+    def is_reserved(self) -> bool:
+        """
+        Whether a checkout reservation is currently held on this post.
+        """
+        return (
+            self.reserved_by_payment_id is not None
+            and self.reserved_until is not None
+            and self.reserved_until > datetime.now(timezone.utc)
+        )

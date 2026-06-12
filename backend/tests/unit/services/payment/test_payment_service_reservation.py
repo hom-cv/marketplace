@@ -7,7 +7,6 @@ a real PricingService (mock settings) exercises the fee math.
 """
 
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 

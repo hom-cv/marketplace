@@ -1,6 +1,5 @@
 """Listing service for purchase, sales, and user listings."""
 
-from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Depends
@@ -85,15 +84,6 @@ def _payment_to_list_item(
     )
 
 
-def _is_reservation_active(post: Post) -> bool:
-    """Whether the post's checkout reservation is currently held."""
-    return (
-        post.reserved_by_payment_id is not None
-        and post.reserved_until is not None
-        and post.reserved_until > datetime.now(timezone.utc)
-    )
-
-
 def _post_with_status_to_response(
     post: Post, is_banned: bool, is_user_banned: bool, is_sold: bool = False
 ) -> PostResponseSchema:
@@ -102,7 +92,10 @@ def _post_with_status_to_response(
     response.is_banned = is_banned
     response.is_user_banned = is_user_banned
     response.is_sold = is_sold
-    response.is_reserved = not is_sold and _is_reservation_active(post)
+
+    if is_sold:
+        response.is_reserved = False
+
     return response
 
 

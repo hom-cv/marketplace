@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import delete, exists, func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,10 +52,12 @@ class FollowCRUD:
     ) -> bool:
         """Check if a user is following another user."""
         query = select(
-            exists().where(
+            select(Follow.id)
+            .where(
                 Follow.follower_id == follower_id,
                 Follow.following_id == following_id,
             )
+            .exists()
         )
         result = await db.scalar(query)
         return bool(result)

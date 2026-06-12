@@ -1,6 +1,6 @@
 from typing import Generic, Sequence, Type, TypeVar
 
-from sqlalchemy import exists, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import not_found_error
@@ -39,7 +39,9 @@ class BaseCRUD(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         Returns:
             bool: True if a resource with the given ID exists, False otherwise.
         """
-        query = select(self.model).where(exists().where(self.model.id == id))
+        query = select(
+            select(self.model.id).where(self.model.id == id).exists()
+        )
         result = await db.scalar(query)
 
         return bool(result)

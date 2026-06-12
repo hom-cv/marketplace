@@ -169,6 +169,10 @@ async def list_posts(
     for post, is_sold in posts_with_sold:
         response_item = PostResponseSchema.model_validate(post)
         response_item.is_sold = is_sold
+
+        if is_sold:
+            response_item.is_reserved = False
+
         post_like_info = like_data.get(post.id, {})
         response_item.like_count = post_like_info.get("count", 0)
         response_item.is_liked = post_like_info.get("is_liked", False)

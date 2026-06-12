@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import case, exists, func, select, update
+from sqlalchemy import case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -25,17 +25,19 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     def _post_ban_subquery(self):
         """Build exists subquery to check if a post is banned."""
         return (
-            exists()
+            select(PostBan.id)
             .where(PostBan.post_id == self.model.id)
             .where(PostBan.is_active.is_(True))
+            .exists()
         )
 
     def _user_ban_subquery(self):
         """Build exists subquery to check if a user is banned."""
         return (
-            exists()
+            select(UserBan.id)
             .where(UserBan.user_id == self.model.user_id)
             .where(UserBan.is_active.is_(True))
+            .exists()
         )
 
     def _ban_status_expressions(self):
@@ -51,9 +53,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     def _sold_status_expression(self):
         """Build labeled case expression for sold status column."""
         is_sold_subquery = (
-            exists()
+            select(Payment.id)
             .where(Payment.post_id == self.model.id)
             .where(Payment.status == PaymentStatus.SUCCESSFUL)
+            .exists()
         )
         return case((is_sold_subquery, 1), else_=0).label("is_sold")
 
@@ -156,8 +159,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         if search:
             search_pattern = f"%{search}%"
             base_query = base_query.where(
-                (self.model.title.ilike(search_pattern))
-                | (self.model.description.ilike(search_pattern))
+                or_(
+                    self.model.title.ilike(search_pattern),
+                    self.model.description.ilike(search_pattern),
+                )
             )
 
         # Count total before pagination
@@ -376,18 +381,21 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             .where(Payment.buyer_id == buyer_id)
         )
         sold_subquery = (
-            exists()
+            select(Payment.id)
             .where(Payment.post_id == post_id)
             .where(Payment.status == PaymentStatus.SUCCESSFUL)
+            .exists()
         )
         stmt = (
             update(self.model)
             .where(self.model.id == post_id)
             .where(self.model.deleted_at.is_(None))
             .where(
-                self.model.reserved_by_payment_id.is_(None)
-                | (self.model.reserved_until < func.now())
-                | self.model.reserved_by_payment_id.in_(own_payment_ids)
+                or_(
+                    self.model.reserved_by_payment_id.is_(None),
+                    self.model.reserved_until < func.now(),
+                    self.model.reserved_by_payment_id.in_(own_payment_ids),
+                )
             )
             .where(~sold_subquery)
             .values(
