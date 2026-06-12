@@ -67,7 +67,10 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Re-add SELLER to the enum and reseed the role row."""
-    op.execute("ALTER TYPE roletype ADD VALUE IF NOT EXISTS 'SELLER'")
-    # ALTER TYPE ADD VALUE must commit before the new value is usable.
-    op.execute("COMMIT")
+    # ALTER TYPE ADD VALUE must commit before the new value is usable by the
+    # insert below. autocommit_block() runs it outside the migration
+    # transaction without breaking Alembic's transaction management (unlike
+    # a raw COMMIT, which would desync test harnesses and --sql mode).
+    with op.get_context().autocommit_block():
+        op.execute("ALTER TYPE roletype ADD VALUE IF NOT EXISTS 'SELLER'")
     op.bulk_insert(user_roles_table, [{"role": "SELLER"}])
