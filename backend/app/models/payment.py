@@ -22,20 +22,21 @@ from app.models._base import Base
 class PaymentStatus(AutoName):
     """Payment status enumeration."""
 
-    PENDING = auto()  # Payment initiated, awaiting processing
-    AUTHORIZED = auto()  # Card authorized, awaiting capture (for 3DS)
-    SUCCESSFUL = auto()  # Payment completed successfully
-    FAILED = auto()  # Payment failed
-    REFUNDED = auto()  # Payment was refunded
-    EXPIRED = auto()  # Payment expired (e.g., PromptPay QR)
-    DISPUTED = auto()  # Chargeback/dispute opened on a successful charge
+    PENDING = auto()
+    AUTHORIZED = auto()
+    SUCCESSFUL = auto()
+    FAILED = auto()
+    REFUNDED = auto()
+    EXPIRED = auto()
+    DISPUTED = auto()
+    REFUND_REQUIRED = auto()
 
 
 class PaymentMethod(AutoName):
     """Payment method enumeration."""
 
-    CARD = auto()  # Credit/Debit card
-    PROMPTPAY = auto()  # Thai PromptPay QR
+    CARD = auto()
+    PROMPTPAY = auto()
 
 
 class FulfillmentStatus(AutoName):

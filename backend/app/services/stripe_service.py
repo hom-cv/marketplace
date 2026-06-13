@@ -201,51 +201,6 @@ class StripeService:
             )
             raise
 
-    async def create_refund(
-        self,
-        *,
-        payment_intent_id: str,
-        reverse_transfer: bool = True,
-        refund_application_fee: bool = True,
-        idempotency_key: str | None = None,
-    ) -> stripe.Refund:
-        """
-        Refund a destination charge in full.
-
-        With ``reverse_transfer`` the seller's portion is pulled back from the
-        connected account, and with ``refund_application_fee`` the platform's
-        cut is returned too, so the buyer is made whole. Reversal can fail if
-        the connected account balance is insufficient — callers must let the
-        error propagate (webhook redelivery retries it).
-
-        Args:
-            payment_intent_id: The paid intent to refund.
-            reverse_transfer: Pull the transferred funds back from the seller.
-            refund_application_fee: Return the platform fee to the buyer.
-            idempotency_key: Optional idempotency key to safely retry.
-
-        Returns:
-            The Stripe Refund object.
-        """
-        try:
-            refund = await self.client.v1.refunds.create_async(
-                params={
-                    "payment_intent": payment_intent_id,
-                    "reverse_transfer": reverse_transfer,
-                    "refund_application_fee": refund_application_fee,
-                },
-                options={"idempotency_key": idempotency_key},
-            )
-            logger.info(
-                f"Created Stripe refund {refund.id} for intent {payment_intent_id}"
-            )
-            return refund
-        except stripe.StripeError as e:
-            logger.error(
-                f"Failed to refund Stripe PaymentIntent {payment_intent_id}: {e}"
-            )
-            raise
-
 
 def _get_stripe_service(
     settings: AnnotatedSettings,

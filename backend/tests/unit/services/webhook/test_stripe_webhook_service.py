@@ -178,19 +178,15 @@ class TestPaymentIntentSucceededReservation:
             service.db, post_id=5
         )
 
-    async def test_sold_to_other_refunds_loser(self, service, mocks):
+    async def test_sold_to_other_flags_refund_required(self, service, mocks):
         payment = make_payment(status=PaymentStatus.PENDING, post_id=5, id=2)
         mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
         mocks.payment_crud.exists_successful_for_post.return_value = True
         await service._handle_payment_intent_succeeded(make_payment_intent())
 
-        refund_kwargs = mocks.stripe_service.create_refund.await_args.kwargs
-        assert refund_kwargs["reverse_transfer"] is True
-        assert refund_kwargs["refund_application_fee"] is True
-        assert refund_kwargs["idempotency_key"] == "refund-2"
         assert (
             mocks.payment_crud.update_status.await_args.kwargs["status"]
-            == PaymentStatus.REFUNDED
+            == PaymentStatus.REFUND_REQUIRED
         )
         # The losing payment must not consume promo credit or clear the
         # winner's (already cleared) reservation.
@@ -198,15 +194,14 @@ class TestPaymentIntentSucceededReservation:
         mocks.post_crud.clear_reservation.assert_not_awaited()
         assert service.db.commit.await_count == 1
 
-    async def test_refund_failure_reraises_for_redelivery(self, service, mocks):
-        payment = make_payment(status=PaymentStatus.PENDING, post_id=5)
+    async def test_refund_required_redelivery_is_idempotent(self, service, mocks):
+        # A redelivered succeeded event for an already-flagged payment must
+        # not re-flag or re-process it.
+        payment = make_payment(status=PaymentStatus.REFUND_REQUIRED, post_id=5)
         mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
-        mocks.payment_crud.exists_successful_for_post.return_value = True
-        mocks.stripe_service.create_refund.side_effect = stripe.StripeError("boom")
-
-        with pytest.raises(stripe.StripeError):
-            await service._handle_payment_intent_succeeded(make_payment_intent())
+        await service._handle_payment_intent_succeeded(make_payment_intent())
         mocks.payment_crud.update_status.assert_not_awaited()
+        mocks.payment_crud.exists_successful_for_post.assert_not_awaited()
         assert service.db.commit.await_count == 0
 
     async def test_expired_payment_paid_on_unsold_post_is_honored(
@@ -310,6 +305,9 @@ class TestPaymentIntentFailed:
             # EXPIRED: we cancelled the intent ourselves and already handled
             # the reservation; the canceled event must not touch the payment.
             PaymentStatus.EXPIRED,
+            # REFUND_REQUIRED: money received, awaiting manual refund — a late
+            # failed/canceled event must not relabel it a clean failure.
+            PaymentStatus.REFUND_REQUIRED,
         ):
             mocks.payment_crud.update_status.reset_mock()
             mocks.post_crud.release_reservation.reset_mock()
@@ -364,6 +362,19 @@ class TestChargeRefunded:
         )
         await service._handle_charge_refunded(make_charge())
         mocks.payment_crud.update_status.assert_not_awaited()
+
+    async def test_refund_required_converges_to_refunded(self, service, mocks):
+        # The manual-refund flow: an operator refunds a REFUND_REQUIRED payment
+        # from the Stripe Dashboard; the charge.refunded webhook lands it here.
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(status=PaymentStatus.REFUND_REQUIRED)
+        )
+        await service._handle_charge_refunded(make_charge())
+        assert (
+            mocks.payment_crud.update_status.await_args.kwargs["status"]
+            == PaymentStatus.REFUNDED
+        )
+        assert service.db.commit.await_count == 1
 
     async def test_no_payment_intent_on_charge(self, service, mocks):
         await service._handle_charge_refunded(make_charge(payment_intent=None))

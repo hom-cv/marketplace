@@ -1,5 +1,9 @@
 import { Loader } from "@mantine/core";
-import { IconCheck, IconShoppingBag, IconArrowRight } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconShoppingBag,
+  IconArrowRight,
+} from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/Alert";
@@ -38,7 +42,8 @@ export function PaymentStatus({
     paymentResponse?.status === "successful";
   const isFailed =
     paymentStatus?.status === "failed" || paymentResponse?.status === "failed";
-  const showQR = !!promptpayQr && !isSuccess && !isFailed;
+  const isRefundRequired = paymentStatus?.status === "refund_required";
+  const showQR = !!promptpayQr && !isSuccess && !isFailed && !isRefundRequired;
 
   return (
     <>
@@ -84,8 +89,22 @@ export function PaymentStatus({
 
       {/* Failed state */}
       {isFailed && (
-        <Alert variant="error" title={t("checkout.paymentFailed")} margin="bottom">
+        <Alert
+          variant="error"
+          title={t("checkout.paymentFailed")}
+          margin="bottom"
+        >
           {paymentStatus?.failure_message || t("checkout.paymentFailedMessage")}
+        </Alert>
+      )}
+
+      {isRefundRequired && (
+        <Alert
+          variant="warning"
+          title={t("checkout.refundRequiredTitle")}
+          margin="bottom"
+        >
+          {t("checkout.refundRequiredMessage")}
         </Alert>
       )}
 

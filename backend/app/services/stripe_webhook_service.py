@@ -192,48 +192,38 @@ class StripeWebhookService:
 
         Decides the winner of the post: with the post row locked, either this
         payment becomes the sale (and the reservation is cleared), or the post
-        was already sold to someone else and this charge is refunded in full
-        (the refund-the-loser safety net for QRs paid inside the race window).
+        was already sold to someone else and this payment is flagged
+        REFUND_REQUIRED for a manual Dashboard refund.
         """
         payment = await self._require_payment_for_intent(intent)
+
         if not payment:
             return
 
         if payment.status == PaymentStatus.SUCCESSFUL:
-            # Idempotent: already processed.
             return
         if payment.status == PaymentStatus.REFUNDED:
             return
         if payment.status == PaymentStatus.DISPUTED:
             return
-        # PENDING, FAILED and EXPIRED all flow on: the money actually moved,
-        # so the payment must be honored — or refunded if the post is already
-        # sold. (EXPIRED happens when a stale QR was paid at the last moment.)
+        if payment.status == PaymentStatus.REFUND_REQUIRED:
+            return
 
-        # Serialize winner determination on the post row. Lock order: payment
-        # row (taken in _require_payment_for_intent) before post row.
         await post_crud.get_by_id_for_update(self.db, id=payment.post_id)
 
         sold_to_other = await payment_crud.exists_successful_for_post(
             self.db, post_id=payment.post_id, exclude_payment_id=payment.id
         )
         if sold_to_other:
-            # Refund-the-loser safety net. A StripeError propagates so the
-            # endpoint 500s and Stripe redelivers; the idempotency key makes
-            # the retried refund safe.
-            await self.stripe_service.create_refund(
-                payment_intent_id=intent.id,
-                reverse_transfer=True,
-                refund_application_fee=True,
-                idempotency_key=f"refund-{payment.id}",
-            )
             await payment_crud.update_status(
-                self.db, payment=payment, status=PaymentStatus.REFUNDED
+                self.db, payment=payment, status=PaymentStatus.REFUND_REQUIRED
             )
             await self.db.commit()
-            logger.warning(
-                f"Payment {payment.id} succeeded after post "
-                f"{payment.post_id} was sold; auto-refunded"
+            logger.error(
+                f"Payment {payment.id} (intent {intent.id}) succeeded after "
+                f"post {payment.post_id} was already sold; flagged "
+                f"REFUND_REQUIRED — issue a manual refund from the Stripe "
+                f"Dashboard"
             )
             return
 
@@ -251,7 +241,6 @@ class StripeWebhookService:
                 self.db, user_id=payment.seller_id
             )
 
-        # The post is sold; whatever reservation remains is moot.
         await post_crud.clear_reservation(self.db, post_id=payment.post_id)
 
         await self.db.commit()
@@ -310,6 +299,9 @@ class StripeWebhookService:
             PaymentStatus.REFUNDED,
             PaymentStatus.DISPUTED,
             PaymentStatus.EXPIRED,
+            # Money was received and is awaiting a manual refund; a late
+            # failed/canceled event must not relabel it as a clean failure.
+            PaymentStatus.REFUND_REQUIRED,
         ):
             return
         if payment.status == PaymentStatus.FAILED:

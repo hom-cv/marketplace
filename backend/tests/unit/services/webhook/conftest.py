@@ -142,7 +142,6 @@ def mocks(monkeypatch):
     stripe_service = SimpleNamespace(
         cancel_payment_intent=AsyncMock(),
         retrieve_payment_intent=AsyncMock(),
-        create_refund=AsyncMock(),
     )
 
     return SimpleNamespace(

@@ -180,7 +180,9 @@
       "postalCode": "Postal Code"
     },
     "qrValidity": "The QR code is valid for about 10 minutes",
-    "cancelAndChooseAnother": "Cancel and choose another method"
+    "cancelAndChooseAnother": "Cancel and choose another method",
+    "refundRequiredTitle": "Item already sold",
+    "refundRequiredMessage": "This item was purchased by someone else just before your payment completed. Your payment will be refunded — no action is needed."
   },
   "verifyEmail": {
     "loading": "Loading...",

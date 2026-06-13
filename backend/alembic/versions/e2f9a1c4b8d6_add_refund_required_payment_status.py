@@ -1,0 +1,68 @@
+"""add_refund_required_payment_status
+
+Add the REFUND_REQUIRED value to payment_status_enum. Set by the
+payment_intent.succeeded webhook when a payment lands after the post was
+already sold to another buyer (a PromptPay QR paid inside the race window):
+the money moved and is irreversible, so the payment is flagged for a manual
+refund (issued from the Stripe Dashboard) rather than auto-refunded. The
+resulting charge.refunded webhook then moves it to REFUNDED.
+
+Split as its own migration so ALTER TYPE ADD VALUE commits before the value
+is ever used (PostgreSQL forbids using a newly added enum value in the same
+transaction that added it), following the pattern in 140147275f4d.
+
+Revision ID: e2f9a1c4b8d6
+Revises: d7c4e8b21a53
+Create Date: 2026-06-13 00:00:00.000000
+
+"""
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+
+from alembic import op
+
+# revision identifiers, used by Alembic.
+revision: str = 'e2f9a1c4b8d6'
+down_revision: Union[str, Sequence[str], None] = 'd7c4e8b21a53'
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
+
+
+def upgrade() -> None:
+    """Add REFUND_REQUIRED to payment_status_enum."""
+    op.execute(
+        "ALTER TYPE payment_status_enum ADD VALUE IF NOT EXISTS 'REFUND_REQUIRED'"
+    )
+    op.execute("COMMIT")  # required: env.py wraps all migrations in one transaction
+
+
+def downgrade() -> None:
+    """Rebuild payment_status_enum without REFUND_REQUIRED."""
+    # Re-map any flagged rows so the cast to the REFUND_REQUIRED-less enum
+    # succeeds. They still owe a refund; SUCCESSFUL is the closest prior state
+    # (money received) and keeps them visible for manual handling.
+    op.execute(
+        "UPDATE payments SET status = 'SUCCESSFUL' WHERE status = 'REFUND_REQUIRED'"
+    )
+
+    old_enum = sa.Enum(
+        "PENDING", "AUTHORIZED", "SUCCESSFUL", "FAILED", "REFUNDED", "EXPIRED",
+        "DISPUTED", "REFUND_REQUIRED",
+        name="payment_status_enum",
+    )
+    tmp_enum = sa.Enum(
+        "PENDING", "AUTHORIZED", "SUCCESSFUL", "FAILED", "REFUNDED", "EXPIRED",
+        "DISPUTED",
+        name="payment_status_enum_tmp",
+    )
+
+    tmp_enum.create(op.get_bind(), checkfirst=False)
+    op.alter_column(
+        "payments", "status",
+        existing_type=old_enum,
+        type_=tmp_enum,
+        postgresql_using="status::text::payment_status_enum_tmp",
+    )
+    old_enum.drop(op.get_bind(), checkfirst=False)
+    op.execute("ALTER TYPE payment_status_enum_tmp RENAME TO payment_status_enum")
