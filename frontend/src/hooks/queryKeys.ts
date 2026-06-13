@@ -14,7 +14,8 @@ export const queryKeys = {
     guestPreview: ["posts", "guestLandingPreview"] as const,
     my: ["posts", "me"] as const,
     public: (filters: unknown) => ["publicPosts", filters] as const,
-    detail: (postId: number | string | null) => ["post", postId] as const,
+    detail: (postId: number | string | null) =>
+      ["post", postId == null ? null : String(postId)] as const,
     liked: ["likedPosts"] as const,
     byUser: (username: string) => ["userPosts", username] as const,
   },
