@@ -31,10 +31,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Add REFUND_REQUIRED to payment_status_enum."""
-    op.execute(
-        "ALTER TYPE payment_status_enum ADD VALUE IF NOT EXISTS 'REFUND_REQUIRED'"
-    )
-    op.execute("COMMIT")  # required: env.py wraps all migrations in one transaction
+
+    with op.get_context().autocommit_block():
+        op.execute(
+            "ALTER TYPE payment_status_enum ADD VALUE IF NOT EXISTS 'REFUND_REQUIRED'"
+        )
 
 
 def downgrade() -> None:
