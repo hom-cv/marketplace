@@ -1,7 +1,6 @@
 """Payment service for handling payment processing."""
 
 import logging
-from datetime import datetime, timezone
 from typing import Annotated
 
 import stripe
@@ -352,11 +351,7 @@ class PaymentService:
         if holder is None:
             return None
 
-        reservation_active = (
-            post.reserved_until is not None
-            and post.reserved_until > datetime.now(timezone.utc)
-        )
-        if reservation_active and holder.buyer_id != buyer.id:
+        if post.is_reserved and holder.buyer_id != buyer.id:
             raise conflict_error(RESERVED_BY_OTHER_DETAIL)
 
         return holder

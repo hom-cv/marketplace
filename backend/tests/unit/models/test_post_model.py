@@ -54,6 +54,28 @@ class TestIsReservedProperty:
         post = _make_post(reserved_until=_future(), reserved_by_payment_id=None)
         assert post.is_reserved is False
 
+    def test_naive_reserved_until_does_not_raise(self):
+        # A naive datetime (e.g. SQLite in tests, or a driver that drops
+        # tzinfo) must be treated as UTC, not raise on comparison.
+        naive_future = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(
+            minutes=5
+        )
+        naive_past = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+            minutes=5
+        )
+        assert (
+            _make_post(
+                reserved_until=naive_future, reserved_by_payment_id=7
+            ).is_reserved
+            is True
+        )
+        assert (
+            _make_post(
+                reserved_until=naive_past, reserved_by_payment_id=7
+            ).is_reserved
+            is False
+        )
+
 
 class TestIsReservedSerialization:
     def _validate(self, post: Post) -> PostResponseSchema:

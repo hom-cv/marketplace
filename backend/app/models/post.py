@@ -166,8 +166,12 @@ class Post(Base):
         """
         Whether a checkout reservation is currently held on this post.
         """
-        return (
-            self.reserved_by_payment_id is not None
-            and self.reserved_until is not None
-            and self.reserved_until > datetime.now(timezone.utc)
-        )
+        if self.reserved_by_payment_id is None or self.reserved_until is None:
+            return False
+
+        reserved_until = self.reserved_until
+
+        if reserved_until.tzinfo is None:
+            reserved_until = reserved_until.replace(tzinfo=timezone.utc)
+
+        return reserved_until > datetime.now(timezone.utc)

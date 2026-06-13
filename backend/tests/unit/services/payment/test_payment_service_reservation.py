@@ -65,9 +65,12 @@ def _make_holder_payment(
     return holder
 
 
-def _reserve_post(post, holder):
+def _reserve_post(post, holder, *, active=True):
     post.reserved_by_payment_id = holder.id
-    post.reserved_until = _future()
+    post.reserved_until = _future() if active else _past()
+    # The MagicMock post can't run the real Post.is_reserved property, so mirror
+    # it here: an active reservation (future expiry) vs an expired one.
+    post.is_reserved = active
 
 
 @pytest.fixture
@@ -77,6 +80,7 @@ def mocks(monkeypatch):
     post = _make_post()
     post.reserved_until = None
     post.reserved_by_payment_id = None
+    post.is_reserved = False
 
     created_payment = MagicMock()
     created_payment.id = 7
@@ -214,8 +218,7 @@ class TestActiveReservationByOtherBuyer:
 class TestTakeover:
     async def test_expired_reservation_is_taken_over(self, service, mocks):
         holder = _make_holder_payment()
-        _reserve_post(mocks.post, holder)
-        mocks.post.reserved_until = _past()
+        _reserve_post(mocks.post, holder, active=False)
         mocks.payment_crud.get_by_id.return_value = holder
         mocks.payment_crud.get_by_id_for_update.return_value = holder
 
@@ -246,8 +249,7 @@ class TestTakeover:
     async def test_holder_without_intent_skips_stripe_cancel(self, service, mocks):
         # Crash window: payment committed before its intent was created.
         holder = _make_holder_payment(stripe_payment_intent_id=None)
-        _reserve_post(mocks.post, holder)
-        mocks.post.reserved_until = _past()
+        _reserve_post(mocks.post, holder, active=False)
         mocks.payment_crud.get_by_id.return_value = holder
         mocks.payment_crud.get_by_id_for_update.return_value = holder
 
@@ -259,8 +261,7 @@ class TestTakeover:
     async def test_old_holder_no_longer_pending_is_not_expired(self, service, mocks):
         # Failed webhook settled the holder between phases; don't downgrade it.
         holder = _make_holder_payment()
-        _reserve_post(mocks.post, holder)
-        mocks.post.reserved_until = _past()
+        _reserve_post(mocks.post, holder, active=False)
         locked_holder = _make_holder_payment(status=PaymentStatus.FAILED)
         mocks.payment_crud.get_by_id.return_value = holder
         mocks.payment_crud.get_by_id_for_update.return_value = locked_holder
@@ -278,8 +279,7 @@ class TestTakeover:
 class TestStaleIntentCancelFailures:
     async def _setup_takeover(self, mocks):
         holder = _make_holder_payment()
-        _reserve_post(mocks.post, holder)
-        mocks.post.reserved_until = _past()
+        _reserve_post(mocks.post, holder, active=False)
         mocks.payment_crud.get_by_id.return_value = holder
         return holder
 
