@@ -40,9 +40,6 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Rebuild payment_status_enum without REFUND_REQUIRED."""
-    # Re-map any flagged rows so the cast to the REFUND_REQUIRED-less enum
-    # succeeds. They still owe a refund; SUCCESSFUL is the closest prior state
-    # (money received) and keeps them visible for manual handling.
     op.execute(
         "UPDATE payments SET status = 'SUCCESSFUL' WHERE status = 'REFUND_REQUIRED'"
     )
