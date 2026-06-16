@@ -186,19 +186,29 @@ class ListingService:
         response = _post_with_status_to_response(
             post, is_banned, is_user_banned, is_sold
         )
-
-        if (
-            response.is_reserved
-            and viewer_user_id is not None
-            and post.reserved_by_payment_id is not None
-        ):
-            holder = await self._payment_crud.get_by_id(
-                self.db, id=post.reserved_by_payment_id
-            )
-            if holder is not None and holder.buyer_id == viewer_user_id:
-                response.is_reserved_by_viewer = True
-
+        response.is_reserved_by_viewer = await self._reservation_held_by(
+            post, viewer_user_id
+        )
         return response
+
+    async def _reservation_held_by(
+        self, post: Post, viewer_user_id: int | None
+    ) -> bool:
+        """
+        Check whether the post's active reservation belongs to the given viewer.
+        """
+        if (
+            not post.is_reserved
+            or viewer_user_id is None
+            or post.reserved_by_payment_id is None
+        ):
+            return False
+
+        holder = await self._payment_crud.get_by_id(
+            self.db, id=post.reserved_by_payment_id
+        )
+
+        return holder is not None and holder.buyer_id == viewer_user_id
 
     def _validate_image_urls(self, image_urls: list[str]) -> None:
         """
