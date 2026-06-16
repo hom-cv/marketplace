@@ -37,6 +37,19 @@ class PriceBreakdown(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class PurchasePricing(BaseModel):
+    """
+    Computed amounts for a purchase, ready for the Payment row and Stripe.
+
+    All monetary values are in satang (integer subunits).
+    """
+
+    amount: int  # total the buyer pays
+    fees: dict[str, int]  # fee breakdown (see _breakdown_to_satang)
+    currency: str
+    waive_platform_fee: bool
+
+
 class ShippingAddress(BaseModel):
     """Embedded shipping address for payment."""
 

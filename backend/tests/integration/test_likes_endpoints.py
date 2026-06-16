@@ -35,6 +35,9 @@ def create_mock_post(
     mock_post.measurements = None
     mock_post.user = create_mock_user(user_id=10, username="postowner")
     mock_post.deleted_at = "2024-01-01" if is_deleted else None
+    mock_post.reserved_until = None
+    mock_post.reserved_by_payment_id = None
+    mock_post.is_reserved = False
     return mock_post
 
 

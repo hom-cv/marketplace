@@ -22,20 +22,21 @@ from app.models._base import Base
 class PaymentStatus(AutoName):
     """Payment status enumeration."""
 
-    PENDING = auto()  # Payment initiated, awaiting processing
-    AUTHORIZED = auto()  # Card authorized, awaiting capture (for 3DS)
-    SUCCESSFUL = auto()  # Payment completed successfully
-    FAILED = auto()  # Payment failed
-    REFUNDED = auto()  # Payment was refunded
-    EXPIRED = auto()  # Payment expired (e.g., PromptPay QR)
-    DISPUTED = auto()  # Chargeback/dispute opened on a successful charge
+    PENDING = auto()
+    AUTHORIZED = auto()
+    SUCCESSFUL = auto()
+    FAILED = auto()
+    REFUNDED = auto()
+    EXPIRED = auto()
+    DISPUTED = auto()
+    REFUND_REQUIRED = auto()
 
 
 class PaymentMethod(AutoName):
     """Payment method enumeration."""
 
-    CARD = auto()  # Credit/Debit card
-    PROMPTPAY = auto()  # Thai PromptPay QR
+    CARD = auto()
+    PROMPTPAY = auto()
 
 
 class FulfillmentStatus(AutoName):
@@ -89,7 +90,7 @@ class Payment(Base):
         String(255),
         nullable=True,
     )
-    
+
     # Fee breakdown for accounting (all in satang)
     item_price: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     shipping_cost: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
@@ -232,5 +233,7 @@ class Payment(Base):
         back_populates="sales",
         foreign_keys=[seller_id],
     )
-    post: Mapped["Post"] = relationship(back_populates="payments")
-
+    post: Mapped["Post"] = relationship(
+        back_populates="payments",
+        foreign_keys=[post_id],
+    )

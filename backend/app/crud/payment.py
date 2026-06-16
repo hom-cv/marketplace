@@ -42,6 +42,53 @@ class PaymentCRUD(
         result = await db.execute(query)
         return result.scalar_one_or_none()
 
+    async def get_by_id_for_update(
+        self, db: AsyncSession, *, id: int
+    ) -> Payment | None:
+        """
+        Retrieve a payment by ID with a row-level lock.
+        """
+        query = (
+            select(self.model).where(self.model.id == id).with_for_update()
+        )
+        result = await db.execute(query)
+
+        return result.scalar_one_or_none()
+
+    async def exists_successful_for_post(
+        self, db: AsyncSession, *, post_id: int, exclude_payment_id: int
+    ) -> bool:
+        """
+        Check whether another payment already successfully bought this post.
+        """
+        query = select(
+            select(self.model.id)
+            .where(self.model.post_id == post_id)
+            .where(self.model.status == PaymentStatus.SUCCESSFUL)
+            .where(self.model.id != exclude_payment_id)
+            .exists()
+        )
+        result = await db.scalar(query)
+
+        return bool(result)
+
+    async def get_pending_with_intent_by_post(
+        self, db: AsyncSession, *, post_id: int, exclude_payment_id: int
+    ) -> list[Payment]:
+        """
+        Get other PENDING payments (with a Stripe intent) for a post.
+        """
+        query = (
+            select(self.model)
+            .where(self.model.post_id == post_id)
+            .where(self.model.status == PaymentStatus.PENDING)
+            .where(self.model.stripe_payment_intent_id.is_not(None))
+            .where(self.model.id != exclude_payment_id)
+        )
+        result = await db.scalars(query)
+
+        return list(result.all())
+
     async def get_payments_by_buyer(
         self, db: AsyncSession, *, buyer_id: int
     ) -> list[Payment]:

@@ -88,7 +88,8 @@ class TestPaymentIntentSucceeded:
         await service._handle_payment_intent_succeeded(make_payment_intent())
         args = mocks.payment_crud.update_status.await_args
         assert args.kwargs["status"] == PaymentStatus.SUCCESSFUL
-        assert service.db.commit.await_count == 1
+        # One commit for the sale, one closing the defensive-cancel read txn.
+        assert service.db.commit.await_count == 2
 
     async def test_idempotent_already_successful(self, service, mocks):
         mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
@@ -146,7 +147,7 @@ class TestPaymentIntentSucceeded:
         mocks.seller_crud.decrement_fee_free_sales.assert_awaited_once_with(
             service.db, user_id=42
         )
-        assert service.db.commit.await_count == 1
+        assert service.db.commit.await_count == 2
 
     async def test_non_waived_payment_does_not_touch_credits(self, service, mocks):
         mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
@@ -163,6 +164,80 @@ class TestPaymentIntentSucceeded:
         await service._handle_payment_intent_succeeded(make_payment_intent())
         mocks.seller_crud.decrement_fee_free_sales.assert_not_awaited()
         assert service.db.commit.await_count == 0
+
+
+class TestPaymentIntentSucceededReservation:
+    async def test_success_locks_post_and_clears_reservation(self, service, mocks):
+        payment = make_payment(status=PaymentStatus.PENDING, post_id=5)
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+        mocks.post_crud.get_by_id_for_update.assert_awaited_once_with(
+            service.db, id=5
+        )
+        mocks.post_crud.clear_reservation.assert_awaited_once_with(
+            service.db, post_id=5
+        )
+
+    async def test_sold_to_other_flags_refund_required(self, service, mocks):
+        payment = make_payment(status=PaymentStatus.PENDING, post_id=5, id=2)
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
+        mocks.payment_crud.exists_successful_for_post.return_value = True
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+
+        assert (
+            mocks.payment_crud.update_status.await_args.kwargs["status"]
+            == PaymentStatus.REFUND_REQUIRED
+        )
+        # The losing payment must not consume promo credit or clear the
+        # winner's (already cleared) reservation.
+        mocks.seller_crud.decrement_fee_free_sales.assert_not_awaited()
+        mocks.post_crud.clear_reservation.assert_not_awaited()
+        assert service.db.commit.await_count == 1
+
+    async def test_refund_required_redelivery_is_idempotent(self, service, mocks):
+        # A redelivered succeeded event for an already-flagged payment must
+        # not re-flag or re-process it.
+        payment = make_payment(status=PaymentStatus.REFUND_REQUIRED, post_id=5)
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+        mocks.payment_crud.update_status.assert_not_awaited()
+        mocks.payment_crud.exists_successful_for_post.assert_not_awaited()
+        assert service.db.commit.await_count == 0
+
+    async def test_expired_payment_paid_on_unsold_post_is_honored(
+        self, service, mocks
+    ):
+        # A stale QR paid at the last moment: money moved, post unsold -> sale.
+        payment = make_payment(status=PaymentStatus.EXPIRED, post_id=5)
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+        assert (
+            mocks.payment_crud.update_status.await_args.kwargs["status"]
+            == PaymentStatus.SUCCESSFUL
+        )
+
+    async def test_other_pending_intents_cancelled_best_effort(self, service, mocks):
+        payment = make_payment(status=PaymentStatus.PENDING, post_id=5, id=1)
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
+        mocks.payment_crud.get_pending_with_intent_by_post.return_value = [
+            make_payment(id=2, stripe_payment_intent_id="pi_other_1"),
+            make_payment(id=3, stripe_payment_intent_id="pi_other_2"),
+        ]
+        # First cancel blows up; the second must still be attempted.
+        mocks.stripe_service.cancel_payment_intent.side_effect = [
+            stripe.StripeError("already paid"),
+            None,
+        ]
+        await service._handle_payment_intent_succeeded(make_payment_intent())
+
+        cancelled = [
+            c.args[0]
+            for c in mocks.stripe_service.cancel_payment_intent.await_args_list
+        ]
+        assert cancelled == ["pi_other_1", "pi_other_2"]
+        mocks.payment_crud.get_pending_with_intent_by_post.assert_awaited_once_with(
+            service.db, post_id=5, exclude_payment_id=1
+        )
 
 
 class TestPaymentIntentFailed:
@@ -227,13 +302,30 @@ class TestPaymentIntentFailed:
             PaymentStatus.REFUNDED,
             PaymentStatus.DISPUTED,
             PaymentStatus.FAILED,
+            # EXPIRED: we cancelled the intent ourselves and already handled
+            # the reservation; the canceled event must not touch the payment.
+            PaymentStatus.EXPIRED,
+            # REFUND_REQUIRED: money received, awaiting manual refund — a late
+            # failed/canceled event must not relabel it a clean failure.
+            PaymentStatus.REFUND_REQUIRED,
         ):
             mocks.payment_crud.update_status.reset_mock()
+            mocks.post_crud.release_reservation.reset_mock()
             mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
                 make_payment(status=terminal)
             )
             await service._handle_payment_intent_failed(make_payment_intent())
             mocks.payment_crud.update_status.assert_not_awaited()
+            mocks.post_crud.release_reservation.assert_not_awaited()
+
+    async def test_failed_releases_reservation_in_same_txn(self, service, mocks):
+        payment = make_payment(status=PaymentStatus.PENDING, post_id=5, id=3)
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = payment
+        await service._handle_payment_intent_failed(make_payment_intent())
+        mocks.post_crud.release_reservation.assert_awaited_once_with(
+            service.db, post_id=5, payment_id=3
+        )
+        assert service.db.commit.await_count == 1
 
 
 class TestFindPaymentForIntent:
@@ -270,6 +362,19 @@ class TestChargeRefunded:
         )
         await service._handle_charge_refunded(make_charge())
         mocks.payment_crud.update_status.assert_not_awaited()
+
+    async def test_refund_required_converges_to_refunded(self, service, mocks):
+        # The manual-refund flow: an operator refunds a REFUND_REQUIRED payment
+        # from the Stripe Dashboard; the charge.refunded webhook lands it here.
+        mocks.payment_crud.get_by_payment_intent_id_for_update.return_value = (
+            make_payment(status=PaymentStatus.REFUND_REQUIRED)
+        )
+        await service._handle_charge_refunded(make_charge())
+        assert (
+            mocks.payment_crud.update_status.await_args.kwargs["status"]
+            == PaymentStatus.REFUNDED
+        )
+        assert service.db.commit.await_count == 1
 
     async def test_no_payment_intent_on_charge(self, service, mocks):
         await service._handle_charge_refunded(make_charge(payment_intent=None))

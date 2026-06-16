@@ -146,6 +146,61 @@ class StripeService:
             logger.error(f"Failed to create Stripe PaymentIntent: {e}")
             raise
 
+    async def cancel_payment_intent(
+        self,
+        payment_intent_id: str,
+        idempotency_key: str | None = None,
+    ) -> stripe.PaymentIntent:
+        """
+        Cancel a PaymentIntent (e.g. a stale PromptPay QR).
+
+        Only intents not yet paid can be cancelled; an intent in
+        ``processing``/``succeeded`` raises ``InvalidRequestError`` with code
+        ``payment_intent_unexpected_state`` — callers must branch on that
+        (the money may have moved).
+
+        Args:
+            payment_intent_id: The intent to cancel.
+            idempotency_key: Optional idempotency key to safely retry.
+
+        Returns:
+            The cancelled Stripe PaymentIntent object.
+        """
+        try:
+            intent = await self.client.v1.payment_intents.cancel_async(
+                payment_intent_id,
+                options={"idempotency_key": idempotency_key},
+            )
+            logger.info(f"Cancelled Stripe PaymentIntent: {intent.id}")
+            return intent
+        except stripe.StripeError as e:
+            logger.warning(
+                f"Failed to cancel Stripe PaymentIntent {payment_intent_id}: {e}"
+            )
+            raise
+
+    async def retrieve_payment_intent(
+        self, payment_intent_id: str
+    ) -> stripe.PaymentIntent:
+        """
+        Retrieve a PaymentIntent (used to disambiguate a failed cancel).
+
+        Args:
+            payment_intent_id: The intent to retrieve.
+
+        Returns:
+            The Stripe PaymentIntent object.
+        """
+        try:
+            return await self.client.v1.payment_intents.retrieve_async(
+                payment_intent_id
+            )
+        except stripe.StripeError as e:
+            logger.error(
+                f"Failed to retrieve Stripe PaymentIntent {payment_intent_id}: {e}"
+            )
+            raise
+
 
 def _get_stripe_service(
     settings: AnnotatedSettings,

@@ -82,6 +82,7 @@ def make_payment(
     status=PaymentStatus.PENDING,
     stripe_payment_intent_id="pi_123",
     seller_id=10,
+    post_id=5,
     platform_fee_waived=False,
 ):
     payment = MagicMock()
@@ -89,6 +90,7 @@ def make_payment(
     payment.status = status
     payment.stripe_payment_intent_id = stripe_payment_intent_id
     payment.seller_id = seller_id
+    payment.post_id = post_id
     payment.platform_fee_waived = platform_fee_waived
     return payment
 
@@ -119,6 +121,13 @@ def mocks(monkeypatch):
         get_by_payment_intent_id_for_update=AsyncMock(return_value=None),
         update_status=AsyncMock(),
         restore_to_successful=AsyncMock(),
+        exists_successful_for_post=AsyncMock(return_value=False),
+        get_pending_with_intent_by_post=AsyncMock(return_value=[]),
+    )
+    post_crud = SimpleNamespace(
+        get_by_id_for_update=AsyncMock(return_value=MagicMock()),
+        clear_reservation=AsyncMock(),
+        release_reservation=AsyncMock(),
     )
     seller_crud = SimpleNamespace(
         get_by_stripe_account_id_for_update=AsyncMock(return_value=None),
@@ -127,12 +136,23 @@ def mocks(monkeypatch):
         decrement_fee_free_sales=AsyncMock(),
     )
     monkeypatch.setattr(mod, "payment_crud", payment_crud)
+    monkeypatch.setattr(mod, "post_crud", post_crud)
     monkeypatch.setattr(mod, "seller_crud", seller_crud)
 
-    return SimpleNamespace(payment_crud=payment_crud, seller_crud=seller_crud)
+    stripe_service = SimpleNamespace(
+        cancel_payment_intent=AsyncMock(),
+        retrieve_payment_intent=AsyncMock(),
+    )
+
+    return SimpleNamespace(
+        payment_crud=payment_crud,
+        post_crud=post_crud,
+        seller_crud=seller_crud,
+        stripe_service=stripe_service,
+    )
 
 
 @pytest.fixture
-def service():
+def service(mocks):
     """A webhook service with an AsyncMock session (tracks commit/flush awaits)."""
-    return StripeWebhookService(db=AsyncMock())
+    return StripeWebhookService(db=AsyncMock(), stripe_service=mocks.stripe_service)

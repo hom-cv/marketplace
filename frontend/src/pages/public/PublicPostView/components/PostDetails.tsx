@@ -25,7 +25,9 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
   return (
     <>
       {/* Status badges */}
-      {(isOwner || post.is_sold) && (
+      {(isOwner ||
+        post.is_sold ||
+        (post.is_reserved && !post.is_reserved_by_viewer)) && (
         <div className={styles.badges}>
           {isOwner && (
             <span className={`${styles.badge} ${styles.badgeOwner}`}>
@@ -37,6 +39,13 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
               {tCommon("badges.sold")}
             </span>
           )}
+          {!post.is_sold &&
+            post.is_reserved &&
+            !post.is_reserved_by_viewer && (
+              <span className={`${styles.badge} ${styles.badgeSold}`}>
+                {tCommon("badges.reserved")}
+              </span>
+            )}
         </div>
       )}
 

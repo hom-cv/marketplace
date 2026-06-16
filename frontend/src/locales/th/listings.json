@@ -128,7 +128,8 @@
     "freeShipping": "จัดส่งฟรี",
     "viewListing": "ดูสินค้า",
     "editListing": "แก้ไขรายการ",
-    "deleteListing": "ลบรายการ"
+    "deleteListing": "ลบรายการ",
+    "reservedNotice": "สินค้านี้กำลังถูกซื้อโดยผู้ซื้อรายอื่น อาจกลับมาว่างอีกครั้งในอีกไม่กี่นาที"
   },
   "myListings": {
     "title": "สินค้าของฉัน",

@@ -7,7 +7,9 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { createCardPayment, createPromptPayPayment } from "@/api/payments";
+import { queryKeys } from "@/hooks/queryKeys";
 import type {
   PaymentResponse,
   PromptPayQr,
@@ -45,6 +47,7 @@ export function PaymentForm({
   const { t } = useTranslation("common");
   const stripe = useStripe();
   const elements = useElements();
+  const queryClient = useQueryClient();
   const buyerEmail = useAuthStore((state) => state.user?.email_address);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isElementReady, setIsElementReady] = useState(false);
@@ -145,6 +148,9 @@ export function PaymentForm({
       }
     } catch (err) {
       onError((err as Error).message ?? "Payment failed");
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.posts.detail(postId),
+      });
     } finally {
       setIsSubmitting(false);
     }

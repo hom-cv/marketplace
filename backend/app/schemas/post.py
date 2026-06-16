@@ -250,6 +250,8 @@ class PostResponseSchema(BaseModel):
     is_sold: bool = False
     is_banned: bool = False
     is_user_banned: bool = False
+    is_reserved: bool = False
+    is_reserved_by_viewer: bool = False
     like_count: int = 0
     is_liked: bool = False
 

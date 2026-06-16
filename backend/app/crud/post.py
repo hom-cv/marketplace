@@ -1,11 +1,11 @@
 """Post CRUD operations."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import case, exists, func, select
+from sqlalchemy import case, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -25,17 +25,19 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     def _post_ban_subquery(self):
         """Build exists subquery to check if a post is banned."""
         return (
-            exists()
+            select(PostBan.id)
             .where(PostBan.post_id == self.model.id)
             .where(PostBan.is_active.is_(True))
+            .exists()
         )
 
     def _user_ban_subquery(self):
         """Build exists subquery to check if a user is banned."""
         return (
-            exists()
+            select(UserBan.id)
             .where(UserBan.user_id == self.model.user_id)
             .where(UserBan.is_active.is_(True))
+            .exists()
         )
 
     def _ban_status_expressions(self):
@@ -51,9 +53,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     def _sold_status_expression(self):
         """Build labeled case expression for sold status column."""
         is_sold_subquery = (
-            exists()
+            select(Payment.id)
             .where(Payment.post_id == self.model.id)
             .where(Payment.status == PaymentStatus.SUCCESSFUL)
+            .exists()
         )
         return case((is_sold_subquery, 1), else_=0).label("is_sold")
 
@@ -156,8 +159,10 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         if search:
             search_pattern = f"%{search}%"
             base_query = base_query.where(
-                (self.model.title.ilike(search_pattern))
-                | (self.model.description.ilike(search_pattern))
+                or_(
+                    self.model.title.ilike(search_pattern),
+                    self.model.description.ilike(search_pattern),
+                )
             )
 
         # Count total before pagination
@@ -325,6 +330,109 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
 
         post, is_post_banned, is_user_banned, is_sold = row
         return (post, bool(is_post_banned), bool(is_user_banned), bool(is_sold))
+
+    async def get_by_id_for_update(
+        self,
+        db: AsyncSession,
+        *,
+        id: int,
+    ) -> Post | None:
+        """
+        Get a post by ID with a row-level lock (no relationships loaded).
+        """
+        query = select(self.model).where(self.model.id == id).with_for_update()
+        result = await db.execute(query)
+
+        return result.scalar_one_or_none()
+
+    async def try_reserve(
+        self,
+        db: AsyncSession,
+        *,
+        post_id: int,
+        payment_id: int,
+        buyer_id: int,
+        duration_minutes: int,
+    ) -> bool:
+        """
+        Atomically claim a checkout reservation on a post.
+
+        Returns:
+            True if the reservation was claimed, False if someone else holds it
+            (or the post is sold/deleted).
+        """
+        own_payment_ids = (
+            select(Payment.id)
+            .where(Payment.post_id == post_id)
+            .where(Payment.buyer_id == buyer_id)
+        )
+        sold_subquery = (
+            select(Payment.id)
+            .where(Payment.post_id == post_id)
+            .where(Payment.status == PaymentStatus.SUCCESSFUL)
+            .exists()
+        )
+        stmt = (
+            update(self.model)
+            .where(self.model.id == post_id)
+            .where(self.model.deleted_at.is_(None))
+            .where(
+                or_(
+                    self.model.reserved_by_payment_id.is_(None),
+                    self.model.reserved_until < func.now(),
+                    self.model.reserved_by_payment_id.in_(own_payment_ids),
+                )
+            )
+            .where(~sold_subquery)
+            .values(
+                reserved_until=func.now() + timedelta(minutes=duration_minutes),
+                reserved_by_payment_id=payment_id,
+            )
+        )
+        result = await db.execute(stmt)
+
+        return result.rowcount == 1
+
+    async def release_reservation(
+        self,
+        db: AsyncSession,
+        *,
+        post_id: int,
+        payment_id: int,
+    ) -> None:
+        """
+        Release a reservation, but only if it is still held by this payment.
+
+        Conditional on reserved_by_payment_id so a late release (e.g. a failed
+        webhook for an old payment) cannot clobber a newer buyer's claim.
+        """
+        stmt = (
+            update(self.model)
+            .where(self.model.id == post_id)
+            .where(self.model.reserved_by_payment_id == payment_id)
+            .values(reserved_until=None, reserved_by_payment_id=None)
+        )
+        await db.execute(stmt)
+
+    async def clear_reservation(
+        self,
+        db: AsyncSession,
+        *,
+        post_id: int,
+    ) -> None:
+        """
+        Unconditionally clear a post's reservation.
+
+        Only for the payment-succeeded path: the post is sold, so whatever
+        reservation remains is moot.
+        """
+        stmt = (
+            update(self.model)
+            .where(self.model.id == post_id)
+            .values(reserved_until=None, reserved_by_payment_id=None)
+        )
+
+        await db.execute(stmt)
 
     async def create_post(
         self,

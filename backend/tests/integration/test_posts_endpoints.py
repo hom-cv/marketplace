@@ -103,6 +103,9 @@ class TestGetPostEndpoint:
         mock_post.size = "M"
         mock_post.measurements = None
         mock_post.user = create_mock_user()
+        mock_post.reserved_until = None
+        mock_post.reserved_by_payment_id = None
+        mock_post.is_reserved = False
 
         # Configure CRUD to return (post, is_banned, is_user_banned, is_sold)
         mock_post_crud.get_by_id_with_status.return_value = (
@@ -244,6 +247,10 @@ def _make_mock_post(
     mock_post.measurements = None
     mock_post.user_id = owner_id
     mock_post.user = create_mock_user(user_id=owner_id)
+    mock_post.reserved_until = None
+    mock_post.reserved_by_payment_id = None
+    # spec'd mocks don't compute the is_reserved property; pin it.
+    mock_post.is_reserved = False
     return mock_post
 
 

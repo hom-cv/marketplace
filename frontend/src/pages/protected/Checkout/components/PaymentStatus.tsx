@@ -1,5 +1,9 @@
 import { Loader } from "@mantine/core";
-import { IconCheck, IconShoppingBag, IconArrowRight } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconShoppingBag,
+  IconArrowRight,
+} from "@tabler/icons-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/components/Alert";
@@ -18,6 +22,8 @@ interface PaymentStatusProps {
   paymentStatus: PaymentStatusResponse | null;
   promptpayQr: PromptPayQr | null;
   error: string | null;
+  onCancel?: () => void;
+  isCancelling?: boolean;
 }
 
 export function PaymentStatus({
@@ -25,6 +31,8 @@ export function PaymentStatus({
   paymentStatus,
   promptpayQr,
   error,
+  onCancel,
+  isCancelling,
 }: PaymentStatusProps) {
   const navigate = useNavigate();
   const { t } = useTranslation("common");
@@ -34,7 +42,8 @@ export function PaymentStatus({
     paymentResponse?.status === "successful";
   const isFailed =
     paymentStatus?.status === "failed" || paymentResponse?.status === "failed";
-  const showQR = !!promptpayQr && !isSuccess && !isFailed;
+  const isRefundRequired = paymentStatus?.status === "refund_required";
+  const showQR = !!promptpayQr && !isSuccess && !isFailed && !isRefundRequired;
 
   return (
     <>
@@ -80,8 +89,22 @@ export function PaymentStatus({
 
       {/* Failed state */}
       {isFailed && (
-        <Alert variant="error" title={t("checkout.paymentFailed")} margin="bottom">
+        <Alert
+          variant="error"
+          title={t("checkout.paymentFailed")}
+          margin="bottom"
+        >
           {paymentStatus?.failure_message || t("checkout.paymentFailedMessage")}
+        </Alert>
+      )}
+
+      {isRefundRequired && (
+        <Alert
+          variant="warning"
+          title={t("checkout.refundRequiredTitle")}
+          margin="bottom"
+        >
+          {t("checkout.refundRequiredMessage")}
         </Alert>
       )}
 
@@ -100,6 +123,17 @@ export function PaymentStatus({
               <Loader size="xs" />
               <span>{t("checkout.waitingForPayment")}</span>
             </div>
+            <p className={styles.qrSubtitle}>{t("checkout.qrValidity")}</p>
+            {onCancel && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onCancel}
+                disabled={isCancelling}
+              >
+                {t("checkout.cancelAndChooseAnother")}
+              </Button>
+            )}
           </div>
         </Card>
       )}

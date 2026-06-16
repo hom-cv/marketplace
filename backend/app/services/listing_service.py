@@ -92,6 +92,10 @@ def _post_with_status_to_response(
     response.is_banned = is_banned
     response.is_user_banned = is_user_banned
     response.is_sold = is_sold
+
+    if is_sold:
+        response.is_reserved = False
+
     return response
 
 
@@ -154,17 +158,24 @@ class ListingService:
             for post, is_banned, is_user_banned, is_sold in posts_with_ban_status
         ]
 
-    async def get_listing(self, post_id: int) -> PostResponseSchema | None:
+    async def get_listing(
+        self, post_id: int, viewer_user_id: int | None = None
+    ) -> PostResponseSchema | None:
         """
         Get a single listing by ID with ban status and sold status.
 
-        Uses an optimized single query to fetch post, ban status, and sold status.
+        Uses an optimized single query to fetch post, ban status, and sold
+        status. When the post is reserved and a viewer is given, also resolves
+        whether the active reservation is the viewer's own checkout (so the
+        reserving buyer keeps a working Buy flow while others see "reserved").
 
         Args:
             post_id: The post ID.
+            viewer_user_id: The requesting user's ID, if authenticated.
 
         Returns:
-            PostResponseSchema with is_banned, is_user_banned, and is_sold, or None if not found.
+            PostResponseSchema with is_banned, is_user_banned, is_sold,
+            is_reserved and is_reserved_by_viewer, or None if not found.
         """
         result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
 
@@ -172,7 +183,32 @@ class ListingService:
             return None
 
         post, is_banned, is_user_banned, is_sold = result
-        return _post_with_status_to_response(post, is_banned, is_user_banned, is_sold)
+        response = _post_with_status_to_response(
+            post, is_banned, is_user_banned, is_sold
+        )
+        response.is_reserved_by_viewer = await self._reservation_held_by(
+            post, viewer_user_id
+        )
+        return response
+
+    async def _reservation_held_by(
+        self, post: Post, viewer_user_id: int | None
+    ) -> bool:
+        """
+        Check whether the post's active reservation belongs to the given viewer.
+        """
+        if (
+            not post.is_reserved
+            or viewer_user_id is None
+            or post.reserved_by_payment_id is None
+        ):
+            return False
+
+        holder = await self._payment_crud.get_by_id(
+            self.db, id=post.reserved_by_payment_id
+        )
+
+        return holder is not None and holder.buyer_id == viewer_user_id
 
     def _validate_image_urls(self, image_urls: list[str]) -> None:
         """

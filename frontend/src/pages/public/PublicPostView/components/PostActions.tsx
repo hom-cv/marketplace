@@ -46,6 +46,10 @@ export function PostActions({
 
   const price = parseFloat(post.price);
 
+  // Reserved by another buyer's active checkout (the reserving buyer keeps
+  // a working Buy flow).
+  const isReserved = !!post.is_reserved && !post.is_reserved_by_viewer;
+
   return (
     <>
       {/* Ban Warning */}
@@ -57,10 +61,19 @@ export function PostActions({
         </Alert>
       )}
 
-      {/* Buy Button - hide for owners, show sold state */}
+      {/* Reserved notice */}
+      {!isOwner && !post.is_sold && isReserved && (
+        <Alert variant="info">{t("view.reservedNotice")}</Alert>
+      )}
+
+      {/* Buy Button - hide for owners, show sold/reserved state */}
       {!isOwner &&
         (post.is_sold ? (
           <div className={styles.soldButton}>{tCommon("badges.sold")}</div>
+        ) : isReserved ? (
+          <div className={styles.soldButton}>
+            {tCommon("badges.reserved")}
+          </div>
         ) : (
           <button
             className={styles.buyButtonDesktop}

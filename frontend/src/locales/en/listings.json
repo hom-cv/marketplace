@@ -128,7 +128,8 @@
     "freeShipping": "Free shipping",
     "viewListing": "View Listing",
     "editListing": "Edit Listing",
-    "deleteListing": "Delete Listing"
+    "deleteListing": "Delete Listing",
+    "reservedNotice": "This item is currently being purchased by another buyer. It may become available again in a few minutes."
   },
   "myListings": {
     "title": "My Listings",

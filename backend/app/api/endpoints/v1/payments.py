@@ -70,6 +70,27 @@ async def create_promptpay_payment(
     )
 
 
+@router.post(
+    "/{payment_id}/cancel",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def cancel_payment(
+    current_user: Annotated[User, Depends(get_current_user)],
+    payment_service: AnnotatedPaymentService,
+    payment_id: int,
+) -> None:
+    """
+    Cancel a pending payment (buyer action).
+
+    Cancels the Stripe PaymentIntent and releases the post's checkout
+    reservation immediately, instead of waiting for it to expire.
+    """
+    await payment_service.cancel_payment(
+        payment_id=payment_id,
+        user=current_user,
+    )
+
+
 @router.get(
     "/my-purchases",
     status_code=status.HTTP_200_OK,

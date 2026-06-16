@@ -1,6 +1,6 @@
 """Post model for clothing marketplace listings."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from enum import auto
 
@@ -116,6 +116,7 @@ class Post(Base):
     payments: Mapped[list["Payment"]] = relationship(
         back_populates="post",
         # Don't cascade delete - preserve payment records
+        foreign_keys="Payment.post_id",
     )
     likes: Mapped[list["Like"]] = relationship(  # type: ignore # noqa
         back_populates="post",
@@ -130,7 +131,40 @@ class Post(Base):
         index=True,
     )
 
+    reserved_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        default=None,
+    )
+
+    reserved_by_payment_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey(
+            "payments.id",
+            ondelete="SET NULL",
+            use_alter=True,
+            name="fk_posts_reserved_by_payment_id",
+        ),
+        nullable=True,
+        default=None,
+    )
+
     @property
     def is_deleted(self) -> bool:
         """Check if post has been soft deleted."""
         return self.deleted_at is not None
+
+    @property
+    def is_reserved(self) -> bool:
+        """
+        Whether a checkout reservation is currently held on this post.
+        """
+        if self.reserved_by_payment_id is None or self.reserved_until is None:
+            return False
+
+        reserved_until = self.reserved_until
+
+        if reserved_until.tzinfo is None:
+            reserved_until = reserved_until.replace(tzinfo=timezone.utc)
+
+        return reserved_until > datetime.now(timezone.utc)

@@ -65,6 +65,8 @@ class Settings(BaseSettings):
     PROCESSING_FEE_VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on processing fees
     MIN_PAYOUT_AMOUNT_SATANG: int = 200  # Stripe minimum transfer amount (2 THB)
 
+    RESERVATION_DURATION_MINUTES: int = 10
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"
