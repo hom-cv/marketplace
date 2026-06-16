@@ -339,10 +339,6 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     ) -> Post | None:
         """
         Get a post by ID with a row-level lock (no relationships loaded).
-
-        Serializes webhook handlers and checkout takeovers contending on the
-        same post. Lock-order convention: always lock the payment row BEFORE
-        the post row — violating this can deadlock.
         """
         query = select(self.model).where(self.model.id == id).with_for_update()
         result = await db.execute(query)
@@ -360,16 +356,6 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     ) -> bool:
         """
         Atomically claim a checkout reservation on a post.
-
-        Single conditional UPDATE — the winner of two concurrent checkouts is
-        decided by the database (rowcount 1); the loser gets False with no
-        lock ever held across application code. Claimable when the post is
-        unreserved, the reservation is expired, or the current holder payment
-        belongs to this same buyer (payment-method switch / retry). Never
-        claimable once a SUCCESSFUL payment exists.
-
-        Both sides of the expiry comparison use the DB clock (now()) so a
-        single clock decides.
 
         Returns:
             True if the reservation was claimed, False if someone else holds it

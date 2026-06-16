@@ -131,19 +131,12 @@ class Post(Base):
         index=True,
     )
 
-    # Checkout reservation: while reserved_until is in the future, the post is
-    # held for the buyer behind reserved_by_payment_id and other buyers get a
-    # 409 at payment creation. Claimed/released only via PostCRUD.try_reserve /
-    # release_reservation / clear_reservation (single conditional UPDATEs) —
-    # never assign these directly, or two concurrent checkouts can both win.
-    # Expiry is lazy: no background job; the next checkout attempt takes over.
     reserved_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
         default=None,
     )
-    # use_alter: posts→payments here + payments→posts (post_id) form a
-    # circular FK pair, so this one must be created as a separate ALTER.
+
     reserved_by_payment_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey(

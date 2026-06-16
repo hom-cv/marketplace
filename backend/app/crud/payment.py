@@ -47,11 +47,6 @@ class PaymentCRUD(
     ) -> Payment | None:
         """
         Retrieve a payment by ID with a row-level lock.
-
-        Used by the checkout takeover path to serialize against webhook
-        handlers (which lock the same row via
-        ``get_by_payment_intent_id_for_update``). Lock-order convention:
-        payment row BEFORE post row, everywhere.
         """
         query = (
             select(self.model).where(self.model.id == id).with_for_update()
@@ -64,10 +59,7 @@ class PaymentCRUD(
         self, db: AsyncSession, *, post_id: int, exclude_payment_id: int
     ) -> bool:
         """
-        Check whether another payment already SUCCESSFUL-ly bought this post.
-
-        The sold-check behind the refund-the-loser safety net; call it while
-        holding the post row lock so the answer cannot change underneath.
+        Check whether another payment already successfully bought this post.
         """
         query = select(
             select(self.model.id)
@@ -85,9 +77,6 @@ class PaymentCRUD(
     ) -> list[Payment]:
         """
         Get other PENDING payments (with a Stripe intent) for a post.
-
-        Used after a sale commits to defensively cancel any other live
-        intents/QRs for the same post.
         """
         query = (
             select(self.model)
