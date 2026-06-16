@@ -1,16 +1,5 @@
 """add_refund_required_payment_status
 
-Add the REFUND_REQUIRED value to payment_status_enum. Set by the
-payment_intent.succeeded webhook when a payment lands after the post was
-already sold to another buyer (a PromptPay QR paid inside the race window):
-the money moved and is irreversible, so the payment is flagged for a manual
-refund (issued from the Stripe Dashboard) rather than auto-refunded. The
-resulting charge.refunded webhook then moves it to REFUNDED.
-
-Split as its own migration so ALTER TYPE ADD VALUE commits before the value
-is ever used (PostgreSQL forbids using a newly added enum value in the same
-transaction that added it), following the pattern in 140147275f4d.
-
 Revision ID: e2f9a1c4b8d6
 Revises: d7c4e8b21a53
 Create Date: 2026-06-13 00:00:00.000000
