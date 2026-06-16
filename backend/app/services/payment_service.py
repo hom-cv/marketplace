@@ -21,7 +21,7 @@ from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
 from app.models.post import Post
-from app.models.seller import SellerVerificationStatus
+from app.models.seller import SellerProfile, SellerVerificationStatus
 from app.models.user import User
 from app.schemas.payment import (
     CreateCardPaymentRequest,
@@ -29,6 +29,7 @@ from app.schemas.payment import (
     PaymentResponse,
     PaymentStatusResponse,
     PriceBreakdown,
+    PurchasePricing,
     ShippingAddress,
 )
 from app.services.pricing_service import (
@@ -124,16 +125,22 @@ class PaymentService:
             payment_method_types=["promptpay"],
         )
 
-    async def _create_payment_intent(
-        self,
-        *,
-        buyer: User,
-        post_id: int,
-        shipping: ShippingAddress,
-        payment_method: PaymentMethod,
-        payment_method_types: list[str],
-    ) -> PaymentResponse:
-        """Shared logic to validate, create a Payment row, and create a PaymentIntent."""
+    async def _load_and_validate_purchase(
+        self, post_id: int, buyer: User
+    ) -> tuple[Post, SellerProfile, str]:
+        """
+        Load the post and seller, and check the purchase is allowed.
+
+        Returns:
+            (post, seller_profile, seller_stripe_account_id) — the account id is
+            guaranteed non-null by the seller-verified check.
+
+        Raises:
+            NotFoundError: post missing, soft-deleted, or banned.
+            ForbiddenError: buyer is the post owner.
+            ConflictError: post already sold.
+            BadRequestError: seller not verified / cannot accept charges or payouts.
+        """
         result = await post_crud.get_by_id_with_status(self.db, id=post_id)
 
         if result is None:
@@ -166,9 +173,23 @@ class PaymentService:
                 "Seller cannot currently receive payouts; their account needs attention"
             )
 
-        seller_stripe_account_id: str = seller_profile.stripe_account_id
+        return post, seller_profile, seller_profile.stripe_account_id
 
-        # Calculate total with all fees using pricing service
+    def _compute_purchase_pricing(
+        self,
+        post: Post,
+        seller_profile: SellerProfile,
+        payment_method: PaymentMethod,
+    ) -> PurchasePricing:
+        """
+        Compute the order total and fee breakdown (in satang) for a purchase.
+
+        Pure computation: no DB or network access.
+
+        Raises:
+            BadRequestError: the resulting seller payout is below the Stripe
+                transfer minimum.
+        """
         method_type = (
             PaymentMethodType.PROMPTPAY
             if payment_method == PaymentMethod.PROMPTPAY
@@ -184,6 +205,7 @@ class PaymentService:
         # platform fee, in the seller's favor — deemed not worth a locking
         # scheme at MVP scale. Revisit if promo credits or traffic grow.
         waive_platform_fee = seller_profile.fee_free_sales_remaining > 0
+
         price_breakdown = self.pricing_service.calculate_order_total(
             post.price,
             post.shipping_cost,
@@ -191,20 +213,44 @@ class PaymentService:
             waive_platform_fee=waive_platform_fee,
         )
 
-        # Convert to satang
         amount = int(price_breakdown.total * CURRENCY_SUBUNIT_MULTIPLIER)
         fees = _breakdown_to_satang(price_breakdown)
-        currency = DEFAULT_CURRENCY
 
         if fees["seller_payout"] < self._settings.MIN_PAYOUT_AMOUNT_SATANG:
             raise bad_request_error(
                 "Order total is too low to process a seller payout"
             )
 
+        return PurchasePricing(
+            amount=amount,
+            fees=fees,
+            currency=DEFAULT_CURRENCY,
+            waive_platform_fee=waive_platform_fee,
+        )
+
+    async def _create_payment_intent(
+        self,
+        *,
+        buyer: User,
+        post_id: int,
+        shipping: ShippingAddress,
+        payment_method: PaymentMethod,
+        payment_method_types: list[str],
+    ) -> PaymentResponse:
+        """Shared logic to validate, create a Payment row, and create a PaymentIntent."""
+        post, seller_profile, seller_stripe_account_id = (
+            await self._load_and_validate_purchase(post_id, buyer)
+        )
+
+        pricing = self._compute_purchase_pricing(post, seller_profile, payment_method)
+        amount = pricing.amount
+        fees = pricing.fees
+        currency = pricing.currency
+        waive_platform_fee = pricing.waive_platform_fee
+
         seller_id = post.user_id
         description = f"Purchase: {post.title}"
 
-        # --- Phase 1: reservation routing + stale-intent cancel (no locks) ---
         takeover_target = await self._resolve_takeover_target(post, buyer)
         takeover_payment_id = takeover_target.id if takeover_target else None
         stale_intent_id = (
@@ -212,22 +258,16 @@ class PaymentService:
         )
 
         if stale_intent_id:
-            # Close the read transaction before the Stripe call — a DB
-            # transaction must never stay open across a network round-trip.
             await self.db.commit()
             await self._cancel_stale_intent(stale_intent_id)
 
-        # --- Phase 2: claim transaction (commits BEFORE the Stripe create) ---
         old_payment: Payment | None = None
         if takeover_payment_id is not None:
-            # Lock order: payment row before post row (same as the webhook
-            # handlers — reversing it can deadlock).
             old_payment = await payment_crud.get_by_id_for_update(
                 self.db, id=takeover_payment_id
             )
 
         if old_payment is not None and old_payment.status == PaymentStatus.SUCCESSFUL:
-            # The previous holder's payment landed between phases.
             await self.db.rollback()
             raise conflict_error(ALREADY_SOLD_DETAIL)
 
@@ -258,9 +298,8 @@ class PaymentService:
             buyer_id=buyer.id,
             duration_minutes=self._settings.RESERVATION_DURATION_MINUTES,
         )
+
         if not reserved:
-            # Someone else claimed the post between phases; discard the
-            # uncommitted payment row.
             await self.db.rollback()
             raise conflict_error(RESERVED_BY_OTHER_DETAIL)
 
@@ -271,9 +310,6 @@ class PaymentService:
 
         await self.db.commit()
 
-        # --- Phase 3: Stripe intent create + finalize ---
-        # A crash from here on leaves a reservation with no intent; it expires
-        # lazily and the takeover path skips the Stripe cancel for it.
         application_fee_amount = fees["platform_fee"] + fees["processing_fee"]
 
         try:
@@ -294,8 +330,6 @@ class PaymentService:
             )
         except stripe.StripeError as e:
             logger.error(f"Stripe error creating PaymentIntent: {e}")
-            # Free the post immediately rather than letting the claim sit out
-            # its TTL. Payment row first, post row second (lock order).
             await payment_crud.update_status(
                 self.db,
                 payment=payment,
@@ -331,10 +365,6 @@ class PaymentService:
         """
         Decide how a checkout interacts with the post's current reservation.
 
-        Read-only routing — the authoritative claim is the conditional UPDATE
-        in ``PostCRUD.try_reserve``; this just rejects obviously-blocked
-        checkouts early and identifies the stale holder to take over.
-
         Returns:
             The reservation-holding Payment to take over (expired, or this
             buyer's own retry), or None when the post is unreserved.
@@ -348,6 +378,7 @@ class PaymentService:
         holder = await payment_crud.get_by_id(
             self.db, id=post.reserved_by_payment_id
         )
+
         if holder is None:
             return None
 
