@@ -148,9 +148,6 @@ export function PaymentForm({
       }
     } catch (err) {
       onError((err as Error).message ?? "Payment failed");
-      // A 409 here means the post was reserved or sold under us — refresh
-      // the post so its reserved/sold state is current when the buyer
-      // navigates back.
       queryClient.invalidateQueries({
         queryKey: queryKeys.posts.detail(postId),
       });

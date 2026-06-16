@@ -100,8 +100,6 @@ export function CheckoutPage() {
     }
   };
 
-  // Cancel a pending PromptPay payment: frees the post's checkout
-  // reservation immediately and returns to the payment-method picker.
   const handleCancelPayment = async () => {
     if (!paymentResponse) return;
     setIsCancelling(true);
