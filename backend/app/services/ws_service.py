@@ -8,10 +8,10 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.constants.message import MAX_MESSAGE_LENGTH
-from app.crud.ban import ban_crud
+from app.crud.ban import BanCRUD
 from app.crud.conversation import ConversationCRUD
 from app.crud.message import MessageCRUD
-from app.crud.message_flag import message_flag_crud as _message_flag_crud
+from app.crud.message_flag import MessageFlagCRUD
 from app.crud.post import PostCRUD
 from app.crud.user import UserCRUD
 from app.services.message_service import MessageService
@@ -31,6 +31,8 @@ class WebSocketService:
         conversation_crud: ConversationCRUD,
         message_crud: MessageCRUD,
         post_crud: PostCRUD,
+        ban_crud: BanCRUD,
+        message_flag_crud: MessageFlagCRUD,
         ws_manager: ConnectionManager,
     ) -> None:
         self._ws = websocket
@@ -39,6 +41,8 @@ class WebSocketService:
         self._conversation_crud = conversation_crud
         self._message_crud = message_crud
         self._post_crud = post_crud
+        self._ban_crud = ban_crud
+        self._message_flag_crud = message_flag_crud
         self._ws_manager = ws_manager
 
     async def validate_user(self, user_id: int) -> bool:
@@ -49,7 +53,7 @@ class WebSocketService:
             if not user or user.is_deleted or not user.is_active:
                 await self._ws.close(code=4001, reason="Invalid token")
                 return False
-            active_ban = await ban_crud.get_active_user_ban(db, user_id=user_id)
+            active_ban = await self._ban_crud.get_active_user_ban(db, user_id=user_id)
             if active_ban:
                 await self._ws.close(code=4003, reason="Account banned")
                 return False
@@ -83,7 +87,7 @@ class WebSocketService:
                 self._post_crud,
                 self._user_crud,
                 ws_manager=self._ws_manager,
-                message_flag_crud=_message_flag_crud,
+                message_flag_crud=self._message_flag_crud,
             )
             await service.send_message(
                 conversation_id=conversation_id,

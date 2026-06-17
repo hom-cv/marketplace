@@ -113,10 +113,8 @@ def make_seller_profile(
 
 
 @pytest.fixture
-def mocks(monkeypatch):
-    """Patch the module-level CRUD singletons with AsyncMock-backed mocks."""
-    import app.services.stripe_webhook_service as mod
-
+def mocks():
+    """AsyncMock-backed CRUD doubles injected into the webhook service."""
     payment_crud = SimpleNamespace(
         get_by_payment_intent_id_for_update=AsyncMock(return_value=None),
         update_status=AsyncMock(),
@@ -135,10 +133,6 @@ def mocks(monkeypatch):
         update_verification_status=AsyncMock(),
         decrement_fee_free_sales=AsyncMock(),
     )
-    monkeypatch.setattr(mod, "payment_crud", payment_crud)
-    monkeypatch.setattr(mod, "post_crud", post_crud)
-    monkeypatch.setattr(mod, "seller_crud", seller_crud)
-
     stripe_service = SimpleNamespace(
         cancel_payment_intent=AsyncMock(),
         retrieve_payment_intent=AsyncMock(),
@@ -155,4 +149,10 @@ def mocks(monkeypatch):
 @pytest.fixture
 def service(mocks):
     """A webhook service with an AsyncMock session (tracks commit/flush awaits)."""
-    return StripeWebhookService(db=AsyncMock(), stripe_service=mocks.stripe_service)
+    return StripeWebhookService(
+        db=AsyncMock(),
+        stripe_service=mocks.stripe_service,
+        post_crud=mocks.post_crud,
+        payment_crud=mocks.payment_crud,
+        seller_crud=mocks.seller_crud,
+    )

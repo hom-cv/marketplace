@@ -45,7 +45,12 @@ def _create_test_pricing_service() -> PricingService:
     mock_settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
     mock_settings.TRANSFER_FEE = Decimal("30.0")
-    return PricingService(db=AsyncMock(), settings=mock_settings, post_crud_dep=MagicMock())
+    return PricingService(
+        db=AsyncMock(),
+        settings=mock_settings,
+        post_crud_dep=MagicMock(),
+        seller_crud_dep=MagicMock(),
+    )
 
 
 def create_mock_user(

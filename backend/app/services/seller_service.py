@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import bad_request_error, conflict_error
 from app.core.settings import AnnotatedSettings, Settings
-from app.crud.seller import seller_crud
+from app.crud.seller import AnnotatedSellerCRUD, SellerCRUD
 from app.db.utils import get_async_db
 from app.models.seller import SellerProfile, SellerVerificationStatus
 from app.models.user import User
@@ -33,12 +33,14 @@ class SellerService:
         stripe_service: StripeService,
         invite_service: InviteService,
         settings: Settings,
+        seller_crud: SellerCRUD,
     ) -> None:
         """Initialize seller service with database session."""
         self.db = db
         self.stripe_service = stripe_service
         self.invite_service = invite_service
         self._settings = settings
+        self._seller_crud = seller_crud
 
     async def register_seller(
         self, user: User, verification_request: SellerVerificationRequest
@@ -58,7 +60,7 @@ class SellerService:
             BadRequestError: If Stripe account creation fails.
         """
         # Check if user already has a seller profile
-        existing_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
+        existing_profile = await self._seller_crud.get_by_user_id(self.db, user_id=user.id)
         if existing_profile:
             if (
                 existing_profile.verification_status
@@ -91,7 +93,7 @@ class SellerService:
             logger.error(f"Stripe error during seller registration: {e}")
             raise bad_request_error(f"Failed to create payout account: {str(e)}")
 
-        await seller_crud.create_seller_profile(
+        await self._seller_crud.create_seller_profile(
             self.db,
             user_id=user.id,
             stripe_account_id=account.id,
@@ -121,7 +123,7 @@ class SellerService:
         Returns:
             SellerStatusResponse: The current seller status.
         """
-        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
+        seller_profile = await self._seller_crud.get_by_user_id(self.db, user_id=user.id)
 
         if not seller_profile:
             return SellerStatusResponse(is_seller=False, verification_status=None)
@@ -166,7 +168,7 @@ class SellerService:
 
     async def create_onboarding_refresh_link(self, user: User) -> str:
         """Generate a fresh onboarding link for a pending seller."""
-        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=user.id)
+        seller_profile = await self._seller_crud.get_by_user_id(self.db, user_id=user.id)
 
         if not seller_profile or not seller_profile.stripe_account_id:
             raise bad_request_error("Seller has no Stripe account")
@@ -188,10 +190,11 @@ def _get_seller_service(
     stripe_service: AnnotatedStripeService,
     invite_service: AnnotatedInviteService,
     settings: AnnotatedSettings,
+    seller_crud: AnnotatedSellerCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> SellerService:
     """Factory function to create SellerService instance."""
-    return SellerService(db, stripe_service, invite_service, settings)
+    return SellerService(db, stripe_service, invite_service, settings, seller_crud)
 
 
 AnnotatedSellerService = Annotated[SellerService, Depends(_get_seller_service)]

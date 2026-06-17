@@ -1,7 +1,9 @@
 """CRUD operations for reports."""
 
 from datetime import datetime, timezone
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -113,3 +115,11 @@ class ReportCRUD:
 
 
 report_crud = ReportCRUD()
+
+
+def get_report_crud() -> ReportCRUD:
+    """Dependency provider for ReportCRUD instance."""
+    return report_crud
+
+
+AnnotatedReportCRUD = Annotated[ReportCRUD, Depends(get_report_crud)]

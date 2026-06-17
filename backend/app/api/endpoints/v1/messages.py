@@ -7,8 +7,10 @@ from fastapi import APIRouter, Depends, Path, Query, WebSocket
 
 from app.core.jwt import create_ws_ticket
 from app.core.security import decode_access_token, get_current_user
+from app.crud.ban import ban_crud
 from app.crud.conversation import conversation_crud
 from app.crud.message import message_crud
+from app.crud.message_flag import message_flag_crud
 from app.crud.post import post_crud
 from app.crud.user import user_crud
 from app.db.session import build_async_session
@@ -127,6 +129,8 @@ async def websocket_endpoint(
         conversation_crud=conversation_crud,
         message_crud=message_crud,
         post_crud=post_crud,
+        ban_crud=ban_crud,
+        message_flag_crud=message_flag_crud,
         ws_manager=manager,
     )
 

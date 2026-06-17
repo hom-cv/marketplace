@@ -10,15 +10,11 @@ from app.services.seller_service import SellerService
 
 
 @pytest.fixture
-def crud(monkeypatch):
-    import app.services.seller_service as mod
-
-    seller_crud = SimpleNamespace(
+def crud():
+    return SimpleNamespace(
         get_by_user_id=AsyncMock(return_value=None),
         create_seller_profile=AsyncMock(),
     )
-    monkeypatch.setattr(mod, "seller_crud", seller_crud)
-    return seller_crud
 
 
 class TestRegisterSellerCopiesCredits:
@@ -46,6 +42,7 @@ class TestRegisterSellerCopiesCredits:
             stripe_service=stripe_service,
             invite_service=invite_service,
             settings=settings,
+            seller_crud=crud,
         )
 
         user = MagicMock()

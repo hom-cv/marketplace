@@ -1,7 +1,9 @@
 """Payment CRUD operations."""
 
 from datetime import datetime, timezone
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -343,3 +345,6 @@ payment_crud = PaymentCRUD(Payment)
 def get_payment_crud() -> PaymentCRUD:
     """Dependency provider for PaymentCRUD instance."""
     return payment_crud
+
+
+AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]

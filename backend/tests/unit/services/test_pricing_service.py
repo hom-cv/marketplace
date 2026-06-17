@@ -33,7 +33,12 @@ def pricing_service(mock_settings):
     """Create PricingService instance with mock dependencies."""
     mock_db = AsyncMock()
     mock_post_crud = MagicMock()
-    return PricingService(db=mock_db, settings=mock_settings, post_crud_dep=mock_post_crud)
+    return PricingService(
+        db=mock_db,
+        settings=mock_settings,
+        post_crud_dep=mock_post_crud,
+        seller_crud_dep=MagicMock(),
+    )
 
 
 class TestCalculateOrderTotal:

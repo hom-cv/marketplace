@@ -44,9 +44,7 @@ def _make_ban():
 
 
 @pytest.fixture
-def cruds(monkeypatch):
-    import app.services.moderation_service as mod
-
+def cruds():
     report_crud = SimpleNamespace(create=AsyncMock(return_value=_make_report()))
     ban_crud = SimpleNamespace(
         get_active_user_ban=AsyncMock(return_value=None),
@@ -57,23 +55,26 @@ def cruds(monkeypatch):
     )
     user_crud = SimpleNamespace(get_by_id=AsyncMock(return_value=None))
 
-    monkeypatch.setattr(mod, "report_crud", report_crud)
-    monkeypatch.setattr(mod, "ban_crud", ban_crud)
-    monkeypatch.setattr(mod, "post_crud", post_crud)
-    monkeypatch.setattr(mod, "user_crud", user_crud)
-
     return SimpleNamespace(
         report_crud=report_crud,
         ban_crud=ban_crud,
         post_crud=post_crud,
         user_crud=user_crud,
+        message_flag_crud=MagicMock(),
     )
 
 
 class TestCommitOwnership:
     async def test_submit_report_commits_once(self, cruds):
         db = AsyncMock()
-        service = ModerationService(db=db)
+        service = ModerationService(
+            db=db,
+            ban_crud=cruds.ban_crud,
+            message_flag_crud=cruds.message_flag_crud,
+            post_crud=cruds.post_crud,
+            report_crud=cruds.report_crud,
+            user_crud=cruds.user_crud,
+        )
         reporter = MagicMock()
         reporter.id = 1
 
@@ -90,7 +91,14 @@ class TestCommitOwnership:
 
     async def test_ban_user_commits_once(self, cruds):
         db = AsyncMock()
-        service = ModerationService(db=db)
+        service = ModerationService(
+            db=db,
+            ban_crud=cruds.ban_crud,
+            message_flag_crud=cruds.message_flag_crud,
+            post_crud=cruds.post_crud,
+            report_crud=cruds.report_crud,
+            user_crud=cruds.user_crud,
+        )
         admin = MagicMock()
         admin.id = 1
         target = MagicMock()

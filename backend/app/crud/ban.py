@@ -1,7 +1,9 @@
 """CRUD operations for bans."""
 
 from datetime import datetime, timezone
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -211,3 +213,11 @@ class BanCRUD:
 
 
 ban_crud = BanCRUD()
+
+
+def get_ban_crud() -> BanCRUD:
+    """Dependency provider for BanCRUD instance."""
+    return ban_crud
+
+
+AnnotatedBanCRUD = Annotated[BanCRUD, Depends(get_ban_crud)]

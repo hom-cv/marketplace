@@ -1,7 +1,9 @@
 """Seller CRUD operations."""
 
 from datetime import datetime, timezone
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -173,3 +175,11 @@ class SellerCRUD(BaseCRUD[SellerProfile, SellerVerificationRequest, SellerVerifi
         return seller_profile
 
 seller_crud = SellerCRUD(SellerProfile)
+
+
+def get_seller_crud() -> SellerCRUD:
+    """Dependency provider for SellerCRUD instance."""
+    return seller_crud
+
+
+AnnotatedSellerCRUD = Annotated[SellerCRUD, Depends(get_seller_crud)]

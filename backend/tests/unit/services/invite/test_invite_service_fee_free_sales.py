@@ -23,19 +23,15 @@ def _make_invite(*, fee_free_sales=0):
 
 
 @pytest.fixture
-def crud(monkeypatch):
-    import app.services.invite_service as mod
-
-    invite_crud = SimpleNamespace(
+def crud():
+    return SimpleNamespace(
         create=AsyncMock(return_value=_make_invite(fee_free_sales=5)),
     )
-    monkeypatch.setattr(mod, "invite_crud", invite_crud)
-    return invite_crud
 
 
 class TestGenerateInvitesWithCredits:
     async def test_passes_fee_free_sales_to_crud(self, crud):
-        service = InviteService(db=AsyncMock())
+        service = InviteService(db=AsyncMock(), invite_crud=crud)
         admin = MagicMock()
         admin.id = 1
 
@@ -50,7 +46,7 @@ class TestGenerateInvitesWithCredits:
 
     async def test_defaults_to_zero_credits(self, crud):
         crud.create.return_value = _make_invite(fee_free_sales=0)
-        service = InviteService(db=AsyncMock())
+        service = InviteService(db=AsyncMock(), invite_crud=crud)
         admin = MagicMock()
         admin.id = 1
 

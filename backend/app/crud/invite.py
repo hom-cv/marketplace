@@ -3,7 +3,9 @@
 import secrets
 import string
 from datetime import datetime, timezone
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -165,3 +167,11 @@ class InviteCRUD:
 
 
 invite_crud = InviteCRUD()
+
+
+def get_invite_crud() -> InviteCRUD:
+    """Dependency provider for InviteCRUD instance."""
+    return invite_crud
+
+
+AnnotatedInviteCRUD = Annotated[InviteCRUD, Depends(get_invite_crud)]

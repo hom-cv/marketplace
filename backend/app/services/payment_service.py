@@ -15,9 +15,9 @@ from app.core.exceptions import (
     not_found_error,
 )
 from app.core.settings import AnnotatedSettings, Settings
-from app.crud.payment import payment_crud
-from app.crud.post import post_crud
-from app.crud.seller import seller_crud
+from app.crud.payment import AnnotatedPaymentCRUD, PaymentCRUD
+from app.crud.post import AnnotatedPostCRUD, PostCRUD
+from app.crud.seller import AnnotatedSellerCRUD, SellerCRUD
 from app.db.utils import get_async_db
 from app.models.payment import Payment, PaymentMethod, PaymentStatus
 from app.models.post import Post
@@ -70,12 +70,18 @@ class PaymentService:
         stripe_service: StripeService,
         settings: Settings,
         pricing_service: PricingService,
+        post_crud: PostCRUD,
+        payment_crud: PaymentCRUD,
+        seller_crud: SellerCRUD,
     ) -> None:
         """Initialize payment service with database session."""
         self.db = db
         self.stripe_service = stripe_service
         self._settings = settings
         self.pricing_service = pricing_service
+        self._post_crud = post_crud
+        self._payment_crud = payment_crud
+        self._seller_crud = seller_crud
 
     async def create_card_payment(
         self, buyer: User, payment_request: CreateCardPaymentRequest
@@ -141,7 +147,7 @@ class PaymentService:
             ConflictError: post already sold.
             BadRequestError: seller not verified / cannot accept charges or payouts.
         """
-        result = await post_crud.get_by_id_with_status(self.db, id=post_id)
+        result = await self._post_crud.get_by_id_with_status(self.db, id=post_id)
 
         if result is None:
             raise not_found_error("Post not found")
@@ -157,7 +163,7 @@ class PaymentService:
         if is_sold:
             raise conflict_error(ALREADY_SOLD_DETAIL)
 
-        seller_profile = await seller_crud.get_by_user_id(self.db, user_id=post.user_id)
+        seller_profile = await self._seller_crud.get_by_user_id(self.db, user_id=post.user_id)
         if (
             not seller_profile
             or seller_profile.verification_status != SellerVerificationStatus.VERIFIED
@@ -263,7 +269,7 @@ class PaymentService:
 
         old_payment: Payment | None = None
         if takeover_payment_id is not None:
-            old_payment = await payment_crud.get_by_id_for_update(
+            old_payment = await self._payment_crud.get_by_id_for_update(
                 self.db, id=takeover_payment_id
             )
 
@@ -271,7 +277,7 @@ class PaymentService:
             await self.db.rollback()
             raise conflict_error(ALREADY_SOLD_DETAIL)
 
-        payment = await payment_crud.create_payment(
+        payment = await self._payment_crud.create_payment(
             self.db,
             buyer_id=buyer.id,
             seller_id=seller_id,
@@ -291,7 +297,7 @@ class PaymentService:
             shipping_postal_code=shipping.postal_code,
         )
 
-        reserved = await post_crud.try_reserve(
+        reserved = await self._post_crud.try_reserve(
             self.db,
             post_id=post_id,
             payment_id=payment.id,
@@ -304,7 +310,7 @@ class PaymentService:
             raise conflict_error(RESERVED_BY_OTHER_DETAIL)
 
         if old_payment is not None and old_payment.status == PaymentStatus.PENDING:
-            await payment_crud.update_status(
+            await self._payment_crud.update_status(
                 self.db, payment=old_payment, status=PaymentStatus.EXPIRED
             )
 
@@ -330,14 +336,14 @@ class PaymentService:
             )
         except stripe.StripeError as e:
             logger.error(f"Stripe error creating PaymentIntent: {e}")
-            await payment_crud.update_status(
+            await self._payment_crud.update_status(
                 self.db,
                 payment=payment,
                 status=PaymentStatus.FAILED,
                 failure_code="payment_intent_creation_failed",
                 failure_message=str(e),
             )
-            await post_crud.release_reservation(
+            await self._post_crud.release_reservation(
                 self.db, post_id=post_id, payment_id=payment.id
             )
             await self.db.commit()
@@ -375,7 +381,7 @@ class PaymentService:
         if post.reserved_by_payment_id is None:
             return None
 
-        holder = await payment_crud.get_by_id(
+        holder = await self._payment_crud.get_by_id(
             self.db, id=post.reserved_by_payment_id
         )
 
@@ -440,7 +446,7 @@ class PaymentService:
             ConflictError: Payment is not cancellable (already completed or
                 otherwise settled).
         """
-        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        payment = await self._payment_crud.get_by_id(self.db, id=payment_id)
         if not payment:
             raise not_found_error("Payment not found")
 
@@ -485,16 +491,16 @@ class PaymentService:
                 raise bad_request_error("Unable to cancel the payment right now")
 
         # Lock order: payment row before post row.
-        locked = await payment_crud.get_by_id_for_update(self.db, id=payment_id)
+        locked = await self._payment_crud.get_by_id_for_update(self.db, id=payment_id)
         if locked is None or locked.status != PaymentStatus.PENDING:
             # A webhook settled it between the cancel and here; leave it be.
             await self.db.rollback()
             return
 
-        await payment_crud.update_status(
+        await self._payment_crud.update_status(
             self.db, payment=locked, status=PaymentStatus.EXPIRED
         )
-        await post_crud.release_reservation(
+        await self._post_crud.release_reservation(
             self.db, post_id=post_id, payment_id=payment_id
         )
         await self.db.commit()
@@ -517,7 +523,7 @@ class PaymentService:
                 NotFoundError: If payment not found.
                 ForbiddenError: If user is not buyer or seller.
             """
-        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        payment = await self._payment_crud.get_by_id(self.db, id=payment_id)
 
         if not payment:
             raise not_found_error("Payment not found")
@@ -557,7 +563,7 @@ class PaymentService:
             NotFoundError: If payment not found.
             ForbiddenError: If user is not seller or payment not successful.
         """
-        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        payment = await self._payment_crud.get_by_id(self.db, id=payment_id)
         if not payment:
             raise not_found_error("Payment not found")
 
@@ -567,7 +573,7 @@ class PaymentService:
         if payment.status != PaymentStatus.SUCCESSFUL:
             raise forbidden_error("Can only add tracking to successful payments")
 
-        await payment_crud.add_tracking_number(
+        await self._payment_crud.add_tracking_number(
             self.db,
             payment=payment,
             tracking_number=tracking_number,
@@ -591,7 +597,7 @@ class PaymentService:
             NotFoundError: If payment not found.
             ForbiddenError: If user is not buyer or payment not successful.
         """
-        payment = await payment_crud.get_by_id(self.db, id=payment_id)
+        payment = await self._payment_crud.get_by_id(self.db, id=payment_id)
         if not payment:
             raise not_found_error("Payment not found")
 
@@ -601,7 +607,7 @@ class PaymentService:
         if payment.status != PaymentStatus.SUCCESSFUL:
             raise forbidden_error("Can only confirm delivery for successful payments")
 
-        await payment_crud.confirm_delivery(self.db, payment=payment)
+        await self._payment_crud.confirm_delivery(self.db, payment=payment)
         await self.db.commit()
 
 
@@ -609,10 +615,21 @@ def _get_payment_service(
     stripe_service: AnnotatedStripeService,
     settings: AnnotatedSettings,
     pricing_service: AnnotatedPricingService,
+    post_crud: AnnotatedPostCRUD,
+    payment_crud: AnnotatedPaymentCRUD,
+    seller_crud: AnnotatedSellerCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> PaymentService:
     """Factory function to create PaymentService instance."""
-    return PaymentService(db, stripe_service, settings, pricing_service)
+    return PaymentService(
+        db,
+        stripe_service,
+        settings,
+        pricing_service,
+        post_crud,
+        payment_crud,
+        seller_crud,
+    )
 
 
 AnnotatedPaymentService = Annotated[PaymentService, Depends(_get_payment_service)]

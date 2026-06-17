@@ -64,9 +64,7 @@ SHIPPING = ShippingAddress(
 
 
 @pytest.fixture
-def mocks(monkeypatch):
-    import app.services.payment_service as mod
-
+def mocks():
     created_payment = MagicMock()
     created_payment.id = 7
     created_payment.status.value = "PENDING"
@@ -85,10 +83,6 @@ def mocks(monkeypatch):
         release_reservation=AsyncMock(),
     )
     seller_crud = SimpleNamespace(get_by_user_id=AsyncMock(return_value=None))
-
-    monkeypatch.setattr(mod, "payment_crud", payment_crud)
-    monkeypatch.setattr(mod, "post_crud", post_crud)
-    monkeypatch.setattr(mod, "seller_crud", seller_crud)
 
     stripe_service = MagicMock()
     intent = MagicMock()
@@ -109,13 +103,19 @@ def mocks(monkeypatch):
 def service(mocks):
     settings = _make_settings()
     pricing_service = PricingService(
-        db=AsyncMock(), settings=settings, post_crud_dep=MagicMock()
+        db=AsyncMock(),
+        settings=settings,
+        post_crud_dep=MagicMock(),
+        seller_crud_dep=MagicMock(),
     )
     return PaymentService(
         db=AsyncMock(),
         stripe_service=mocks.stripe_service,
         settings=settings,
         pricing_service=pricing_service,
+        post_crud=mocks.post_crud,
+        payment_crud=mocks.payment_crud,
+        seller_crud=mocks.seller_crud,
     )
 
 

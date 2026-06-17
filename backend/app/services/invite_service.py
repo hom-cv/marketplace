@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.invite import InviteStatus
 from app.core.exceptions import bad_request_error, not_found_error
-from app.crud.invite import invite_crud
+from app.crud.invite import AnnotatedInviteCRUD, InviteCRUD
 from app.db.utils import get_async_db
 from app.models.invite import SellerInvite
 from app.models.user import User
@@ -20,9 +20,10 @@ logger = logging.getLogger(__name__)
 class InviteService:
     """Service for managing seller invite codes."""
 
-    def __init__(self, db: AsyncSession) -> None:
+    def __init__(self, db: AsyncSession, invite_crud: InviteCRUD) -> None:
         """Initialize invite service with database session."""
         self.db = db
+        self._invite_crud = invite_crud
 
     async def generate_invites(
         self,
@@ -43,7 +44,7 @@ class InviteService:
         """
         invites = []
         for _ in range(count):
-            invite = await invite_crud.create(
+            invite = await self._invite_crud.create(
                 self.db,
                 created_by_user_id=admin_user.id,
                 fee_free_sales=fee_free_sales,
@@ -74,7 +75,7 @@ class InviteService:
         Raises:
             BadRequestError: If code is invalid or already used.
         """
-        invite = await invite_crud.get_by_code_for_update(self.db, code=code)
+        invite = await self._invite_crud.get_by_code_for_update(self.db, code=code)
 
         if not invite:
             raise bad_request_error("Invalid invite code")
@@ -86,7 +87,7 @@ class InviteService:
             raise bad_request_error("Invite code has been revoked")
 
         # Mark as used and commit right away (burns the code; see docstring)
-        invite = await invite_crud.mark_used(
+        invite = await self._invite_crud.mark_used(
             self.db,
             invite=invite,
             user_id=user_id,
@@ -120,7 +121,7 @@ class InviteService:
             except KeyError:
                 raise bad_request_error(f"Invalid status: {status}")
 
-        invites, total = await invite_crud.get_all(
+        invites, total = await self._invite_crud.get_all(
             self.db,
             status=status_enum,
             skip=skip,
@@ -148,7 +149,7 @@ class InviteService:
             NotFoundError: If code not found.
             BadRequestError: If code already used or revoked.
         """
-        invite = await invite_crud.get_by_code(self.db, code=code)
+        invite = await self._invite_crud.get_by_code(self.db, code=code)
 
         if not invite:
             raise not_found_error("Invite code not found")
@@ -159,7 +160,7 @@ class InviteService:
         if invite.status == InviteStatus.REVOKED:
             raise bad_request_error("Invite is already revoked")
 
-        invite = await invite_crud.revoke(self.db, invite=invite)
+        invite = await self._invite_crud.revoke(self.db, invite=invite)
         await self.db.commit()
         logger.info(f"Invite code {code} revoked")
 
@@ -179,10 +180,11 @@ class InviteService:
 
 
 def _get_invite_service(
+    invite_crud: AnnotatedInviteCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> InviteService:
     """Factory function to create InviteService instance."""
-    return InviteService(db)
+    return InviteService(db, invite_crud)
 
 
 AnnotatedInviteService = Annotated[InviteService, Depends(_get_invite_service)]

@@ -28,13 +28,19 @@ def service(mocks):
     settings = _make_settings()
     settings.MIN_PAYOUT_AMOUNT_SATANG = 200
     pricing_service = PricingService(
-        db=MagicMock(), settings=settings, post_crud_dep=MagicMock()
+        db=MagicMock(),
+        settings=settings,
+        post_crud_dep=MagicMock(),
+        seller_crud_dep=MagicMock(),
     )
     svc = PaymentService(
         db=AsyncMock(),
         stripe_service=mocks.stripe_service,
         settings=settings,
         pricing_service=pricing_service,
+        post_crud=mocks.post_crud,
+        payment_crud=mocks.payment_crud,
+        seller_crud=mocks.seller_crud,
     )
     return svc
 

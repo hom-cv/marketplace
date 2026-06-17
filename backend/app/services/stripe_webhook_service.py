@@ -19,9 +19,9 @@ from app.constants.stripe import (
     CONNECT_WEBHOOK_EVENT_HANDLER_MAP,
 )
 from app.core.exceptions import not_found_error
-from app.crud.payment import payment_crud
-from app.crud.post import post_crud
-from app.crud.seller import seller_crud
+from app.crud.payment import AnnotatedPaymentCRUD, PaymentCRUD
+from app.crud.post import AnnotatedPostCRUD, PostCRUD
+from app.crud.seller import AnnotatedSellerCRUD, SellerCRUD
 from app.db.utils import get_async_db
 from app.models.payment import Payment, PaymentStatus
 from app.models.seller import SellerVerificationStatus
@@ -33,9 +33,19 @@ logger = logging.getLogger(__name__)
 class StripeWebhookService:
     """Service for handling Stripe webhook events."""
 
-    def __init__(self, db: AsyncSession, stripe_service: StripeService) -> None:
+    def __init__(
+        self,
+        db: AsyncSession,
+        stripe_service: StripeService,
+        post_crud: PostCRUD,
+        payment_crud: PaymentCRUD,
+        seller_crud: SellerCRUD,
+    ) -> None:
         self.db = db
         self.stripe_service = stripe_service
+        self._post_crud = post_crud
+        self._payment_crud = payment_crud
+        self._seller_crud = seller_crud
 
     async def verify_event(
         self, request: Request, secret: str | None
@@ -148,7 +158,7 @@ class StripeWebhookService:
         metadata policy: ``payment_id`` metadata present → 404 → Stripe
         redelivers after the id has committed.
         """
-        return await payment_crud.get_by_payment_intent_id_for_update(
+        return await self._payment_crud.get_by_payment_intent_id_for_update(
             self.db, payment_intent_id=intent.id
         )
 
@@ -209,13 +219,13 @@ class StripeWebhookService:
         if payment.status == PaymentStatus.REFUND_REQUIRED:
             return
 
-        await post_crud.get_by_id_for_update(self.db, id=payment.post_id)
+        await self._post_crud.get_by_id_for_update(self.db, id=payment.post_id)
 
-        sold_to_other = await payment_crud.exists_successful_for_post(
+        sold_to_other = await self._payment_crud.exists_successful_for_post(
             self.db, post_id=payment.post_id, exclude_payment_id=payment.id
         )
         if sold_to_other:
-            await payment_crud.update_status(
+            await self._payment_crud.update_status(
                 self.db, payment=payment, status=PaymentStatus.REFUND_REQUIRED
             )
             await self.db.commit()
@@ -227,7 +237,7 @@ class StripeWebhookService:
             )
             return
 
-        await payment_crud.update_status(
+        await self._payment_crud.update_status(
             self.db,
             payment=payment,
             status=PaymentStatus.SUCCESSFUL,
@@ -237,11 +247,11 @@ class StripeWebhookService:
         # on the transition to SUCCESSFUL (redeliveries early-return above),
         # in the same transaction as the status flip.
         if payment.platform_fee_waived:
-            await seller_crud.decrement_fee_free_sales(
+            await self._seller_crud.decrement_fee_free_sales(
                 self.db, user_id=payment.seller_id
             )
 
-        await post_crud.clear_reservation(self.db, post_id=payment.post_id)
+        await self._post_crud.clear_reservation(self.db, post_id=payment.post_id)
 
         await self.db.commit()
         logger.info(f"Payment {payment.id} marked as successful via webhook")
@@ -262,7 +272,7 @@ class StripeWebhookService:
         caught by the refund safety net, and a cancelled one settles via its
         own payment_intent.canceled webhook.
         """
-        others = await payment_crud.get_pending_with_intent_by_post(
+        others = await self._payment_crud.get_pending_with_intent_by_post(
             self.db, post_id=post_id, exclude_payment_id=winner_payment_id
         )
         intent_ids = [p.stripe_payment_intent_id for p in others]
@@ -308,7 +318,7 @@ class StripeWebhookService:
             return  # idempotent
 
         last_error = intent.last_payment_error
-        await payment_crud.update_status(
+        await self._payment_crud.update_status(
             self.db,
             payment=payment,
             status=PaymentStatus.FAILED,
@@ -318,7 +328,7 @@ class StripeWebhookService:
 
         # Free the post for other buyers if this payment still holds it.
         # Lock order: payment row (already held) before post row.
-        await post_crud.release_reservation(
+        await self._post_crud.release_reservation(
             self.db, post_id=payment.post_id, payment_id=payment.id
         )
 
@@ -330,7 +340,7 @@ class StripeWebhookService:
         intent_id = charge.payment_intent
         payment: Payment | None = None
         if intent_id:
-            payment = await payment_crud.get_by_payment_intent_id_for_update(
+            payment = await self._payment_crud.get_by_payment_intent_id_for_update(
                 self.db, payment_intent_id=intent_id
             )
         if not payment:
@@ -342,7 +352,7 @@ class StripeWebhookService:
         if payment.status == PaymentStatus.REFUNDED:
             return  # idempotent
 
-        await payment_crud.update_status(
+        await self._payment_crud.update_status(
             self.db,
             payment=payment,
             status=PaymentStatus.REFUNDED,
@@ -361,7 +371,7 @@ class StripeWebhookService:
                 f"Dispute {dispute.id} has no payment_intent; cannot resolve payment"
             )
             return None
-        return await payment_crud.get_by_payment_intent_id_for_update(
+        return await self._payment_crud.get_by_payment_intent_id_for_update(
             self.db, payment_intent_id=intent_id
         )
 
@@ -385,7 +395,7 @@ class StripeWebhookService:
             )
             return
 
-        await payment_crud.update_status(
+        await self._payment_crud.update_status(
             self.db, payment=payment, status=PaymentStatus.DISPUTED
         )
 
@@ -407,7 +417,7 @@ class StripeWebhookService:
             # A lost dispute reverses funds with no charge.refunded event.
             if payment.status == PaymentStatus.REFUNDED:
                 return  # idempotent
-            await payment_crud.update_status(
+            await self._payment_crud.update_status(
                 self.db, payment=payment, status=PaymentStatus.REFUNDED
             )
             await self.db.commit()
@@ -420,7 +430,7 @@ class StripeWebhookService:
             # Only revert a payment we moved to DISPUTED; never resurrect one
             # that was refunded separately. Preserve paid_at/fulfillment_status.
             if payment.status == PaymentStatus.DISPUTED:
-                await payment_crud.restore_to_successful(self.db, payment=payment)
+                await self._payment_crud.restore_to_successful(self.db, payment=payment)
                 await self.db.commit()
                 logger.info(
                     f"Payment {payment.id} restored to successful via won "
@@ -440,7 +450,7 @@ class StripeWebhookService:
         if not account_id:
             return
 
-        seller_profile = await seller_crud.get_by_stripe_account_id_for_update(
+        seller_profile = await self._seller_crud.get_by_stripe_account_id_for_update(
             self.db, stripe_account_id=account_id
         )
 
@@ -452,7 +462,7 @@ class StripeWebhookService:
         payouts_enabled = bool(account.payouts_enabled)
         details_submitted = bool(account.details_submitted)
 
-        await seller_crud.update_account_status(
+        await self._seller_crud.update_account_status(
             self.db,
             seller_profile=seller_profile,
             charges_enabled=charges_enabled,
@@ -468,7 +478,7 @@ class StripeWebhookService:
 
         if is_rejected:
             if seller_profile.verification_status != SellerVerificationStatus.REJECTED:
-                await seller_crud.update_verification_status(
+                await self._seller_crud.update_verification_status(
                     self.db,
                     seller_profile=seller_profile,
                     status=SellerVerificationStatus.REJECTED,
@@ -481,7 +491,7 @@ class StripeWebhookService:
             fully_onboarded
             and seller_profile.verification_status != SellerVerificationStatus.VERIFIED
         ):
-            await seller_crud.update_verification_status(
+            await self._seller_crud.update_verification_status(
                 self.db,
                 seller_profile=seller_profile,
                 status=SellerVerificationStatus.VERIFIED,
@@ -493,7 +503,7 @@ class StripeWebhookService:
             not fully_onboarded
             and seller_profile.verification_status == SellerVerificationStatus.VERIFIED
         ):
-            await seller_crud.update_verification_status(
+            await self._seller_crud.update_verification_status(
                 self.db,
                 seller_profile=seller_profile,
                 status=SellerVerificationStatus.PENDING,
@@ -514,7 +524,7 @@ class StripeWebhookService:
         if not account_id:
             return
 
-        seller_profile = await seller_crud.get_by_stripe_account_id_for_update(
+        seller_profile = await self._seller_crud.get_by_stripe_account_id_for_update(
             self.db, stripe_account_id=account_id
         )
         if not seller_profile:
@@ -532,14 +542,14 @@ class StripeWebhookService:
         ):
             return
 
-        await seller_crud.update_account_status(
+        await self._seller_crud.update_account_status(
             self.db,
             seller_profile=seller_profile,
             charges_enabled=False,
             payouts_enabled=False,
             details_submitted=seller_profile.details_submitted,
         )
-        await seller_crud.update_verification_status(
+        await self._seller_crud.update_verification_status(
             self.db,
             seller_profile=seller_profile,
             status=SellerVerificationStatus.REJECTED,
@@ -554,10 +564,19 @@ class StripeWebhookService:
 
 def _get_stripe_webhook_service(
     stripe_service: AnnotatedStripeService,
+    post_crud: AnnotatedPostCRUD,
+    payment_crud: AnnotatedPaymentCRUD,
+    seller_crud: AnnotatedSellerCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> StripeWebhookService:
     """Factory function to create StripeWebhookService instance."""
-    return StripeWebhookService(db, stripe_service)
+    return StripeWebhookService(
+        db,
+        stripe_service,
+        post_crud,
+        payment_crud,
+        seller_crud,
+    )
 
 
 AnnotatedStripeWebhookService = Annotated[

@@ -23,24 +23,20 @@ def _make_invite(*, status=InviteStatus.ACTIVE):
 
 
 @pytest.fixture
-def crud(monkeypatch):
-    import app.services.invite_service as mod
-
-    invite_crud = SimpleNamespace(
+def crud():
+    return SimpleNamespace(
         create=AsyncMock(return_value=_make_invite()),
         get_by_code=AsyncMock(return_value=None),
         get_by_code_for_update=AsyncMock(return_value=None),
         mark_used=AsyncMock(),
         revoke=AsyncMock(),
     )
-    monkeypatch.setattr(mod, "invite_crud", invite_crud)
-    return invite_crud
 
 
 class TestCommitOwnership:
     async def test_generate_invites_commits_batch_once(self, crud):
         db = AsyncMock()
-        service = InviteService(db=db)
+        service = InviteService(db=db, invite_crud=crud)
         admin = MagicMock()
         admin.id = 1
 
@@ -57,7 +53,7 @@ class TestCommitOwnership:
         crud.get_by_code_for_update.return_value = invite
         crud.mark_used.return_value = invite
         db = AsyncMock()
-        service = InviteService(db=db)
+        service = InviteService(db=db, invite_crud=crud)
 
         result = await service.validate_and_consume(code="ABCD2345", user_id=9)
 
@@ -70,7 +66,7 @@ class TestCommitOwnership:
         crud.get_by_code_for_update.return_value = _make_invite(
             status=InviteStatus.USED
         )
-        service = InviteService(db=AsyncMock())
+        service = InviteService(db=AsyncMock(), invite_crud=crud)
 
         with pytest.raises(Exception, match="already been used"):
             await service.validate_and_consume(code="ABCD2345", user_id=9)
@@ -81,7 +77,7 @@ class TestCommitOwnership:
         crud.get_by_code.return_value = invite
         crud.revoke.return_value = invite
         db = AsyncMock()
-        service = InviteService(db=db)
+        service = InviteService(db=db, invite_crud=crud)
 
         await service.revoke_invite(code="ABCD2345")
 

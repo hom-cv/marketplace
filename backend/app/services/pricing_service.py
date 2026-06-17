@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from app.core.exceptions import not_found_error
 from app.core.settings import AnnotatedSettings, Settings
 from app.crud.post import PostCRUD, get_post_crud
-from app.crud.seller import seller_crud
+from app.crud.seller import AnnotatedSellerCRUD, SellerCRUD
 from app.db.utils import get_async_db
 from app.schemas.payment import PaymentMethodType, PriceBreakdown
 
@@ -19,7 +19,13 @@ AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 class PricingService:
     """Service for pricing calculations."""
 
-    def __init__(self, db: AsyncSession, settings: Settings, post_crud_dep: PostCRUD):
+    def __init__(
+        self,
+        db: AsyncSession,
+        settings: Settings,
+        post_crud_dep: PostCRUD,
+        seller_crud_dep: SellerCRUD,
+    ):
         """
         Initialize PricingService.
 
@@ -27,10 +33,12 @@ class PricingService:
             db (AsyncSession): The database session.
             settings (Settings): The application settings.
             post_crud_dep (PostCRUD): Post CRUD operations.
+            seller_crud_dep (SellerCRUD): Seller CRUD operations.
         """
         self.db = db
         self._settings = settings
         self._post_crud = post_crud_dep
+        self._seller_crud = seller_crud_dep
 
     def calculate_order_total(
         self,
@@ -109,7 +117,7 @@ class PricingService:
 
     async def _seller_has_fee_free_credit(self, user_id: int) -> bool:
         """Whether the user has founding-seller fee-free sale credits left."""
-        profile = await seller_crud.get_by_user_id(self.db, user_id=user_id)
+        profile = await self._seller_crud.get_by_user_id(self.db, user_id=user_id)
         return bool(profile and profile.fee_free_sales_remaining > 0)
 
     async def get_price_breakdown_for_post(
@@ -164,10 +172,11 @@ class PricingService:
 def _get_pricing_service(
     settings: AnnotatedSettings,
     post_crud_dep: AnnotatedPostCRUD,
+    seller_crud_dep: AnnotatedSellerCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> PricingService:
     """Factory function to create PricingService instance."""
-    return PricingService(db, settings, post_crud_dep)
+    return PricingService(db, settings, post_crud_dep, seller_crud_dep)
 
 
 AnnotatedPricingService = Annotated[PricingService, Depends(_get_pricing_service)]

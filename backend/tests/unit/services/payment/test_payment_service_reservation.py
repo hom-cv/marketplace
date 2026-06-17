@@ -74,9 +74,7 @@ def _reserve_post(post, holder, *, active=True):
 
 
 @pytest.fixture
-def mocks(monkeypatch):
-    import app.services.payment_service as mod
-
+def mocks():
     post = _make_post()
     post.reserved_until = None
     post.reserved_by_payment_id = None
@@ -101,10 +99,6 @@ def mocks(monkeypatch):
         get_by_user_id=AsyncMock(return_value=_make_seller_profile())
     )
 
-    monkeypatch.setattr(mod, "payment_crud", payment_crud)
-    monkeypatch.setattr(mod, "post_crud", post_crud)
-    monkeypatch.setattr(mod, "seller_crud", seller_crud)
-
     stripe_service = MagicMock()
     intent = MagicMock()
     intent.id = "pi_new"
@@ -128,13 +122,19 @@ def service(mocks):
     settings = _make_settings()
     settings.RESERVATION_DURATION_MINUTES = 10
     pricing_service = PricingService(
-        db=AsyncMock(), settings=settings, post_crud_dep=MagicMock()
+        db=AsyncMock(),
+        settings=settings,
+        post_crud_dep=MagicMock(),
+        seller_crud_dep=MagicMock(),
     )
     return PaymentService(
         db=AsyncMock(),
         stripe_service=mocks.stripe_service,
         settings=settings,
         pricing_service=pricing_service,
+        post_crud=mocks.post_crud,
+        payment_crud=mocks.payment_crud,
+        seller_crud=mocks.seller_crud,
     )
 
 
