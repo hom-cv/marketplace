@@ -82,7 +82,7 @@
     },
     "contact": {
       "title": "9. Contact Us",
-      "content": "For questions about this Privacy Policy or to exercise your data protection rights, please contact our Data Protection Officer at {{privacyEmail}}. We will respond to your requests within 30 days as required by the PDPA."
+      "content": "For questions about this Privacy Policy or to exercise your data protection rights, please contact our Data Protection Officer at {{supportEmail}}. We will respond to your requests within 30 days as required by the PDPA."
     }
   },
   "data-protection": {
