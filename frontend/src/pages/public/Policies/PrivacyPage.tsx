@@ -12,7 +12,7 @@ import {
   Anchor,
   Box,
 } from "@mantine/core";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { CONTACT_EMAILS } from "@/constants/contact";
 
 const PRIVACY_SECTIONS = [
@@ -63,7 +63,18 @@ export function PrivacyPage() {
           {PRIVACY_SECTIONS.map((section) => (
             <section key={section}>
               <Title order={3}>{t(`privacy.${section}.title`)}</Title>
-              <Text mt="sm">{t(`privacy.${section}.content`, CONTACT_EMAILS)}</Text>
+              <Text mt="sm">
+                <Trans
+                  t={t}
+                  i18nKey={`privacy.${section}.content`}
+                  values={CONTACT_EMAILS}
+                  components={{
+                    emailLink: (
+                      <Anchor href={`mailto:${CONTACT_EMAILS.supportEmail}`} />
+                    ),
+                  }}
+                />
+              </Text>
             </section>
           ))}
         </Stack>

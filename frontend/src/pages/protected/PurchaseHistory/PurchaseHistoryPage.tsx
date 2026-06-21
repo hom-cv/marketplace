@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
 import { useMyPurchases, useConfirmDeliveryMutation } from "@/hooks/usePayments";
 import type { PurchaseListItem } from "@/api/types/payment";
+import { CONTACT_EMAILS } from "@/constants/contact";
 import { formatSatang } from "@/utils/currency";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
@@ -79,6 +80,16 @@ export function PurchaseHistoryPage() {
     { icon: IconCheck, label: t("purchases.delivered") },
   ];
 
+  const contactSupport = (purchase: PurchaseListItem) => {
+    const subject = t("purchases.supportSubject", {
+      title: purchase.post.title,
+      id: purchase.payment_id,
+    });
+    window.location.assign(
+      `mailto:${CONTACT_EMAILS.supportEmail}?subject=${encodeURIComponent(subject)}`,
+    );
+  };
+
   const renderRightColumn = (purchase: PurchaseListItem) => {
     const status = purchase.fulfillment_status;
 
@@ -104,7 +115,13 @@ export function PurchaseHistoryPage() {
               <IconClock size={14} className={styles.awaitingIcon} />
               <span>{t("purchases.awaitingShipment")}</span>
             </div>
-            <Button variant="ghost" size="sm" fullWidth leftIcon={<IconHeadset size={14} />}>
+            <Button
+              variant="ghost"
+              size="sm"
+              fullWidth
+              leftIcon={<IconHeadset size={14} />}
+              onClick={() => contactSupport(purchase)}
+            >
               {t("purchases.contactSupport")}
             </Button>
           </>
@@ -128,7 +145,12 @@ export function PurchaseHistoryPage() {
               >
                 {t("purchases.confirmDelivery")}
               </Button>
-              <Button variant="ghost" size="sm" leftIcon={<IconHeadset size={14} />}>
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<IconHeadset size={14} />}
+                onClick={() => contactSupport(purchase)}
+              >
                 {t("purchases.contactSupport")}
               </Button>
             </div>
@@ -148,7 +170,12 @@ export function PurchaseHistoryPage() {
                 <IconCheck size={14} />
                 <span>{t("purchases.delivered")}</span>
               </div>
-              <Button variant="ghost" size="sm" leftIcon={<IconHeadset size={14} />}>
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<IconHeadset size={14} />}
+                onClick={() => contactSupport(purchase)}
+              >
                 {t("purchases.contactSupport")}
               </Button>
             </div>

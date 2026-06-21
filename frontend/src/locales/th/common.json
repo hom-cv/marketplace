@@ -224,6 +224,7 @@
     "viewListing": "ดูรายการสินค้า",
     "showReceipt": "แสดงใบเสร็จ",
     "contactSupport": "ติดต่อฝ่ายสนับสนุน",
+    "supportSubject": "คำขอความช่วยเหลือ — {{title}} (คำสั่งซื้อ #{{id}})",
     "receipt": "ใบเสร็จ",
     "item": "สินค้า"
   },

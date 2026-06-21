@@ -12,7 +12,7 @@ import {
   Anchor,
   Box,
 } from "@mantine/core";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { CONTACT_EMAILS } from "@/constants/contact";
 
 const TERMS_SECTIONS = [
@@ -82,7 +82,18 @@ export function TermsPage() {
           {REFUND_SECTIONS.map((section) => (
             <section key={section}>
               <Title order={3}>{t(`refund.${section}.title`)}</Title>
-              <Text mt="sm">{t(`refund.${section}.content`, CONTACT_EMAILS)}</Text>
+              <Text mt="sm">
+                <Trans
+                  t={t}
+                  i18nKey={`refund.${section}.content`}
+                  values={CONTACT_EMAILS}
+                  components={{
+                    emailLink: (
+                      <Anchor href={`mailto:${CONTACT_EMAILS.supportEmail}`} />
+                    ),
+                  }}
+                />
+              </Text>
             </section>
           ))}
         </Stack>
