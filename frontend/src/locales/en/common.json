@@ -224,6 +224,7 @@
     "viewListing": "View listing",
     "showReceipt": "Show receipt",
     "contactSupport": "Contact Support",
+    "supportSubject": "Support request — {{title}} (Order #{{id}})",
     "receipt": "Receipt",
     "item": "Item"
   },
