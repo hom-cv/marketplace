@@ -79,6 +79,15 @@ class UserResponseSchema(BaseModel):
         )
 
 
+class UserListResponse(BaseModel):
+    """Schema for paginated user list response (admin)."""
+
+    items: list[UserResponseSchema]
+    total: int
+    skip: int
+    limit: int
+
+
 class UserProfileUpdateSchema(BaseModel):
     """The full set of editable profile fields, submitted on every save.
 

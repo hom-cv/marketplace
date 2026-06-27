@@ -20,8 +20,10 @@ import type {
   BanPostRequest,
   MessageFlag,
   MessageFlagListResponse,
+  UserListResponse,
 } from "@/api/types/admin";
 import type { ConversationDetail } from "@/api/types/chat";
+import type { LoginResponse } from "@/api/types/user";
 
 /**
  * Build URLSearchParams for paginated list endpoints
@@ -48,6 +50,25 @@ function buildPaginatedParams(
 
 export function getAdminStats(): Promise<AdminStats> {
   return apiRequest<AdminStats>("/admin/stats");
+}
+
+export function getUsers(
+  search?: string,
+  skip = 0,
+  limit = 50
+): Promise<UserListResponse> {
+  const query = buildPaginatedParams(skip, limit, { search });
+  return apiRequest<UserListResponse>(`/admin/users?${query}`);
+}
+
+/**
+ * Mint an access token for another user (admin "log in as"). Returns a normal
+ * login token whose permissions follow the target user.
+ */
+export function impersonateUser(userId: number): Promise<LoginResponse> {
+  return apiRequest<LoginResponse>(`/admin/impersonate/${userId}`, {
+    method: "POST",
+  });
 }
 
 export function generateInvites(

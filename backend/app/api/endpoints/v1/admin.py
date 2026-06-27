@@ -1,10 +1,20 @@
 """Admin API endpoints for bans, dashboard, and flagged messages."""
 
-from fastapi import APIRouter, Query, status
+import logging
+from datetime import timedelta
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.message_flag import MessageFlagStatus
+from app.core.exceptions import not_found_error
+from app.core.jwt import create_access_token
 from app.core.security import AnnotatedAdminUser
+from app.crud.user import AnnotatedUserCRUD
+from app.db.utils import get_async_db
+from app.schemas.auth import AuthLoginResponse
 from app.schemas.ban import (
     BanPostRequest,
     BanUserRequest,
@@ -15,8 +25,11 @@ from app.schemas.ban import (
 )
 from app.schemas.conversation import ConversationDetailSchema
 from app.schemas.message_flag import MessageFlagListResponse, MessageFlagResponse
+from app.schemas.user import UserListResponse, UserResponseSchema
 from app.services.message_service import AnnotatedMessageService
 from app.services.moderation_service import AnnotatedModerationService
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -28,6 +41,67 @@ class AdminStatsResponse(BaseModel):
     active_user_bans: int
     active_post_bans: int
     pending_flags: int
+
+
+@router.get(
+    "/users",
+    status_code=status.HTTP_200_OK,
+    response_model=UserListResponse,
+)
+async def list_users(
+    admin_user: AnnotatedAdminUser,
+    user_crud: AnnotatedUserCRUD,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    search: str | None = Query(None, description="Filter by username or email"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
+) -> UserListResponse:
+    """
+    List users.
+
+    **Admin only.** Returns a paginated list of users, used by the admin
+    dashboard (e.g. to pick a user to impersonate).
+    """
+    users, total = await user_crud.list_paginated(
+        db, skip=skip, limit=limit, search=search
+    )
+    return UserListResponse(
+        items=[UserResponseSchema.from_user(u) for u in users],
+        total=total,
+        skip=skip,
+        limit=limit,
+    )
+
+
+@router.post(
+    "/impersonate/{user_id}",
+    status_code=status.HTTP_200_OK,
+    response_model=AuthLoginResponse,
+)
+async def impersonate_user(
+    user_id: int,
+    admin_user: AnnotatedAdminUser,
+    user_crud: AnnotatedUserCRUD,
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+) -> AuthLoginResponse:
+    """
+    Log in as another user.
+
+    **Admin only.** Returns an access token for the target user so an admin can
+    act on their behalf (e.g. to fix issues or create listings). The token is an
+    ordinary access token — permissions follow the target user, not the admin.
+    """
+    target = await user_crud.get_by_id_with_relations(db, id=user_id)
+
+    if not target or target.is_deleted:
+        raise not_found_error("User not found")
+
+    logger.info(f"Admin {admin_user.id} impersonating user {user_id}")
+
+    access_token = create_access_token(
+        data={"user_id": target.id}, expires_delta=timedelta(days=1)
+    )
+    return AuthLoginResponse(access_token=access_token, token_type="bearer")
 
 
 @router.get(
@@ -260,5 +334,3 @@ async def get_conversation_admin(
         before_id=before_id,
         limit=limit,
     )
-
-

@@ -62,7 +62,9 @@ export const queryKeys = {
     allUserBans: ["adminUserBans"] as const,
     allPostBans: ["adminPostBans"] as const,
     allFlaggedMessages: ["adminFlaggedMessages"] as const,
+    allUsers: ["adminUsers"] as const,
     // Parameterized keys for specific queries
+    users: (search?: string | null) => ["adminUsers", search] as const,
     reports: (status?: string | null, type?: string | null) =>
       ["adminReports", status, type] as const,
     invites: (status?: string | null) => ["adminInvites", status] as const,

@@ -10,6 +10,7 @@ import {
   getInvites,
   getUserBans,
   getPostBans,
+  getUsers,
   reviewReport,
   generateInvites,
   revokeInvite,
@@ -43,6 +44,13 @@ export function useAdminInvites(statusFilter?: string | null) {
   return useQuery({
     queryKey: queryKeys.admin.invites(statusFilter),
     queryFn: () => getInvites(statusFilter || undefined),
+  });
+}
+
+export function useAdminUsers(search?: string | null) {
+  return useQuery({
+    queryKey: queryKeys.admin.users(search),
+    queryFn: () => getUsers(search || undefined),
   });
 }
 
