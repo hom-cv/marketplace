@@ -5,7 +5,6 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { IconSearch, IconUsers, IconLogin2 } from "@tabler/icons-react";
 import { useAdminUsers } from "@/hooks/useAdmin";
 import { useImpersonateMutation } from "@/hooks/useAuth";
-import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -16,7 +15,6 @@ import styles from "./UsersPage.module.css";
 
 export function UsersPage() {
   const navigate = useNavigate();
-  const currentUser = useAuthStore((state) => state.user);
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, 300);
 
@@ -67,7 +65,9 @@ export function UsersPage() {
         <EmptyStateCard
           icon={<IconUsers size={24} />}
           title="No users"
-          description={search ? "No users match your search." : "No users found."}
+          description={
+            search ? "No users match your search." : "No users found."
+          }
         />
       ) : (
         <div className={styles.tableWrap}>
@@ -82,7 +82,6 @@ export function UsersPage() {
             </Table.Thead>
             <Table.Tbody>
               {users.map((user) => {
-                const isSelf = user.id === currentUser?.id;
                 return (
                   <Table.Tr key={user.id}>
                     <Table.Td>
@@ -115,10 +114,7 @@ export function UsersPage() {
                         size="sm"
                         leftIcon={<IconLogin2 size={14} />}
                         onClick={() => handleImpersonate(user.id)}
-                        disabled={isSelf || impersonate.isPending}
-                        title={
-                          isSelf ? "You can't impersonate yourself" : undefined
-                        }
+                        disabled={impersonate.isPending}
                       >
                         Impersonate
                       </Button>

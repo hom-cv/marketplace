@@ -101,6 +101,32 @@ class TestImpersonate:
         assert payload["user_id"] == 42
         assert payload["sub"] == "access"
 
+    async def test_impersonating_self_returns_403(
+        self,
+        admin_client: AsyncClient,
+        mock_user_crud: MagicMock,
+        mock_admin_user: MagicMock,
+    ) -> None:
+        mock_user_crud.get_by_id_with_relations = AsyncMock(
+            return_value=mock_admin_user
+        )
+
+        response = await admin_client.post(
+            f"/api/v1/admin/impersonate/{mock_admin_user.id}"
+        )
+        assert response.status_code == 403
+
+    async def test_impersonating_another_admin_returns_403(
+        self,
+        admin_client: AsyncClient,
+        mock_user_crud: MagicMock,
+    ) -> None:
+        other_admin = create_mock_user(user_id=99, username="other", is_admin=True)
+        mock_user_crud.get_by_id_with_relations = AsyncMock(return_value=other_admin)
+
+        response = await admin_client.post("/api/v1/admin/impersonate/99")
+        assert response.status_code == 403
+
     async def test_unknown_user_returns_404(
         self,
         admin_client: AsyncClient,

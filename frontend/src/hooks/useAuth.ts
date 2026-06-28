@@ -3,7 +3,13 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { registerUser, loginUser, getCurrentUser, verifyEmail, resendVerificationEmail } from "@/api/auth";
+import {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  verifyEmail,
+  resendVerificationEmail,
+} from "@/api/auth";
 import { impersonateUser } from "@/api/admin";
 import { useAuthStore } from "@/stores/authStore";
 import type { RegisterRequest } from "@/api/types/user";
@@ -37,19 +43,15 @@ export function useLoginMutation() {
   });
 }
 
-/**
- * Admin "log in as" another user. On success, stashes the admin token, swaps in
- * the target's token, and refetches the current user so the app reflects them.
- */
 export function useImpersonateMutation() {
   const queryClient = useQueryClient();
   const startImpersonation = useAuthStore((state) => state.startImpersonation);
 
   return useMutation({
     mutationFn: (userId: number) => impersonateUser(userId),
-    onSuccess: async (data) => {
+    onSuccess: (data) => {
       startImpersonation(data.access_token);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
+      queryClient.clear();
     },
   });
 }

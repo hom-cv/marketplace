@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.message_flag import MessageFlagStatus
-from app.core.exceptions import not_found_error
+from app.core.exceptions import forbidden_error, not_found_error
 from app.core.jwt import create_access_token
 from app.core.security import AnnotatedAdminUser
 from app.crud.user import AnnotatedUserCRUD
@@ -87,19 +87,24 @@ async def impersonate_user(
     """
     Log in as another user.
 
-    **Admin only.** Returns an access token for the target user so an admin can
-    act on their behalf (e.g. to fix issues or create listings). The token is an
-    ordinary access token — permissions follow the target user, not the admin.
+    **Admin only.** Returns a short-lived access token for the target user so an
+    admin can act on their behalf (e.g. to fix issues or create listings).
     """
     target = await user_crud.get_by_id_with_relations(db, id=user_id)
 
     if not target or target.is_deleted:
         raise not_found_error("User not found")
 
+    if target.id == admin_user.id:
+        raise forbidden_error("You cannot impersonate yourself")
+
+    if target.is_admin:
+        raise forbidden_error("You cannot impersonate another admin")
+
     logger.info(f"Admin {admin_user.id} impersonating user {user_id}")
 
     access_token = create_access_token(
-        data={"user_id": target.id}, expires_delta=timedelta(days=1)
+        data={"user_id": target.id}, expires_delta=timedelta(minutes=30)
     )
     return AuthLoginResponse(access_token=access_token, token_type="bearer")
 
