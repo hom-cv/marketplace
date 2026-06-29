@@ -2,7 +2,12 @@
  * Admin-related query and mutation hooks
  */
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import {
   getFlaggedMessages,
   getAdminConversation,
@@ -47,10 +52,12 @@ export function useAdminInvites(statusFilter?: string | null) {
   });
 }
 
-export function useAdminUsers(search?: string | null) {
+export function useAdminUsers(search?: string | null, skip = 0) {
   return useQuery({
-    queryKey: queryKeys.admin.users(search),
-    queryFn: () => getUsers(search || undefined),
+    queryKey: queryKeys.admin.users(search, skip),
+    queryFn: () => getUsers(search || undefined, skip),
+    // Keep the current page visible while the next one loads (no flicker).
+    placeholderData: keepPreviousData,
   });
 }
 

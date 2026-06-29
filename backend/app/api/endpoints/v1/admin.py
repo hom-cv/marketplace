@@ -59,8 +59,8 @@ async def list_users(
     """
     List users.
 
-    **Admin only.** Returns a paginated list of users, used by the admin
-    dashboard (e.g. to pick a user to impersonate).
+    **Admin only.** Returns a page of users plus the total count, used by the
+    admin dashboard (e.g. to pick a user to impersonate).
     """
     users, total = await user_crud.list_paginated(
         db, skip=skip, limit=limit, search=search
@@ -68,8 +68,6 @@ async def list_users(
     return UserListResponse(
         items=[UserResponseSchema.from_user(u) for u in users],
         total=total,
-        skip=skip,
-        limit=limit,
     )
 
 

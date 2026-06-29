@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Loader, Table, TextInput } from "@mantine/core";
+import { Loader, Pagination, Table, TextInput } from "@mantine/core";
 import { useDebouncedValue } from "@mantine/hooks";
 import { IconSearch, IconUsers, IconLogin2 } from "@tabler/icons-react";
 import { useAdminUsers } from "@/hooks/useAdmin";
@@ -13,12 +13,18 @@ import { getErrorMessage } from "@/utils/error";
 import shared from "@/styles/listPage.module.css";
 import styles from "./UsersPage.module.css";
 
+const PAGE_SIZE = 20;
+
 export function UsersPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, 300);
+  const [page, setPage] = useState(1);
 
-  const { data, isLoading, error } = useAdminUsers(debouncedSearch);
+  const { data, isLoading, error } = useAdminUsers(
+    debouncedSearch,
+    (page - 1) * PAGE_SIZE,
+  );
 
   const impersonate = useImpersonateMutation();
 
@@ -29,6 +35,7 @@ export function UsersPage() {
   };
 
   const users = data?.items ?? [];
+  const totalPages = Math.ceil((data?.total ?? 0) / PAGE_SIZE);
 
   return (
     <div className={shared.container}>
@@ -42,7 +49,10 @@ export function UsersPage() {
           placeholder="Search username or email"
           leftSection={<IconSearch size={14} />}
           value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
+          onChange={(e) => {
+            setSearch(e.currentTarget.value);
+            setPage(1);
+          }}
           className={styles.search}
         />
       </div>
@@ -81,49 +91,53 @@ export function UsersPage() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {users.map((user) => {
-                return (
-                  <Table.Tr key={user.id}>
-                    <Table.Td>
-                      <div className={styles.userCell}>
-                        <span className={styles.username}>{user.username}</span>
-                        <span className={styles.fullName}>
-                          {[user.first_name, user.last_name]
-                            .filter(Boolean)
-                            .join(" ")}
-                        </span>
-                      </div>
-                    </Table.Td>
-                    <Table.Td>{user.email_address}</Table.Td>
-                    <Table.Td>
-                      <div className={styles.badges}>
-                        {user.is_admin && (
-                          <StatusBadge label="Admin" color="violet" />
-                        )}
-                        {user.is_seller && (
-                          <StatusBadge label="Seller" color="blue" />
-                        )}
-                        {!user.email_verified && (
-                          <StatusBadge label="Unverified" color="orange" />
-                        )}
-                      </div>
-                    </Table.Td>
-                    <Table.Td className={styles.actionCell}>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        leftIcon={<IconLogin2 size={14} />}
-                        onClick={() => handleImpersonate(user.id)}
-                        disabled={impersonate.isPending}
-                      >
-                        Impersonate
-                      </Button>
-                    </Table.Td>
-                  </Table.Tr>
-                );
-              })}
+              {users.map((user) => (
+                <Table.Tr key={user.id}>
+                  <Table.Td>
+                    <div className={styles.userCell}>
+                      <span className={styles.username}>{user.username}</span>
+                      <span className={styles.fullName}>
+                        {[user.first_name, user.last_name]
+                          .filter(Boolean)
+                          .join(" ")}
+                      </span>
+                    </div>
+                  </Table.Td>
+                  <Table.Td>{user.email_address}</Table.Td>
+                  <Table.Td>
+                    <div className={styles.badges}>
+                      {user.is_admin && (
+                        <StatusBadge label="Admin" color="violet" />
+                      )}
+                      {user.is_seller && (
+                        <StatusBadge label="Seller" color="blue" />
+                      )}
+                      {!user.email_verified && (
+                        <StatusBadge label="Unverified" color="orange" />
+                      )}
+                    </div>
+                  </Table.Td>
+                  <Table.Td className={styles.actionCell}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      leftIcon={<IconLogin2 size={14} />}
+                      onClick={() => handleImpersonate(user.id)}
+                      disabled={impersonate.isPending}
+                    >
+                      Impersonate
+                    </Button>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
             </Table.Tbody>
           </Table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <Pagination total={totalPages} value={page} onChange={setPage} />
         </div>
       )}
     </div>

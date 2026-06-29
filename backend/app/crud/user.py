@@ -125,7 +125,7 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
 
         Used by the admin users table. An optional ``search`` matches username or
         email (case-insensitive, substring). Returns the page of users plus the
-        total count for pagination.
+        total match count.
 
         Args:
             db (AsyncSession): The asynchronous database session.
