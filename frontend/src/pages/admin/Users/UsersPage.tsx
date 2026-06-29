@@ -26,6 +26,7 @@ export function UsersPage() {
   const { data, isLoading, error } = useAdminUsers(
     debouncedSearch,
     (page - 1) * PAGE_SIZE,
+    PAGE_SIZE,
   );
 
   const impersonate = useImpersonateMutation();
@@ -95,6 +96,11 @@ export function UsersPage() {
             <Table.Tbody>
               {users.map((user) => {
                 const isSelf = user.id === currentUser?.id;
+                const disableReason = isSelf
+                  ? "This is your own account"
+                  : user.is_admin
+                    ? "Admins can't be impersonated"
+                    : undefined;
                 return (
                   <Table.Tr key={user.id}>
                     <Table.Td>
@@ -127,8 +133,8 @@ export function UsersPage() {
                         size="sm"
                         leftIcon={<IconLogin2 size={14} />}
                         onClick={() => handleImpersonate(user.id)}
-                        disabled={isSelf || impersonate.isPending}
-                        title={isSelf ? "This is your own account" : undefined}
+                        disabled={!!disableReason || impersonate.isPending}
+                        title={disableReason}
                       >
                         Impersonate
                       </Button>

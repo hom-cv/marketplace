@@ -26,10 +26,7 @@ import {
   dismissFlaggedMessage,
 } from "@/api/admin";
 import { getPost } from "@/api/posts";
-import type {
-  BanUserRequest,
-  BanPostRequest,
-} from "@/api/types/admin";
+import type { BanUserRequest, BanPostRequest } from "@/api/types/admin";
 import { queryKeys } from "./queryKeys";
 
 // Queries
@@ -52,10 +49,10 @@ export function useAdminInvites(statusFilter?: string | null) {
   });
 }
 
-export function useAdminUsers(search?: string | null, skip = 0) {
+export function useAdminUsers(search?: string | null, skip = 0, limit = 50) {
   return useQuery({
     queryKey: queryKeys.admin.users(search, skip),
-    queryFn: () => getUsers(search || undefined, skip),
+    queryFn: () => getUsers(search || undefined, skip, limit),
     // Keep the current page visible while the next one loads (no flicker).
     placeholderData: keepPreviousData,
   });
@@ -88,8 +85,7 @@ export function useAdminConversation(
 ) {
   return useQuery({
     queryKey: queryKeys.admin.conversation(conversationId),
-    queryFn: () =>
-      getAdminConversation(conversationId!, undefined, limit),
+    queryFn: () => getAdminConversation(conversationId!, undefined, limit),
     enabled: conversationId !== null,
     staleTime: Infinity,
   });
@@ -164,8 +160,12 @@ export function useBanUserMutation(options?: {
     onSuccess: () => {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allUserBans }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allFlaggedMessages }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.allUserBans,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.allFlaggedMessages,
+        }),
       ]);
       options?.onSuccess?.();
     },
@@ -183,7 +183,9 @@ export function useBanPostMutation(options?: {
     onSuccess: () => {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPostBans }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.allPostBans,
+        }),
       ]);
       options?.onSuccess?.();
     },
@@ -197,7 +199,9 @@ export function useLiftUserBanMutation() {
     mutationFn: (banId: number) => liftUserBan(banId),
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allUserBans }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.allUserBans,
+        }),
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
       ]);
     },
@@ -210,7 +214,9 @@ export function useLiftPostBanMutation() {
     mutationFn: (banId: number) => liftPostBan(banId),
     onSuccess: () => {
       Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.admin.allPostBans }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.admin.allPostBans,
+        }),
         queryClient.invalidateQueries({ queryKey: queryKeys.admin.allReports }),
       ]);
     },
