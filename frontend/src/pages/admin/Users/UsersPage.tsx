@@ -5,6 +5,7 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { IconSearch, IconUsers, IconLogin2 } from "@tabler/icons-react";
 import { useAdminUsers } from "@/hooks/useAdmin";
 import { useImpersonateMutation } from "@/hooks/useAuth";
+import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -17,6 +18,7 @@ const PAGE_SIZE = 20;
 
 export function UsersPage() {
   const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(search, 300);
   const [page, setPage] = useState(1);
@@ -91,45 +93,49 @@ export function UsersPage() {
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {users.map((user) => (
-                <Table.Tr key={user.id}>
-                  <Table.Td>
-                    <div className={styles.userCell}>
-                      <span className={styles.username}>{user.username}</span>
-                      <span className={styles.fullName}>
-                        {[user.first_name, user.last_name]
-                          .filter(Boolean)
-                          .join(" ")}
-                      </span>
-                    </div>
-                  </Table.Td>
-                  <Table.Td>{user.email_address}</Table.Td>
-                  <Table.Td>
-                    <div className={styles.badges}>
-                      {user.is_admin && (
-                        <StatusBadge label="Admin" color="violet" />
-                      )}
-                      {user.is_seller && (
-                        <StatusBadge label="Seller" color="blue" />
-                      )}
-                      {!user.email_verified && (
-                        <StatusBadge label="Unverified" color="orange" />
-                      )}
-                    </div>
-                  </Table.Td>
-                  <Table.Td className={styles.actionCell}>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      leftIcon={<IconLogin2 size={14} />}
-                      onClick={() => handleImpersonate(user.id)}
-                      disabled={impersonate.isPending}
-                    >
-                      Impersonate
-                    </Button>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
+              {users.map((user) => {
+                const isSelf = user.id === currentUser?.id;
+                return (
+                  <Table.Tr key={user.id}>
+                    <Table.Td>
+                      <div className={styles.userCell}>
+                        <span className={styles.username}>{user.username}</span>
+                        <span className={styles.fullName}>
+                          {[user.first_name, user.last_name]
+                            .filter(Boolean)
+                            .join(" ")}
+                        </span>
+                      </div>
+                    </Table.Td>
+                    <Table.Td>{user.email_address}</Table.Td>
+                    <Table.Td>
+                      <div className={styles.badges}>
+                        {user.is_admin && (
+                          <StatusBadge label="Admin" color="violet" />
+                        )}
+                        {user.is_seller && (
+                          <StatusBadge label="Seller" color="blue" />
+                        )}
+                        {!user.email_verified && (
+                          <StatusBadge label="Unverified" color="orange" />
+                        )}
+                      </div>
+                    </Table.Td>
+                    <Table.Td className={styles.actionCell}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        leftIcon={<IconLogin2 size={14} />}
+                        onClick={() => handleImpersonate(user.id)}
+                        disabled={isSelf || impersonate.isPending}
+                        title={isSelf ? "This is your own account" : undefined}
+                      >
+                        Impersonate
+                      </Button>
+                    </Table.Td>
+                  </Table.Tr>
+                );
+              })}
             </Table.Tbody>
           </Table>
         </div>
