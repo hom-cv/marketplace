@@ -42,9 +42,11 @@ import {
 
 import { ChatSubscriptionProvider } from "@/components/ChatSubscriptionProvider";
 import { VerificationGate } from "@/components/VerificationGate";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 
 // Admin pages
 import {
+  UsersPage,
   InviteCodesPage,
   ReportsPage,
   FlaggedMessagesPage,
@@ -59,6 +61,7 @@ const rootRoute = createRootRoute({
     <ChatSubscriptionProvider>
       <VerificationGate />
       <div className={styles.rootLayout}>
+        <ImpersonationBanner />
         <AppNavigation />
         <main className={styles.mainContent}>
           <Outlet />
@@ -238,6 +241,12 @@ const adminIndexRoute = createRoute({
   },
 });
 
+const adminUsersRoute = createRoute({
+  getParentRoute: () => adminLayout,
+  path: "/users",
+  component: UsersPage,
+});
+
 const adminInvitesRoute = createRoute({
   getParentRoute: () => adminLayout,
   path: "/invites",
@@ -294,6 +303,7 @@ const routeTree = rootRoute.addChildren([
     adminProtectedLayout.addChildren([
       adminLayout.addChildren([
         adminIndexRoute,
+        adminUsersRoute,
         adminInvitesRoute,
         adminReportsRoute,
         adminFlaggedMessagesRoute,

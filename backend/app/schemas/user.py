@@ -79,6 +79,13 @@ class UserResponseSchema(BaseModel):
         )
 
 
+class UserListResponse(BaseModel):
+    """Schema for the admin user list response."""
+
+    items: list[UserResponseSchema]
+    total: int
+
+
 class UserProfileUpdateSchema(BaseModel):
     """The full set of editable profile fields, submitted on every save.
 

@@ -4,6 +4,7 @@ import {
   IconTicket,
   IconFlag,
   IconMessageReport,
+  IconUsers,
   IconUserOff,
   IconPackageOff,
   IconArrowLeft,
@@ -21,6 +22,13 @@ function SidebarContent() {
 
       <div className={styles.navSection}>
         <div className={styles.navHeader}>Management</div>
+        <SidebarNavLink
+          to="/admin/users"
+          icon={<IconUsers size={18} />}
+          label="Users"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
         <SidebarNavLink
           to="/admin/reports"
           icon={<IconFlag size={18} />}
@@ -66,10 +74,11 @@ function SidebarContent() {
 }
 
 const MOBILE_NAV_LINKS = [
+  { to: "/admin/users" as const, icon: IconUsers, label: "Users" },
   { to: "/admin/reports" as const, icon: IconFlag, label: "Reports" },
   { to: "/admin/flagged-messages" as const, icon: IconMessageReport, label: "Flags" },
   { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
-  { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Users" },
+  { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Bans" },
   { to: "/admin/bans/posts" as const, icon: IconPackageOff, label: "Posts" },
 ];
 

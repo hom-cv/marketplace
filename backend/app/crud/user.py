@@ -3,7 +3,7 @@
 from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -111,6 +111,58 @@ class UserCRUD(BaseCRUD[User, UserCreateSchema, UserUpdateSchema]):
         )
         result = await db.execute(query)
         return result.scalar_one_or_none()
+
+    async def list_paginated(
+        self,
+        db: AsyncSession,
+        *,
+        skip: int = 0,
+        limit: int = 50,
+        search: str | None = None,
+    ) -> tuple[list[User], int]:
+        """
+        List non-deleted users with roles and seller_profile eagerly loaded.
+
+        Used by the admin users table. An optional ``search`` matches username or
+        email (case-insensitive, substring). Returns the page of users plus the
+        total match count.
+
+        Args:
+            db (AsyncSession): The asynchronous database session.
+            skip (int): Number of rows to skip.
+            limit (int): Maximum number of rows to return.
+            search (str | None): Optional username/email substring filter.
+
+        Returns:
+            tuple[list[User], int]: The page of users and the total match count.
+        """
+        filters = [User.deleted_at.is_(None)]
+
+        if search:
+            pattern = f"%{search}%"
+            filters.append(
+                or_(
+                    User.username.ilike(pattern),
+                    User.email_address.ilike(pattern),
+                )
+            )
+
+        total = await db.scalar(select(func.count()).select_from(User).where(*filters))
+
+        query = (
+            select(User)
+            .where(*filters)
+            .options(
+                selectinload(User.roles),
+                selectinload(User.seller_profile),
+            )
+            .order_by(User.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        result = await db.execute(query)
+
+        return list(result.scalars().all()), total or 0
 
     async def create_user(self, db: AsyncSession, *, user: User) -> User:
         """

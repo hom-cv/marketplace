@@ -3,6 +3,13 @@
  * Types for admin dashboard, invites, reports, and bans
  */
 
+import type { User } from "@/api/types/user";
+
+export interface UserListResponse {
+  items: User[];
+  total: number;
+}
+
 export interface AdminStats {
   pending_reports: number;
   active_user_bans: number;
