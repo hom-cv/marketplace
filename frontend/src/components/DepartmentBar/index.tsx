@@ -11,7 +11,10 @@ export function DepartmentBar() {
   const { t } = useTranslation("explore");
   const { t: tListings } = useTranslation("listings");
   const active = useRouterState({
-    select: (s) => (s.location.search as { department?: Department }).department,
+    select: (s) =>
+      s.location.pathname === "/explore"
+        ? (s.location.search as { department?: Department }).department
+        : null,
   });
 
   const items: { value: Department | undefined; label: string }[] = [
