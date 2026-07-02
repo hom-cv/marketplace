@@ -110,53 +110,66 @@ def downgrade() -> None:
     op.alter_column('users', 'status',
                existing_type=sa.Enum('PENDING', 'ACTIVE', name='userstatus', native_enum=False),
                type_=postgresql.ENUM('PENDING', 'ACTIVE', name='user_status_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::user_status_enum')
     op.alter_column('user_roles', 'role',
                existing_type=sa.Enum('ADMIN', 'USER', 'MODERATOR', name='roletype', native_enum=False),
                type_=postgresql.ENUM('ADMIN', 'USER', 'MODERATOR', name='roletype'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='role::roletype')
     op.alter_column('seller_profiles', 'verification_status',
                existing_type=sa.Enum('PENDING', 'VERIFIED', 'REJECTED', name='sellerverificationstatus', native_enum=False),
                type_=postgresql.ENUM('PENDING', 'VERIFIED', 'REJECTED', name='seller_verification_status_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='verification_status::seller_verification_status_enum')
     op.alter_column('seller_invites', 'status',
                existing_type=sa.Enum('ACTIVE', 'USED', 'REVOKED', name='invitestatus', native_enum=False),
                type_=postgresql.ENUM('ACTIVE', 'USED', 'REVOKED', name='invite_status_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::invite_status_enum')
     op.alter_column('reports', 'status',
                existing_type=sa.Enum('PENDING', 'REVIEWED', 'RESOLVED', 'DISMISSED', name='reportstatus', native_enum=False),
                type_=postgresql.ENUM('PENDING', 'REVIEWED', 'RESOLVED', 'DISMISSED', name='report_status_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::report_status_enum')
     op.alter_column('reports', 'reason',
                existing_type=sa.Enum('COUNTERFEIT', 'ABUSE_OF_SYSTEM', 'PROHIBITED_ITEM', 'SCAM', name='reportreason', native_enum=False),
                type_=postgresql.ENUM('COUNTERFEIT', 'ABUSE_OF_SYSTEM', 'PROHIBITED_ITEM', 'SCAM', name='report_reason_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='reason::report_reason_enum')
     op.alter_column('reports', 'report_type',
                existing_type=sa.Enum('USER', 'POST', name='reporttype', native_enum=False),
                type_=postgresql.ENUM('USER', 'POST', name='report_type_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='report_type::report_type_enum')
     op.alter_column('posts', 'type',
                existing_type=sa.Enum('SHIRT', 'PANTS', 'JACKET', 'SHOES', 'ACCESSORIES', 'OTHER', name='posttype', native_enum=False),
                type_=postgresql.ENUM('SHIRT', 'PANTS', 'JACKET', 'SHOES', 'ACCESSORIES', 'OTHER', name='post_type_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='type::post_type_enum')
     op.alter_column('payments', 'shipping_carrier',
                existing_type=sa.Enum('EMS', 'KEX', 'FLASH_EXPRESS', 'J_AND_T', name='shippingcarrier', native_enum=False),
                type_=postgresql.ENUM('EMS', 'KEX', 'FLASH_EXPRESS', 'J_AND_T', name='shipping_carrier_enum'),
-               existing_nullable=True)
+               existing_nullable=True,
+               postgresql_using='shipping_carrier::shipping_carrier_enum')
     op.alter_column('payments', 'fulfillment_status',
                existing_type=sa.Enum('PACKING', 'IN_TRANSIT', 'DELIVERED', name='fulfillmentstatus', native_enum=False),
                type_=postgresql.ENUM('PACKING', 'IN_TRANSIT', 'DELIVERED', name='fulfillment_status_enum'),
-               existing_nullable=True)
+               existing_nullable=True,
+               postgresql_using='fulfillment_status::fulfillment_status_enum')
     op.alter_column('payments', 'status',
                existing_type=sa.Enum('PENDING', 'AUTHORIZED', 'SUCCESSFUL', 'FAILED', 'REFUNDED', 'EXPIRED', 'DISPUTED', 'REFUND_REQUIRED', name='paymentstatus', native_enum=False),
                type_=postgresql.ENUM('PENDING', 'AUTHORIZED', 'SUCCESSFUL', 'FAILED', 'REFUNDED', 'EXPIRED', 'DISPUTED', 'REFUND_REQUIRED', name='payment_status_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::payment_status_enum')
     op.alter_column('payments', 'payment_method',
                existing_type=sa.Enum('CARD', 'PROMPTPAY', name='paymentmethod', native_enum=False),
                type_=postgresql.ENUM('CARD', 'PROMPTPAY', name='payment_method_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='payment_method::payment_method_enum')
     op.alter_column('message_flags', 'status',
                existing_type=sa.Enum('PENDING', 'DISMISSED', name='messageflagstatus', native_enum=False),
                type_=postgresql.ENUM('PENDING', 'DISMISSED', name='message_flag_status_enum'),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='status::message_flag_status_enum')
     # ### end Alembic commands ###
