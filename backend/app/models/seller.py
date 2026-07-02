@@ -83,8 +83,7 @@ class SellerProfile(Base):
     verification_status: Mapped[SellerVerificationStatus] = mapped_column(
         Enum(
             SellerVerificationStatus,
-            name="seller_verification_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=SellerVerificationStatus.PENDING,

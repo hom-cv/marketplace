@@ -110,8 +110,7 @@ class Payment(Base):
     payment_method: Mapped[PaymentMethod] = mapped_column(
         Enum(
             PaymentMethod,
-            name="payment_method_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=PaymentMethod.CARD,
@@ -120,8 +119,7 @@ class Payment(Base):
     status: Mapped[PaymentStatus] = mapped_column(
         Enum(
             PaymentStatus,
-            name="payment_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=PaymentStatus.PENDING,
@@ -133,8 +131,7 @@ class Payment(Base):
     fulfillment_status: Mapped[FulfillmentStatus | None] = mapped_column(
         Enum(
             FulfillmentStatus,
-            name="fulfillment_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         nullable=True,  # Only set after payment is successful
@@ -147,8 +144,7 @@ class Payment(Base):
     shipping_carrier: Mapped[ShippingCarrier | None] = mapped_column(
         Enum(
             ShippingCarrier,
-            name="shipping_carrier_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         nullable=True,

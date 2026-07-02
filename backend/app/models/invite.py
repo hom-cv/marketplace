@@ -29,8 +29,7 @@ class SellerInvite(Base):
     status: Mapped[InviteStatus] = mapped_column(
         Enum(
             InviteStatus,
-            name="invite_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=InviteStatus.ACTIVE,
