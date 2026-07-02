@@ -43,8 +43,7 @@ class MessageFlag(Base):
     status: Mapped[MessageFlagStatus] = mapped_column(
         Enum(
             MessageFlagStatus,
-            name="message_flag_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=MessageFlagStatus.PENDING,

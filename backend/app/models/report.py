@@ -33,8 +33,7 @@ class Report(Base):
     report_type: Mapped[ReportType] = mapped_column(
         Enum(
             ReportType,
-            name="report_type_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         nullable=False,
@@ -57,8 +56,7 @@ class Report(Base):
     reason: Mapped[ReportReason] = mapped_column(
         Enum(
             ReportReason,
-            name="report_reason_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         nullable=False,
@@ -73,8 +71,7 @@ class Report(Base):
     status: Mapped[ReportStatus] = mapped_column(
         Enum(
             ReportStatus,
-            name="report_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=ReportStatus.PENDING,

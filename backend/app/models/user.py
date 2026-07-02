@@ -69,8 +69,7 @@ class User(Base):
     status: Mapped[UserStatus] = mapped_column(
         Enum(
             UserStatus,
-            name="user_status_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         default=UserStatus.PENDING,

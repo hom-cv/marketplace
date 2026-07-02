@@ -54,8 +54,7 @@ class Post(Base):
     type: Mapped[PostType] = mapped_column(
         Enum(
             PostType,
-            name="post_type_enum",
-            create_constraint=True,
+            native_enum=False,
             validate_strings=True,
         ),
         nullable=False,

@@ -32,7 +32,7 @@ class UserRole(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
 
     role: Mapped[RoleType] = mapped_column(
-        SqlEnum(RoleType, native_enum=True),
+        SqlEnum(RoleType, native_enum=False),
         unique=True,
         index=True,
         nullable=False,
