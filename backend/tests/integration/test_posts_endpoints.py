@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 from httpx import AsyncClient
 
-from app.models.post import Post, PostType
+from app.models.post import Gender, Post, PostType
 from tests.integration.conftest import TEST_CDN_URL, create_mock_user
 
 
@@ -49,6 +49,35 @@ class TestListPostsEndpoint:
         body = response.json()
         assert body["skip"] == 10
         assert body["limit"] == 25
+
+    async def test_list_posts_gender_filter_passthrough(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """The Women's department (womens+unisex) is forwarded to the CRUD.
+
+        This pins the department-scope contract: the schema enums from the
+        query string are converted to model enums and passed as ``genders``.
+        """
+        mock_post_crud.get_posts_with_filters.return_value = ([], 0)
+
+        response = await async_client.get(
+            "/api/v1/posts?genders=WOMENS&genders=UNISEX"
+        )
+
+        assert response.status_code == 200
+        _, kwargs = mock_post_crud.get_posts_with_filters.call_args
+        assert kwargs["genders"] == [Gender.WOMENS, Gender.UNISEX]
+
+    async def test_list_posts_invalid_gender_returns_422(
+        self,
+        async_client: AsyncClient,
+    ):
+        """An unknown gender value is rejected by validation."""
+        response = await async_client.get("/api/v1/posts?genders=KIDS")
+
+        assert response.status_code == 422
 
     async def test_list_posts_invalid_skip_returns_422(
         self,
@@ -96,6 +125,7 @@ class TestGetPostEndpoint:
         mock_post.title = "Test Post"
         mock_post.description = "A test post description"
         mock_post.type = PostType.SHIRT  # Use actual enum
+        mock_post.gender = Gender.UNISEX
         mock_post.price = Decimal("500.00")
         mock_post.shipping_cost = Decimal("50.00")
         mock_post.image_url = None
@@ -239,6 +269,7 @@ def _make_mock_post(
     mock_post.title = "Original Title"
     mock_post.description = "Original description"
     mock_post.type = PostType.SHIRT
+    mock_post.gender = Gender.UNISEX
     mock_post.price = Decimal("500.00")
     mock_post.shipping_cost = Decimal("50.00")
     mock_post.image_url = (image_urls or [None])[0]
@@ -258,6 +289,7 @@ VALID_UPDATE_JSON = {
     "title": "Updated Title",
     "description": "Updated description",
     "type": "SHIRT",
+    "gender": "MENS",
     "price": "600.00",
     "size": "L",
     "image_urls": [],
@@ -468,6 +500,7 @@ VALID_CREATE_JSON = {
     "title": "New Item",
     "description": "A brand new listing",
     "type": "SHIRT",
+    "gender": "MENS",
     "price": "600.00",
     "size": "L",
     "image_urls": [],

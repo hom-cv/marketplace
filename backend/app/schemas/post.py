@@ -27,6 +27,14 @@ class PostType(str, Enum):
     OTHER = "OTHER"
 
 
+class Gender(str, Enum):
+    """Target department enumeration for API."""
+
+    MENS = "MENS"
+    WOMENS = "WOMENS"
+    UNISEX = "UNISEX"
+
+
 # Measurement schemas for category-specific validation
 class TopMeasurements(BaseModel):
     """Measurements for shirts, jackets, and tops (all in cm)."""
@@ -121,6 +129,10 @@ class PostCreateSchema(BaseModel):
         ...,
         description="Category of the clothing item",
     )
+    gender: Gender = Field(
+        ...,
+        description="Target department (mens/womens/unisex)",
+    )
     price: Decimal = Field(
         ...,
         ge=MIN_LISTING_PRICE,
@@ -167,6 +179,7 @@ class PostUpdateSchema(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1, max_length=5000)
     type: PostType | None = None
+    gender: Gender | None = None
     price: Decimal | None = Field(
         None, ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
     )
@@ -189,6 +202,7 @@ class PostUpdateRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1, max_length=5000)
     type: PostType
+    gender: Gender
     price: Decimal = Field(
         ..., ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
     )
@@ -240,6 +254,7 @@ class PostResponseSchema(BaseModel):
     title: str
     description: str
     type: PostType
+    gender: Gender
     price: Decimal
     shipping_cost: Decimal
     image_url: str | None

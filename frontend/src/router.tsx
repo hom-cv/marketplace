@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
+import { isDepartment, type Department } from "@/constants/departments";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
@@ -124,6 +125,10 @@ const publicExploreRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/explore",
   component: PublicExplorePage,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { department?: Department } =>
+    isDepartment(search.department) ? { department: search.department } : {},
 });
 
 const publicPostViewRoute = createRoute({

@@ -31,6 +31,14 @@ class PostType(AutoName):
     OTHER = auto()
 
 
+class Gender(AutoName):
+    """Target department for a listing."""
+
+    MENS = auto()
+    WOMENS = auto()
+    UNISEX = auto()
+
+
 class Post(Base):
     """
     Post model representing clothing listings in the marketplace.
@@ -54,6 +62,15 @@ class Post(Base):
     type: Mapped[PostType] = mapped_column(
         Enum(
             PostType,
+            native_enum=False,
+            validate_strings=True,
+        ),
+        nullable=False,
+        index=True,
+    )
+    gender: Mapped[Gender] = mapped_column(
+        Enum(
+            Gender,
             native_enum=False,
             validate_strings=True,
         ),

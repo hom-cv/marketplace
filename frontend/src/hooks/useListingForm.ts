@@ -16,12 +16,19 @@ import {
 } from "@/constants/listing";
 import { notifySuccess, notifyError } from "@/utils/notify";
 import { getErrorMessage } from "@/utils/error";
-import type { Post, PostType, CreatePostRequest } from "@/api/types/post";
+import type {
+  Post,
+  PostType,
+  Gender,
+  CreatePostRequest,
+} from "@/api/types/post";
 import {
   getSizesForType,
   formatSize,
   MEASUREMENT_FIELDS,
+  POST_GENDERS,
 } from "@/api/types/post";
+import { getGenderLabels } from "@/constants/postGenders";
 import type {
   CreatePostFormValues,
   MeasurementField,
@@ -70,6 +77,11 @@ export function useListingForm({
     [t],
   );
 
+  const genderOptions = useMemo<SelectOption[]>(() => {
+    const labels = getGenderLabels(t);
+    return POST_GENDERS.map((g) => ({ value: g, label: labels[g] }));
+  }, [t]);
+
   const form = useForm<CreatePostFormValues>({
     validateInputOnBlur: true,
     initialValues,
@@ -79,6 +91,7 @@ export function useListingForm({
       description: (value) =>
         value.trim().length < 1 ? t("create.form.descriptionRequired") : null,
       type: (value) => (!value ? t("create.form.categoryRequired") : null),
+      gender: (value) => (!value ? t("create.form.genderRequired") : null),
       price: (value) => {
         if (!value || value < MIN_LISTING_PRICE)
           return t("create.form.priceMin", { min: MIN_LISTING_PRICE });
@@ -126,6 +139,13 @@ export function useListingForm({
     [form, resetMeasurements],
   );
 
+  const handleGenderChange = useCallback(
+    (value: string | null) => {
+      form.setFieldValue("gender", value as Gender | null);
+    },
+    [form],
+  );
+
   const measurementFields = useMemo<MeasurementField[]>(() => {
     if (!form.values.type) return [];
     return (MEASUREMENT_FIELDS[form.values.type] ?? []).map((field) => ({
@@ -158,6 +178,7 @@ export function useListingForm({
         title: values.title,
         description: values.description,
         type: values.type!,
+        gender: values.gender!,
         price: values.price as number,
         shipping_cost: (values.shippingCost as number) || 0,
         size: values.size!,
@@ -171,8 +192,10 @@ export function useListingForm({
     // Form
     form,
     postTypeOptions,
+    genderOptions,
     sizeOptions,
     handleTypeChange,
+    handleGenderChange,
 
     // Images
     imageCount: images.imageCount,

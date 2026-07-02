@@ -23,6 +23,7 @@ export function useEditPostForm(post: Post) {
       title: post.title,
       description: post.description,
       type: post.type,
+      gender: post.gender,
       price: parseFloat(post.price),
       shippingCost: parseFloat(post.shipping_cost || "0"),
       size: post.size,

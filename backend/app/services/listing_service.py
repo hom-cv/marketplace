@@ -16,7 +16,7 @@ from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
-from app.models.post import Post, PostType
+from app.models.post import Gender, Post, PostType
 from app.schemas.payment import PostSummary, PurchaseListItem, UserSummary
 from app.schemas.post import (
     PostCreateSchema,
@@ -263,6 +263,7 @@ class ListingService:
             title=data.title,
             description=data.description,
             type=PostType[data.type.value],
+            gender=Gender[data.gender.value],
             price=data.price,
             shipping_cost=data.shipping_cost,
             size=data.size,
@@ -320,8 +321,9 @@ class ListingService:
         # a bucket lifecycle/TTL rule or a periodic sweep that deletes keys not
         # referenced by any post's image_urls.
 
-        # type needs schema -> model enum conversion; image fields are set here.
+        # type/gender need schema -> model enum conversion; image fields set here.
         post.type = PostType[data.type.value]
+        post.gender = Gender[data.gender.value]
         post.image_urls = data.image_urls
         post.image_url = data.image_urls[0] if data.image_urls else None
 

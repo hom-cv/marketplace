@@ -8,6 +8,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuthStore, useIsAuthenticated } from "@/stores/authStore";
 import { useLogout, useCurrentUser } from "@/hooks/useAuth";
+import { DepartmentBar } from "@/components/DepartmentBar";
 import { Header } from "./Header";
 import { MobileDrawer } from "./MobileDrawer";
 
@@ -36,6 +37,7 @@ export function AppNavigation() {
         onToggleDrawer={toggleDrawer}
         onLogout={handleLogout}
       />
+      <DepartmentBar />
       <MobileDrawer
         opened={drawerOpened}
         onClose={closeDrawer}

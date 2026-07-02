@@ -21,7 +21,7 @@ from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import User
-from app.models.post import PostType
+from app.models.post import Gender, PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
@@ -31,6 +31,7 @@ from app.schemas.post import (
     PresignUploadRequest,
     PresignUploadResponse,
 )
+from app.schemas.post import Gender as GenderSchema
 from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
@@ -117,6 +118,7 @@ async def list_posts(
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     types: Annotated[list[PostTypeSchema] | None, Query()] = None,
+    genders: Annotated[list[GenderSchema] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
     min_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     max_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
@@ -132,6 +134,7 @@ async def list_posts(
     - skip: Number of records to skip (for pagination)
     - limit: Maximum number of records to return
     - types: Filter by post types (can specify multiple)
+    - genders: Filter by department (mens/womens/unisex, can specify multiple)
     - sizes: Filter by sizes (can specify multiple). Excludes posts with no size.
     - min_price: Minimum price filter
     - max_price: Maximum price filter
@@ -142,12 +145,14 @@ async def list_posts(
     """
     # Convert schema types to model types for CRUD
     model_types = [PostType[t.value] for t in types] if types else None
+    model_genders = [Gender[g.value] for g in genders] if genders else None
 
     posts_with_sold, total = await post_crud_dep.get_posts_with_filters(
         db,
         skip=skip,
         limit=limit,
         types=model_types,
+        genders=model_genders,
         sizes=sizes,
         min_price=min_price,
         max_price=max_price,

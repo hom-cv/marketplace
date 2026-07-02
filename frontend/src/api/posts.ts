@@ -34,6 +34,9 @@ export async function getPosts(
   if (filters?.types && filters.types.length > 0) {
     filters.types.forEach((type) => params.append("types", type));
   }
+  if (filters?.genders && filters.genders.length > 0) {
+    filters.genders.forEach((gender) => params.append("genders", gender));
+  }
   if (filters?.sizes && filters.sizes.length > 0) {
     filters.sizes.forEach((size) => params.append("sizes", size));
   }

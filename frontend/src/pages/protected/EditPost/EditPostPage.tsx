@@ -30,8 +30,10 @@ function EditPostForm({ post }: { post: Post }) {
   const {
     form,
     postTypeOptions,
+    genderOptions,
     sizeOptions,
     handleTypeChange,
+    handleGenderChange,
     imageCount,
     imagePreviews,
     selectedImageIndex,
@@ -88,8 +90,10 @@ function EditPostForm({ post }: { post: Post }) {
                 <ListingDetailsForm
                   form={form}
                   postTypeOptions={postTypeOptions}
+                  genderOptions={genderOptions}
                   sizeOptions={sizeOptions}
                   onTypeChange={handleTypeChange}
+                  onGenderChange={handleGenderChange}
                 />
               </div>
 

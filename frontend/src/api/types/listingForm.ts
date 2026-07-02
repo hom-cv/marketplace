@@ -2,12 +2,13 @@
  * Listing create/edit form types (shared across the form hooks + components).
  */
 
-import type { PostType } from "./post";
+import type { Gender, PostType } from "./post";
 
 export interface CreatePostFormValues {
   title: string;
   description: string;
   type: PostType | null;
+  gender: Gender | null;
   price: number | "";
   shippingCost: number | "";
   size: string | null;

@@ -1,5 +1,8 @@
 {
   "title": "Explore",
+  "departments": {
+    "all": "All"
+  },
   "search": {
     "placeholder": "Search listings...",
     "label": "Search"

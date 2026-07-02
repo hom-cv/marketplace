@@ -14,6 +14,8 @@
       "descriptionPlaceholder": "อธิบายสินค้าของคุณ - สภาพ, ขนาด, แบรนด์, ฯลฯ",
       "category": "หมวดหมู่",
       "categoryPlaceholder": "เลือกประเภท",
+      "gender": "แผนก",
+      "genderPlaceholder": "เลือกแผนก",
       "size": "ไซส์",
       "sizePlaceholder": "เลือกไซส์",
       "price": "ราคา (฿)",
@@ -33,6 +35,7 @@
       "titleRequired": "กรุณาระบุชื่อสินค้า",
       "descriptionRequired": "กรุณาระบุรายละเอียด",
       "categoryRequired": "กรุณาเลือกหมวดหมู่",
+      "genderRequired": "กรุณาเลือกแผนก",
       "priceMin": "ราคาขั้นต่ำ ฿{{min}}",
       "priceMax": "ราคาสูงสุด ฿{{max}}",
       "sizeRequired": "กรุณาเลือกไซส์",
@@ -82,6 +85,11 @@
     "shoes": "รองเท้า",
     "accessories": "เครื่องประดับ",
     "other": "อื่นๆ"
+  },
+  "genders": {
+    "mens": "ผู้ชาย",
+    "womens": "ผู้หญิง",
+    "unisex": "ยูนิเซ็กส์"
   },
   "sizeCategories": {
     "tops": "เสื้อผ้าส่วนบน (เสื้อ/แจ็คเก็ต)",

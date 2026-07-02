@@ -19,6 +19,14 @@ export const POST_TYPES = [
 
 export type PostType = (typeof POST_TYPES)[number];
 
+/**
+ * All available departments (who the item is for).
+ * Single source of truth for gender values.
+ */
+export const POST_GENDERS = ["MENS", "WOMENS", "UNISEX"] as const;
+
+export type Gender = (typeof POST_GENDERS)[number];
+
 // Letter-based sizes for shirts, jackets, tops
 export const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 export type LetterSize = (typeof LETTER_SIZES)[number] | "ONE_SIZE";
@@ -260,6 +268,7 @@ export interface Post {
   title: string;
   description: string;
   type: PostType;
+  gender: Gender;
   price: string; // Decimal comes as string from API
   shipping_cost: string; // Decimal comes as string from API
   image_url: string | null;
@@ -282,6 +291,7 @@ export interface CreatePostRequest {
   title: string;
   description: string;
   type: PostType;
+  gender: Gender;
   price: number;
   shipping_cost?: number;
   size: string;
@@ -293,6 +303,7 @@ export interface UpdatePostRequest {
   title: string;
   description: string;
   type: PostType;
+  gender: Gender;
   price: number;
   shipping_cost?: number;
   size: string;
@@ -302,6 +313,7 @@ export interface UpdatePostRequest {
 
 export interface PostFilters {
   types?: PostType[];
+  genders?: Gender[];
   sizes?: string[];
   minPrice?: number;
   maxPrice?: number;

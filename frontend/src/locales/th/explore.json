@@ -1,5 +1,8 @@
 {
   "title": "สำรวจ",
+  "departments": {
+    "all": "ทั้งหมด"
+  },
   "search": {
     "placeholder": "ค้นหาสินค้า...",
     "label": "ค้นหา"
