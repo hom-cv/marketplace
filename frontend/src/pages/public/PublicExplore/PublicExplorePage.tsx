@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Loader, Stack, Box, Drawer } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
@@ -17,7 +17,7 @@ import { FilterBadge } from "@/components/FilterBadge";
 import { EmptyState } from "@/components/EmptyState";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
 import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
-import { DEPARTMENT_GENDERS, type Department } from "@/constants/departments";
+import { DEPARTMENT_GENDERS } from "@/constants/departments";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
@@ -44,10 +44,7 @@ export function PublicExplorePage() {
     search: "",
   });
 
-  const department = useRouterState({
-    select: (s) =>
-      (s.location.search as { department?: Department }).department,
-  });
+  const { department } = useSearch({ from: "/explore" });
 
   const typeOptions = useMemo(
     () =>
