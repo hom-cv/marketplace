@@ -31,8 +31,6 @@ from app.schemas.post import (
     PresignUploadRequest,
     PresignUploadResponse,
 )
-from app.schemas.post import Gender as GenderSchema
-from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
@@ -117,8 +115,8 @@ async def list_posts(
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    types: Annotated[list[PostTypeSchema] | None, Query()] = None,
-    genders: Annotated[list[GenderSchema] | None, Query()] = None,
+    types: Annotated[list[PostType] | None, Query()] = None,
+    genders: Annotated[list[Gender] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
     min_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     max_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
@@ -143,16 +141,12 @@ async def list_posts(
     Response includes like_count and is_liked for each post.
     is_liked is only populated if the user is authenticated.
     """
-    # Convert schema types to model types for CRUD
-    model_types = [PostType[t.value] for t in types] if types else None
-    model_genders = [Gender[g.value] for g in genders] if genders else None
-
     posts_with_sold, total = await post_crud_dep.get_posts_with_filters(
         db,
         skip=skip,
         limit=limit,
-        types=model_types,
-        genders=model_genders,
+        types=types,
+        genders=genders,
         sizes=sizes,
         min_price=min_price,
         max_price=max_price,

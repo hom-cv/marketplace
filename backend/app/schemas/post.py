@@ -1,7 +1,6 @@
 """Post schemas for request/response validation."""
 
 from decimal import Decimal
-from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, model_validator
@@ -11,28 +10,11 @@ from app.constants.post import (
     MAX_SHIPPING_COST,
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
+    Gender,
+    PostType,
 )
 from app.constants.storage import MAX_IMAGES_PER_POST
 from app.schemas.user import UserResponseSchema
-
-
-class PostType(str, Enum):
-    """Clothing type enumeration for API."""
-
-    SHIRT = "SHIRT"
-    PANTS = "PANTS"
-    JACKET = "JACKET"
-    SHOES = "SHOES"
-    ACCESSORIES = "ACCESSORIES"
-    OTHER = "OTHER"
-
-
-class Gender(str, Enum):
-    """Target department enumeration for API."""
-
-    MENS = "MENS"
-    WOMENS = "WOMENS"
-    UNISEX = "UNISEX"
 
 
 # Measurement schemas for category-specific validation

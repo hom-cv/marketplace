@@ -2,7 +2,6 @@
 
 from datetime import datetime, timezone
 from decimal import Decimal
-from enum import auto
 
 from sqlalchemy import (
     BigInteger,
@@ -16,27 +15,8 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.utils import AutoName
+from app.constants.post import Gender, PostType
 from app.models._base import Base
-
-
-class PostType(AutoName):
-    """Clothing type enumeration."""
-
-    SHIRT = auto()
-    PANTS = auto()
-    JACKET = auto()
-    SHOES = auto()
-    ACCESSORIES = auto()
-    OTHER = auto()
-
-
-class Gender(AutoName):
-    """Target department for a listing."""
-
-    MENS = auto()
-    WOMENS = auto()
-    UNISEX = auto()
 
 
 class Post(Base):
