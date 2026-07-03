@@ -14,6 +14,8 @@
       "descriptionPlaceholder": "Describe your item - condition, size, brand, etc.",
       "category": "Category",
       "categoryPlaceholder": "Select type",
+      "gender": "Department",
+      "genderPlaceholder": "Select department",
       "size": "Size",
       "sizePlaceholder": "Select size",
       "price": "Price (฿)",
@@ -33,6 +35,7 @@
       "titleRequired": "Title is required",
       "descriptionRequired": "Description is required",
       "categoryRequired": "Category is required",
+      "genderRequired": "Department is required",
       "priceMin": "Price must be at least ฿{{min}}",
       "priceMax": "Price must not exceed ฿{{max}}",
       "sizeRequired": "Size is required",
@@ -82,6 +85,11 @@
     "shoes": "Shoes",
     "accessories": "Accessories",
     "other": "Other"
+  },
+  "genders": {
+    "mens": "Men's",
+    "womens": "Women's",
+    "unisex": "Unisex"
   },
   "sizeCategories": {
     "tops": "Tops (Shirt/Jacket)",

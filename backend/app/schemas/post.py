@@ -1,7 +1,6 @@
 """Post schemas for request/response validation."""
 
 from decimal import Decimal
-from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, model_validator
@@ -11,20 +10,11 @@ from app.constants.post import (
     MAX_SHIPPING_COST,
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
+    Gender,
+    PostType,
 )
 from app.constants.storage import MAX_IMAGES_PER_POST
 from app.schemas.user import UserResponseSchema
-
-
-class PostType(str, Enum):
-    """Clothing type enumeration for API."""
-
-    SHIRT = "SHIRT"
-    PANTS = "PANTS"
-    JACKET = "JACKET"
-    SHOES = "SHOES"
-    ACCESSORIES = "ACCESSORIES"
-    OTHER = "OTHER"
 
 
 # Measurement schemas for category-specific validation
@@ -121,6 +111,10 @@ class PostCreateSchema(BaseModel):
         ...,
         description="Category of the clothing item",
     )
+    gender: Gender = Field(
+        ...,
+        description="Target department (mens/womens/unisex)",
+    )
     price: Decimal = Field(
         ...,
         ge=MIN_LISTING_PRICE,
@@ -167,6 +161,7 @@ class PostUpdateSchema(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1, max_length=5000)
     type: PostType | None = None
+    gender: Gender | None = None
     price: Decimal | None = Field(
         None, ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
     )
@@ -189,6 +184,7 @@ class PostUpdateRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1, max_length=5000)
     type: PostType
+    gender: Gender
     price: Decimal = Field(
         ..., ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
     )
@@ -240,6 +236,7 @@ class PostResponseSchema(BaseModel):
     title: str
     description: str
     type: PostType
+    gender: Gender
     price: Decimal
     shipping_cost: Decimal
     image_url: str | None

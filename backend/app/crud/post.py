@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import server_error
 from app.crud._base import BaseCRUD
 from app.models.payment import Payment, PaymentStatus
-from app.models.post import Post, PostType
+from app.models.post import Gender, Post, PostType
 from app.models.post_ban import PostBan
 from app.models.user import User
 from app.models.user_ban import UserBan
@@ -99,6 +99,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         skip: int = 0,
         limit: int = 50,
         types: list[PostType] | None = None,
+        genders: list[Gender] | None = None,
         sizes: list[str] | None = None,
         min_price: Decimal | None = None,
         max_price: Decimal | None = None,
@@ -121,6 +122,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             skip: Number of records to skip.
             limit: Maximum number of records to return.
             types: Filter by post types.
+            genders: Filter by target department (mens/womens/unisex).
             min_price: Minimum price filter.
             max_price: Maximum price filter.
             search: Search query for title/description.
@@ -145,6 +147,9 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         # Apply filters
         if types:
             base_query = base_query.where(self.model.type.in_(types))
+
+        if genders:
+            base_query = base_query.where(self.model.gender.in_(genders))
 
         if sizes:
             # Filter by size - this automatically excludes posts with no size (NULL)

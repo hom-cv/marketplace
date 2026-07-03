@@ -29,15 +29,19 @@ import styles from "./ListingDetailsForm.module.css";
 interface ListingDetailsFormProps {
   form: UseFormReturnType<CreatePostFormValues>;
   postTypeOptions: SelectOption[];
+  genderOptions: SelectOption[];
   sizeOptions: SelectOption[];
   onTypeChange: (value: string | null) => void;
+  onGenderChange: (value: string | null) => void;
 }
 
 export function ListingDetailsForm({
   form,
   postTypeOptions,
+  genderOptions,
   sizeOptions,
   onTypeChange,
+  onGenderChange,
 }: ListingDetailsFormProps) {
   const { t } = useTranslation("listings");
 
@@ -82,6 +86,16 @@ export function ListingDetailsForm({
             value={form.values.type}
             onChange={onTypeChange}
             error={form.errors.type}
+          />
+          <Select
+            label={t("create.form.gender")}
+            placeholder={t("create.form.genderPlaceholder")}
+            data={genderOptions}
+            required
+            radius="xs"
+            value={form.values.gender}
+            onChange={onGenderChange}
+            error={form.errors.gender}
           />
           <Select
             label={t("create.form.size")}

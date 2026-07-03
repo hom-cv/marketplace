@@ -21,7 +21,7 @@ from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import User
-from app.models.post import PostType
+from app.models.post import Gender, PostType
 from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
@@ -31,7 +31,6 @@ from app.schemas.post import (
     PresignUploadRequest,
     PresignUploadResponse,
 )
-from app.schemas.post import PostType as PostTypeSchema
 from app.services.listing_service import AnnotatedListingService
 from app.services.pricing_service import AnnotatedPricingService
 from app.services.storage_service import AnnotatedStorageService
@@ -116,7 +115,8 @@ async def list_posts(
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    types: Annotated[list[PostTypeSchema] | None, Query()] = None,
+    types: Annotated[list[PostType] | None, Query()] = None,
+    genders: Annotated[list[Gender] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
     min_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     max_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
@@ -132,6 +132,7 @@ async def list_posts(
     - skip: Number of records to skip (for pagination)
     - limit: Maximum number of records to return
     - types: Filter by post types (can specify multiple)
+    - genders: Filter by department (mens/womens/unisex, can specify multiple)
     - sizes: Filter by sizes (can specify multiple). Excludes posts with no size.
     - min_price: Minimum price filter
     - max_price: Maximum price filter
@@ -140,14 +141,12 @@ async def list_posts(
     Response includes like_count and is_liked for each post.
     is_liked is only populated if the user is authenticated.
     """
-    # Convert schema types to model types for CRUD
-    model_types = [PostType[t.value] for t in types] if types else None
-
     posts_with_sold, total = await post_crud_dep.get_posts_with_filters(
         db,
         skip=skip,
         limit=limit,
-        types=model_types,
+        types=types,
+        genders=genders,
         sizes=sizes,
         min_price=min_price,
         max_price=max_price,

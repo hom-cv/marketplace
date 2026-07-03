@@ -9,7 +9,7 @@ These tests pin both the property logic and that serialization pickup.
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from app.models.post import Post, PostType
+from app.models.post import Gender, Post, PostType
 from app.models.user import User
 from app.schemas.post import PostResponseSchema
 
@@ -19,6 +19,7 @@ def _make_post(*, reserved_until=None, reserved_by_payment_id=None) -> Post:
         title="Test item",
         description="A test item",
         type=PostType.SHIRT,
+        gender=Gender.UNISEX,
         price=Decimal("500.00"),
         shipping_cost=Decimal("0.00"),
         user_id=10,

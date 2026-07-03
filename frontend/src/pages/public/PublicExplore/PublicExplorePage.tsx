@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Loader, Stack, Box, Drawer } from "@mantine/core";
 import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
 import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
@@ -17,6 +17,7 @@ import { FilterBadge } from "@/components/FilterBadge";
 import { EmptyState } from "@/components/EmptyState";
 import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
 import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
+import { DEPARTMENT_GENDERS } from "@/constants/departments";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
@@ -42,6 +43,8 @@ export function PublicExplorePage() {
     sizes: [],
     search: "",
   });
+
+  const { department } = useSearch({ from: "/explore" });
 
   const typeOptions = useMemo(
     () =>
@@ -96,12 +99,22 @@ export function PublicExplorePage() {
       apiFilters.types = [...typesSet];
     }
 
+    if (department) {
+      apiFilters.genders = DEPARTMENT_GENDERS[department];
+    }
+
     if (debouncedSearch.trim()) {
       apiFilters.search = debouncedSearch.trim();
     }
 
     return apiFilters;
-  }, [filters.types, filters.sizes, debouncedSearch, sizeCategoryMap]);
+  }, [
+    filters.types,
+    filters.sizes,
+    department,
+    debouncedSearch,
+    sizeCategoryMap,
+  ]);
 
   const {
     data,

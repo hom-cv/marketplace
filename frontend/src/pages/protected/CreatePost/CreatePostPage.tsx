@@ -25,8 +25,10 @@ export function CreatePostPage() {
   const {
     form,
     postTypeOptions,
+    genderOptions,
     sizeOptions,
     handleTypeChange,
+    handleGenderChange,
     imageCount,
     imagePreviews,
     selectedImageIndex,
@@ -95,8 +97,10 @@ export function CreatePostPage() {
                 <ListingDetailsForm
                   form={form}
                   postTypeOptions={postTypeOptions}
+                  genderOptions={genderOptions}
                   sizeOptions={sizeOptions}
                   onTypeChange={handleTypeChange}
+                  onGenderChange={handleGenderChange}
                 />
               </div>
 

@@ -20,6 +20,7 @@ export function useCreatePostForm() {
       title: "",
       description: "",
       type: null,
+      gender: null,
       price: "",
       shippingCost: 0,
       size: null,
