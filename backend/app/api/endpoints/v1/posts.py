@@ -6,6 +6,7 @@ from typing import Annotated, Literal, Optional
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.payment import PaymentMethod
 from app.constants.post import (
     MAX_LISTING_PRICE,
     MAX_SHIPPING_COST,
@@ -22,7 +23,7 @@ from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import User
 from app.models.post import Gender, PostType
-from app.schemas.payment import PaymentMethodType, PriceBreakdownResponse
+from app.schemas.payment import PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
     PostCreateSchema,
@@ -275,7 +276,7 @@ async def get_price_breakdown(
     VAT, platform fee, processing fee, and total. When the requester is
     the post's owner, any fee-free sale promo is reflected.
     """
-    method = PaymentMethodType(payment_method)
+    method = PaymentMethod(payment_method)
     breakdown = await pricing_service.get_price_breakdown_for_post(
         post_id,
         method,
@@ -369,7 +370,7 @@ async def preview_earnings(
     Useful for showing earnings preview during post creation. When the caller
     has fee-free sale credits, the waived breakdown is returned.
     """
-    method = PaymentMethodType(payment_method)
+    method = PaymentMethod(payment_method)
     breakdown = await pricing_service.preview_earnings(
         item_price,
         shipping_cost,

@@ -34,7 +34,6 @@ from app.schemas.payment import (
 )
 from app.services.pricing_service import (
     AnnotatedPricingService,
-    PaymentMethodType,
     PricingService,
 )
 from app.services.stripe_service import AnnotatedStripeService, StripeService
@@ -190,11 +189,6 @@ class PaymentService:
             BadRequestError: the resulting seller payout is below the Stripe
                 transfer minimum.
         """
-        method_type = (
-            PaymentMethodType.PROMPTPAY
-            if payment_method == PaymentMethod.PROMPTPAY
-            else PaymentMethodType.CARD
-        )
         # Founding-seller promo: waive the platform fee while credits remain.
         # The credit is consumed when the payment succeeds (webhook).
         #
@@ -209,7 +203,7 @@ class PaymentService:
         price_breakdown = self.pricing_service.calculate_order_total(
             post.price,
             post.shipping_cost,
-            method_type,
+            payment_method,
             waive_platform_fee=waive_platform_fee,
         )
 

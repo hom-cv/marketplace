@@ -15,6 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.constants.payment import PaymentMethod
 from app.core.utils import AutoName
 from app.models._base import Base
 
@@ -30,13 +31,6 @@ class PaymentStatus(AutoName):
     EXPIRED = auto()
     DISPUTED = auto()
     REFUND_REQUIRED = auto()
-
-
-class PaymentMethod(AutoName):
-    """Payment method enumeration."""
-
-    CARD = auto()
-    PROMPTPAY = auto()
 
 
 class FulfillmentStatus(AutoName):

@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.schemas.payment import PaymentMethodType
+from app.constants.payment import PaymentMethod
 from app.services.pricing_service import PricingService
 
 
@@ -47,7 +47,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         assert result.total == Decimal("1100.00")
@@ -60,7 +60,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         # Processing fee base: 1000 * 3.65% + 10 = 46.50
@@ -76,12 +76,12 @@ class TestCalculateOrderTotal:
         card_result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
         promptpay_result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.PROMPTPAY,
+            payment_method=PaymentMethod.PROMPTPAY,
         )
 
         assert promptpay_result.processing_fee < card_result.processing_fee
@@ -91,12 +91,12 @@ class TestCalculateOrderTotal:
         small = pricing_service.calculate_order_total(
             item_price=Decimal("100.00"),
             shipping_cost=Decimal("0.00"),
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
         big = pricing_service.calculate_order_total(
             item_price=Decimal("10000.00"),
             shipping_cost=Decimal("0.00"),
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         # For 100 THB: base = 100*3.65% + 10 = 13.65
@@ -116,7 +116,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         # Platform fee base: 1000 * 10% = 100.00
@@ -132,7 +132,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         base_amount = item_price + shipping_cost
@@ -146,7 +146,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         assert result.total_fees == result.platform_fee + result.processing_fee
@@ -159,7 +159,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         assert result.shipping_cost == Decimal("0.00")
@@ -170,7 +170,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=Decimal("100.00"),
             shipping_cost=Decimal("10.00"),
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         assert hasattr(result, "item_price")
@@ -191,7 +191,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         # Platform fee base: 333.33 * 10% = 33.333 -> 33.34 (ROUND_UP)
@@ -207,7 +207,7 @@ class TestCalculateOrderTotal:
         result = pricing_service.calculate_order_total(
             item_price=item_price,
             shipping_cost=shipping_cost,
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         # Platform VAT: 100 * 7% = 7.00
@@ -225,7 +225,7 @@ class TestPlatformFeeWaiver:
         result = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("0.00"),
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
             waive_platform_fee=True,
         )
 
@@ -242,7 +242,7 @@ class TestPlatformFeeWaiver:
         result = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("0.00"),
-            payment_method=PaymentMethodType.PROMPTPAY,
+            payment_method=PaymentMethod.PROMPTPAY,
             waive_platform_fee=True,
         )
 
@@ -257,7 +257,7 @@ class TestPlatformFeeWaiver:
         result = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("100.00"),
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
             waive_platform_fee=True,
         )
 
@@ -268,7 +268,7 @@ class TestPlatformFeeWaiver:
         result = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("0.00"),
-            payment_method=PaymentMethodType.CARD,
+            payment_method=PaymentMethod.CARD,
         )
 
         assert result.platform_fee == Decimal("107.00")
