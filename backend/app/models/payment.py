@@ -15,6 +15,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.constants.payment import PaymentMethod
 from app.core.utils import AutoName
 from app.models._base import Base
 
@@ -30,13 +31,6 @@ class PaymentStatus(AutoName):
     EXPIRED = auto()
     DISPUTED = auto()
     REFUND_REQUIRED = auto()
-
-
-class PaymentMethod(AutoName):
-    """Payment method enumeration."""
-
-    CARD = auto()
-    PROMPTPAY = auto()
 
 
 class FulfillmentStatus(AutoName):
@@ -112,6 +106,9 @@ class Payment(Base):
             PaymentMethod,
             native_enum=False,
             validate_strings=True,
+            # Persist the enum VALUE ("card") not the NAME ("CARD"), so the DB
+            # matches the API/Stripe token and raw SQL behaves intuitively.
+            values_callable=lambda enum: [member.value for member in enum],
         ),
         default=PaymentMethod.CARD,
         nullable=False,

@@ -24,7 +24,8 @@ from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.main import create_app
 from app.models.user import User, UserStatus
-from app.schemas.payment import PaymentMethodType, PriceBreakdown
+from app.constants.payment import PaymentMethod
+from app.schemas.payment import PriceBreakdown
 from app.services.email_service import EmailService, _get_email_service
 from app.services.pricing_service import PricingService
 from app.services.storage_service import StorageService, _get_storage_service
@@ -85,7 +86,7 @@ def create_mock_user(
 def create_mock_price_breakdown(
     item_price: Decimal = Decimal("1000.00"),
     shipping_cost: Decimal = Decimal("100.00"),
-    payment_method: PaymentMethodType = PaymentMethodType.CARD,
+    payment_method: PaymentMethod = PaymentMethod.CARD,
 ) -> PriceBreakdown:
     """Factory function to create a realistic PriceBreakdown using the actual service."""
     pricing_service = _create_test_pricing_service()

@@ -2,15 +2,8 @@
 
 from datetime import datetime
 from decimal import Decimal
-from enum import Enum
 
 from pydantic import BaseModel, Field, field_serializer
-
-
-class PaymentMethodType(str, Enum):
-    """Payment method types."""
-    CARD = "card"
-    PROMPTPAY = "promptpay"
 
 
 class PriceBreakdown(BaseModel):

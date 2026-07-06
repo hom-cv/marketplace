@@ -11,7 +11,8 @@ from app.core.settings import AnnotatedSettings, Settings
 from app.crud.post import PostCRUD, get_post_crud
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.schemas.payment import PaymentMethodType, PriceBreakdown
+from app.constants.payment import PaymentMethod
+from app.schemas.payment import PriceBreakdown
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 
@@ -36,7 +37,7 @@ class PricingService:
         self,
         item_price: Decimal,
         shipping_cost: Decimal,
-        payment_method: PaymentMethodType = PaymentMethodType.CARD,
+        payment_method: PaymentMethod = PaymentMethod.CARD,
         *,
         waive_platform_fee: bool = False,
     ) -> PriceBreakdown:
@@ -69,7 +70,7 @@ class PricingService:
 
         # Processing fee: Stripe Thailand rate (percentage + fixed) + VAT —
         # deducted from seller
-        if payment_method == PaymentMethodType.PROMPTPAY:
+        if payment_method == PaymentMethod.PROMPTPAY:
             base_rate = Decimal(str(self._settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
             fixed_fee_thb = Decimal(
                 str(self._settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB)
@@ -115,7 +116,7 @@ class PricingService:
     async def get_price_breakdown_for_post(
         self,
         post_id: int,
-        payment_method: PaymentMethodType = PaymentMethodType.CARD,
+        payment_method: PaymentMethod = PaymentMethod.CARD,
         viewer_user_id: int | None = None,
     ) -> PriceBreakdown:
         """
@@ -146,7 +147,7 @@ class PricingService:
         self,
         item_price: Decimal,
         shipping_cost: Decimal,
-        payment_method: PaymentMethodType = PaymentMethodType.CARD,
+        payment_method: PaymentMethod = PaymentMethod.CARD,
         seller_user_id: int | None = None,
     ) -> PriceBreakdown:
         """Earnings preview for a prospective listing by the given seller."""
