@@ -106,6 +106,9 @@ class Payment(Base):
             PaymentMethod,
             native_enum=False,
             validate_strings=True,
+            # Persist the enum VALUE ("card") not the NAME ("CARD"), so the DB
+            # matches the API/Stripe token and raw SQL behaves intuitively.
+            values_callable=lambda enum: [member.value for member in enum],
         ),
         default=PaymentMethod.CARD,
         nullable=False,

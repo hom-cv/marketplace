@@ -6,8 +6,8 @@ from enum import Enum
 class PaymentMethod(str, Enum):
     """Payment method. Shared by the API schema and the ORM model.
 
-    value = Stripe/API token (lowercase); SQLAlchemy persists the member NAME
-    (uppercase) to the DB, so one enum serves both representations.
+    ``value`` is the Stripe/API token, and the column persists that same value
+    (see ``values_callable`` on the model), so DB == value == API everywhere.
     """
 
     CARD = "card"
