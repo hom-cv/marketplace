@@ -76,9 +76,6 @@ export function PublicExplorePage() {
     [navigate],
   );
 
-  // Search is separate and submit-based (Enter/clear only) — the input is local
-  // and only hits the URL/server on submit, so typing costs nothing. Seed from
-  // the URL and re-sync on external changes (shared link, back/forward, clear).
   const [searchInput, setSearchInput] = useState(search);
   const [prevUrlSearch, setPrevUrlSearch] = useState(search);
   if (search !== prevUrlSearch) {
@@ -168,8 +165,6 @@ export function PublicExplorePage() {
   const hasActiveFilters =
     types.length > 0 || sizes.length > 0 || search.trim() !== "";
 
-  // Mobile filter-button badge counts only the sidebar filters (search is its
-  // own top bar, not in the drawer).
   const activeFilterCount = types.length + sizes.length;
 
   const handleTypeToggle = (postType: PostType) =>
@@ -271,10 +266,7 @@ export function PublicExplorePage() {
             {hasActiveFilters && (
               <div className={styles.filterBadges}>
                 {search.trim() && (
-                  <FilterBadge
-                    label={`"${search}"`}
-                    onRemove={clearSearch}
-                  />
+                  <FilterBadge label={`"${search}"`} onRemove={clearSearch} />
                 )}
                 {filters.types.map((type) => (
                   <FilterBadge

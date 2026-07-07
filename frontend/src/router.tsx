@@ -127,8 +127,6 @@ const publicExploreRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/explore",
   component: PublicExplorePage,
-  // All Explore filters live in the URL so they're shareable and survive
-  // refresh/back. Empty values are dropped to keep the URL clean.
   validateSearch: (
     search: Record<string, unknown>,
   ): {
@@ -147,8 +145,7 @@ const publicExploreRoute = createRoute({
       ),
     ];
     const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
-    const q =
-      typeof search.search === "string" ? search.search.trim() : "";
+    const q = typeof search.search === "string" ? search.search.trim() : "";
     return {
       department: isDepartment(search.department)
         ? search.department
