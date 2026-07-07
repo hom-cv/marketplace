@@ -18,14 +18,6 @@ export interface FiltersState {
 }
 
 /**
- * Initial/default filter state
- */
-export const INITIAL_FILTERS: FiltersState = {
-  types: [],
-  sizes: [],
-};
-
-/**
  * Items per page for infinite scroll
  */
 export const ITEMS_PER_PAGE = 20;
