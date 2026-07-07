@@ -15,7 +15,6 @@ import type {
 export interface FiltersState {
   types: PostType[];
   sizes: string[];
-  search: string;
 }
 
 /**
@@ -24,7 +23,6 @@ export interface FiltersState {
 export const INITIAL_FILTERS: FiltersState = {
   types: [],
   sizes: [],
-  search: "",
 };
 
 /**
@@ -94,21 +92,4 @@ export function toggleSizeFilter(
     : [...currentFilters.sizes, sizeKey];
 
   return { ...currentFilters, sizes: updatedSizes };
-}
-
-/**
- * Update the search term in the filter state.
- */
-export function updateSearchFilter(
-  currentFilters: FiltersState,
-  searchTerm: string,
-): FiltersState {
-  return { ...currentFilters, search: searchTerm };
-}
-
-/**
- * Clear the search term in the filter state.
- */
-export function clearSearchFilter(currentFilters: FiltersState): FiltersState {
-  return { ...currentFilters, search: "" };
 }
