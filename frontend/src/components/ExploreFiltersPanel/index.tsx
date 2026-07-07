@@ -1,9 +1,9 @@
 /**
  * ExploreFiltersPanel - Reusable filter panel for explore pages
- * Contains search, category checkboxes, and size filters
+ * Contains category checkboxes and size filters
  */
 
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, memo } from "react";
 import { Stack, Group, Checkbox } from "@mantine/core";
 import { IconX, IconCategory, IconRuler } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -26,7 +26,7 @@ interface ExploreFiltersPanelProps {
   ) => void;
 }
 
-export function ExploreFiltersPanel({
+function ExploreFiltersPanelComponent({
   filters,
   onFiltersChange,
 }: ExploreFiltersPanelProps) {
@@ -150,3 +150,18 @@ export function ExploreFiltersPanel({
     </Stack>
   );
 }
+
+function sameArray(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+// `filters` is a fresh object each parent render, so compare it by value.
+// `onFiltersChange` is referentially stable (useCallback), so a ref check is
+// enough. Lets the panel skip re-rendering when e.g. the search input changes.
+export const ExploreFiltersPanel = memo(
+  ExploreFiltersPanelComponent,
+  (prev, next) =>
+    prev.onFiltersChange === next.onFiltersChange &&
+    sameArray(prev.filters.types, next.filters.types) &&
+    sameArray(prev.filters.sizes, next.filters.sizes),
+);

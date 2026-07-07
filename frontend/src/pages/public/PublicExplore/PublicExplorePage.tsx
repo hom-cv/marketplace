@@ -3,7 +3,7 @@
  * Features a persistent filter sidebar on desktop with collapsible sections
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Loader, Stack, Box, Drawer, TextInput, Button } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -51,20 +51,30 @@ export function PublicExplorePage() {
   const filters: FiltersState = { types, sizes };
 
   // Sidebar filters (types/sizes) write to the URL immediately on toggle.
-  const onFiltersChange = (
-    updater: FiltersState | ((prev: FiltersState) => FiltersState),
-  ) => {
-    const next = typeof updater === "function" ? updater(filters) : updater;
-    navigate({
-      to: "/explore",
-      replace: true,
-      search: (prev) => ({
-        ...prev,
-        types: next.types.length ? next.types : undefined,
-        sizes: next.sizes.length ? next.sizes : undefined,
-      }),
-    });
-  };
+  // Reads current filters from navigate's `prev` (the live search params) rather
+  // than closing over `filters`, so this stays referentially stable ([navigate]).
+  const onFiltersChange = useCallback(
+    (updater: FiltersState | ((prev: FiltersState) => FiltersState)) => {
+      navigate({
+        to: "/explore",
+        replace: true,
+        search: (prev) => {
+          const current: FiltersState = {
+            types: prev.types ?? [],
+            sizes: prev.sizes ?? [],
+          };
+          const next =
+            typeof updater === "function" ? updater(current) : updater;
+          return {
+            ...prev,
+            types: next.types.length ? next.types : undefined,
+            sizes: next.sizes.length ? next.sizes : undefined,
+          };
+        },
+      });
+    },
+    [navigate],
+  );
 
   // Search is separate and submit-based (Enter/clear only) — the input is local
   // and only hits the URL/server on submit, so typing costs nothing. Seed from
