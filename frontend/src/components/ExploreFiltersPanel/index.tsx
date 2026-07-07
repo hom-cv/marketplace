@@ -60,8 +60,7 @@ function ExploreFiltersPanelComponent({
     return counts;
   }, [filters.sizes]);
 
-  const hasActiveFilters =
-    filters.types.length > 0 || filters.sizes.length > 0;
+  const hasActiveFilters = filters.types.length > 0 || filters.sizes.length > 0;
 
   const handleTypeToggle = useCallback(
     (postType: PostType) => {
@@ -115,28 +114,28 @@ function ExploreFiltersPanelComponent({
           badge={activeSizeCountByCategory.get(categoryConfig.category) ?? 0}
           defaultOpen={false}
         >
-            <Group gap="xs" wrap="wrap">
-              {categoryConfig.sizes.map((size) => {
-                const sizeKey = createSizeKey(categoryConfig.category, size);
-                return (
-                  <Checkbox
-                    key={sizeKey}
-                    label={
-                      categoryConfig.formatLabel
-                        ? categoryConfig.formatLabel(size)
-                        : size
-                    }
-                    size="xs"
-                    checked={filters.sizes.includes(sizeKey)}
-                    onChange={() =>
-                      handleSizeToggle(categoryConfig.category, size)
-                    }
-                    radius="xs"
-                    className={styles.checkbox}
-                  />
-                );
-              })}
-            </Group>
+          <Group gap="xs" wrap="wrap">
+            {categoryConfig.sizes.map((size) => {
+              const sizeKey = createSizeKey(categoryConfig.category, size);
+              return (
+                <Checkbox
+                  key={sizeKey}
+                  label={
+                    categoryConfig.formatLabel
+                      ? categoryConfig.formatLabel(size)
+                      : size
+                  }
+                  size="xs"
+                  checked={filters.sizes.includes(sizeKey)}
+                  onChange={() =>
+                    handleSizeToggle(categoryConfig.category, size)
+                  }
+                  radius="xs"
+                  className={styles.checkbox}
+                />
+              );
+            })}
+          </Group>
         </CollapsibleFilterSection>
       ))}
 
@@ -155,9 +154,6 @@ function sameArray(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
-// `filters` is a fresh object each parent render, so compare it by value.
-// `onFiltersChange` is referentially stable (useCallback), so a ref check is
-// enough. Lets the panel skip re-rendering when e.g. the search input changes.
 export const ExploreFiltersPanel = memo(
   ExploreFiltersPanelComponent,
   (prev, next) =>
