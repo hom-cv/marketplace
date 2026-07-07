@@ -1,16 +1,11 @@
 /**
  * ExploreFiltersPanel - Reusable filter panel for explore pages
- * Contains search, category checkboxes, and size filters
+ * Contains category checkboxes and size filters
  */
 
-import { useMemo, useCallback } from "react";
-import { Stack, Group, Checkbox, TextInput } from "@mantine/core";
-import {
-  IconSearch,
-  IconX,
-  IconCategory,
-  IconRuler,
-} from "@tabler/icons-react";
+import { useMemo, useCallback, memo } from "react";
+import { Stack, Group, Checkbox } from "@mantine/core";
+import { IconX, IconCategory, IconRuler } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
 import type { PostType, SizeCategory } from "@/api/types/post";
@@ -21,8 +16,6 @@ import {
   parseSizeKey,
   toggleTypeFilter,
   toggleSizeFilter,
-  updateSearchFilter,
-  clearSearchFilter,
 } from "@/utils/filterHelpers";
 import styles from "./ExploreFiltersPanel.module.css";
 
@@ -33,11 +26,10 @@ interface ExploreFiltersPanelProps {
   ) => void;
 }
 
-export function ExploreFiltersPanel({
+function ExploreFiltersPanelComponent({
   filters,
   onFiltersChange,
 }: ExploreFiltersPanelProps) {
-  const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
 
@@ -68,10 +60,7 @@ export function ExploreFiltersPanel({
     return counts;
   }, [filters.sizes]);
 
-  const hasActiveFilters =
-    filters.types.length > 0 ||
-    filters.sizes.length > 0 ||
-    filters.search.trim() !== "";
+  const hasActiveFilters = filters.types.length > 0 || filters.sizes.length > 0;
 
   const handleTypeToggle = useCallback(
     (postType: PostType) => {
@@ -90,42 +79,11 @@ export function ExploreFiltersPanel({
   );
 
   const handleClearAllFilters = useCallback(() => {
-    onFiltersChange({ types: [], sizes: [], search: "" });
-  }, [onFiltersChange]);
-
-  const handleSearchChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const searchTerm = event.currentTarget.value;
-      onFiltersChange((prev) => updateSearchFilter(prev, searchTerm));
-    },
-    [onFiltersChange],
-  );
-
-  const handleSearchClear = useCallback(() => {
-    onFiltersChange((prev) => clearSearchFilter(prev));
+    onFiltersChange({ types: [], sizes: [] });
   }, [onFiltersChange]);
 
   return (
     <Stack gap="lg">
-      {/* Search Input */}
-      <TextInput
-        placeholder={t("search.placeholder")}
-        leftSection={<IconSearch size={16} />}
-        value={filters.search}
-        onChange={handleSearchChange}
-        radius="xs"
-        className={styles.searchInput}
-        rightSection={
-          filters.search && (
-            <IconX
-              size={14}
-              className={styles.clearIcon}
-              onClick={handleSearchClear}
-            />
-          )
-        }
-      />
-
       {/* Category Filter */}
       <CollapsibleFilterSection
         title={tCommon("filtersSidebar.category")}
@@ -156,28 +114,28 @@ export function ExploreFiltersPanel({
           badge={activeSizeCountByCategory.get(categoryConfig.category) ?? 0}
           defaultOpen={false}
         >
-            <Group gap="xs" wrap="wrap">
-              {categoryConfig.sizes.map((size) => {
-                const sizeKey = createSizeKey(categoryConfig.category, size);
-                return (
-                  <Checkbox
-                    key={sizeKey}
-                    label={
-                      categoryConfig.formatLabel
-                        ? categoryConfig.formatLabel(size)
-                        : size
-                    }
-                    size="xs"
-                    checked={filters.sizes.includes(sizeKey)}
-                    onChange={() =>
-                      handleSizeToggle(categoryConfig.category, size)
-                    }
-                    radius="xs"
-                    className={styles.checkbox}
-                  />
-                );
-              })}
-            </Group>
+          <Group gap="xs" wrap="wrap">
+            {categoryConfig.sizes.map((size) => {
+              const sizeKey = createSizeKey(categoryConfig.category, size);
+              return (
+                <Checkbox
+                  key={sizeKey}
+                  label={
+                    categoryConfig.formatLabel
+                      ? categoryConfig.formatLabel(size)
+                      : size
+                  }
+                  size="xs"
+                  checked={filters.sizes.includes(sizeKey)}
+                  onChange={() =>
+                    handleSizeToggle(categoryConfig.category, size)
+                  }
+                  radius="xs"
+                  className={styles.checkbox}
+                />
+              );
+            })}
+          </Group>
         </CollapsibleFilterSection>
       ))}
 
@@ -191,3 +149,15 @@ export function ExploreFiltersPanel({
     </Stack>
   );
 }
+
+function sameArray(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
+}
+
+export const ExploreFiltersPanel = memo(
+  ExploreFiltersPanelComponent,
+  (prev, next) =>
+    prev.onFiltersChange === next.onFiltersChange &&
+    sameArray(prev.filters.types, next.filters.types) &&
+    sameArray(prev.filters.sizes, next.filters.sizes),
+);

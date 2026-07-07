@@ -62,17 +62,20 @@
   min-width: 0;
 }
 
-/* Header */
-.header {
-  margin-bottom: 20px;
+/* Top search bar (submit-based) */
+.searchBar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin: 0;
-  letter-spacing: -0.02em;
+.searchField {
+  flex: 1;
+}
+
+.searchClear {
+  cursor: pointer;
+  color: var(--color-text-muted);
 }
 
 /* Active filter badges */

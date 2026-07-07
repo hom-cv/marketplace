@@ -24,7 +24,10 @@ export function DepartmentBar() {
   ];
 
   const select = (value: Department | undefined) => {
-    navigate({ to: "/explore", search: value ? { department: value } : {} });
+    navigate({
+      to: "/explore",
+      search: (prev) => ({ ...prev, department: value || undefined }),
+    });
   };
 
   return (

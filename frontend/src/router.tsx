@@ -6,6 +6,8 @@ import {
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
+import { POST_TYPES } from "@/api/types/post";
+import type { PostType } from "@/api/types/post";
 import { isDepartment, type Department } from "@/constants/departments";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -127,8 +129,32 @@ const publicExploreRoute = createRoute({
   component: PublicExplorePage,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { department?: Department } =>
-    isDepartment(search.department) ? { department: search.department } : {},
+  ): {
+    department?: Department;
+    types?: PostType[];
+    sizes?: string[];
+    search?: string;
+  } => {
+    const asArray = (v: unknown): string[] =>
+      Array.isArray(v) ? v.map(String) : typeof v === "string" && v ? [v] : [];
+    const types = [
+      ...new Set(
+        asArray(search.types).filter((t): t is PostType =>
+          (POST_TYPES as readonly string[]).includes(t),
+        ),
+      ),
+    ];
+    const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
+    const q = typeof search.search === "string" ? search.search.trim() : "";
+    return {
+      department: isDepartment(search.department)
+        ? search.department
+        : undefined,
+      types: types.length ? types : undefined,
+      sizes: sizes.length ? sizes : undefined,
+      search: q || undefined,
+    };
+  },
 });
 
 const publicPostViewRoute = createRoute({

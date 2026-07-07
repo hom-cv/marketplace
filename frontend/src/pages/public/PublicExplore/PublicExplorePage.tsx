@@ -3,11 +3,16 @@
  * Features a persistent filter sidebar on desktop with collapsible sections
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Loader, Stack, Box, Drawer } from "@mantine/core";
-import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
-import { IconAlertCircle, IconAdjustments, IconX } from "@tabler/icons-react";
+import { Loader, Stack, Box, Drawer, TextInput, Button } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import {
+  IconAlertCircle,
+  IconAdjustments,
+  IconX,
+  IconSearch,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { usePublicPosts } from "@/hooks/usePosts";
 import { PostCard } from "@/components/PostCard";
@@ -24,7 +29,6 @@ import {
   parseSizeKey,
   toggleTypeFilter,
   toggleSizeFilter,
-  clearSearchFilter,
 } from "@/utils/filterHelpers";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useIsAuthenticated } from "@/stores/authStore";
@@ -38,13 +42,58 @@ export function PublicExplorePage() {
   const { t: tListings } = useTranslation("listings");
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
-  const [filters, setFilters] = useState<FiltersState>({
-    types: [],
-    sizes: [],
-    search: "",
-  });
+  const {
+    department,
+    types = [],
+    sizes = [],
+    search = "",
+  } = useSearch({ from: "/explore" });
+  const filters: FiltersState = { types, sizes };
 
-  const { department } = useSearch({ from: "/explore" });
+  // Sidebar filters (types/sizes) write to the URL immediately on toggle.
+  // Reads current filters from navigate's `prev` (the live search params) rather
+  // than closing over `filters`, so this stays referentially stable ([navigate]).
+  const onFiltersChange = useCallback(
+    (updater: FiltersState | ((prev: FiltersState) => FiltersState)) => {
+      navigate({
+        to: "/explore",
+        replace: true,
+        search: (prev) => {
+          const current: FiltersState = {
+            types: prev.types ?? [],
+            sizes: prev.sizes ?? [],
+          };
+          const next =
+            typeof updater === "function" ? updater(current) : updater;
+          return {
+            ...prev,
+            types: next.types.length ? next.types : undefined,
+            sizes: next.sizes.length ? next.sizes : undefined,
+          };
+        },
+      });
+    },
+    [navigate],
+  );
+
+  const [searchInput, setSearchInput] = useState(search);
+  const [prevUrlSearch, setPrevUrlSearch] = useState(search);
+  if (search !== prevUrlSearch) {
+    setPrevUrlSearch(search);
+    setSearchInput(search);
+  }
+  const submitSearch = () =>
+    navigate({
+      to: "/explore",
+      search: (prev) => ({ ...prev, search: searchInput.trim() || undefined }),
+    });
+  const clearSearch = () => {
+    setSearchInput("");
+    navigate({
+      to: "/explore",
+      search: (prev) => ({ ...prev, search: undefined }),
+    });
+  };
 
   const typeOptions = useMemo(
     () =>
@@ -65,23 +114,16 @@ export function PublicExplorePage() {
     [],
   );
 
-  const [debouncedSearch] = useDebouncedValue(filters.search, 300);
+  const queryFilters: PostFilters = {};
+  {
+    const typesSet = new Set<PostType>(types);
+    const hasExplicitTypes = types.length > 0;
 
-  const queryFilters = useMemo<PostFilters>(() => {
-    const apiFilters: PostFilters = {};
-
-    // Start with explicitly selected types
-    const typesSet = new Set<PostType>(filters.types);
-    const hasExplicitTypes = filters.types.length > 0;
-
-    if (filters.sizes.length > 0) {
+    if (sizes.length > 0) {
       const rawSizes: string[] = [];
-
-      for (const sizeKey of filters.sizes) {
+      for (const sizeKey of sizes) {
         const { category, size } = parseSizeKey(sizeKey);
         rawSizes.push(size);
-
-        // Only auto-expand types if user hasn't selected any types explicitly
         if (!hasExplicitTypes) {
           const categoryConfig = sizeCategoryMap.get(category);
           if (categoryConfig) {
@@ -91,30 +133,13 @@ export function PublicExplorePage() {
           }
         }
       }
-
-      apiFilters.sizes = [...new Set(rawSizes)];
+      queryFilters.sizes = [...new Set(rawSizes)];
     }
 
-    if (typesSet.size > 0) {
-      apiFilters.types = [...typesSet];
-    }
-
-    if (department) {
-      apiFilters.genders = DEPARTMENT_GENDERS[department];
-    }
-
-    if (debouncedSearch.trim()) {
-      apiFilters.search = debouncedSearch.trim();
-    }
-
-    return apiFilters;
-  }, [
-    filters.types,
-    filters.sizes,
-    department,
-    debouncedSearch,
-    sizeCategoryMap,
-  ]);
+    if (typesSet.size > 0) queryFilters.types = [...typesSet];
+    if (department) queryFilters.genders = DEPARTMENT_GENDERS[department];
+    if (search.trim()) queryFilters.search = search.trim();
+  }
 
   const {
     data,
@@ -138,38 +163,31 @@ export function PublicExplorePage() {
   });
 
   const hasActiveFilters =
-    filters.types.length > 0 ||
-    filters.sizes.length > 0 ||
-    filters.search.trim() !== "";
+    types.length > 0 || sizes.length > 0 || search.trim() !== "";
 
-  const activeFilterCount =
-    filters.types.length +
-    filters.sizes.length +
-    (filters.search.trim() ? 1 : 0);
+  const activeFilterCount = types.length + sizes.length;
 
-  const handleTypeToggle = useCallback(
-    (postType: PostType) => {
-      setFilters((prev) =>
-        toggleTypeFilter(prev, postType, SIZE_CATEGORY_CONFIG),
-      );
-    },
-    [],
-  );
+  const handleTypeToggle = (postType: PostType) =>
+    onFiltersChange((prev) =>
+      toggleTypeFilter(prev, postType, SIZE_CATEGORY_CONFIG),
+    );
 
-  const handleSizeToggle = useCallback(
-    (category: SizeCategory, size: string) => {
-      setFilters((prev) => toggleSizeFilter(prev, category, size));
-    },
-    [],
-  );
+  const handleSizeToggle = (category: SizeCategory, size: string) =>
+    onFiltersChange((prev) => toggleSizeFilter(prev, category, size));
 
-  const handleClearAllFilters = useCallback(() => {
-    setFilters({ types: [], sizes: [], search: "" });
-  }, []);
-
-  const handleSearchClear = useCallback(() => {
-    setFilters((prev) => clearSearchFilter(prev));
-  }, []);
+  const handleClearAllFilters = () => {
+    setSearchInput("");
+    navigate({
+      to: "/explore",
+      replace: true,
+      search: (prev) => ({
+        ...prev,
+        types: undefined,
+        sizes: undefined,
+        search: undefined,
+      }),
+    });
+  };
 
   if (error) {
     return (
@@ -205,7 +223,7 @@ export function PublicExplorePage() {
               </div>
               <ExploreFiltersPanel
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={onFiltersChange}
               />
             </div>
           </Box>
@@ -214,19 +232,41 @@ export function PublicExplorePage() {
           <div
             className={`${styles.content} ${isAuthenticated ? styles.contentAuth : ""}`}
           >
-            {/* Header */}
-            <header className={styles.header}>
-              <h1 className={styles.title}>{t("title")}</h1>
-            </header>
+            {/* Search bar — submit-based (Enter), separate from the filters */}
+            <form
+              className={styles.searchBar}
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitSearch();
+              }}
+            >
+              <TextInput
+                className={styles.searchField}
+                placeholder={t("search.placeholder")}
+                leftSection={<IconSearch size={16} />}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.currentTarget.value)}
+                radius="xs"
+                rightSection={
+                  searchInput ? (
+                    <IconX
+                      size={14}
+                      className={styles.searchClear}
+                      onClick={clearSearch}
+                    />
+                  ) : null
+                }
+              />
+              <Button type="submit" radius="xs">
+                {t("search.label")}
+              </Button>
+            </form>
 
             {/* Active Filters Display */}
             {hasActiveFilters && (
               <div className={styles.filterBadges}>
-                {filters.search.trim() && (
-                  <FilterBadge
-                    label={`"${filters.search}"`}
-                    onRemove={handleSearchClear}
-                  />
+                {search.trim() && (
+                  <FilterBadge label={`"${search}"`} onRemove={clearSearch} />
                 )}
                 {filters.types.map((type) => (
                   <FilterBadge
@@ -369,7 +409,7 @@ export function PublicExplorePage() {
       >
         <ExploreFiltersPanel
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={onFiltersChange}
         />
       </Drawer>
 
