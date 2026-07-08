@@ -24,6 +24,8 @@ export function useEditPostForm(post: Post) {
       description: post.description,
       type: post.type,
       gender: post.gender,
+      brand: post.brand?.slug ?? "",
+      tags: post.tags ?? [],
       price: parseFloat(post.price),
       shippingCost: parseFloat(post.shipping_cost || "0"),
       size: post.size,

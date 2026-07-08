@@ -15,6 +15,7 @@ import type {
 export interface FiltersState {
   types: PostType[];
   sizes: string[];
+  brands: string[];
 }
 
 /**
@@ -84,4 +85,17 @@ export function toggleSizeFilter(
     : [...currentFilters.sizes, sizeKey];
 
   return { ...currentFilters, sizes: updatedSizes };
+}
+
+/**
+ * Toggle a brand slug in the filter state.
+ */
+export function toggleBrandFilter(
+  currentFilters: FiltersState,
+  slug: string,
+): FiltersState {
+  const updatedBrands = currentFilters.brands.includes(slug)
+    ? currentFilters.brands.filter((s) => s !== slug)
+    : [...currentFilters.brands, slug];
+  return { ...currentFilters, brands: updatedBrands };
 }

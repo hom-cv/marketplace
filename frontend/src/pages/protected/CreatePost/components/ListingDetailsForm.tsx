@@ -3,21 +3,26 @@
  * Typography-forward design with generous spacing
  */
 
+import { useMemo } from "react";
 import {
   TextInput,
   Textarea,
   Select,
+  TagsInput,
   NumberInput,
   Stack,
   SimpleGrid,
 } from "@mantine/core";
 import type { UseFormReturnType } from "@mantine/form";
 import { useTranslation } from "react-i18next";
+import { useBrands } from "@/hooks/useBrands";
 import {
   MAX_LISTING_PRICE,
   MAX_SHIPPING_COST,
   MIN_LISTING_PRICE,
   MIN_SHIPPING_COST,
+  MAX_TAGS_PER_POST,
+  MAX_TAG_LENGTH,
 } from "@/constants/listing";
 import type {
   CreatePostFormValues,
@@ -44,6 +49,11 @@ export function ListingDetailsForm({
   onGenderChange,
 }: ListingDetailsFormProps) {
   const { t } = useTranslation("listings");
+  const { data: brands } = useBrands();
+  const brandOptions = useMemo(
+    () => (brands ?? []).map((b) => ({ value: b.slug, label: b.name })),
+    [brands],
+  );
 
   return (
     <Stack gap={28}>
@@ -98,6 +108,14 @@ export function ListingDetailsForm({
             error={form.errors.gender}
           />
           <Select
+            label={t("create.form.brand")}
+            placeholder={t("create.form.brandPlaceholder")}
+            data={brandOptions}
+            searchable
+            radius="xs"
+            {...form.getInputProps("brand")}
+          />
+          <Select
             label={t("create.form.size")}
             placeholder={t("create.form.sizePlaceholder")}
             data={sizeOptions}
@@ -107,6 +125,16 @@ export function ListingDetailsForm({
             {...form.getInputProps("size")}
           />
         </SimpleGrid>
+        <TagsInput
+          mt="md"
+          label={t("create.form.tags")}
+          placeholder={t("create.form.tagsPlaceholder")}
+          description={t("create.form.tagsHint")}
+          maxTags={MAX_TAGS_PER_POST}
+          maxLength={MAX_TAG_LENGTH}
+          radius="xs"
+          {...form.getInputProps("tags")}
+        />
       </div>
 
       {/* Pricing Section */}

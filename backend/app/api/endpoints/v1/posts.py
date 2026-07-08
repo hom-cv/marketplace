@@ -119,6 +119,8 @@ async def list_posts(
     types: Annotated[list[PostType] | None, Query()] = None,
     genders: Annotated[list[Gender] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
+    brands: Annotated[list[str] | None, Query()] = None,
+    tags: Annotated[list[str] | None, Query()] = None,
     min_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     max_price: Annotated[Decimal | None, Query(ge=0, decimal_places=2)] = None,
     search: Annotated[str | None, Query(max_length=200)] = None,
@@ -135,6 +137,8 @@ async def list_posts(
     - types: Filter by post types (can specify multiple)
     - genders: Filter by department (mens/womens/unisex, can specify multiple)
     - sizes: Filter by sizes (can specify multiple). Excludes posts with no size.
+    - brands: Filter by brand slug(s) (can specify multiple)
+    - tags: Filter by tag name(s) (can specify multiple; matches any)
     - min_price: Minimum price filter
     - max_price: Maximum price filter
     - search: Search query for title/description
@@ -149,6 +153,8 @@ async def list_posts(
         types=types,
         genders=genders,
         sizes=sizes,
+        brand_slugs=brands,
+        tags=tags,
         min_price=min_price,
         max_price=max_price,
         search=search,

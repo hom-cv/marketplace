@@ -103,10 +103,24 @@ class Post(Base):
         nullable=False,
         index=True,
     )
+    # Brand is optional; SET NULL so removing a brand doesn't delete listings.
+    brand_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("brands.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
 
     # Relationships
     user: Mapped["User"] = relationship(
         back_populates="posts",
+        lazy="selectin",
+    )
+    brand: Mapped["Brand | None"] = relationship(  # type: ignore # noqa
+        lazy="selectin",
+    )
+    tags: Mapped[list["Tag"]] = relationship(  # type: ignore # noqa
+        secondary="post_tags",
         lazy="selectin",
     )
     payments: Mapped[list["Payment"]] = relationship(

@@ -10,10 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import server_error
+from app.core.utils import normalize_tag, slugify
 from app.crud._base import BaseCRUD
+from app.models.brand import Brand
 from app.models.payment import Payment, PaymentStatus
 from app.models.post import Gender, Post, PostType
 from app.models.post_ban import PostBan
+from app.models.post_tag import PostTag
+from app.models.tag import Tag
 from app.models.user import User
 from app.models.user_ban import UserBan
 from app.schemas.post import PostCreateSchema, PostUpdateSchema
@@ -101,6 +105,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         types: list[PostType] | None = None,
         genders: list[Gender] | None = None,
         sizes: list[str] | None = None,
+        brand_slugs: list[str] | None = None,
+        tags: list[str] | None = None,
         min_price: Decimal | None = None,
         max_price: Decimal | None = None,
         search: str | None = None,
@@ -123,6 +129,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             limit: Maximum number of records to return.
             types: Filter by post types.
             genders: Filter by target department (mens/womens/unisex).
+            brand_slugs: Filter by brand slug(s).
+            tags: Filter by tag name(s); matches posts having any of them.
             min_price: Minimum price filter.
             max_price: Maximum price filter.
             search: Search query for title/description.
@@ -154,6 +162,26 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         if sizes:
             # Filter by size - this automatically excludes posts with no size (NULL)
             base_query = base_query.where(self.model.size.in_(sizes))
+
+        if brand_slugs:
+            # Normalize so a hand-edited ?brands=Nike still matches "nike".
+            normalized = [slugify(s) for s in brand_slugs if slugify(s)]
+            if normalized:
+                base_query = base_query.where(
+                    self.model.brand.has(Brand.slug.in_(normalized))
+                )
+
+        if tags:
+            # ANY-of: post matches if it has any of the requested tags.
+            normalized_tags = [normalize_tag(t) for t in tags if normalize_tag(t)]
+            if normalized_tags:
+                base_query = base_query.where(
+                    self.model.id.in_(
+                        select(PostTag.post_id)
+                        .join(Tag, Tag.id == PostTag.tag_id)
+                        .where(Tag.name.in_(normalized_tags))
+                    )
+                )
 
         if min_price is not None:
             base_query = base_query.where(self.model.price >= min_price)

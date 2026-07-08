@@ -40,6 +40,12 @@ export async function getPosts(
   if (filters?.sizes && filters.sizes.length > 0) {
     filters.sizes.forEach((size) => params.append("sizes", size));
   }
+  if (filters?.brands && filters.brands.length > 0) {
+    filters.brands.forEach((brand) => params.append("brands", brand));
+  }
+  if (filters?.tags && filters.tags.length > 0) {
+    filters.tags.forEach((tag) => params.append("tags", tag));
+  }
   if (filters?.minPrice !== undefined) {
     params.append("min_price", String(filters.minPrice));
   }

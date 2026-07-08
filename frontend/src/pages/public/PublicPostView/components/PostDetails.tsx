@@ -2,11 +2,14 @@
  * PostDetails - Displays post title, badges, price, size, description, and measurements
  */
 
+import { Badge, Group } from "@mantine/core";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LikeButton } from "@/components/LikeButton";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { Post } from "@/api/types/post";
 import { formatSize } from "@/api/types/post";
+import { CATCHALL_BRAND_SLUG } from "@/constants/listing";
 import styles from "../PublicPostViewPage.module.css";
 
 interface PostDetailsProps {
@@ -18,6 +21,7 @@ interface PostDetailsProps {
 export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsProps) {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
+  const navigate = useNavigate();
 
   const price = parseFloat(post.price);
   const shippingCost = parseFloat(post.shipping_cost || "0");
@@ -47,6 +51,23 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
               </span>
             )}
         </div>
+      )}
+
+      {/* Brand */}
+      {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
+        <Badge
+          variant="light"
+          radius="xs"
+          className={styles.brandBadge}
+          onClick={() =>
+            navigate({
+              to: "/explore",
+              search: { brands: [post.brand!.slug] },
+            })
+          }
+        >
+          {post.brand.name}
+        </Badge>
       )}
 
       {/* Title */}
@@ -99,6 +120,28 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
       {/* Measurements Section */}
       {post.measurements && (
         <MeasurementsDisplay measurements={post.measurements} />
+      )}
+
+      {/* Tags */}
+      {post.tags.length > 0 && (
+        <div>
+          <div className={styles.sectionLabel}>{t("view.tags")}</div>
+          <Group gap="xs">
+            {post.tags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="light"
+                radius="xs"
+                className={styles.tagBadge}
+                onClick={() =>
+                  navigate({ to: "/explore", search: { tags: [tag] } })
+                }
+              >
+                #{tag}
+              </Badge>
+            ))}
+          </Group>
+        </div>
       )}
 
       <hr className={styles.divider} />

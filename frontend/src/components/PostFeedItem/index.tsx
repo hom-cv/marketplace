@@ -9,6 +9,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
+import { CATCHALL_BRAND_SLUG } from "@/constants/listing";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -109,6 +110,12 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
             )}
           </Group>
         </Group>
+
+        {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
+          <Text size="xs" fw={600} c="dimmed" tt="uppercase" lineClamp={1}>
+            {post.brand.name}
+          </Text>
+        )}
 
         <Text fw={500} lineClamp={1}>
           {post.title}

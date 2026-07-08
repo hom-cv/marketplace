@@ -133,6 +133,8 @@ const publicExploreRoute = createRoute({
     department?: Department;
     types?: PostType[];
     sizes?: string[];
+    brands?: string[];
+    tags?: string[];
     search?: string;
   } => {
     const asArray = (v: unknown): string[] =>
@@ -145,6 +147,8 @@ const publicExploreRoute = createRoute({
       ),
     ];
     const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
+    const brands = [...new Set(asArray(search.brands).filter(Boolean))];
+    const tags = [...new Set(asArray(search.tags).filter(Boolean))];
     const q = typeof search.search === "string" ? search.search.trim() : "";
     return {
       department: isDepartment(search.department)
@@ -152,6 +156,8 @@ const publicExploreRoute = createRoute({
         : undefined,
       types: types.length ? types : undefined,
       sizes: sizes.length ? sizes : undefined,
+      brands: brands.length ? brands : undefined,
+      tags: tags.length ? tags : undefined,
       search: q || undefined,
     };
   },

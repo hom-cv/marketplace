@@ -73,6 +73,9 @@
     "filters": "ตัวกรอง",
     "clear": "ล้าง",
     "category": "หมวดหมู่",
+    "brand": "แบรนด์",
+    "searchBrands": "ค้นหาแบรนด์",
+    "noBrands": "ไม่พบแบรนด์",
     "priceRange": "ช่วงราคา",
     "size": "ไซส์",
     "oneSize": "ขนาดเดียว"

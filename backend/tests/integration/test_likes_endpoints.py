@@ -28,6 +28,8 @@ def create_mock_post(
     mock_post.description = description
     mock_post.type = PostType.SHIRT
     mock_post.gender = Gender.UNISEX
+    mock_post.brand = None
+    mock_post.tags = []
     mock_post.price = price
     mock_post.shipping_cost = Decimal("50.00")
     mock_post.image_url = None

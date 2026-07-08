@@ -3,11 +3,18 @@
  * Contains category checkboxes and size filters
  */
 
-import { useMemo, useCallback, memo } from "react";
-import { Stack, Group, Checkbox } from "@mantine/core";
-import { IconX, IconCategory, IconRuler } from "@tabler/icons-react";
+import { useMemo, useCallback, useState, memo } from "react";
+import { Stack, Group, Checkbox, TextInput, ScrollArea } from "@mantine/core";
+import {
+  IconX,
+  IconCategory,
+  IconRuler,
+  IconBuildingStore,
+  IconSearch,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { CollapsibleFilterSection } from "@/components/CollapsibleFilterSection";
+import { useBrands } from "@/hooks/useBrands";
 import type { PostType, SizeCategory } from "@/api/types/post";
 import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
 import {
@@ -16,6 +23,7 @@ import {
   parseSizeKey,
   toggleTypeFilter,
   toggleSizeFilter,
+  toggleBrandFilter,
 } from "@/utils/filterHelpers";
 import styles from "./ExploreFiltersPanel.module.css";
 
@@ -32,6 +40,14 @@ function ExploreFiltersPanelComponent({
 }: ExploreFiltersPanelProps) {
   const { t: tCommon } = useTranslation("common");
   const { t: tListings } = useTranslation("listings");
+  const { data: brands } = useBrands();
+  const [brandQuery, setBrandQuery] = useState("");
+
+  const visibleBrands = useMemo(() => {
+    const q = brandQuery.trim().toLowerCase();
+    const all = brands ?? [];
+    return q ? all.filter((b) => b.name.toLowerCase().includes(q)) : all;
+  }, [brands, brandQuery]);
 
   const typeOptions = useMemo(
     () =>
@@ -60,7 +76,17 @@ function ExploreFiltersPanelComponent({
     return counts;
   }, [filters.sizes]);
 
-  const hasActiveFilters = filters.types.length > 0 || filters.sizes.length > 0;
+  const hasActiveFilters =
+    filters.types.length > 0 ||
+    filters.sizes.length > 0 ||
+    filters.brands.length > 0;
+
+  const handleBrandToggle = useCallback(
+    (slug: string) => {
+      onFiltersChange((prev) => toggleBrandFilter(prev, slug));
+    },
+    [onFiltersChange],
+  );
 
   const handleTypeToggle = useCallback(
     (postType: PostType) => {
@@ -79,7 +105,7 @@ function ExploreFiltersPanelComponent({
   );
 
   const handleClearAllFilters = useCallback(() => {
-    onFiltersChange({ types: [], sizes: [] });
+    onFiltersChange({ types: [], sizes: [], brands: [] });
   }, [onFiltersChange]);
 
   return (
@@ -104,6 +130,46 @@ function ExploreFiltersPanelComponent({
           ))}
         </Stack>
       </CollapsibleFilterSection>
+
+      {/* Brand Filter */}
+      {brands && brands.length > 0 && (
+        <CollapsibleFilterSection
+          title={tCommon("filtersSidebar.brand")}
+          icon={<IconBuildingStore size={18} />}
+          badge={filters.brands.length}
+          defaultOpen={false}
+        >
+          <Stack gap="xs">
+            <TextInput
+              placeholder={tCommon("filtersSidebar.searchBrands")}
+              leftSection={<IconSearch size={14} />}
+              value={brandQuery}
+              onChange={(e) => setBrandQuery(e.currentTarget.value)}
+              size="xs"
+              radius="xs"
+            />
+            <ScrollArea.Autosize mah={220}>
+              <Stack gap="xs">
+                {visibleBrands.map((brand) => (
+                  <Checkbox
+                    key={brand.slug}
+                    label={brand.name}
+                    checked={filters.brands.includes(brand.slug)}
+                    onChange={() => handleBrandToggle(brand.slug)}
+                    radius="xs"
+                    className={styles.checkbox}
+                  />
+                ))}
+                {visibleBrands.length === 0 && (
+                  <span className={styles.noResults}>
+                    {tCommon("filtersSidebar.noBrands")}
+                  </span>
+                )}
+              </Stack>
+            </ScrollArea.Autosize>
+          </Stack>
+        </CollapsibleFilterSection>
+      )}
 
       {/* Size Filters */}
       {visibleSizeCategories.map((categoryConfig) => (
@@ -159,5 +225,6 @@ export const ExploreFiltersPanel = memo(
   (prev, next) =>
     prev.onFiltersChange === next.onFiltersChange &&
     sameArray(prev.filters.types, next.filters.types) &&
-    sameArray(prev.filters.sizes, next.filters.sizes),
+    sameArray(prev.filters.sizes, next.filters.sizes) &&
+    sameArray(prev.filters.brands, next.filters.brands),
 );

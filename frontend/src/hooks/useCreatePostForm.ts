@@ -21,6 +21,8 @@ export function useCreatePostForm() {
       description: "",
       type: null,
       gender: null,
+      brand: "",
+      tags: [],
       price: "",
       shippingCost: 0,
       size: null,

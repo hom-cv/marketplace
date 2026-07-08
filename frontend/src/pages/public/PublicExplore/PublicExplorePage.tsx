@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { usePublicPosts } from "@/hooks/usePosts";
+import { useBrands } from "@/hooks/useBrands";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
@@ -29,6 +30,7 @@ import {
   parseSizeKey,
   toggleTypeFilter,
   toggleSizeFilter,
+  toggleBrandFilter,
 } from "@/utils/filterHelpers";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useIsAuthenticated } from "@/stores/authStore";
@@ -46,11 +48,13 @@ export function PublicExplorePage() {
     department,
     types = [],
     sizes = [],
+    brands = [],
+    tags = [],
     search = "",
   } = useSearch({ from: "/explore" });
-  const filters: FiltersState = { types, sizes };
+  const filters: FiltersState = { types, sizes, brands };
 
-  // Sidebar filters (types/sizes) write to the URL immediately on toggle.
+  // Sidebar filters (types/sizes/brands) write to the URL immediately on toggle.
   // Reads current filters from navigate's `prev` (the live search params) rather
   // than closing over `filters`, so this stays referentially stable ([navigate]).
   const onFiltersChange = useCallback(
@@ -62,6 +66,7 @@ export function PublicExplorePage() {
           const current: FiltersState = {
             types: prev.types ?? [],
             sizes: prev.sizes ?? [],
+            brands: prev.brands ?? [],
           };
           const next =
             typeof updater === "function" ? updater(current) : updater;
@@ -69,10 +74,25 @@ export function PublicExplorePage() {
             ...prev,
             types: next.types.length ? next.types : undefined,
             sizes: next.sizes.length ? next.sizes : undefined,
+            brands: next.brands.length ? next.brands : undefined,
           };
         },
       });
     },
+    [navigate],
+  );
+
+  // A tag chip removes just that tag from the URL.
+  const removeTag = useCallback(
+    (tag: string) =>
+      navigate({
+        to: "/explore",
+        replace: true,
+        search: (prev) => {
+          const remaining = (prev.tags ?? []).filter((x) => x !== tag);
+          return { ...prev, tags: remaining.length ? remaining : undefined };
+        },
+      }),
     [navigate],
   );
 
@@ -114,6 +134,12 @@ export function PublicExplorePage() {
     [],
   );
 
+  const { data: brandList } = useBrands();
+  const brandNameBySlug = useMemo(
+    () => new Map((brandList ?? []).map((b) => [b.slug, b.name])),
+    [brandList],
+  );
+
   const queryFilters: PostFilters = {};
   {
     const typesSet = new Set<PostType>(types);
@@ -138,6 +164,8 @@ export function PublicExplorePage() {
 
     if (typesSet.size > 0) queryFilters.types = [...typesSet];
     if (department) queryFilters.genders = DEPARTMENT_GENDERS[department];
+    if (brands.length > 0) queryFilters.brands = brands;
+    if (tags.length > 0) queryFilters.tags = tags;
     if (search.trim()) queryFilters.search = search.trim();
   }
 
@@ -163,9 +191,16 @@ export function PublicExplorePage() {
   });
 
   const hasActiveFilters =
-    types.length > 0 || sizes.length > 0 || search.trim() !== "";
+    types.length > 0 ||
+    sizes.length > 0 ||
+    brands.length > 0 ||
+    tags.length > 0 ||
+    search.trim() !== "";
 
-  const activeFilterCount = types.length + sizes.length;
+  const activeFilterCount = types.length + sizes.length + brands.length;
+
+  const handleBrandToggle = (slug: string) =>
+    onFiltersChange((prev) => toggleBrandFilter(prev, slug));
 
   const handleTypeToggle = (postType: PostType) =>
     onFiltersChange((prev) =>
@@ -184,6 +219,8 @@ export function PublicExplorePage() {
         ...prev,
         types: undefined,
         sizes: undefined,
+        brands: undefined,
+        tags: undefined,
         search: undefined,
       }),
     });
@@ -289,6 +326,20 @@ export function PublicExplorePage() {
                     />
                   );
                 })}
+                {brands.map((slug) => (
+                  <FilterBadge
+                    key={slug}
+                    label={brandNameBySlug.get(slug) ?? slug}
+                    onRemove={() => handleBrandToggle(slug)}
+                  />
+                ))}
+                {tags.map((tag) => (
+                  <FilterBadge
+                    key={tag}
+                    label={`#${tag}`}
+                    onRemove={() => removeTag(tag)}
+                  />
+                ))}
                 <button
                   className={styles.clearAllBadge}
                   onClick={handleClearAllFilters}

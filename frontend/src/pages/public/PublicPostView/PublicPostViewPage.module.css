@@ -143,6 +143,19 @@
   color: var(--color-text);
 }
 
+/* Clickable brand/tag badges link to filtered Explore */
+.brandBadge {
+  align-self: flex-start;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tagBadge {
+  cursor: pointer;
+  text-decoration: none;
+}
+
 /* Description */
 .description {
   font-size: 0.95rem;

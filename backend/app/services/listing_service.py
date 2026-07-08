@@ -12,8 +12,10 @@ from app.core.exceptions import (
     post_not_found_error,
     too_many_images_error,
 )
+from app.crud.brand import BrandCRUD, get_brand_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
+from app.crud.tag import TagCRUD, get_tag_crud
 from app.db.utils import get_async_db
 from app.models.payment import Payment
 from app.models.post import Post
@@ -28,6 +30,8 @@ from app.services.storage_service import StorageService, _get_storage_service
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
+AnnotatedBrandCRUD = Annotated[BrandCRUD, Depends(get_brand_crud)]
+AnnotatedTagCRUD = Annotated[TagCRUD, Depends(get_tag_crud)]
 AnnotatedStorageService = Annotated[StorageService, Depends(_get_storage_service)]
 
 
@@ -107,11 +111,15 @@ class ListingService:
         db: AsyncSession,
         post_crud_dep: PostCRUD,
         payment_crud_dep: PaymentCRUD,
+        brand_crud_dep: BrandCRUD,
+        tag_crud_dep: TagCRUD,
         storage_service: StorageService,
     ) -> None:
         self.db = db
         self._post_crud = post_crud_dep
         self._payment_crud = payment_crud_dep
+        self._brand_crud = brand_crud_dep
+        self._tag_crud = tag_crud_dep
         self._storage = storage_service
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
@@ -235,6 +243,19 @@ class ListingService:
             if not url.startswith(prefix) or "/../" in url:
                 raise bad_request_error(f"Invalid image URL: {url}")
 
+    async def _apply_brand_and_tags(
+        self, post: Post, *, brand: str | None, tags: list[str]
+    ) -> None:
+        """Resolve the brand (from the curated list) and tag set onto ``post``.
+
+        ``brand`` is a slug; an unknown/absent one falls back to the catch-all.
+        ``tags`` fully replaces the post's tags.
+        """
+        post.brand = await self._brand_crud.resolve_or_catchall(
+            self.db, slug=brand
+        )
+        post.tags = await self._tag_crud.get_or_create_many(self.db, names=tags)
+
     async def create_listing(
         self,
         *,
@@ -272,6 +293,7 @@ class ListingService:
             image_urls=data.image_urls,
             user_id=owner_id,
         )
+        await self._apply_brand_and_tags(post, brand=data.brand, tags=data.tags)
         created_post = await self._post_crud.create_post(self.db, post=post)
         await self.db.commit()
         return PostResponseSchema.model_validate(created_post)
@@ -325,6 +347,8 @@ class ListingService:
         post.gender = data.gender
         post.image_urls = data.image_urls
         post.image_url = data.image_urls[0] if data.image_urls else None
+        # Full replace: brand/tags reflect exactly what the payload carries.
+        await self._apply_brand_and_tags(post, brand=data.brand, tags=data.tags)
 
         # Plain scalar edits flow through the CRUD via the update schema.
         obj_in = PostUpdateSchema(
@@ -375,11 +399,20 @@ class ListingService:
 def _get_listing_service(
     post_crud_dep: AnnotatedPostCRUD,
     payment_crud_dep: AnnotatedPaymentCRUD,
+    brand_crud_dep: AnnotatedBrandCRUD,
+    tag_crud_dep: AnnotatedTagCRUD,
     storage_service: AnnotatedStorageService,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
-    return ListingService(db, post_crud_dep, payment_crud_dep, storage_service)
+    return ListingService(
+        db,
+        post_crud_dep,
+        payment_crud_dep,
+        brand_crud_dep,
+        tag_crud_dep,
+        storage_service,
+    )
 
 
 AnnotatedListingService = Annotated[ListingService, Depends(_get_listing_service)]

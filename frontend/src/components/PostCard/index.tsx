@@ -11,6 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
+import { CATCHALL_BRAND_SLUG } from "@/constants/listing";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -173,6 +174,11 @@ export function PostCard({
       </div>
 
       <Box className={styles.info}>
+        {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
+          <Text size="xs" fw={600} c="var(--color-text-muted)" tt="uppercase" lineClamp={1}>
+            {post.brand.name}
+          </Text>
+        )}
         <Group className={styles.titleRow} justify="space-between" gap="xs" wrap="nowrap">
           <Text size="sm" c="var(--color-text)" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
             {post.title}

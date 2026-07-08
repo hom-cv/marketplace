@@ -73,6 +73,9 @@
     "filters": "Filters",
     "clear": "Clear",
     "category": "Category",
+    "brand": "Brand",
+    "searchBrands": "Search brands",
+    "noBrands": "No brands found",
     "priceRange": "Price Range",
     "size": "Size",
     "oneSize": "One Size"

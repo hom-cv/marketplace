@@ -79,6 +79,23 @@ class TestListPostsEndpoint:
 
         assert response.status_code == 422
 
+    async def test_list_posts_brand_and_tag_filters_passthrough(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """`brands` (as brand_slugs) and `tags` are forwarded to the CRUD."""
+        mock_post_crud.get_posts_with_filters.return_value = ([], 0)
+
+        response = await async_client.get(
+            "/api/v1/posts?brands=nike&brands=adidas&tags=vintage"
+        )
+
+        assert response.status_code == 200
+        _, kwargs = mock_post_crud.get_posts_with_filters.call_args
+        assert kwargs["brand_slugs"] == ["nike", "adidas"]
+        assert kwargs["tags"] == ["vintage"]
+
     async def test_list_posts_invalid_skip_returns_422(
         self,
         async_client: AsyncClient,
@@ -126,6 +143,8 @@ class TestGetPostEndpoint:
         mock_post.description = "A test post description"
         mock_post.type = PostType.SHIRT  # Use actual enum
         mock_post.gender = Gender.UNISEX
+        mock_post.brand = None
+        mock_post.tags = []
         mock_post.price = Decimal("500.00")
         mock_post.shipping_cost = Decimal("50.00")
         mock_post.image_url = None
@@ -276,6 +295,8 @@ def _make_mock_post(
     mock_post.description = "Original description"
     mock_post.type = PostType.SHIRT
     mock_post.gender = Gender.UNISEX
+    mock_post.brand = None
+    mock_post.tags = []
     mock_post.price = Decimal("500.00")
     mock_post.shipping_cost = Decimal("50.00")
     mock_post.image_url = (image_urls or [None])[0]

@@ -3,11 +3,14 @@
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from app.constants.post import (
+    MAX_BRAND_NAME_LENGTH,
     MAX_LISTING_PRICE,
     MAX_SHIPPING_COST,
+    MAX_TAG_LENGTH,
+    MAX_TAGS_PER_POST,
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
     Gender,
@@ -15,6 +18,25 @@ from app.constants.post import (
 )
 from app.constants.storage import MAX_IMAGES_PER_POST
 from app.schemas.user import UserResponseSchema
+
+
+class BrandRead(BaseModel):
+    """Brand as exposed on a post response."""
+
+    name: str
+    slug: str
+
+    model_config = {"from_attributes": True}
+
+
+def validate_tags(tags: list[str]) -> list[str]:
+    """Enforce tag count/length caps (normalization happens in the CRUD)."""
+    if len(tags) > MAX_TAGS_PER_POST:
+        raise ValueError(f"At most {MAX_TAGS_PER_POST} tags allowed")
+    for tag in tags:
+        if len(tag) > MAX_TAG_LENGTH:
+            raise ValueError(f"Each tag must be at most {MAX_TAG_LENGTH} characters")
+    return tags
 
 
 # Measurement schemas for category-specific validation
@@ -115,6 +137,15 @@ class PostCreateSchema(BaseModel):
         ...,
         description="Target department (mens/womens/unisex)",
     )
+    brand: str | None = Field(
+        default=None,
+        max_length=MAX_BRAND_NAME_LENGTH,
+        description="Brand slug from the curated list; unknown/blank → catch-all",
+    )
+    tags: list[str] = Field(
+        default_factory=list,
+        description="Hashtags (without '#'); normalized + deduped server-side",
+    )
     price: Decimal = Field(
         ...,
         ge=MIN_LISTING_PRICE,
@@ -122,6 +153,11 @@ class PostCreateSchema(BaseModel):
         decimal_places=2,
         description=f"Price in THB (minimum ฿{MIN_LISTING_PRICE})",
     )
+
+    @field_validator("tags")
+    @classmethod
+    def _check_tags(cls, v: list[str]) -> list[str]:
+        return validate_tags(v)
     shipping_cost: Decimal = Field(
         default=Decimal("0"),
         ge=MIN_SHIPPING_COST,
@@ -185,9 +221,16 @@ class PostUpdateRequest(BaseModel):
     description: str = Field(..., min_length=1, max_length=5000)
     type: PostType
     gender: Gender
+    brand: str | None = Field(default=None, max_length=MAX_BRAND_NAME_LENGTH)
+    tags: list[str] = Field(default_factory=list)
     price: Decimal = Field(
         ..., ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
     )
+
+    @field_validator("tags")
+    @classmethod
+    def _check_tags(cls, v: list[str]) -> list[str]:
+        return validate_tags(v)
     shipping_cost: Decimal = Field(
         default=Decimal("0"),
         ge=MIN_SHIPPING_COST,
@@ -237,6 +280,8 @@ class PostResponseSchema(BaseModel):
     description: str
     type: PostType
     gender: Gender
+    brand: BrandRead | None = None
+    tags: list[str] = Field(default_factory=list)
     price: Decimal
     shipping_cost: Decimal
     image_url: str | None
@@ -244,6 +289,14 @@ class PostResponseSchema(BaseModel):
     size: str | None = None
     measurements: dict[str, Any] | None = None
     user: UserResponseSchema
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _tag_names(cls, v: Any) -> list[str]:
+        """Map the ORM ``list[Tag]`` to plain names (leave a list[str] as-is)."""
+        if not v:
+            return []
+        return [getattr(t, "name", t) for t in v]
     is_sold: bool = False
     is_banned: bool = False
     is_user_banned: bool = False
