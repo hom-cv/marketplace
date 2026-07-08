@@ -112,6 +112,7 @@ export function ListingDetailsForm({
             placeholder={t("create.form.brandPlaceholder")}
             data={brandOptions}
             searchable
+            clearable
             radius="xs"
             {...form.getInputProps("brand")}
           />
