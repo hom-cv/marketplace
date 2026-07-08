@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.post import CATCHALL_BRAND_SLUG
+from app.core.utils import slugify
 from app.models.brand import Brand
 
 
@@ -26,12 +27,13 @@ class BrandCRUD:
         self, db: AsyncSession, *, slug: str | None
     ) -> Brand:
         """Return the curated brand for ``slug``, else the catch-all brand.
-
-        A missing or unknown slug falls back to the seeded catch-all, so every
-        listing ends up with a real brand (never a free-typed one).
         """
-        if slug:
-            brand = await db.scalar(select(Brand).where(Brand.slug == slug))
+        normalized = slugify(slug) if slug else ""
+
+        if normalized:
+            brand = await db.scalar(
+                select(Brand).where(Brand.slug == normalized)
+            )
             if brand:
                 return brand
         catchall = await db.scalar(
