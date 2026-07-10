@@ -11,6 +11,7 @@ import {
   Text,
   NavLink,
   Button,
+  Skeleton,
 } from "@mantine/core";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -51,48 +52,48 @@ export function MobileDrawer({
   return (
     <Drawer opened={opened} onClose={onClose} size="100%">
       <Stack>
-        {isAuthenticated && (
+        {user && (
           <Group mb="md" px="md">
             <Avatar color="blue" radius="xl" size="md">
               {getInitials(user)}
             </Avatar>
             <div>
               <strong>
-                {[user?.first_name, user?.last_name].filter(Boolean).join(" ")}
+                {[user.first_name, user.last_name].filter(Boolean).join(" ")}
               </strong>
               <Text size="sm" c="dimmed">
-                @{user?.username}
+                @{user.username}
               </Text>
             </div>
           </Group>
         )}
 
-        {isAuthenticated && (
+        {user && (
           <Button
             component={Link}
             to={
-              user?.is_seller
+              user.is_seller
                 ? "/account/listings/new"
                 : "/account/become-seller"
             }
             onClick={onClose}
             fullWidth
-            variant={user?.is_seller ? "filled" : "light"}
+            variant={user.is_seller ? "filled" : "light"}
             leftSection={
-              user?.is_seller ? (
+              user.is_seller ? (
                 <IconPlus size={16} />
               ) : (
                 <IconBuildingStore size={16} />
               )
             }
           >
-            {user?.is_seller
+            {user.is_seller
               ? t("menu.createListing")
               : t("menu.becomeSeller")}
           </Button>
         )}
 
-        {isAuthenticated && (
+        {user && (
           <>
             <Divider my="sm" />
 
@@ -173,10 +174,10 @@ export function MobileDrawer({
             </Text>
             <NavLink
               component={Link}
-              to={`/profile/${user?.username ?? ""}`}
+              to={`/profile/${user.username ?? ""}`}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
-              active={location.pathname === `/profile/${user?.username ?? ""}`}
+              active={location.pathname === `/profile/${user.username ?? ""}`}
               onClick={onClose}
             />
             <NavLink
@@ -188,7 +189,7 @@ export function MobileDrawer({
               onClick={onClose}
             />
 
-            {user?.is_admin && (
+            {user.is_admin && (
               <NavLink
                 component={Link}
                 to="/admin"
@@ -203,7 +204,7 @@ export function MobileDrawer({
           </>
         )}
 
-        {isAuthenticated ? (
+        {user ? (
           <Button
             fullWidth
             variant="outline"
@@ -213,6 +214,15 @@ export function MobileDrawer({
           >
             {t("menu.logout")}
           </Button>
+        ) : isAuthenticated ? (
+          // Signed in but profile still loading — placeholders (the user-guarded
+          // sections above render nothing until it arrives).
+          <Stack px="md" mt="md" gap="sm">
+            <Skeleton height={44} radius="sm" />
+            <Skeleton height={36} radius="sm" />
+            <Skeleton height={36} radius="sm" />
+            <Skeleton height={36} radius="sm" />
+          </Stack>
         ) : (
           <>
             <Button component={Link} to="/login" onClick={onClose}>

@@ -9,6 +9,7 @@ import {
   Burger,
   ActionIcon,
   Tooltip,
+  Skeleton,
 } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import {
@@ -47,24 +48,24 @@ export function Header({
         </Link>
 
         <Group visibleFrom="xs">
-          {isAuthenticated ? (
+          {user ? (
             <>
               <Button
                 component={Link}
                 to={
-                  user?.is_seller
+                  user.is_seller
                     ? "/account/listings/new"
                     : "/account/become-seller"
                 }
                 leftSection={
-                  user?.is_seller ? (
+                  user.is_seller ? (
                     <IconPlus size={16} />
                   ) : (
                     <IconBuildingStore size={16} />
                   )
                 }
               >
-                {user?.is_seller
+                {user.is_seller
                   ? t("menu.createListing")
                   : t("menu.becomeSeller")}
               </Button>
@@ -93,6 +94,15 @@ export function Header({
                 </ActionIcon>
               </Tooltip>
               <UserMenu user={user} onLogout={onLogout} />
+            </>
+          ) : isAuthenticated ? (
+            // Authenticated but profile still loading — placeholders to avoid a
+            // flash of the wrong seller state / login buttons.
+            <>
+              <Skeleton height={36} width={140} radius="sm" />
+              <Skeleton circle height={36} width={36} />
+              <Skeleton circle height={36} width={36} />
+              <Skeleton circle height={40} width={40} />
             </>
           ) : (
             <>
