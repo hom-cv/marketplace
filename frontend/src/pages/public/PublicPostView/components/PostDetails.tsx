@@ -2,7 +2,7 @@
  * PostDetails - Displays post title, badges, price, size, description, and measurements
  */
 
-import { Badge, Group } from "@mantine/core";
+import { Group, Anchor } from "@mantine/core";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LikeButton } from "@/components/LikeButton";
@@ -18,7 +18,11 @@ interface PostDetailsProps {
   onLikeAuthRequired: () => void;
 }
 
-export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsProps) {
+export function PostDetails({
+  post,
+  isOwner,
+  onLikeAuthRequired,
+}: PostDetailsProps) {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
   const navigate = useNavigate();
@@ -43,31 +47,35 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
               {tCommon("badges.sold")}
             </span>
           )}
-          {!post.is_sold &&
-            post.is_reserved &&
-            !post.is_reserved_by_viewer && (
-              <span className={`${styles.badge} ${styles.badgeSold}`}>
-                {tCommon("badges.reserved")}
-              </span>
-            )}
+          {!post.is_sold && post.is_reserved && !post.is_reserved_by_viewer && (
+            <span className={`${styles.badge} ${styles.badgeSold}`}>
+              {tCommon("badges.reserved")}
+            </span>
+          )}
         </div>
       )}
 
       {/* Brand */}
       {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
-        <Badge
-          variant="light"
-          radius="xs"
-          className={styles.brandBadge}
-          onClick={() =>
-            navigate({
-              to: "/explore",
-              search: { brands: [post.brand!.slug] },
-            })
-          }
-        >
-          {post.brand.name}
-        </Badge>
+        <div>
+          <Anchor
+            component="button"
+            type="button"
+            c="dimmed"
+            fw={600}
+            size="sm"
+            tt="uppercase"
+            underline="hover"
+            onClick={() =>
+              navigate({
+                to: "/explore",
+                search: { brands: [post.brand!.slug] },
+              })
+            }
+          >
+            {post.brand.name}
+          </Anchor>
+        </div>
       )}
 
       {/* Title */}
@@ -102,9 +110,7 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
       {/* Size */}
       {post.size && (
         <div>
-          <div className={styles.sectionLabel}>
-            {tCommon("postCard.size")}
-          </div>
+          <div className={styles.sectionLabel}>{tCommon("postCard.size")}</div>
           <span className={styles.sizeBadge}>
             {formatSize(post.size, post.type)}
           </span>
@@ -126,19 +132,21 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
       {post.tags.length > 0 && (
         <div>
           <div className={styles.sectionLabel}>{t("view.tags")}</div>
-          <Group gap="xs">
+          <Group gap="md">
             {post.tags.map((tag) => (
-              <Badge
+              <Anchor
                 key={tag}
-                variant="light"
-                radius="xs"
-                className={styles.tagBadge}
+                component="button"
+                type="button"
+                c="dimmed"
+                size="sm"
+                underline="hover"
                 onClick={() =>
                   navigate({ to: "/explore", search: { tags: [tag] } })
                 }
               >
                 #{tag}
-              </Badge>
+              </Anchor>
             ))}
           </Group>
         </div>
