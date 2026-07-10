@@ -13,15 +13,12 @@ import { Header } from "./Header";
 import { MobileDrawer } from "./MobileDrawer";
 
 export function AppNavigation() {
-  const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] = useDisclosure(false);
+  const [drawerOpened, { toggle: toggleDrawer, close: closeDrawer }] =
+    useDisclosure(false);
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
 
-  // Fetch current user on mount. `isLoading` is true only while the request is
-  // actually in flight — so a failed/settled fetch (bad token already logged
-  // out by the 401 interceptor, or a transient error) won't leave the nav
-  // stuck in the loading state.
   const { isLoading: userLoading } = useCurrentUser();
 
   const handleLogout = () => {
