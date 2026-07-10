@@ -48,6 +48,3 @@ export function AppNavigation() {
     </Box>
   );
 }
-
-// Re-export for backward compatibility
-export { AppNavigation as HeaderBar };

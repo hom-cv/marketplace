@@ -12,15 +12,10 @@ import {
   Skeleton,
 } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
-import {
-  IconPlus,
-  IconBuildingStore,
-  IconMessage,
-  IconHeart,
-} from "@tabler/icons-react";
+import { IconMessage, IconHeart } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
-import type { UserInfo } from "./types";
+import { sellerAction, type UserInfo } from "./types";
 import styles from "./AppNavigation.module.css";
 
 interface HeaderProps {
@@ -39,6 +34,7 @@ export function Header({
   onLogout,
 }: HeaderProps) {
   const { t } = useTranslation("navigation");
+  const seller = user ? sellerAction(user.is_seller) : null;
 
   return (
     <header className={styles.header}>
@@ -50,25 +46,15 @@ export function Header({
         <Group visibleFrom="xs">
           {user ? (
             <>
-              <Button
-                component={Link}
-                to={
-                  user.is_seller
-                    ? "/account/listings/new"
-                    : "/account/become-seller"
-                }
-                leftSection={
-                  user.is_seller ? (
-                    <IconPlus size={16} />
-                  ) : (
-                    <IconBuildingStore size={16} />
-                  )
-                }
-              >
-                {user.is_seller
-                  ? t("menu.createListing")
-                  : t("menu.becomeSeller")}
-              </Button>
+              {seller && (
+                <Button
+                  component={Link}
+                  to={seller.to}
+                  leftSection={<seller.icon size={16} />}
+                >
+                  {t(seller.labelKey)}
+                </Button>
+              )}
               <Tooltip label={t("menu.messages")}>
                 <ActionIcon
                   component={Link}

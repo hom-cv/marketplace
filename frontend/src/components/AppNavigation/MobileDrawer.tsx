@@ -17,8 +17,6 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   IconLogout,
-  IconBuildingStore,
-  IconPlus,
   IconSearch,
   IconShoppingBag,
   IconPackage,
@@ -29,7 +27,7 @@ import {
   IconShield,
   IconMessage,
 } from "@tabler/icons-react";
-import { getInitials, type UserInfo } from "./types";
+import { getInitials, sellerAction, type UserInfo } from "./types";
 
 interface MobileDrawerProps {
   opened: boolean;
@@ -48,6 +46,7 @@ export function MobileDrawer({
 }: MobileDrawerProps) {
   const location = useLocation();
   const { t } = useTranslation("navigation");
+  const seller = user ? sellerAction(user.is_seller) : null;
 
   return (
     <Drawer opened={opened} onClose={onClose} size="100%">
@@ -68,28 +67,18 @@ export function MobileDrawer({
               </div>
             </Group>
 
-            <Button
-              component={Link}
-              to={
-                user.is_seller
-                  ? "/account/listings/new"
-                  : "/account/become-seller"
-              }
-              onClick={onClose}
-              fullWidth
-              variant={user.is_seller ? "filled" : "light"}
-              leftSection={
-                user.is_seller ? (
-                  <IconPlus size={16} />
-                ) : (
-                  <IconBuildingStore size={16} />
-                )
-              }
-            >
-              {user.is_seller
-                ? t("menu.createListing")
-                : t("menu.becomeSeller")}
-            </Button>
+            {seller && (
+              <Button
+                component={Link}
+                to={seller.to}
+                onClick={onClose}
+                fullWidth
+                variant={user.is_seller ? "filled" : "light"}
+                leftSection={<seller.icon size={16} />}
+              >
+                {t(seller.labelKey)}
+              </Button>
+            )}
 
             <Divider my="sm" />
 
