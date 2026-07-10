@@ -33,7 +33,7 @@ interface MobileDrawerProps {
   opened: boolean;
   onClose: () => void;
   user: UserInfo | null;
-  isAuthenticated: boolean;
+  userLoading: boolean;
   onLogout: () => void;
 }
 
@@ -41,7 +41,7 @@ export function MobileDrawer({
   opened,
   onClose,
   user,
-  isAuthenticated,
+  userLoading,
   onLogout,
 }: MobileDrawerProps) {
   const location = useLocation();
@@ -199,7 +199,8 @@ export function MobileDrawer({
           >
             {t("menu.logout")}
           </Button>
-        ) : isAuthenticated ? (
+        ) : userLoading ? (
+          // Profile fetch in flight — spinner rather than a faked layout.
           <Group justify="center" py="xl">
             <Loader />
           </Group>

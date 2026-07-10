@@ -20,7 +20,7 @@ import styles from "./AppNavigation.module.css";
 
 interface HeaderProps {
   user: UserInfo | null;
-  isAuthenticated: boolean;
+  userLoading: boolean;
   drawerOpened: boolean;
   onToggleDrawer: () => void;
   onLogout: () => void;
@@ -28,7 +28,7 @@ interface HeaderProps {
 
 export function Header({
   user,
-  isAuthenticated,
+  userLoading,
   drawerOpened,
   onToggleDrawer,
   onLogout,
@@ -81,9 +81,9 @@ export function Header({
               </Tooltip>
               <UserMenu user={user} onLogout={onLogout} />
             </>
-          ) : isAuthenticated ? (
-            // Authenticated but profile still loading — placeholders to avoid a
-            // flash of the wrong seller state / login buttons.
+          ) : userLoading ? (
+            // Profile fetch in flight — placeholders to avoid a flash of the
+            // wrong seller state / login buttons.
             <>
               <Skeleton height={36} width={140} radius="sm" />
               <Skeleton circle height={36} width={36} />
