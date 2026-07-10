@@ -2,8 +2,21 @@
  * Header bar component
  */
 
-import { Container, Group, Button, Burger } from "@mantine/core";
+import {
+  Container,
+  Group,
+  Button,
+  Burger,
+  ActionIcon,
+  Tooltip,
+} from "@mantine/core";
 import { Link } from "@tanstack/react-router";
+import {
+  IconPlus,
+  IconBuildingStore,
+  IconMessage,
+  IconHeart,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { UserMenu } from "./UserMenu";
 import type { UserInfo } from "./types";
@@ -28,14 +41,59 @@ export function Header({
 
   return (
     <header className={styles.header}>
-      <Container size="md" className={styles.headerContent}>
+      <Container size="lg" className={styles.headerContent}>
         <Link to="/" className={styles.logo}>
           tallad.co
         </Link>
 
         <Group visibleFrom="xs">
           {isAuthenticated ? (
-            <UserMenu user={user} onLogout={onLogout} />
+            <>
+              <Button
+                component={Link}
+                to={
+                  user?.is_seller
+                    ? "/account/listings/new"
+                    : "/account/become-seller"
+                }
+                leftSection={
+                  user?.is_seller ? (
+                    <IconPlus size={16} />
+                  ) : (
+                    <IconBuildingStore size={16} />
+                  )
+                }
+              >
+                {user?.is_seller
+                  ? t("menu.createListing")
+                  : t("menu.becomeSeller")}
+              </Button>
+              <Tooltip label={t("menu.messages")}>
+                <ActionIcon
+                  component={Link}
+                  to="/messages"
+                  variant="subtle"
+                  color="gray"
+                  size="lg"
+                  aria-label={t("menu.messages")}
+                >
+                  <IconMessage size={20} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label={t("links.likedListings")}>
+                <ActionIcon
+                  component={Link}
+                  to="/account/liked"
+                  variant="subtle"
+                  color="gray"
+                  size="lg"
+                  aria-label={t("links.likedListings")}
+                >
+                  <IconHeart size={20} />
+                </ActionIcon>
+              </Tooltip>
+              <UserMenu user={user} onLogout={onLogout} />
+            </>
           ) : (
             <>
               <Button component={Link} to="/login">

@@ -68,6 +68,31 @@ export function MobileDrawer({
         )}
 
         {isAuthenticated && (
+          <Button
+            component={Link}
+            to={
+              user?.is_seller
+                ? "/account/listings/new"
+                : "/account/become-seller"
+            }
+            onClick={onClose}
+            fullWidth
+            variant={user?.is_seller ? "filled" : "light"}
+            leftSection={
+              user?.is_seller ? (
+                <IconPlus size={16} />
+              ) : (
+                <IconBuildingStore size={16} />
+              )
+            }
+          >
+            {user?.is_seller
+              ? t("menu.createListing")
+              : t("menu.becomeSeller")}
+          </Button>
+        )}
+
+        {isAuthenticated && (
           <>
             <Divider my="sm" />
 
@@ -179,40 +204,15 @@ export function MobileDrawer({
         )}
 
         {isAuthenticated ? (
-          <>
-            {!user?.is_seller && (
-              <Button
-                component={Link}
-                to="/account/become-seller"
-                onClick={onClose}
-                fullWidth
-                variant="light"
-                leftSection={<IconBuildingStore size={16} />}
-              >
-                {t("menu.becomeSeller")}
-              </Button>
-            )}
-            {user?.is_seller && (
-              <Button
-                component={Link}
-                to="/account/listings/new"
-                onClick={onClose}
-                fullWidth
-                leftSection={<IconPlus size={16} />}
-              >
-                {t("menu.createListing")}
-              </Button>
-            )}
-            <Button
-              fullWidth
-              variant="outline"
-              color="red"
-              onClick={onLogout}
-              leftSection={<IconLogout size={16} />}
-            >
-              {t("menu.logout")}
-            </Button>
-          </>
+          <Button
+            fullWidth
+            variant="outline"
+            color="red"
+            onClick={onLogout}
+            leftSection={<IconLogout size={16} />}
+          >
+            {t("menu.logout")}
+          </Button>
         ) : (
           <>
             <Button component={Link} to="/login" onClick={onClose}>
