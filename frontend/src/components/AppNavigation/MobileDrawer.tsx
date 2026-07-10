@@ -11,7 +11,7 @@ import {
   Text,
   NavLink,
   Button,
-  Skeleton,
+  Loader,
 } from "@mantine/core";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -87,9 +87,7 @@ export function MobileDrawer({
               )
             }
           >
-            {user.is_seller
-              ? t("menu.createListing")
-              : t("menu.becomeSeller")}
+            {user.is_seller ? t("menu.createListing") : t("menu.becomeSeller")}
           </Button>
         )}
 
@@ -215,14 +213,9 @@ export function MobileDrawer({
             {t("menu.logout")}
           </Button>
         ) : isAuthenticated ? (
-          // Signed in but profile still loading — placeholders (the user-guarded
-          // sections above render nothing until it arrives).
-          <Stack px="md" mt="md" gap="sm">
-            <Skeleton height={44} radius="sm" />
-            <Skeleton height={36} radius="sm" />
-            <Skeleton height={36} radius="sm" />
-            <Skeleton height={36} radius="sm" />
-          </Stack>
+          <Group justify="center" py="xl">
+            <Loader />
+          </Group>
         ) : (
           <>
             <Button component={Link} to="/login" onClick={onClose}>
