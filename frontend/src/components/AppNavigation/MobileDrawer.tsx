@@ -53,46 +53,44 @@ export function MobileDrawer({
     <Drawer opened={opened} onClose={onClose} size="100%">
       <Stack>
         {user && (
-          <Group mb="md" px="md">
-            <Avatar color="blue" radius="xl" size="md">
-              {getInitials(user)}
-            </Avatar>
-            <div>
-              <strong>
-                {[user.first_name, user.last_name].filter(Boolean).join(" ")}
-              </strong>
-              <Text size="sm" c="dimmed">
-                @{user.username}
-              </Text>
-            </div>
-          </Group>
-        )}
-
-        {user && (
-          <Button
-            component={Link}
-            to={
-              user.is_seller
-                ? "/account/listings/new"
-                : "/account/become-seller"
-            }
-            onClick={onClose}
-            fullWidth
-            variant={user.is_seller ? "filled" : "light"}
-            leftSection={
-              user.is_seller ? (
-                <IconPlus size={16} />
-              ) : (
-                <IconBuildingStore size={16} />
-              )
-            }
-          >
-            {user.is_seller ? t("menu.createListing") : t("menu.becomeSeller")}
-          </Button>
-        )}
-
-        {user && (
           <>
+            <Group mb="md" px="md">
+              <Avatar color="blue" radius="xl" size="md">
+                {getInitials(user)}
+              </Avatar>
+              <div>
+                <strong>
+                  {[user.first_name, user.last_name].filter(Boolean).join(" ")}
+                </strong>
+                <Text size="sm" c="dimmed">
+                  @{user.username}
+                </Text>
+              </div>
+            </Group>
+
+            <Button
+              component={Link}
+              to={
+                user.is_seller
+                  ? "/account/listings/new"
+                  : "/account/become-seller"
+              }
+              onClick={onClose}
+              fullWidth
+              variant={user.is_seller ? "filled" : "light"}
+              leftSection={
+                user.is_seller ? (
+                  <IconPlus size={16} />
+                ) : (
+                  <IconBuildingStore size={16} />
+                )
+              }
+            >
+              {user.is_seller
+                ? t("menu.createListing")
+                : t("menu.becomeSeller")}
+            </Button>
+
             <Divider my="sm" />
 
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mb="xs">
@@ -172,10 +170,10 @@ export function MobileDrawer({
             </Text>
             <NavLink
               component={Link}
-              to={`/profile/${user.username ?? ""}`}
+              to={`/profile/${user.username}`}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
-              active={location.pathname === `/profile/${user.username ?? ""}`}
+              active={location.pathname === `/profile/${user.username}`}
               onClick={onClose}
             />
             <NavLink
