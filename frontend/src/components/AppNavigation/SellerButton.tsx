@@ -4,7 +4,7 @@
  * non-null — no guard needed and the icon can be a PascalCase component.
  */
 
-import { Button } from "@mantine/core";
+import { Button, type ButtonProps } from "@mantine/core";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { sellerAction, type UserInfo } from "./types";
@@ -12,7 +12,7 @@ import { sellerAction, type UserInfo } from "./types";
 interface SellerButtonProps {
   user: UserInfo;
   fullWidth?: boolean;
-  variant?: string;
+  variant?: ButtonProps["variant"];
   onClick?: () => void;
   iconSize?: number;
 }
