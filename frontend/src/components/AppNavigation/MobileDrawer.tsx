@@ -11,13 +11,12 @@ import {
   Text,
   NavLink,
   Button,
+  Loader,
 } from "@mantine/core";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   IconLogout,
-  IconBuildingStore,
-  IconPlus,
   IconSearch,
   IconShoppingBag,
   IconPackage,
@@ -28,13 +27,14 @@ import {
   IconShield,
   IconMessage,
 } from "@tabler/icons-react";
+import { SellerButton } from "./SellerButton";
 import { getInitials, type UserInfo } from "./types";
 
 interface MobileDrawerProps {
   opened: boolean;
   onClose: () => void;
   user: UserInfo | null;
-  isAuthenticated: boolean;
+  userLoading: boolean;
   onLogout: () => void;
 }
 
@@ -42,7 +42,7 @@ export function MobileDrawer({
   opened,
   onClose,
   user,
-  isAuthenticated,
+  userLoading,
   onLogout,
 }: MobileDrawerProps) {
   const location = useLocation();
@@ -51,24 +51,29 @@ export function MobileDrawer({
   return (
     <Drawer opened={opened} onClose={onClose} size="100%">
       <Stack>
-        {isAuthenticated && (
-          <Group mb="md" px="md">
-            <Avatar color="blue" radius="xl" size="md">
-              {getInitials(user)}
-            </Avatar>
-            <div>
-              <strong>
-                {[user?.first_name, user?.last_name].filter(Boolean).join(" ")}
-              </strong>
-              <Text size="sm" c="dimmed">
-                @{user?.username}
-              </Text>
-            </div>
-          </Group>
-        )}
-
-        {isAuthenticated && (
+        {user ? (
           <>
+            <Group mb="md" px="md">
+              <Avatar color="blue" radius="xl" size="md">
+                {getInitials(user)}
+              </Avatar>
+              <div>
+                <strong>
+                  {[user.first_name, user.last_name].filter(Boolean).join(" ")}
+                </strong>
+                <Text size="sm" c="dimmed">
+                  @{user.username}
+                </Text>
+              </div>
+            </Group>
+
+            <SellerButton
+              user={user}
+              fullWidth
+              variant={user.is_seller ? "filled" : "light"}
+              onClick={onClose}
+            />
+
             <Divider my="sm" />
 
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mb="xs">
@@ -148,10 +153,10 @@ export function MobileDrawer({
             </Text>
             <NavLink
               component={Link}
-              to={`/profile/${user?.username ?? ""}`}
+              to={`/profile/${user.username}`}
               label={t("menu.profile")}
               leftSection={<IconUser size={18} />}
-              active={location.pathname === `/profile/${user?.username ?? ""}`}
+              active={location.pathname === `/profile/${user.username}`}
               onClick={onClose}
             />
             <NavLink
@@ -163,7 +168,7 @@ export function MobileDrawer({
               onClick={onClose}
             />
 
-            {user?.is_admin && (
+            {user.is_admin && (
               <NavLink
                 component={Link}
                 to="/admin"
@@ -175,34 +180,7 @@ export function MobileDrawer({
             )}
 
             <Divider my="sm" />
-          </>
-        )}
 
-        {isAuthenticated ? (
-          <>
-            {!user?.is_seller && (
-              <Button
-                component={Link}
-                to="/account/become-seller"
-                onClick={onClose}
-                fullWidth
-                variant="light"
-                leftSection={<IconBuildingStore size={16} />}
-              >
-                {t("menu.becomeSeller")}
-              </Button>
-            )}
-            {user?.is_seller && (
-              <Button
-                component={Link}
-                to="/account/listings/new"
-                onClick={onClose}
-                fullWidth
-                leftSection={<IconPlus size={16} />}
-              >
-                {t("menu.createListing")}
-              </Button>
-            )}
             <Button
               fullWidth
               variant="outline"
@@ -213,6 +191,11 @@ export function MobileDrawer({
               {t("menu.logout")}
             </Button>
           </>
+        ) : userLoading ? (
+          // Profile fetch in flight — spinner rather than a faked layout.
+          <Group justify="center" py="xl">
+            <Loader />
+          </Group>
         ) : (
           <>
             <Button component={Link} to="/login" onClick={onClose}>

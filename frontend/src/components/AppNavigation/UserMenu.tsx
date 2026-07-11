@@ -7,8 +7,6 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   IconLogout,
-  IconBuildingStore,
-  IconPlus,
   IconShoppingBag,
   IconPackage,
   IconReceipt,
@@ -18,16 +16,18 @@ import {
   IconShield,
   IconMessage,
 } from "@tabler/icons-react";
-import { getInitials, type UserInfo } from "./types";
+import { getInitials, sellerAction, type UserInfo } from "./types";
 import styles from "./AppNavigation.module.css";
 
 interface UserMenuProps {
-  user: UserInfo | null;
+  user: UserInfo;
   onLogout: () => void;
 }
 
 export function UserMenu({ user, onLogout }: UserMenuProps) {
   const { t } = useTranslation("navigation");
+  const seller = sellerAction(user.is_seller);
+  const SellerIcon = seller.icon;
 
   return (
     <Menu shadow="md" width={200} position="bottom-end">
@@ -40,11 +40,11 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
       </Menu.Target>
 
       <Menu.Dropdown>
-        <Menu.Label>@{user?.username}</Menu.Label>
+        <Menu.Label>@{user.username}</Menu.Label>
 
         <Menu.Item
           component={Link}
-          to={`/profile/${user?.username ?? ""}`}
+          to={`/profile/${user.username}`}
           leftSection={<IconUser size={14} />}
         >
           {t("menu.profile")}
@@ -92,25 +92,13 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           {t("links.soldListings")}
         </Menu.Item>
 
-        {user?.is_seller && (
-          <Menu.Item
-            leftSection={<IconPlus size={14} />}
-            component={Link}
-            to="/account/listings/new"
-          >
-            {t("menu.createListing")}
-          </Menu.Item>
-        )}
-
-        {!user?.is_seller && (
-          <Menu.Item
-            leftSection={<IconBuildingStore size={14} />}
-            component={Link}
-            to="/account/become-seller"
-          >
-            {t("menu.becomeSeller")}
-          </Menu.Item>
-        )}
+        <Menu.Item
+          leftSection={<SellerIcon size={14} />}
+          component={Link}
+          to={seller.to}
+        >
+          {t(seller.labelKey)}
+        </Menu.Item>
 
         <Menu.Divider />
 
@@ -122,7 +110,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
           {t("menu.editProfile")}
         </Menu.Item>
 
-        {user?.is_admin && (
+        {user.is_admin && (
           <Menu.Item
             leftSection={<IconShield size={14} />}
             component={Link}
