@@ -46,175 +46,180 @@ export function MobileDrawer({
 }: MobileDrawerProps) {
   const location = useLocation();
   const { t } = useTranslation("navigation");
-  const seller = user ? sellerAction(user.is_seller) : null;
+
+  // Built inside the `user` guard so `seller`/`SellerIcon` are non-null.
+  let content;
+  if (user) {
+    const seller = sellerAction(user.is_seller);
+    const SellerIcon = seller.icon;
+    content = (
+      <>
+        <Group mb="md" px="md">
+          <Avatar color="blue" radius="xl" size="md">
+            {getInitials(user)}
+          </Avatar>
+          <div>
+            <strong>
+              {[user.first_name, user.last_name].filter(Boolean).join(" ")}
+            </strong>
+            <Text size="sm" c="dimmed">
+              @{user.username}
+            </Text>
+          </div>
+        </Group>
+
+        <Button
+          component={Link}
+          to={seller.to}
+          onClick={onClose}
+          fullWidth
+          variant={user.is_seller ? "filled" : "light"}
+          leftSection={<SellerIcon size={16} />}
+        >
+          {t(seller.labelKey)}
+        </Button>
+
+        <Divider my="sm" />
+
+        <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mb="xs">
+          {t("sections.buying")}
+        </Text>
+        <NavLink
+          component={Link}
+          to="/explore"
+          label={t("menu.explore")}
+          leftSection={<IconSearch size={18} />}
+          active={location.pathname === "/explore"}
+          onClick={onClose}
+        />
+        <NavLink
+          component={Link}
+          to="/messages"
+          label={t("menu.messages")}
+          leftSection={<IconMessage size={18} />}
+          active={location.pathname.startsWith("/messages")}
+          onClick={onClose}
+        />
+        <NavLink
+          component={Link}
+          to="/account/liked"
+          label={t("links.likedListings")}
+          leftSection={<IconHeart size={18} />}
+          active={location.pathname === "/account/liked"}
+          onClick={onClose}
+        />
+        <NavLink
+          component={Link}
+          to="/account/purchases"
+          label={t("links.purchaseHistory")}
+          leftSection={<IconShoppingBag size={18} />}
+          active={location.pathname === "/account/purchases"}
+          onClick={onClose}
+        />
+
+        <Text
+          size="xs"
+          c="dimmed"
+          tt="uppercase"
+          fw={600}
+          px="md"
+          mt="md"
+          mb="xs"
+        >
+          {t("sections.selling")}
+        </Text>
+        <NavLink
+          component={Link}
+          to="/account/listings"
+          label={t("menu.myListings")}
+          leftSection={<IconPackage size={18} />}
+          active={location.pathname === "/account/listings"}
+          onClick={onClose}
+        />
+        <NavLink
+          component={Link}
+          to="/account/sales"
+          label={t("links.soldListings")}
+          leftSection={<IconReceipt size={18} />}
+          active={location.pathname === "/account/sales"}
+          onClick={onClose}
+        />
+
+        <Text
+          size="xs"
+          c="dimmed"
+          tt="uppercase"
+          fw={600}
+          px="md"
+          mt="md"
+          mb="xs"
+        >
+          {t("sections.account")}
+        </Text>
+        <NavLink
+          component={Link}
+          to={`/profile/${user.username}`}
+          label={t("menu.profile")}
+          leftSection={<IconUser size={18} />}
+          active={location.pathname === `/profile/${user.username}`}
+          onClick={onClose}
+        />
+        <NavLink
+          component={Link}
+          to="/account/settings"
+          label={t("menu.editProfile")}
+          leftSection={<IconSettings size={18} />}
+          active={location.pathname === "/account/settings"}
+          onClick={onClose}
+        />
+
+        {user.is_admin && (
+          <NavLink
+            component={Link}
+            to="/admin"
+            label={t("menu.adminDashboard")}
+            leftSection={<IconShield size={18} />}
+            active={location.pathname.startsWith("/admin")}
+            onClick={onClose}
+          />
+        )}
+
+        <Divider my="sm" />
+
+        <Button
+          fullWidth
+          variant="outline"
+          color="red"
+          onClick={onLogout}
+          leftSection={<IconLogout size={16} />}
+        >
+          {t("menu.logout")}
+        </Button>
+      </>
+    );
+  } else if (userLoading) {
+    // Profile fetch in flight — spinner rather than a faked layout.
+    content = (
+      <Group justify="center" py="xl">
+        <Loader />
+      </Group>
+    );
+  } else {
+    content = (
+      <>
+        <Button component={Link} to="/login" onClick={onClose}>
+          {t("header.login")}
+        </Button>
+        <Button component={Link} to="/sign-up" onClick={onClose}>
+          {t("header.signUp")}
+        </Button>
+      </>
+    );
+  }
 
   return (
     <Drawer opened={opened} onClose={onClose} size="100%">
-      <Stack>
-        {user && (
-          <>
-            <Group mb="md" px="md">
-              <Avatar color="blue" radius="xl" size="md">
-                {getInitials(user)}
-              </Avatar>
-              <div>
-                <strong>
-                  {[user.first_name, user.last_name].filter(Boolean).join(" ")}
-                </strong>
-                <Text size="sm" c="dimmed">
-                  @{user.username}
-                </Text>
-              </div>
-            </Group>
-
-            {seller && (
-              <Button
-                component={Link}
-                to={seller.to}
-                onClick={onClose}
-                fullWidth
-                variant={user.is_seller ? "filled" : "light"}
-                leftSection={<seller.icon size={16} />}
-              >
-                {t(seller.labelKey)}
-              </Button>
-            )}
-
-            <Divider my="sm" />
-
-            <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mb="xs">
-              {t("sections.buying")}
-            </Text>
-            <NavLink
-              component={Link}
-              to="/explore"
-              label={t("menu.explore")}
-              leftSection={<IconSearch size={18} />}
-              active={location.pathname === "/explore"}
-              onClick={onClose}
-            />
-            <NavLink
-              component={Link}
-              to="/messages"
-              label={t("menu.messages")}
-              leftSection={<IconMessage size={18} />}
-              active={location.pathname.startsWith("/messages")}
-              onClick={onClose}
-            />
-            <NavLink
-              component={Link}
-              to="/account/liked"
-              label={t("links.likedListings")}
-              leftSection={<IconHeart size={18} />}
-              active={location.pathname === "/account/liked"}
-              onClick={onClose}
-            />
-            <NavLink
-              component={Link}
-              to="/account/purchases"
-              label={t("links.purchaseHistory")}
-              leftSection={<IconShoppingBag size={18} />}
-              active={location.pathname === "/account/purchases"}
-              onClick={onClose}
-            />
-
-            <Text
-              size="xs"
-              c="dimmed"
-              tt="uppercase"
-              fw={600}
-              px="md"
-              mt="md"
-              mb="xs"
-            >
-              {t("sections.selling")}
-            </Text>
-            <NavLink
-              component={Link}
-              to="/account/listings"
-              label={t("menu.myListings")}
-              leftSection={<IconPackage size={18} />}
-              active={location.pathname === "/account/listings"}
-              onClick={onClose}
-            />
-            <NavLink
-              component={Link}
-              to="/account/sales"
-              label={t("links.soldListings")}
-              leftSection={<IconReceipt size={18} />}
-              active={location.pathname === "/account/sales"}
-              onClick={onClose}
-            />
-
-            <Text
-              size="xs"
-              c="dimmed"
-              tt="uppercase"
-              fw={600}
-              px="md"
-              mt="md"
-              mb="xs"
-            >
-              {t("sections.account")}
-            </Text>
-            <NavLink
-              component={Link}
-              to={`/profile/${user.username}`}
-              label={t("menu.profile")}
-              leftSection={<IconUser size={18} />}
-              active={location.pathname === `/profile/${user.username}`}
-              onClick={onClose}
-            />
-            <NavLink
-              component={Link}
-              to="/account/settings"
-              label={t("menu.editProfile")}
-              leftSection={<IconSettings size={18} />}
-              active={location.pathname === "/account/settings"}
-              onClick={onClose}
-            />
-
-            {user.is_admin && (
-              <NavLink
-                component={Link}
-                to="/admin"
-                label={t("menu.adminDashboard")}
-                leftSection={<IconShield size={18} />}
-                active={location.pathname.startsWith("/admin")}
-                onClick={onClose}
-              />
-            )}
-
-            <Divider my="sm" />
-          </>
-        )}
-
-        {user ? (
-          <Button
-            fullWidth
-            variant="outline"
-            color="red"
-            onClick={onLogout}
-            leftSection={<IconLogout size={16} />}
-          >
-            {t("menu.logout")}
-          </Button>
-        ) : userLoading ? (
-          // Profile fetch in flight — spinner rather than a faked layout.
-          <Group justify="center" py="xl">
-            <Loader />
-          </Group>
-        ) : (
-          <>
-            <Button component={Link} to="/login" onClick={onClose}>
-              {t("header.login")}
-            </Button>
-            <Button component={Link} to="/sign-up" onClick={onClose}>
-              {t("header.signUp")}
-            </Button>
-          </>
-        )}
-      </Stack>
+      <Stack>{content}</Stack>
     </Drawer>
   );
 }

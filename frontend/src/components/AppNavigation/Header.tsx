@@ -34,7 +34,49 @@ export function Header({
   onLogout,
 }: HeaderProps) {
   const { t } = useTranslation("navigation");
-  const seller = user ? sellerAction(user.is_seller) : null;
+
+  // Built inside the `user` guard so `seller`/`SellerIcon` are non-null.
+  let authed = null;
+  if (user) {
+    const seller = sellerAction(user.is_seller);
+    const SellerIcon = seller.icon;
+    authed = (
+      <>
+        <Button
+          component={Link}
+          to={seller.to}
+          leftSection={<SellerIcon size={16} />}
+        >
+          {t(seller.labelKey)}
+        </Button>
+        <Tooltip label={t("menu.messages")}>
+          <ActionIcon
+            component={Link}
+            to="/messages"
+            variant="subtle"
+            color="gray"
+            size="lg"
+            aria-label={t("menu.messages")}
+          >
+            <IconMessage size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <Tooltip label={t("links.likedListings")}>
+          <ActionIcon
+            component={Link}
+            to="/account/liked"
+            variant="subtle"
+            color="gray"
+            size="lg"
+            aria-label={t("links.likedListings")}
+          >
+            <IconHeart size={20} />
+          </ActionIcon>
+        </Tooltip>
+        <UserMenu user={user} onLogout={onLogout} />
+      </>
+    );
+  }
 
   return (
     <header className={styles.header}>
@@ -44,62 +86,26 @@ export function Header({
         </Link>
 
         <Group visibleFrom="xs">
-          {user ? (
-            <>
-              {seller && (
-                <Button
-                  component={Link}
-                  to={seller.to}
-                  leftSection={<seller.icon size={16} />}
-                >
-                  {t(seller.labelKey)}
+          {authed ??
+            (userLoading ? (
+              // Profile fetch in flight — placeholders to avoid a flash of the
+              // wrong seller state / login buttons.
+              <>
+                <Skeleton height={36} width={140} radius="sm" />
+                <Skeleton circle height={36} width={36} />
+                <Skeleton circle height={36} width={36} />
+                <Skeleton circle height={40} width={40} />
+              </>
+            ) : (
+              <>
+                <Button component={Link} to="/login">
+                  {t("header.login")}
                 </Button>
-              )}
-              <Tooltip label={t("menu.messages")}>
-                <ActionIcon
-                  component={Link}
-                  to="/messages"
-                  variant="subtle"
-                  color="gray"
-                  size="lg"
-                  aria-label={t("menu.messages")}
-                >
-                  <IconMessage size={20} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label={t("links.likedListings")}>
-                <ActionIcon
-                  component={Link}
-                  to="/account/liked"
-                  variant="subtle"
-                  color="gray"
-                  size="lg"
-                  aria-label={t("links.likedListings")}
-                >
-                  <IconHeart size={20} />
-                </ActionIcon>
-              </Tooltip>
-              <UserMenu user={user} onLogout={onLogout} />
-            </>
-          ) : userLoading ? (
-            // Profile fetch in flight — placeholders to avoid a flash of the
-            // wrong seller state / login buttons.
-            <>
-              <Skeleton height={36} width={140} radius="sm" />
-              <Skeleton circle height={36} width={36} />
-              <Skeleton circle height={36} width={36} />
-              <Skeleton circle height={40} width={40} />
-            </>
-          ) : (
-            <>
-              <Button component={Link} to="/login">
-                {t("header.login")}
-              </Button>
-              <Button component={Link} to="/sign-up">
-                {t("header.signUp")}
-              </Button>
-            </>
-          )}
+                <Button component={Link} to="/sign-up">
+                  {t("header.signUp")}
+                </Button>
+              </>
+            ))}
         </Group>
 
         <Group hiddenFrom="xs" gap="xs">
