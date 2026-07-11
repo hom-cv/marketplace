@@ -27,7 +27,6 @@ interface UserMenuProps {
 export function UserMenu({ user, onLogout }: UserMenuProps) {
   const { t } = useTranslation("navigation");
   const seller = sellerAction(user.is_seller);
-  const SellerIcon = seller.icon;
 
   return (
     <Menu shadow="md" width={200} position="bottom-end">
@@ -93,7 +92,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
         </Menu.Item>
 
         <Menu.Item
-          leftSection={<SellerIcon size={14} />}
+          leftSection={<seller.icon size={14} />}
           component={Link}
           to={seller.to}
         >
