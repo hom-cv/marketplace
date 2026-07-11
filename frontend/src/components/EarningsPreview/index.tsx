@@ -17,7 +17,7 @@ import styles from "./EarningsPreview.module.css";
 interface BreakdownData {
   itemPrice: number;
   shippingCost: number;
-  totalFees: number;
+  sellerFee: number;
   sellerPayout: number;
   platformFeeWaived?: boolean;
 }
@@ -80,7 +80,7 @@ export function EarningsPreview({
     return {
       itemPrice: parseFloat(apiData.item_price),
       shippingCost: parseFloat(apiData.shipping_cost),
-      totalFees: parseFloat(apiData.total_fees),
+      sellerFee: parseFloat(apiData.platform_fee),
       sellerPayout: parseFloat(apiData.seller_payout),
       platformFeeWaived: apiData.platform_fee_waived,
     };
@@ -146,7 +146,7 @@ export function EarningsPreview({
           <tr className={styles.row}>
             <td className={styles.labelCell}>{t("earnings.fees")}</td>
             <td className={`${styles.valueCell} ${styles.valueFee}`}>
-              -฿{format(data.totalFees)}
+              -฿{format(data.sellerFee)}
             </td>
           </tr>
           {data.platformFeeWaived && (

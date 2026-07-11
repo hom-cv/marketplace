@@ -142,9 +142,10 @@ class TestPlatformFeeWaiverAtCheckout:
         create_kwargs = mocks.payment_crud.create_payment.await_args.kwargs
         assert create_kwargs["platform_fee_waived"] is True
         assert create_kwargs["platform_fee"] == 0
-        # Card processing on ฿1000: 49.76 -> 4976 satang
+        # Card processing on ฿1000: 49.76 -> 4976 satang (buyer-paid)
         assert create_kwargs["processing_fee"] == 4976
-        assert create_kwargs["seller_payout"] == 95024
+        # Platform fee waived -> seller receives the full ฿1000 base
+        assert create_kwargs["seller_payout"] == 100000
 
         intent_kwargs = mocks.stripe_service.create_payment_intent.await_args.kwargs
         # Application fee = processing only when waived
@@ -162,7 +163,8 @@ class TestPlatformFeeWaiverAtCheckout:
         # Platform ฿107 + processing ฿49.76
         assert create_kwargs["platform_fee"] == 10700
         assert create_kwargs["processing_fee"] == 4976
-        assert create_kwargs["seller_payout"] == 84324
+        # Seller only shoulders the platform fee: ฿1000 - ฿107 = ฿893
+        assert create_kwargs["seller_payout"] == 89300
 
         intent_kwargs = mocks.stripe_service.create_payment_intent.await_args.kwargs
         assert intent_kwargs["application_fee_amount"] == 10700 + 4976
@@ -175,4 +177,5 @@ class TestPlatformFeeWaiverAtCheckout:
         await _create(service)
 
         intent_kwargs = mocks.stripe_service.create_payment_intent.await_args.kwargs
-        assert intent_kwargs["amount"] == 100000  # ฿1000 in satang
+        # Buyer pays base ฿1000 + card processing ฿49.76 = ฿1049.76
+        assert intent_kwargs["amount"] == 104976

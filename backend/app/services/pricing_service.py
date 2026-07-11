@@ -44,12 +44,13 @@ class PricingService:
         """
         Calculate order total and seller payout.
 
-        All fees are on the seller side:
-        - Buyer pays: item_price + shipping_cost
-        - Seller receives: item_price + shipping_cost - platform_fee - processing_fee
+        Fees are split: the buyer covers payment processing, the seller covers
+        the platform fee.
+        - Buyer pays: item_price + shipping_cost + processing_fee
+        - Seller receives: item_price + shipping_cost - platform_fee
 
         With ``waive_platform_fee`` (founding-seller promo) the platform fee
-        and its VAT are zeroed; the processing fee still applies.
+        and its VAT are zeroed; the buyer-paid processing fee still applies.
         """
         base_amount = item_price + shipping_cost
         vat_percent = Decimal(str(self._settings.VAT_PERCENT))
@@ -91,10 +92,10 @@ class PricingService:
         processing_fee = processing_fee_base + processing_vat
 
         # Totals
-        total = base_amount  # What buyer pays
-        total_fees = platform_fee + processing_fee  # Deducted from seller
+        total = base_amount + processing_fee  # Buyer pays item + shipping + processing
+        total_fees = platform_fee + processing_fee  # Platform application fee
         total_vat = platform_vat + processing_vat
-        seller_payout = base_amount - total_fees
+        seller_payout = base_amount - platform_fee  # Seller shoulders only platform fee
 
         return PriceBreakdown(
             item_price=item_price,

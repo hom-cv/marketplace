@@ -21,6 +21,7 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
 
   const itemPrice = parseFloat(priceBreakdown?.item_price ?? "0");
   const shippingCost = parseFloat(priceBreakdown?.shipping_cost ?? "0");
+  const processingFee = parseFloat(priceBreakdown?.processing_fee ?? "0");
   const total = parseFloat(priceBreakdown?.total ?? "0");
 
   return (
@@ -60,6 +61,10 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
             ? t("checkout.freeShipping")
             : `฿${formatThb(shippingCost)}`}
         </span>
+      </div>
+      <div className={styles.priceRow}>
+        <span className={styles.priceLabel}>{t("checkout.processingFee")}</span>
+        <span className={styles.priceValue}>฿{formatThb(processingFee)}</span>
       </div>
 
       {/* Total */}

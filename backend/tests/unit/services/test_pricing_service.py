@@ -1,8 +1,9 @@
 """Unit tests for PricingService.
 
 Tests verify fee calculations, rounding behavior, and payout accuracy.
-Fee model: 10% platform fee + Stripe Thailand processing fee (percentage +
-fixed per-charge THB), all seller-side.
+Fee model: seller pays the 10% platform fee (+VAT); the buyer pays the Stripe
+Thailand processing fee (percentage + fixed per-charge THB, +VAT) on top of
+item + shipping.
 """
 
 from decimal import Decimal
@@ -39,8 +40,8 @@ def pricing_service(mock_settings):
 class TestCalculateOrderTotal:
     """Tests for calculate_order_total method."""
 
-    def test_buyer_total_is_item_plus_shipping(self, pricing_service):
-        """Buyer pays item_price + shipping_cost only."""
+    def test_buyer_total_is_item_plus_shipping_plus_processing(self, pricing_service):
+        """Buyer pays item_price + shipping_cost + processing_fee."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("100.00")
 
@@ -50,7 +51,7 @@ class TestCalculateOrderTotal:
             payment_method=PaymentMethod.CARD,
         )
 
-        assert result.total == Decimal("1100.00")
+        assert result.total == Decimal("1100.00") + result.processing_fee
 
     def test_card_processing_fee_calculation(self, pricing_service):
         """Card processing fee = (amount * 3.65% + 10 THB) + 7% VAT."""
@@ -124,8 +125,8 @@ class TestCalculateOrderTotal:
         # Total platform: 100.00 + 7.00 = 107.00
         assert result.platform_fee == Decimal("107.00")
 
-    def test_seller_payout_is_base_minus_fees(self, pricing_service):
-        """Seller payout = base_amount - total_fees."""
+    def test_seller_payout_is_base_minus_platform_fee(self, pricing_service):
+        """Seller payout = base_amount - platform_fee (processing is buyer-paid)."""
         item_price = Decimal("1000.00")
         shipping_cost = Decimal("100.00")
 
@@ -136,7 +137,22 @@ class TestCalculateOrderTotal:
         )
 
         base_amount = item_price + shipping_cost
-        assert result.seller_payout == base_amount - result.total_fees
+        assert result.seller_payout == base_amount - result.platform_fee
+
+    def test_split_invariant_total_minus_payout_is_application_fee(self, pricing_service):
+        """total - seller_payout must equal the platform application fee.
+
+        This is what Stripe splits at charge time: buyer pays `total`, seller
+        receives `seller_payout`, platform keeps `total_fees` (platform +
+        processing). If this drifts, the destination charge won't balance.
+        """
+        result = pricing_service.calculate_order_total(
+            item_price=Decimal("777.00"),
+            shipping_cost=Decimal("55.00"),
+            payment_method=PaymentMethod.CARD,
+        )
+
+        assert result.total - result.seller_payout == result.total_fees
 
     def test_total_fees_equals_platform_plus_processing(self, pricing_service):
         """Total fees = platform_fee + processing_fee (no transfer fee)."""
@@ -163,7 +179,7 @@ class TestCalculateOrderTotal:
         )
 
         assert result.shipping_cost == Decimal("0.00")
-        assert result.total == item_price
+        assert result.total == item_price + result.processing_fee
 
     def test_response_includes_all_required_fields(self, pricing_service):
         """Result should contain all PriceBreakdown fields (transfer_fee removed)."""
@@ -221,7 +237,7 @@ class TestPlatformFeeWaiver:
     """Tests for the founding-seller platform fee waiver."""
 
     def test_waived_card_breakdown(self, pricing_service):
-        """Waiver zeroes the platform fee (and its VAT); processing fee stays."""
+        """Waiver zeroes the platform fee; seller gets the full base amount."""
         result = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("0.00"),
@@ -231,14 +247,16 @@ class TestPlatformFeeWaiver:
 
         assert result.platform_fee == Decimal("0.00")
         assert result.processing_fee == Decimal("49.76")
+        # Platform fee waived, but buyer still pays processing on top of base.
         assert result.total_fees == Decimal("49.76")
         # Only processing VAT remains: 46.50 * 7% -> 3.26
         assert result.total_vat == Decimal("3.26")
-        assert result.seller_payout == Decimal("950.24")
+        assert result.seller_payout == Decimal("1000.00")
+        assert result.total == Decimal("1049.76")
         assert result.platform_fee_waived is True
 
     def test_waived_promptpay_breakdown(self, pricing_service):
-        """PromptPay waiver: payout = base - promptpay processing fee."""
+        """PromptPay waiver: seller gets full base; buyer still pays processing."""
         result = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("0.00"),
@@ -249,19 +267,27 @@ class TestPlatformFeeWaiver:
         assert result.platform_fee == Decimal("0.00")
         # Processing base: 1000*2% + 10 = 30.00; VAT 2.10; total 32.10
         assert result.processing_fee == Decimal("32.10")
-        assert result.seller_payout == Decimal("967.90")
+        assert result.seller_payout == Decimal("1000.00")
+        assert result.total == Decimal("1032.10")
         assert result.platform_fee_waived is True
 
-    def test_waiver_does_not_change_buyer_total(self, pricing_service):
-        """Buyer pays item + shipping regardless of the waiver."""
-        result = pricing_service.calculate_order_total(
+    def test_waiver_reduces_seller_deduction_not_buyer_total(self, pricing_service):
+        """Waiver gives the seller the full base; buyer total is unaffected by it."""
+        waived = pricing_service.calculate_order_total(
             item_price=Decimal("1000.00"),
             shipping_cost=Decimal("100.00"),
             payment_method=PaymentMethod.CARD,
             waive_platform_fee=True,
         )
+        standard = pricing_service.calculate_order_total(
+            item_price=Decimal("1000.00"),
+            shipping_cost=Decimal("100.00"),
+            payment_method=PaymentMethod.CARD,
+        )
 
-        assert result.total == Decimal("1100.00")
+        # Buyer pays the same either way (only the seller's deduction changes).
+        assert waived.total == standard.total
+        assert waived.seller_payout == Decimal("1100.00")
 
     def test_default_is_not_waived(self, pricing_service):
         """Without the flag the standard breakdown is returned."""

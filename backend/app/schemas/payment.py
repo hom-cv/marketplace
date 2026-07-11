@@ -12,10 +12,10 @@ class PriceBreakdown(BaseModel):
 
     All monetary values are in THB.
     - platform_fee: 10% + VAT, deducted from seller
-    - processing_fee: Stripe Thailand rate (percentage + fixed) + VAT, deducted
-      from seller
-    - total: what the buyer pays (item + shipping)
-    - seller_payout: what the seller receives (total - all fees)
+    - processing_fee: Stripe Thailand rate (percentage + fixed) + VAT, paid by
+      the buyer on top of item + shipping
+    - total: what the buyer pays (item + shipping + processing_fee)
+    - seller_payout: what the seller receives (item + shipping - platform_fee)
     """
     item_price: Decimal
     shipping_cost: Decimal
