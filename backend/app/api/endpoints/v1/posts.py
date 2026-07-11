@@ -54,7 +54,7 @@ async def create_post(
 
     Images are uploaded separately via presigned URLs
     (POST /posts/uploads/presign); pass the resulting public CDN URLs in
-    `image_urls` (first = cover, max 5).
+    `image_urls` (first = cover, max 10).
 
     Size is required. Valid sizes depend on category:
     - Shirts/Jackets/Other: XS, S, M, L, XL, XXL, XXXL
@@ -305,7 +305,7 @@ async def update_post(
     `image_urls` is the final ordered list of public CDN URLs (first = cover),
     uploaded beforehand via presigned URLs (POST /posts/uploads/presign).
     Adding, removing, and reordering images are all expressed by this list.
-    Max 5 images.
+    Max 10 images.
     """
     return await listing_service.update_listing(
         post_id=post_id,

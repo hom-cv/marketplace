@@ -10,7 +10,7 @@ import { uploadImages } from "@/api/uploads";
 import { moveItem } from "@/utils/array";
 
 /** Maximum number of images allowed per listing. */
-export const MAX_IMAGES = 5;
+export const MAX_IMAGES = 10;
 
 type ImageSlot =
   | { kind: "existing"; url: string }
