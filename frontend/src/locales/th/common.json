@@ -150,7 +150,7 @@
     "itemPrice": "ราคาสินค้า",
     "shippingLabel": "ค่าจัดส่ง",
     "freeShipping": "ฟรี",
-    "processingFee": "ค่าธรรมเนียมการชำระเงิน",
+    "buyerProtectionFee": "ค่าคุ้มครองผู้ซื้อ",
     "total": "รวม",
     "paymentSuccess": "ชำระเงินสำเร็จ!",
     "paymentSuccessMessage": "การชำระเงินเสร็จสิ้น ผู้ขายได้รับการแจ้งเตือนแล้ว",

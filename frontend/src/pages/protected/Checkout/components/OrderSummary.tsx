@@ -63,7 +63,7 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
         </span>
       </div>
       <div className={styles.priceRow}>
-        <span className={styles.priceLabel}>{t("checkout.processingFee")}</span>
+        <span className={styles.priceLabel}>{t("checkout.buyerProtectionFee")}</span>
         <span className={styles.priceValue}>฿{formatThb(processingFee)}</span>
       </div>
 

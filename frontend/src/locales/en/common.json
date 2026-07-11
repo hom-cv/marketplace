@@ -150,7 +150,7 @@
     "itemPrice": "Item Price",
     "shippingLabel": "Shipping",
     "freeShipping": "Free",
-    "processingFee": "Processing Fee",
+    "buyerProtectionFee": "Buyer Protection Fee",
     "total": "Total",
     "paymentSuccess": "Payment Successful!",
     "paymentSuccessMessage": "Your payment has been processed. The seller will be notified.",

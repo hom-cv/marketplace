@@ -6,12 +6,12 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
+from app.constants.payment import PaymentMethod
 from app.core.exceptions import not_found_error
 from app.core.settings import AnnotatedSettings, Settings
 from app.crud.post import PostCRUD, get_post_crud
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.constants.payment import PaymentMethod
 from app.schemas.payment import PriceBreakdown
 
 AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
@@ -45,8 +45,10 @@ class PricingService:
         Calculate order total and seller payout.
 
         Fees are split: the buyer covers payment processing, the seller covers
-        the platform fee.
-        - Buyer pays: item_price + shipping_cost + processing_fee
+        the platform fee. The processing fee is grossed up so that after Stripe
+        takes its cut of the full charge, the seller's base amount is intact.
+        - Buyer pays: item_price + shipping_cost + processing_fee, where
+          processing_fee = Stripe's fee on that full total (not just the base)
         - Seller receives: item_price + shipping_cost - platform_fee
 
         With ``waive_platform_fee`` (founding-seller promo) the platform fee
@@ -69,8 +71,6 @@ class PricingService:
             )
             platform_fee = platform_fee_base + platform_vat
 
-        # Processing fee: Stripe Thailand rate (percentage + fixed) + VAT —
-        # deducted from seller
         if payment_method == PaymentMethod.PROMPTPAY:
             base_rate = Decimal(str(self._settings.PROMPTPAY_PROCESSING_FEE_PERCENT))
             fixed_fee_thb = Decimal(
@@ -82,14 +82,17 @@ class PricingService:
                 str(self._settings.CARD_PROCESSING_FEE_FIXED_THB)
             )
 
-        processing_fee_base = (
-            (base_amount * base_rate / 100) + fixed_fee_thb
-        ).quantize(Decimal("0.01"), rounding=ROUND_UP)
         processing_vat_percent = Decimal(str(self._settings.PROCESSING_FEE_VAT_PERCENT))
-        processing_vat = (processing_fee_base * processing_vat_percent / 100).quantize(
-            Decimal("0.01"), rounding=ROUND_UP
-        )
-        processing_fee = processing_fee_base + processing_vat
+        vat_multiplier = 1 + processing_vat_percent / 100
+        rate_multiplier = base_rate / 100 * vat_multiplier
+        processing_fee = (
+            vat_multiplier
+            * (base_amount * base_rate / 100 + fixed_fee_thb)
+            / (1 - rate_multiplier)
+        ).quantize(Decimal("0.01"), rounding=ROUND_UP)
+        processing_vat = (
+            processing_fee * processing_vat_percent / (100 + processing_vat_percent)
+        ).quantize(Decimal("0.01"), rounding=ROUND_UP)
 
         # Totals
         total = base_amount + processing_fee  # Buyer pays item + shipping + processing

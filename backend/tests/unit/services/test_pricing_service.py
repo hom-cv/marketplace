@@ -64,10 +64,37 @@ class TestCalculateOrderTotal:
             payment_method=PaymentMethod.CARD,
         )
 
-        # Processing fee base: 1000 * 3.65% + 10 = 46.50
-        # Processing VAT: 46.50 * 7% = 3.255 -> 3.26 (ROUND_UP)
-        # Total processing: 46.50 + 3.26 = 49.76
-        assert result.processing_fee == Decimal("49.76")
+        # Grossed up: fee is charged on the full total (base + fee), not base.
+        #   fee = 1.07 * (1000*3.65% + 10) / (1 - 3.65%*1.07)
+        #       = 49.755 / 0.960945 = 51.777... -> 51.78 (ROUND_UP)
+        assert result.processing_fee == Decimal("51.78")
+
+    @pytest.mark.parametrize("method", [PaymentMethod.CARD, PaymentMethod.PROMPTPAY])
+    @pytest.mark.parametrize("base", ["100.00", "1000.00", "12345.67"])
+    def test_gross_up_leaves_seller_whole(self, pricing_service, method, base):
+        """Buyer total minus Stripe's real fee on that total must cover the base.
+
+        The processing fee is grossed up, so after Stripe deducts its fee from
+        the full charge the platform is never underwater (margin is a rounding
+        cent at most, never negative).
+        """
+        item_price = Decimal(base)
+        result = pricing_service.calculate_order_total(
+            item_price=item_price,
+            shipping_cost=Decimal("0.00"),
+            payment_method=method,
+        )
+
+        if method == PaymentMethod.PROMPTPAY:
+            rate, fixed = Decimal("2.0"), Decimal("10.0")
+        else:
+            rate, fixed = Decimal("3.65"), Decimal("10.0")
+        # Stripe's actual fee is charged on the FULL total the buyer pays.
+        stripe_fee = (result.total * rate / 100 + fixed) * Decimal("1.07")
+        margin = result.total - stripe_fee - item_price
+
+        assert margin >= 0  # platform never under-collects
+        assert margin < Decimal("0.05")  # ...and only by a rounding cent
 
     def test_promptpay_processing_fee_lower_than_card(self, pricing_service):
         """PromptPay should have lower processing fee (2% vs 3.65%)."""
@@ -100,14 +127,13 @@ class TestCalculateOrderTotal:
             payment_method=PaymentMethod.CARD,
         )
 
-        # For 100 THB: base = 100*3.65% + 10 = 13.65
-        # For 10000 THB: base = 10000*3.65% + 10 = 375.00
+        # For 100 THB (grossed up): ~15.20. For 10000 THB: ~417.57.
         # The +10 flat is present in both; percentage scales with amount.
         # Small-amount check: the +10 must be included (sanity bounds).
-        assert small.processing_fee > Decimal("13.0")
-        assert small.processing_fee < Decimal("15.0")
-        # Big-amount check: the +10 is only added once (would be 400+ if doubled).
-        assert big.processing_fee < Decimal("410.00")
+        assert small.processing_fee > Decimal("14.0")
+        assert small.processing_fee < Decimal("16.0")
+        # Big-amount check: the +10 is only added once (would be ~428 if doubled).
+        assert big.processing_fee < Decimal("420.00")
 
     def test_platform_fee_calculation(self, pricing_service):
         """Platform fee should be 10% + 7% VAT (no separate transfer fee)."""
@@ -227,10 +253,9 @@ class TestCalculateOrderTotal:
         )
 
         # Platform VAT: 100 * 7% = 7.00
-        # Processing base: 1000*3.65% + 10 = 46.50
-        # Processing VAT: 46.50 * 7% = 3.255 -> 3.26 (ROUND_UP)
-        # Total VAT: 7.00 + 3.26 = 10.26
-        assert result.total_vat == Decimal("10.26")
+        # Processing fee (grossed up): 51.78; its VAT = 51.78 * 7/107 -> 3.39
+        # Total VAT: 7.00 + 3.39 = 10.39
+        assert result.total_vat == Decimal("10.39")
 
 
 class TestPlatformFeeWaiver:
@@ -246,13 +271,13 @@ class TestPlatformFeeWaiver:
         )
 
         assert result.platform_fee == Decimal("0.00")
-        assert result.processing_fee == Decimal("49.76")
+        assert result.processing_fee == Decimal("51.78")
         # Platform fee waived, but buyer still pays processing on top of base.
-        assert result.total_fees == Decimal("49.76")
-        # Only processing VAT remains: 46.50 * 7% -> 3.26
-        assert result.total_vat == Decimal("3.26")
+        assert result.total_fees == Decimal("51.78")
+        # Only processing VAT remains: 51.78 * 7/107 -> 3.39
+        assert result.total_vat == Decimal("3.39")
         assert result.seller_payout == Decimal("1000.00")
-        assert result.total == Decimal("1049.76")
+        assert result.total == Decimal("1051.78")
         assert result.platform_fee_waived is True
 
     def test_waived_promptpay_breakdown(self, pricing_service):
@@ -265,10 +290,10 @@ class TestPlatformFeeWaiver:
         )
 
         assert result.platform_fee == Decimal("0.00")
-        # Processing base: 1000*2% + 10 = 30.00; VAT 2.10; total 32.10
-        assert result.processing_fee == Decimal("32.10")
+        # Grossed up: 1.07*(1000*2% + 10) / (1 - 2%*1.07) = 32.1/0.9786 -> 32.81
+        assert result.processing_fee == Decimal("32.81")
         assert result.seller_payout == Decimal("1000.00")
-        assert result.total == Decimal("1032.10")
+        assert result.total == Decimal("1032.81")
         assert result.platform_fee_waived is True
 
     def test_waiver_reduces_seller_deduction_not_buyer_total(self, pricing_service):
