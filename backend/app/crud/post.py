@@ -165,7 +165,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
 
         if brand_slugs:
             # Normalize so a hand-edited ?brands=Nike still matches "nike".
-            normalized = [slugify(s) for s in brand_slugs if slugify(s)]
+            normalized = [n for s in brand_slugs if (n := slugify(s))]
             if normalized:
                 base_query = base_query.where(
                     self.model.brand.has(Brand.slug.in_(normalized))
@@ -173,7 +173,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
 
         if tags:
             # ANY-of: post matches if it has any of the requested tags.
-            normalized_tags = [normalize_tag(t) for t in tags if normalize_tag(t)]
+            normalized_tags = [n for t in tags if (n := normalize_tag(t))]
             if normalized_tags:
                 base_query = base_query.where(
                     self.model.id.in_(

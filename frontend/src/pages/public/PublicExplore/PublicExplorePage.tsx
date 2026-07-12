@@ -197,7 +197,8 @@ export function PublicExplorePage() {
     tags.length > 0 ||
     search.trim() !== "";
 
-  const activeFilterCount = types.length + sizes.length + brands.length;
+  const activeFilterCount =
+    types.length + sizes.length + brands.length + tags.length;
 
   const handleBrandToggle = (slug: string) =>
     onFiltersChange((prev) => toggleBrandFilter(prev, slug));
