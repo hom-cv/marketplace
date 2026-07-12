@@ -19,8 +19,16 @@ class BrandCRUD:
     """
 
     async def list_brands(self, db: AsyncSession) -> Sequence[Brand]:
-        """All brands, alphabetical (for the pick-list + the Explore filter)."""
-        result = await db.scalars(select(Brand).order_by(Brand.name))
+        """Selectable brands, alphabetical (for the pick-list + Explore filter).
+
+        Excludes the catch-all: it's a fallback, not a brand to advertise, and
+        the create form pins its own relabeled "Other" option separately.
+        """
+        result = await db.scalars(
+            select(Brand)
+            .where(Brand.slug != CATCHALL_BRAND_SLUG)
+            .order_by(Brand.name)
+        )
         return result.all()
 
     async def resolve_or_catchall(
