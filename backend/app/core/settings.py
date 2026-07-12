@@ -51,12 +51,10 @@ class Settings(BaseSettings):
     DO_SPACES_BUCKET: str | None = None
     DO_SPACES_REGION: str | None = None
 
-    # Transaction fees (percentages) — all on seller side
     PLATFORM_FEE_PERCENT: Decimal = Decimal("10.0")  # Seller-side platform fee
     VAT_PERCENT: Decimal = Decimal("7.0")  # VAT on fees
 
-    # Payment processing fees (Stripe Thailand rates — verify from Stripe dashboard)
-    CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("3.65")  # Thai cards percentage
+    CARD_PROCESSING_FEE_PERCENT: Decimal = Decimal("4.75")  # 3.65% domestic + 1.1% intl
     CARD_PROCESSING_FEE_FIXED_THB: Decimal = Decimal("10.0")  # Fixed per-charge fee
     PROMPTPAY_PROCESSING_FEE_PERCENT: Decimal = Decimal("2.0")  # PromptPay percentage
     PROMPTPAY_PROCESSING_FEE_FIXED_THB: Decimal = Decimal(

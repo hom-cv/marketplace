@@ -171,8 +171,14 @@ class TestPreviewEarningsEndpoint:
         assert "shipping_cost" in body
         assert "seller_payout" in body
         assert "total" in body
-        # Verify real calculation was done (total = item + shipping)
-        assert Decimal(body["total"]) == Decimal("1100")
+        # Buyer total = item + shipping + processing fee (buyer-paid).
+        assert Decimal(body["total"]) == Decimal("1100") + Decimal(
+            body["processing_fee"]
+        )
+        # Seller receives base minus only the platform fee.
+        assert Decimal(body["seller_payout"]) == Decimal("1100") - Decimal(
+            body["platform_fee"]
+        )
 
     async def test_preview_earnings_default_shipping_zero(
         self,

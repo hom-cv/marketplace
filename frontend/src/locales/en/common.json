@@ -108,7 +108,7 @@
     "youReceive": "You receive",
     "platformFeeWaived": "Platform fee waived",
     "salesLeft": "{{count}} left",
-    "feesExplanation": "Fees include platform fee, processing fee, transfer fee, and VAT"
+    "feesExplanation": "Fee is the platform fee plus VAT. Buyers pay the payment processing fee."
   },
   "tracking": {
     "title": "Tracking",
@@ -150,6 +150,8 @@
     "itemPrice": "Item Price",
     "shippingLabel": "Shipping",
     "freeShipping": "Free",
+    "buyerProtectionFee": "Buyer Protection Fee",
+    "buyerProtectionTooltip": "Covers secure payment, and refund support if your item doesn't arrive or isn't as described.",
     "total": "Total",
     "paymentSuccess": "Payment Successful!",
     "paymentSuccessMessage": "Your payment has been processed. The seller will be notified.",

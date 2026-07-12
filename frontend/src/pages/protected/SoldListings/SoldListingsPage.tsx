@@ -132,7 +132,7 @@ export function SoldListingsPage() {
                             breakdown={{
                               itemPrice: satangToThb(sale.item_price ?? 0),
                               shippingCost: satangToThb(sale.shipping_cost ?? 0),
-                              totalFees: satangToThb(sale.total_fees ?? 0),
+                              sellerFee: satangToThb(sale.platform_fee ?? 0),
                               sellerPayout: satangToThb(sale.seller_payout ?? 0),
                               platformFeeWaived: sale.platform_fee_waived,
                             }}
