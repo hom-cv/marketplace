@@ -18,6 +18,8 @@
       "genderPlaceholder": "Select department",
       "brand": "Brand",
       "brandPlaceholder": "Select a brand",
+      "brandOther": "Brand not listed / Not sure",
+      "brandOtherHint": "Don't worry, you can describe it in the description",
       "tags": "Hashtags",
       "tagsPlaceholder": "Add a tag and press Enter",
       "tagsHint": "Help buyers find your item (e.g. vintage, y2k)",

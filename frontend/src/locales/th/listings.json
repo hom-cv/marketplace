@@ -18,6 +18,8 @@
       "genderPlaceholder": "เลือกแผนก",
       "brand": "แบรนด์",
       "brandPlaceholder": "เลือกแบรนด์",
+      "brandOther": "ไม่มีแบรนด์ในรายการ / ไม่แน่ใจ",
+      "brandOtherHint": "ไม่ต้องกังวล คุณสามารถอธิบายเพิ่มเติมในรายละเอียดได้",
       "tags": "แฮชแท็ก",
       "tagsPlaceholder": "เพิ่มแท็กแล้วกด Enter",
       "tagsHint": "ช่วยให้ผู้ซื้อค้นหาสินค้าของคุณ (เช่น vintage, y2k)",
