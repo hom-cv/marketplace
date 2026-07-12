@@ -216,6 +216,14 @@
   color: var(--color-text-secondary);
 }
 
+.infoIcon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: var(--color-text-muted);
+  cursor: help;
+}
+
 .priceValue {
   font-size: 0.875rem;
   font-weight: 500;

@@ -151,6 +151,7 @@
     "shippingLabel": "Shipping",
     "freeShipping": "Free",
     "buyerProtectionFee": "Buyer Protection Fee",
+    "buyerProtectionTooltip": "Covers secure payment, and refund support if your item doesn't arrive or isn't as described.",
     "total": "Total",
     "paymentSuccess": "Payment Successful!",
     "paymentSuccessMessage": "Your payment has been processed. The seller will be notified.",

@@ -1,4 +1,6 @@
 import { useTranslation } from "react-i18next";
+import { Tooltip } from "@mantine/core";
+import { IconInfoCircle } from "@tabler/icons-react";
 import type { PriceBreakdownResponse } from "@/api/types/payment";
 import { formatThb } from "@/utils/currency";
 import { Card } from "@/components/Card";
@@ -63,7 +65,18 @@ export function OrderSummary({ post, priceBreakdown }: OrderSummaryProps) {
         </span>
       </div>
       <div className={styles.priceRow}>
-        <span className={styles.priceLabel}>{t("checkout.buyerProtectionFee")}</span>
+        <span className={styles.priceLabel}>
+          {t("checkout.buyerProtectionFee")}
+          <Tooltip
+            label={t("checkout.buyerProtectionTooltip")}
+            multiline
+            w={240}
+            withArrow
+            events={{ hover: true, focus: true, touch: true }}
+          >
+            <IconInfoCircle size={14} className={styles.infoIcon} />
+          </Tooltip>
+        </span>
         <span className={styles.priceValue}>฿{formatThb(processingFee)}</span>
       </div>
 
