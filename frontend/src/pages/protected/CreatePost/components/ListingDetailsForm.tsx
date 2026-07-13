@@ -3,7 +3,7 @@
  * Typography-forward design with generous spacing
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   TextInput,
   Textarea,
@@ -51,6 +51,7 @@ export function ListingDetailsForm({
 }: ListingDetailsFormProps) {
   const { t } = useTranslation("listings");
   const { data: brands } = useBrands();
+  const [brandSearch, setBrandSearch] = useState("");
 
   const brandOptions = useMemo(
     () => [
@@ -117,8 +118,9 @@ export function ListingDetailsForm({
             placeholder={t("create.form.brandPlaceholder")}
             data={brandOptions}
             searchable
-            clearable
             radius="xs"
+            searchValue={brandSearch}
+            onSearchChange={setBrandSearch}
             renderOption={({ option }) => (
               <div>
                 <div>{option.label}</div>
@@ -130,6 +132,10 @@ export function ListingDetailsForm({
               </div>
             )}
             {...form.getInputProps("brand")}
+            onFocus={() => {
+              form.setFieldValue("brand", "");
+              setBrandSearch("");
+            }}
           />
           <Select
             label={t("create.form.size")}
