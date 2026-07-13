@@ -1,9 +1,16 @@
 """Post schemas for request/response validation."""
 
 from decimal import Decimal
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from app.constants.post import (
     MAX_BRAND_NAME_LENGTH,
@@ -43,6 +50,9 @@ def validate_tags(tags: list[str]) -> list[str]:
         if len(tag) > MAX_TAG_LENGTH:
             raise ValueError(f"Each tag must be at most {MAX_TAG_LENGTH} characters")
     return tags
+
+
+TagList = Annotated[list[str], AfterValidator(validate_tags)]
 
 
 # Measurement schemas for category-specific validation
@@ -148,7 +158,7 @@ class PostCreateSchema(BaseModel):
         max_length=MAX_BRAND_NAME_LENGTH,
         description="Brand slug from the curated list; unknown/blank → Other (no brand)",
     )
-    tags: list[str] = Field(
+    tags: TagList = Field(
         default_factory=list,
         description="Hashtags (without '#'); normalized + deduped server-side",
     )
@@ -159,11 +169,6 @@ class PostCreateSchema(BaseModel):
         decimal_places=2,
         description=f"Price in THB (minimum ฿{MIN_LISTING_PRICE})",
     )
-
-    @field_validator("tags")
-    @classmethod
-    def _check_tags(cls, v: list[str]) -> list[str]:
-        return validate_tags(v)
     shipping_cost: Decimal = Field(
         default=Decimal("0"),
         ge=MIN_SHIPPING_COST,
@@ -228,15 +233,10 @@ class PostUpdateRequest(BaseModel):
     type: PostType
     gender: Gender
     brand: str | None = Field(default=None, max_length=MAX_BRAND_NAME_LENGTH)
-    tags: list[str] = Field(default_factory=list)
+    tags: TagList = Field(default_factory=list)
     price: Decimal = Field(
         ..., ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
     )
-
-    @field_validator("tags")
-    @classmethod
-    def _check_tags(cls, v: list[str]) -> list[str]:
-        return validate_tags(v)
     shipping_cost: Decimal = Field(
         default=Decimal("0"),
         ge=MIN_SHIPPING_COST,

@@ -95,6 +95,18 @@ class TestCreateBrand:
         assert response.status_code == 400
         mock_brand_crud.create.assert_not_called()
 
+    @pytest.mark.parametrize("name", ["other", "Other", "  OTHER  "])
+    async def test_reserved_other_slug_is_rejected(
+        self,
+        admin_client: AsyncClient,
+        mock_brand_crud: MagicMock,
+        name: str,
+    ) -> None:
+        response = await admin_client.post("/api/v1/brands", json={"name": name})
+
+        assert response.status_code == 400
+        mock_brand_crud.create.assert_not_called()
+
     async def test_non_admin_forbidden(
         self,
         async_client: AsyncClient,

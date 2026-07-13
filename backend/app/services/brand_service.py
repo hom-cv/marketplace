@@ -4,8 +4,10 @@ import logging
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants.post import RESERVED_BRAND_SLUG
 from app.core.exceptions import (
     bad_request_error,
     conflict_error,
@@ -37,11 +39,18 @@ class BrandService:
         slug = slugify(name)
         if not slug:
             raise bad_request_error("Brand name must contain a letter or number")
+        if slug == RESERVED_BRAND_SLUG:
+            raise bad_request_error(f"'{name}' is a reserved brand name")
         if await self._brand_crud.get_by_slug(self.db, slug):
             raise conflict_error(f"Brand '{name}' already exists")
 
         brand = await self._brand_crud.create(self.db, name=name, slug=slug)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+
+            raise conflict_error(f"Brand '{name}' already exists")
         logger.info("Created brand %r", slug)
         return BrandRead.model_validate(brand)
 

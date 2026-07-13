@@ -71,9 +71,6 @@ export function toggleTypeFilter(
   return { ...currentFilters, types: updatedTypes, sizes: updatedSizes };
 }
 
-/**
- * Toggle a size filter in the filter state.
- */
 export function toggleSizeFilter(
   currentFilters: FiltersState,
   category: SizeCategory,
@@ -86,9 +83,6 @@ export function toggleSizeFilter(
   };
 }
 
-/**
- * Toggle a brand slug in the filter state.
- */
 export function toggleBrandFilter(
   currentFilters: FiltersState,
   slug: string,
@@ -99,9 +93,6 @@ export function toggleBrandFilter(
   };
 }
 
-/**
- * Toggle a tag in the filter state.
- */
 export function toggleTagFilter(
   currentFilters: FiltersState,
   tag: string,

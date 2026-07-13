@@ -13,8 +13,6 @@ import {
   MIN_LISTING_PRICE,
   MAX_SHIPPING_COST,
   MIN_SHIPPING_COST,
-  MAX_TAGS_PER_POST,
-  MAX_TAG_LENGTH,
   BRAND_OTHER_VALUE,
 } from "@/constants/listing";
 import { notifySuccess, notifyError } from "@/utils/notify";
@@ -116,13 +114,6 @@ export function useListingForm({
       },
       size: (value, values) =>
         values.type && !value ? t("create.form.sizeRequired") : null,
-      tags: (value) => {
-        if (value.length > MAX_TAGS_PER_POST)
-          return t("create.form.tagsMax", { max: MAX_TAGS_PER_POST });
-        if (value.some((tag) => tag.length > MAX_TAG_LENGTH))
-          return t("create.form.tagLengthMax", { max: MAX_TAG_LENGTH });
-        return null;
-      },
     },
   });
 
