@@ -23,7 +23,7 @@ export function BrandsPage() {
 
   const handleAdd = () => {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed || createMutation.isPending) return;
     createMutation.mutate(trimmed, {
       onSuccess: () => {
         notifySuccess("Brand added");

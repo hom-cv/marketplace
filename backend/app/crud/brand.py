@@ -3,7 +3,7 @@
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.post import CATCHALL_BRAND_SLUG
@@ -27,7 +27,7 @@ class BrandCRUD:
         result = await db.scalars(
             select(Brand)
             .where(Brand.slug != CATCHALL_BRAND_SLUG)
-            .order_by(Brand.name)
+            .order_by(func.lower(Brand.name))
         )
         return result.all()
 
