@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import case, func, or_, select, update
+from sqlalchemy import case, false, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -165,18 +165,19 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         if brand_slugs:
             # Normalize so a hand-edited ?brands=Nike still matches "nike".
             normalized = [n for s in brand_slugs if (n := slugify(s))]
-            if normalized:
-                base_query = base_query.where(
-                    self.model.brand.has(Brand.slug.in_(normalized))
-                )
+            base_query = base_query.where(
+                self.model.brand.has(Brand.slug.in_(normalized))
+                if normalized
+                else false()
+            )
 
         if tags:
-            # ANY-of: post matches if it has any of the requested tags.
             normalized_tags = [n for t in tags if (n := normalize_tag(t))]
-            if normalized_tags:
-                base_query = base_query.where(
-                    self.model.tags.any(Tag.name.in_(normalized_tags))
-                )
+            base_query = base_query.where(
+                self.model.tags.any(Tag.name.in_(normalized_tags))
+                if normalized_tags
+                else false()
+            )
 
         if min_price is not None:
             base_query = base_query.where(self.model.price >= min_price)
