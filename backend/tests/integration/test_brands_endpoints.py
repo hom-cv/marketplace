@@ -117,6 +117,8 @@ class TestDeleteBrand:
         response = await admin_client.delete("/api/v1/brands/nike")
 
         assert response.status_code == 204
+        # Its posts are re-pointed to the catch-all before the brand is removed.
+        mock_brand_crud.reassign_posts.assert_called_once()
         mock_brand_crud.delete.assert_called_once()
 
     async def test_catchall_cannot_be_deleted(

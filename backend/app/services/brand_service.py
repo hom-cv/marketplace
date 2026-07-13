@@ -55,6 +55,12 @@ class BrandService:
         if brand is None:
             raise not_found_error(f"Brand '{slug}' not found")
 
+        # Re-point this brand's posts to the catch-all so brand_id is never
+        # left NULL, then delete the now-unreferenced brand.
+        catchall = await self._brand_crud.resolve_or_catchall(self.db, slug=None)
+        await self._brand_crud.reassign_posts(
+            self.db, from_brand_id=brand.id, to_brand_id=catchall.id
+        )
         await self._brand_crud.delete(self.db, brand=brand)
         await self.db.commit()
         logger.info("Deleted brand %r", slug)

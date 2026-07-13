@@ -3,12 +3,13 @@
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.constants.post import CATCHALL_BRAND_SLUG
 from app.core.utils import slugify
 from app.models.brand import Brand
+from app.models.post import Post
 
 
 class BrandCRUD:
@@ -42,10 +43,22 @@ class BrandCRUD:
         await db.flush()
         return brand
 
+    async def reassign_posts(
+        self, db: AsyncSession, *, from_brand_id: int, to_brand_id: int
+    ) -> None:
+        """Re-point every post on one brand to another (flush only)."""
+        await db.execute(
+            update(Post)
+            .where(Post.brand_id == from_brand_id)
+            .values(brand_id=to_brand_id)
+        )
+        await db.flush()
+
     async def delete(self, db: AsyncSession, *, brand: Brand) -> None:
         """Delete a brand (flush only; caller commits).
 
-        Posts referencing it are unlinked via the FK's ``ON DELETE SET NULL``.
+        Callers re-point its posts to the catch-all first, so no post is left
+        with a NULL brand (the FK's ``ON DELETE SET NULL`` is a safety net).
         """
         await db.delete(brand)
         await db.flush()

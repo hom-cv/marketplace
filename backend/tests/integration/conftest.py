@@ -237,6 +237,7 @@ def create_mock_brand_crud() -> MagicMock:
     crud.create = AsyncMock(
         side_effect=lambda db, *, name, slug: Brand(name=name, slug=slug)
     )
+    crud.reassign_posts = AsyncMock(return_value=None)
     crud.delete = AsyncMock(return_value=None)
     return crud
 
