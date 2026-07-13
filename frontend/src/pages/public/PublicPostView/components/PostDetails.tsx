@@ -9,7 +9,7 @@ import { LikeButton } from "@/components/LikeButton";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { Post } from "@/api/types/post";
 import { formatSize } from "@/api/types/post";
-import { CATCHALL_BRAND_SLUG } from "@/constants/listing";
+import { displayBrand } from "@/utils/brand";
 import styles from "../PublicPostViewPage.module.css";
 
 interface PostDetailsProps {
@@ -29,6 +29,7 @@ export function PostDetails({
 
   const price = parseFloat(post.price);
   const shippingCost = parseFloat(post.shipping_cost || "0");
+  const brand = displayBrand(post.brand);
 
   return (
     <>
@@ -56,7 +57,7 @@ export function PostDetails({
       )}
 
       {/* Brand */}
-      {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
+      {brand && (
         <div>
           <Anchor
             component="button"
@@ -69,11 +70,11 @@ export function PostDetails({
             onClick={() =>
               navigate({
                 to: "/explore",
-                search: { brands: [post.brand!.slug] },
+                search: { brands: [brand.slug] },
               })
             }
           >
-            {post.brand.name}
+            {brand.name}
           </Anchor>
         </div>
       )}

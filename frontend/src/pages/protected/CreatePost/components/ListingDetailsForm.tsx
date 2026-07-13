@@ -55,9 +55,7 @@ export function ListingDetailsForm({
   const brandOptions = useMemo(
     () => [
       { value: CATCHALL_BRAND_SLUG, label: t("create.form.brandOther") },
-      ...(brands ?? [])
-        .filter((b) => b.slug !== CATCHALL_BRAND_SLUG)
-        .map((b) => ({ value: b.slug, label: b.name })),
+      ...(brands ?? []).map((b) => ({ value: b.slug, label: b.name })),
     ],
     [brands, t],
   );

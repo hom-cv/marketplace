@@ -31,6 +31,7 @@ import {
   toggleTypeFilter,
   toggleSizeFilter,
   toggleBrandFilter,
+  toggleTagFilter,
 } from "@/utils/filterHelpers";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useIsAuthenticated } from "@/stores/authStore";
@@ -52,11 +53,8 @@ export function PublicExplorePage() {
     tags = [],
     search = "",
   } = useSearch({ from: "/explore" });
-  const filters: FiltersState = { types, sizes, brands };
+  const filters: FiltersState = { types, sizes, brands, tags };
 
-  // Sidebar filters (types/sizes/brands) write to the URL immediately on toggle.
-  // Reads current filters from navigate's `prev` (the live search params) rather
-  // than closing over `filters`, so this stays referentially stable ([navigate]).
   const onFiltersChange = useCallback(
     (updater: FiltersState | ((prev: FiltersState) => FiltersState)) => {
       navigate({
@@ -67,6 +65,7 @@ export function PublicExplorePage() {
             types: prev.types ?? [],
             sizes: prev.sizes ?? [],
             brands: prev.brands ?? [],
+            tags: prev.tags ?? [],
           };
           const next =
             typeof updater === "function" ? updater(current) : updater;
@@ -75,24 +74,11 @@ export function PublicExplorePage() {
             types: next.types.length ? next.types : undefined,
             sizes: next.sizes.length ? next.sizes : undefined,
             brands: next.brands.length ? next.brands : undefined,
+            tags: next.tags.length ? next.tags : undefined,
           };
         },
       });
     },
-    [navigate],
-  );
-
-  // A tag chip removes just that tag from the URL.
-  const removeTag = useCallback(
-    (tag: string) =>
-      navigate({
-        to: "/explore",
-        replace: true,
-        search: (prev) => {
-          const remaining = (prev.tags ?? []).filter((x) => x !== tag);
-          return { ...prev, tags: remaining.length ? remaining : undefined };
-        },
-      }),
     [navigate],
   );
 
@@ -338,7 +324,9 @@ export function PublicExplorePage() {
                   <FilterBadge
                     key={tag}
                     label={`#${tag}`}
-                    onRemove={() => removeTag(tag)}
+                    onRemove={() =>
+                      onFiltersChange((prev) => toggleTagFilter(prev, tag))
+                    }
                   />
                 ))}
                 <button

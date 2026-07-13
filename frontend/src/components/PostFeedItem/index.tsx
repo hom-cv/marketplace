@@ -9,7 +9,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
-import { CATCHALL_BRAND_SLUG } from "@/constants/listing";
+import { displayBrand } from "@/utils/brand";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -34,6 +34,7 @@ const typeColors: Record<PostType, string> = {
 export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
+  const brand = displayBrand(post.brand);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
@@ -111,9 +112,9 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
           </Group>
         </Group>
 
-        {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
+        {brand && (
           <Text size="xs" fw={600} c="dimmed" tt="uppercase" lineClamp={1}>
-            {post.brand.name}
+            {brand.name}
           </Text>
         )}
 

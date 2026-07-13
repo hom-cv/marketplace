@@ -79,7 +79,8 @@ function ExploreFiltersPanelComponent({
   const hasActiveFilters =
     filters.types.length > 0 ||
     filters.sizes.length > 0 ||
-    filters.brands.length > 0;
+    filters.brands.length > 0 ||
+    filters.tags.length > 0;
 
   const handleBrandToggle = useCallback(
     (slug: string) => {
@@ -105,7 +106,7 @@ function ExploreFiltersPanelComponent({
   );
 
   const handleClearAllFilters = useCallback(() => {
-    onFiltersChange({ types: [], sizes: [], brands: [] });
+    onFiltersChange({ types: [], sizes: [], brands: [], tags: [] });
   }, [onFiltersChange]);
 
   return (
@@ -226,5 +227,6 @@ export const ExploreFiltersPanel = memo(
     prev.onFiltersChange === next.onFiltersChange &&
     sameArray(prev.filters.types, next.filters.types) &&
     sameArray(prev.filters.sizes, next.filters.sizes) &&
-    sameArray(prev.filters.brands, next.filters.brands),
+    sameArray(prev.filters.brands, next.filters.brands) &&
+    sameArray(prev.filters.tags, next.filters.tags),
 );

@@ -188,7 +188,7 @@ export function useListingForm({
         description: values.description,
         type: values.type!,
         gender: values.gender!,
-        brand: values.brand.trim() || undefined,
+        brand: (values.brand ?? "").trim() || undefined,
         tags: values.tags,
         price: values.price as number,
         shipping_cost: (values.shippingCost as number) || 0,

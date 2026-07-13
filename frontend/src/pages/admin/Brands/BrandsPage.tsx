@@ -54,7 +54,7 @@ export function BrandsPage() {
   if (error) {
     return (
       <Alert variant="error" title="Error">
-        {error instanceof Error ? error.message : "Failed to load brands"}
+        {getErrorMessage(error, "Failed to load brands")}
       </Alert>
     );
   }

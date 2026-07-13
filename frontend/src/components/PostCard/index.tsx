@@ -11,7 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
-import { CATCHALL_BRAND_SLUG } from "@/constants/listing";
+import { displayBrand } from "@/utils/brand";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -38,6 +38,7 @@ export function PostCard({
 }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
+  const brand = displayBrand(post.brand);
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
@@ -174,9 +175,9 @@ export function PostCard({
       </div>
 
       <Box className={styles.info}>
-        {post.brand && post.brand.slug !== CATCHALL_BRAND_SLUG && (
+        {brand && (
           <Text size="xs" fw={600} c="var(--color-text-muted)" tt="uppercase" lineClamp={1}>
-            {post.brand.name}
+            {brand.name}
           </Text>
         )}
         <Group className={styles.titleRow} justify="space-between" gap="xs" wrap="nowrap">
