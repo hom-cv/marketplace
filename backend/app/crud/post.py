@@ -16,7 +16,6 @@ from app.models.brand import Brand
 from app.models.payment import Payment, PaymentStatus
 from app.models.post import Gender, Post, PostType
 from app.models.post_ban import PostBan
-from app.models.post_tag import PostTag
 from app.models.tag import Tag
 from app.models.user import User
 from app.models.user_ban import UserBan
@@ -176,11 +175,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             normalized_tags = [n for t in tags if (n := normalize_tag(t))]
             if normalized_tags:
                 base_query = base_query.where(
-                    self.model.id.in_(
-                        select(PostTag.post_id)
-                        .join(Tag, Tag.id == PostTag.tag_id)
-                        .where(Tag.name.in_(normalized_tags))
-                    )
+                    self.model.tags.any(Tag.name.in_(normalized_tags))
                 )
 
         if min_price is not None:
