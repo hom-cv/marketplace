@@ -65,6 +65,10 @@ class Settings(BaseSettings):
 
     RESERVATION_DURATION_MINUTES: int = 10
 
+    # Image upload guards (enforced at the storage layer / on the presign endpoint)
+    MAX_UPLOAD_BYTES: int = 10 * 1024 * 1024  # hard cap per image, rejected by Spaces
+    PRESIGN_RATE_LIMIT_PER_MINUTE: int = 30  # presign URLs a user may mint per minute
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"

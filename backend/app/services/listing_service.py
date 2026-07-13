@@ -1,5 +1,6 @@
 """Listing service for purchase, sales, and user listings."""
 
+import asyncio
 from typing import Annotated
 
 from fastapi import Depends
@@ -12,6 +13,7 @@ from app.core.exceptions import (
     post_not_found_error,
     too_many_images_error,
 )
+from app.core.settings import AnnotatedSettings, Settings
 from app.crud.brand import BrandCRUD, get_brand_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
@@ -114,6 +116,7 @@ class ListingService:
         brand_crud_dep: BrandCRUD,
         tag_crud_dep: TagCRUD,
         storage_service: StorageService,
+        settings: Settings,
     ) -> None:
         self.db = db
         self._post_crud = post_crud_dep
@@ -121,6 +124,7 @@ class ListingService:
         self._brand_crud = brand_crud_dep
         self._tag_crud = tag_crud_dep
         self._storage = storage_service
+        self._settings = settings
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
@@ -218,16 +222,17 @@ class ListingService:
 
         return holder is not None and holder.buyer_id == viewer_user_id
 
-    def _validate_image_urls(self, image_urls: list[str]) -> None:
+    async def _validate_image_urls(self, image_urls: list[str]) -> None:
         """
-        Ensure submitted image URLs are ours (uploaded via presigned URLs).
+        Ensure submitted image URLs are ours and point at real uploaded objects.
 
-        Guards against storing arbitrary external URLs: every URL must live
-        under our CDN's ``posts/`` prefix.
+        Guards against storing arbitrary external URLs (every URL must live under
+        our CDN's ``posts/`` prefix) and against referencing keys that were never
+        uploaded or exceed the size cap.
 
         Raises:
-            HTTPException: 400 if any URL is outside our storage, or storage is
-                not configured but URLs were provided; 400 if too many images.
+            HTTPException: 400 if any URL is outside our storage, missing, or
+                oversized, or storage is unconfigured; 400 if too many images.
         """
         if len(image_urls) > MAX_IMAGES_PER_POST:
             raise too_many_images_error(
@@ -239,9 +244,21 @@ class ListingService:
         if not cdn_url:
             raise bad_request_error("Image storage is not configured")
         prefix = f"{cdn_url.rstrip('/')}/posts/"
+        max_bytes = self._settings.MAX_UPLOAD_BYTES
         for url in image_urls:
             if not url.startswith(prefix) or "/../" in url:
                 raise bad_request_error(f"Invalid image URL: {url}")
+
+        # HEAD every object concurrently to confirm it was uploaded and is
+        # within the size cap.
+        sizes = await asyncio.gather(
+            *(self._storage.get_object_size(url) for url in image_urls)
+        )
+        for url, size in zip(image_urls, sizes):
+            if size is None:
+                raise bad_request_error(f"Image not found in storage: {url}")
+            if size > max_bytes:
+                raise bad_request_error(f"Image exceeds size limit: {url}")
 
     async def _apply_brand_and_tags(
         self, post: Post, *, brand: str | None, tags: list[str]
@@ -276,7 +293,7 @@ class ListingService:
         Raises:
             HTTPException: 400 if any image URL is not ours / too many images.
         """
-        self._validate_image_urls(data.image_urls)
+        await self._validate_image_urls(data.image_urls)
 
         post = Post(
             title=data.title,
@@ -335,7 +352,7 @@ class ListingService:
         if is_sold:
             raise bad_request_error("Sold listings cannot be edited")
 
-        self._validate_image_urls(data.image_urls)
+        await self._validate_image_urls(data.image_urls)
 
         # TODO(storage-gc): reclaim unreferenced Spaces objects out-of-band, via
         # a bucket lifecycle/TTL rule or a periodic sweep that deletes keys not
@@ -400,6 +417,7 @@ def _get_listing_service(
     brand_crud_dep: AnnotatedBrandCRUD,
     tag_crud_dep: AnnotatedTagCRUD,
     storage_service: AnnotatedStorageService,
+    settings: AnnotatedSettings,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
@@ -410,6 +428,7 @@ def _get_listing_service(
         brand_crud_dep,
         tag_crud_dep,
         storage_service,
+        settings,
     )
 
 

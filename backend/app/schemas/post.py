@@ -272,9 +272,12 @@ class PresignUploadRequest(BaseModel):
 
 
 class PresignUploadResponse(BaseModel):
-    """Presigned upload target plus the resulting public URL."""
+    """Presigned POST target plus the resulting public URL."""
 
-    upload_url: str = Field(..., description="Signed PUT URL to upload the bytes to")
+    url: str = Field(..., description="URL to POST the multipart upload form to")
+    fields: dict[str, str] = Field(
+        ..., description="Form fields to include in the multipart POST (before the file)"
+    )
     file_url: str = Field(..., description="Public CDN URL to reference once uploaded")
 
 

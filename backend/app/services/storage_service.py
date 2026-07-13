@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 from urllib.parse import urlparse
 
 import boto3
@@ -86,7 +86,7 @@ class StorageService:
         if not file or not file.filename:
             return None
 
-        if not self.enabled:
+        if not self.enabled or self.client is None:
             logger.warning("Image upload skipped - DO Spaces not configured")
             return None
 
@@ -156,14 +156,13 @@ class StorageService:
         content_type: str,
         folder: str = "posts",
         expires_in: int = 600,
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         """
-        Create a presigned URL for a direct browser-to-Spaces image upload.
+        Create a presigned POST target for a direct browser-to-Spaces upload.
 
-        The client PUTs the file bytes to ``upload_url`` (sending matching
-        ``Content-Type`` and ``x-amz-acl: public-read`` headers, which are part
-        of the signature) and then references ``file_url`` (the public CDN URL)
-        when creating/updating a listing.
+        The client POSTs a multipart form of ``fields`` + the image bytes to
+        ``url``, then references ``file_url`` (the public CDN URL) when
+        creating/updating a listing.
 
         Args:
             content_type: The image MIME type (e.g. "image/jpeg").
@@ -171,13 +170,14 @@ class StorageService:
             expires_in: Seconds until the presigned URL expires.
 
         Returns:
-            ``{"upload_url": <signed PUT url>, "file_url": <public CDN url>}``.
+            ``{"url": <POST url>, "fields": <form fields>, "file_url": <CDN url>}``.
+            The client POSTs a multipart form of ``fields`` + the image bytes.
 
         Raises:
             UploadError: If storage is not configured or signing fails.
             InvalidFileTypeError: If the content type is not an allowed image.
         """
-        if not self.enabled or not self.cdn_url:
+        if not self.enabled or not self.cdn_url or self.client is None:
             raise upload_error("Image storage is not configured")
 
         file_ext = CONTENT_TYPE_TO_EXTENSION.get(content_type.lower())
@@ -190,21 +190,48 @@ class StorageService:
         key = f"{folder}/{uuid.uuid4()}.{file_ext}"
 
         try:
-            upload_url = self.client.generate_presigned_url(
-                "put_object",
-                Params={
-                    "Bucket": self.bucket,
-                    "Key": key,
-                    "ContentType": content_type,
-                    "ACL": "public-read",
-                },
+            # POST (not PUT) so the signed policy can enforce content-length-range:
+            # Spaces rejects oversized bodies at write time, not just the browser.
+            presigned = self.client.generate_presigned_post(
+                Bucket=self.bucket,
+                Key=key,
+                Fields={"acl": "public-read", "Content-Type": content_type},
+                Conditions=[
+                    {"acl": "public-read"},
+                    {"Content-Type": content_type},
+                    ["content-length-range", 0, self._settings.MAX_UPLOAD_BYTES],
+                ],
                 ExpiresIn=expires_in,
             )
         except ClientError as e:
             logger.error(f"Failed to create presigned upload URL: {e}")
             raise upload_error("Failed to create upload URL") from e
 
-        return {"upload_url": upload_url, "file_url": f"{self.cdn_url.rstrip('/')}/{key}"}
+        return {
+            "url": presigned["url"],
+            "fields": presigned["fields"],
+            "file_url": f"{self.cdn_url.rstrip('/')}/{key}",
+        }
+
+    async def get_object_size(self, image_url: str) -> int | None:
+        """Return the stored object's size in bytes, or None if it doesn't exist.
+
+        Used to confirm a submitted image URL was actually uploaded (not just a
+        well-formed guess). Any missing object or storage error yields None.
+
+        Args:
+            image_url: The full CDN URL of the image.
+        """
+        if not self.enabled or not image_url or self.client is None:
+            return None
+        key = urlparse(image_url).path.lstrip("/")
+        try:
+            head = await asyncio.to_thread(
+                self.client.head_object, Bucket=self.bucket, Key=key
+            )
+            return head["ContentLength"]
+        except ClientError:
+            return None
 
     async def delete_image(self, image_url: str) -> None:
         """
@@ -216,7 +243,7 @@ class StorageService:
         Raises:
             DeleteError: If deletion fails.
         """
-        if not self.enabled or not image_url:
+        if not self.enabled or not image_url or self.client is None:
             return
 
         try:

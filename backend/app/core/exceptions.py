@@ -52,6 +52,11 @@ def conflict_error(detail: str = "Conflict") -> HTTPException:
     return _build_error(status_code=status.HTTP_409_CONFLICT, detail=detail)
 
 
+def too_many_requests_error(detail: str = "Too many requests") -> HTTPException:
+    """Creates an HTTP 429 Too Many Requests error."""
+    return _build_error(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=detail)
+
+
 def server_error(detail: str = "Internal server error") -> HTTPException:
     """Creates an HTTP 500 Internal Server Error."""
     return _build_error(

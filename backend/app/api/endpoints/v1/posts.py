@@ -13,6 +13,7 @@ from app.constants.post import (
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
 )
+from app.api.dependencies.rate_limit import enforce_presign_rate_limit
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
@@ -79,6 +80,7 @@ async def create_post(
     "/uploads/presign",
     status_code=status.HTTP_200_OK,
     response_model=PresignUploadResponse,
+    dependencies=[Depends(enforce_presign_rate_limit)],
 )
 async def create_upload_url(
     storage_service: AnnotatedStorageService,
@@ -86,13 +88,14 @@ async def create_upload_url(
     data: PresignUploadRequest,
 ) -> PresignUploadResponse:
     """
-    Issue a presigned URL for a direct image upload to object storage.
+    Issue a presigned POST target for a direct image upload to object storage.
 
-    The client PUTs the file bytes to `upload_url` with matching `Content-Type`
-    and `x-amz-acl: public-read` headers (both are part of the signature), then
-    references the returned `file_url` when creating/updating a listing.
+    The client POSTs a multipart form of the returned `fields` plus the image
+    bytes to `url`; the signed policy caps the size (`content-length-range`) and
+    pins the content type. The returned `file_url` is referenced when
+    creating/updating a listing.
 
-    Requires the user to be a verified seller.
+    Requires the user to be a verified seller; rate-limited per user.
     """
     if not current_user.is_seller:
         raise bad_request_error(

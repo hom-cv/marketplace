@@ -23,6 +23,7 @@ from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.crud.tag import TagCRUD, get_tag_crud
 from app.crud.user import UserCRUD, get_user_crud
+from app.db.redis import get_redis_dep
 from app.db.utils import get_async_db
 from app.main import create_app
 from app.models.brand import Brand
@@ -185,10 +186,13 @@ def create_mock_storage_service() -> MagicMock:
     mock_service.upload_image = AsyncMock(return_value=None)
     mock_service.upload_images = AsyncMock(return_value=[])
     mock_service.delete_image = AsyncMock(return_value=None)
-    # generate_presigned_url is local signing (sync), not async.
+    # A referenced object exists and is within the size cap by default.
+    mock_service.get_object_size = AsyncMock(return_value=1024)
+    # generate_presigned_post is local signing (sync), not async.
     mock_service.create_presigned_upload = MagicMock(
         return_value={
-            "upload_url": "https://upload.example/signed",
+            "url": "https://upload.example/",
+            "fields": {"key": "posts/new-image.jpg", "acl": "public-read"},
             "file_url": f"{TEST_CDN_URL}/posts/new-image.jpg",
         }
     )
@@ -206,12 +210,23 @@ def create_mock_settings() -> MagicMock:
     mock_settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
     mock_settings.TRANSFER_FEE = Decimal("30.0")
+    mock_settings.MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+    mock_settings.PRESIGN_RATE_LIMIT_PER_MINUTE = 30
     return mock_settings
 
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
+
+@pytest.fixture
+def mock_redis() -> MagicMock:
+    """Mock Redis client; incr returns 1 (under the rate limit) by default."""
+    redis = MagicMock()
+    redis.incr = AsyncMock(return_value=1)
+    redis.expire = AsyncMock(return_value=True)
+    return redis
 
 
 @pytest.fixture
@@ -339,6 +354,7 @@ async def async_client(
     mock_email_service: MagicMock,
     mock_storage_service: MagicMock,
     mock_settings: MagicMock,
+    mock_redis: MagicMock,
     mock_user: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client with all CRUDs mocked via dependency injection.
@@ -361,6 +377,7 @@ async def async_client(
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service
     app.dependency_overrides[_get_storage_service] = lambda: mock_storage_service
     app.dependency_overrides[get_settings] = lambda: mock_settings
+    app.dependency_overrides[get_redis_dep] = lambda: mock_redis
 
     # Override database dependency
     app.dependency_overrides[get_async_db] = lambda: AsyncMock()
@@ -392,6 +409,7 @@ async def unauthenticated_client(
     mock_email_service: MagicMock,
     mock_storage_service: MagicMock,
     mock_settings: MagicMock,
+    mock_redis: MagicMock,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Create an async test client without auth override (for testing 401s)."""
     app = create_app()
@@ -407,6 +425,7 @@ async def unauthenticated_client(
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service
     app.dependency_overrides[_get_storage_service] = lambda: mock_storage_service
     app.dependency_overrides[get_settings] = lambda: mock_settings
+    app.dependency_overrides[get_redis_dep] = lambda: mock_redis
 
     app.dependency_overrides[get_async_db] = lambda: AsyncMock()
 
