@@ -24,6 +24,7 @@
       "tagsPlaceholder": "Add a tag and press Enter",
       "tagsHint": "Help buyers find your item (e.g. vintage, y2k)",
       "tagsMax": "At most {{max}} tags",
+      "tagLengthMax": "Each tag must be at most {{max}} characters",
       "size": "Size",
       "sizePlaceholder": "Select size",
       "price": "Price (฿)",

@@ -24,6 +24,7 @@
       "tagsPlaceholder": "เพิ่มแท็กแล้วกด Enter",
       "tagsHint": "ช่วยให้ผู้ซื้อค้นหาสินค้าของคุณ (เช่น vintage, y2k)",
       "tagsMax": "ไม่เกิน {{max}} แท็ก",
+      "tagLengthMax": "แต่ละแท็กต้องมีความยาวไม่เกิน {{max}} ตัวอักษร",
       "size": "ไซส์",
       "sizePlaceholder": "เลือกไซส์",
       "price": "ราคา (฿)",
