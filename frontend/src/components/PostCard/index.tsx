@@ -37,6 +37,7 @@ export function PostCard({
 }: PostCardProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
+  const brand = post.brand;
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
@@ -173,6 +174,11 @@ export function PostCard({
       </div>
 
       <Box className={styles.info}>
+        {brand && (
+          <Text size="xs" fw={600} c="var(--color-text-muted)" tt="uppercase" lineClamp={1}>
+            {brand.name}
+          </Text>
+        )}
         <Group className={styles.titleRow} justify="space-between" gap="xs" wrap="nowrap">
           <Text size="sm" c="var(--color-text)" lineClamp={1} style={{ flex: 1, minWidth: 0 }}>
             {post.title}

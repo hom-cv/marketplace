@@ -9,6 +9,8 @@ export interface CreatePostFormValues {
   description: string;
   type: PostType | null;
   gender: Gender | null;
+  brand: string;
+  tags: string[];
   price: number | "";
   shippingCost: number | "";
   size: string | null;

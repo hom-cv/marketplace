@@ -2,6 +2,8 @@
  * PostDetails - Displays post title, badges, price, size, description, and measurements
  */
 
+import { Group, Anchor } from "@mantine/core";
+import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { LikeButton } from "@/components/LikeButton";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
@@ -15,12 +17,18 @@ interface PostDetailsProps {
   onLikeAuthRequired: () => void;
 }
 
-export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsProps) {
+export function PostDetails({
+  post,
+  isOwner,
+  onLikeAuthRequired,
+}: PostDetailsProps) {
   const { t } = useTranslation("listings");
   const { t: tCommon } = useTranslation("common");
+  const navigate = useNavigate();
 
   const price = parseFloat(post.price);
   const shippingCost = parseFloat(post.shipping_cost || "0");
+  const brand = post.brand;
 
   return (
     <>
@@ -39,13 +47,34 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
               {tCommon("badges.sold")}
             </span>
           )}
-          {!post.is_sold &&
-            post.is_reserved &&
-            !post.is_reserved_by_viewer && (
-              <span className={`${styles.badge} ${styles.badgeSold}`}>
-                {tCommon("badges.reserved")}
-              </span>
-            )}
+          {!post.is_sold && post.is_reserved && !post.is_reserved_by_viewer && (
+            <span className={`${styles.badge} ${styles.badgeSold}`}>
+              {tCommon("badges.reserved")}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Brand */}
+      {brand && (
+        <div>
+          <Anchor
+            component="button"
+            type="button"
+            c="dimmed"
+            fw={600}
+            size="sm"
+            tt="uppercase"
+            underline="hover"
+            onClick={() =>
+              navigate({
+                to: "/explore",
+                search: { brands: [brand.slug] },
+              })
+            }
+          >
+            {brand.name}
+          </Anchor>
         </div>
       )}
 
@@ -81,9 +110,7 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
       {/* Size */}
       {post.size && (
         <div>
-          <div className={styles.sectionLabel}>
-            {tCommon("postCard.size")}
-          </div>
+          <div className={styles.sectionLabel}>{tCommon("postCard.size")}</div>
           <span className={styles.sizeBadge}>
             {formatSize(post.size, post.type)}
           </span>
@@ -99,6 +126,30 @@ export function PostDetails({ post, isOwner, onLikeAuthRequired }: PostDetailsPr
       {/* Measurements Section */}
       {post.measurements && (
         <MeasurementsDisplay measurements={post.measurements} />
+      )}
+
+      {/* Tags */}
+      {post.tags.length > 0 && (
+        <div>
+          <div className={styles.sectionLabel}>{t("view.tags")}</div>
+          <Group gap="md">
+            {post.tags.map((tag) => (
+              <Anchor
+                key={tag}
+                component="button"
+                type="button"
+                c="dimmed"
+                size="sm"
+                underline="hover"
+                onClick={() =>
+                  navigate({ to: "/explore", search: { tags: [tag] } })
+                }
+              >
+                #{tag}
+              </Anchor>
+            ))}
+          </Group>
+        </div>
       )}
 
       <hr className={styles.divider} />

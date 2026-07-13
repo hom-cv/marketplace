@@ -12,6 +12,11 @@ export function moveItem<T>(arr: T[], from: number, to: number): T[] {
   return next;
 }
 
+/** Toggle a value: remove it if present, otherwise append it. */
+export function toggleInArray<T>(arr: readonly T[], item: T): T[] {
+  return arr.includes(item) ? arr.filter((x) => x !== item) : [...arr, item];
+}
+
 /** Replace the item at `index` via an updater function. */
 export function updateAt<T>(
   arr: T[],

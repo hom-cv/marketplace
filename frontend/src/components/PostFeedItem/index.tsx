@@ -33,6 +33,7 @@ const typeColors: Record<PostType, string> = {
 export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
+  const brand = post.brand;
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");
@@ -109,6 +110,12 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
             )}
           </Group>
         </Group>
+
+        {brand && (
+          <Text size="xs" fw={600} c="dimmed" tt="uppercase" lineClamp={1}>
+            {brand.name}
+          </Text>
+        )}
 
         <Text fw={500} lineClamp={1}>
           {post.title}

@@ -7,6 +7,7 @@ import {
   IconUsers,
   IconUserOff,
   IconPackageOff,
+  IconHanger,
   IconArrowLeft,
 } from "@tabler/icons-react";
 import { SidebarNavLink } from "@/components/shared/SidebarNavLink";
@@ -50,6 +51,13 @@ function SidebarContent() {
           className={styles.navLink}
           activeClassName={`${styles.navLink} ${styles.active}`}
         />
+        <SidebarNavLink
+          to="/admin/brands"
+          icon={<IconHanger size={18} />}
+          label="Brands"
+          className={styles.navLink}
+          activeClassName={`${styles.navLink} ${styles.active}`}
+        />
       </div>
 
       <div className={styles.navSection}>
@@ -78,6 +86,7 @@ const MOBILE_NAV_LINKS = [
   { to: "/admin/reports" as const, icon: IconFlag, label: "Reports" },
   { to: "/admin/flagged-messages" as const, icon: IconMessageReport, label: "Flags" },
   { to: "/admin/invites" as const, icon: IconTicket, label: "Invites" },
+  { to: "/admin/brands" as const, icon: IconHanger, label: "Brands" },
   { to: "/admin/bans/users" as const, icon: IconUserOff, label: "Bans" },
   { to: "/admin/bans/posts" as const, icon: IconPackageOff, label: "Posts" },
 ];

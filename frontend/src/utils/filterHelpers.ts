@@ -8,6 +8,7 @@ import type {
   SizeCategory,
   SizeCategoryConfig,
 } from "@/api/types/post";
+import { toggleInArray } from "@/utils/array";
 
 /**
  * State for post filters
@@ -15,6 +16,8 @@ import type {
 export interface FiltersState {
   types: PostType[];
   sizes: string[];
+  brands: string[];
+  tags: string[];
 }
 
 /**
@@ -50,9 +53,7 @@ export function toggleTypeFilter(
   typeToToggle: PostType,
   sizeCategoryConfig: readonly SizeCategoryConfig[],
 ): FiltersState {
-  const updatedTypes = currentFilters.types.includes(typeToToggle)
-    ? currentFilters.types.filter((t) => t !== typeToToggle)
-    : [...currentFilters.types, typeToToggle];
+  const updatedTypes = toggleInArray(currentFilters.types, typeToToggle);
 
   const updatedSizes =
     updatedTypes.length === 0
@@ -70,18 +71,31 @@ export function toggleTypeFilter(
   return { ...currentFilters, types: updatedTypes, sizes: updatedSizes };
 }
 
-/**
- * Toggle a size filter in the filter state.
- */
 export function toggleSizeFilter(
   currentFilters: FiltersState,
   category: SizeCategory,
   size: string,
 ): FiltersState {
   const sizeKey = createSizeKey(category, size);
-  const updatedSizes = currentFilters.sizes.includes(sizeKey)
-    ? currentFilters.sizes.filter((key) => key !== sizeKey)
-    : [...currentFilters.sizes, sizeKey];
+  return {
+    ...currentFilters,
+    sizes: toggleInArray(currentFilters.sizes, sizeKey),
+  };
+}
 
-  return { ...currentFilters, sizes: updatedSizes };
+export function toggleBrandFilter(
+  currentFilters: FiltersState,
+  slug: string,
+): FiltersState {
+  return {
+    ...currentFilters,
+    brands: toggleInArray(currentFilters.brands, slug),
+  };
+}
+
+export function toggleTagFilter(
+  currentFilters: FiltersState,
+  tag: string,
+): FiltersState {
+  return { ...currentFilters, tags: toggleInArray(currentFilters.tags, tag) };
 }

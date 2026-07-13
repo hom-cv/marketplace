@@ -29,3 +29,9 @@
   color: var(--color-text-muted);
   margin-top: 4px;
 }
+
+.brandOptionHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}

@@ -31,15 +31,14 @@ export async function getPosts(
   params.append("skip", String(skip));
   params.append("limit", String(limit));
 
-  if (filters?.types && filters.types.length > 0) {
-    filters.types.forEach((type) => params.append("types", type));
-  }
-  if (filters?.genders && filters.genders.length > 0) {
-    filters.genders.forEach((gender) => params.append("genders", gender));
-  }
-  if (filters?.sizes && filters.sizes.length > 0) {
-    filters.sizes.forEach((size) => params.append("sizes", size));
-  }
+  const appendAll = (name: string, values?: string[]) =>
+    values?.forEach((v) => params.append(name, v));
+  appendAll("types", filters?.types);
+  appendAll("genders", filters?.genders);
+  appendAll("sizes", filters?.sizes);
+  appendAll("brands", filters?.brands);
+  appendAll("tags", filters?.tags);
+
   if (filters?.minPrice !== undefined) {
     params.append("min_price", String(filters.minPrice));
   }

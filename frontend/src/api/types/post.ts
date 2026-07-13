@@ -263,12 +263,19 @@ export function getSizesForType(type: PostType): readonly string[] {
   }
 }
 
+export interface Brand {
+  name: string;
+  slug: string;
+}
+
 export interface Post {
   id: number;
   title: string;
   description: string;
   type: PostType;
   gender: Gender;
+  brand: Brand | null;
+  tags: string[];
   price: string; // Decimal comes as string from API
   shipping_cost: string; // Decimal comes as string from API
   image_url: string | null;
@@ -292,6 +299,8 @@ export interface CreatePostRequest {
   description: string;
   type: PostType;
   gender: Gender;
+  brand?: string;
+  tags?: string[];
   price: number;
   shipping_cost?: number;
   size: string;
@@ -304,6 +313,8 @@ export interface UpdatePostRequest {
   description: string;
   type: PostType;
   gender: Gender;
+  brand?: string;
+  tags?: string[];
   price: number;
   shipping_cost?: number;
   size: string;
@@ -315,6 +326,8 @@ export interface PostFilters {
   types?: PostType[];
   genders?: Gender[];
   sizes?: string[];
+  brands?: string[];
+  tags?: string[];
   minPrice?: number;
   maxPrice?: number;
   search?: string;

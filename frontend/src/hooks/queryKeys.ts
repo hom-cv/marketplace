@@ -20,6 +20,11 @@ export const queryKeys = {
     byUser: (username: string) => ["userPosts", username] as const,
   },
 
+  // Brands
+  brands: {
+    all: ["brands"] as const,
+  },
+
   // Payments
   payments: {
     priceBreakdown: (postId: number | string, method?: string) =>

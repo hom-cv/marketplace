@@ -1,3 +1,9 @@
+.noResults {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  padding: 4px 0;
+}
+
 /* Checkbox styling */
 .checkbox [data-checked] {
   background-color: var(--color-primary);

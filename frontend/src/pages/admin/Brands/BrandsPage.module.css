@@ -1,0 +1,22 @@
+.addRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.addInput {
+  flex: 1;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+}
+
+.slug {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}

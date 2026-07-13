@@ -1,4 +1,19 @@
+import re
 from enum import Enum
+
+
+def slugify(value: str) -> str:
+    """Lowercase, trim, collapse non-alphanumeric runs to single hyphens.
+
+    Used as the canonical key for brands so "Nike", "nike " and "NIKE" map to
+    the same slug ("nike").
+    """
+    return re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+
+
+def normalize_tag(value: str) -> str:
+    """Normalize a hashtag: drop a leading '#', trim, lowercase."""
+    return value.strip().lstrip("#").strip().lower()
 
 
 class AutoName(Enum):

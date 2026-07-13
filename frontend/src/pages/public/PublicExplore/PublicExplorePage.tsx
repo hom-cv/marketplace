@@ -15,6 +15,7 @@ import {
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { usePublicPosts } from "@/hooks/usePosts";
+import { useBrands } from "@/hooks/useBrands";
 import { PostCard } from "@/components/PostCard";
 import { PostFeedItem } from "@/components/PostFeedItem";
 import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
@@ -29,6 +30,8 @@ import {
   parseSizeKey,
   toggleTypeFilter,
   toggleSizeFilter,
+  toggleBrandFilter,
+  toggleTagFilter,
 } from "@/utils/filterHelpers";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { useIsAuthenticated } from "@/stores/authStore";
@@ -46,13 +49,12 @@ export function PublicExplorePage() {
     department,
     types = [],
     sizes = [],
+    brands = [],
+    tags = [],
     search = "",
   } = useSearch({ from: "/explore" });
-  const filters: FiltersState = { types, sizes };
+  const filters: FiltersState = { types, sizes, brands, tags };
 
-  // Sidebar filters (types/sizes) write to the URL immediately on toggle.
-  // Reads current filters from navigate's `prev` (the live search params) rather
-  // than closing over `filters`, so this stays referentially stable ([navigate]).
   const onFiltersChange = useCallback(
     (updater: FiltersState | ((prev: FiltersState) => FiltersState)) => {
       navigate({
@@ -62,6 +64,8 @@ export function PublicExplorePage() {
           const current: FiltersState = {
             types: prev.types ?? [],
             sizes: prev.sizes ?? [],
+            brands: prev.brands ?? [],
+            tags: prev.tags ?? [],
           };
           const next =
             typeof updater === "function" ? updater(current) : updater;
@@ -69,6 +73,8 @@ export function PublicExplorePage() {
             ...prev,
             types: next.types.length ? next.types : undefined,
             sizes: next.sizes.length ? next.sizes : undefined,
+            brands: next.brands.length ? next.brands : undefined,
+            tags: next.tags.length ? next.tags : undefined,
           };
         },
       });
@@ -114,6 +120,12 @@ export function PublicExplorePage() {
     [],
   );
 
+  const { data: brandList } = useBrands();
+  const brandNameBySlug = useMemo(
+    () => new Map((brandList ?? []).map((b) => [b.slug, b.name])),
+    [brandList],
+  );
+
   const queryFilters: PostFilters = {};
   {
     const typesSet = new Set<PostType>(types);
@@ -138,6 +150,8 @@ export function PublicExplorePage() {
 
     if (typesSet.size > 0) queryFilters.types = [...typesSet];
     if (department) queryFilters.genders = DEPARTMENT_GENDERS[department];
+    if (brands.length > 0) queryFilters.brands = brands;
+    if (tags.length > 0) queryFilters.tags = tags;
     if (search.trim()) queryFilters.search = search.trim();
   }
 
@@ -163,9 +177,17 @@ export function PublicExplorePage() {
   });
 
   const hasActiveFilters =
-    types.length > 0 || sizes.length > 0 || search.trim() !== "";
+    types.length > 0 ||
+    sizes.length > 0 ||
+    brands.length > 0 ||
+    tags.length > 0 ||
+    search.trim() !== "";
 
-  const activeFilterCount = types.length + sizes.length;
+  const activeFilterCount =
+    types.length + sizes.length + brands.length + tags.length;
+
+  const handleBrandToggle = (slug: string) =>
+    onFiltersChange((prev) => toggleBrandFilter(prev, slug));
 
   const handleTypeToggle = (postType: PostType) =>
     onFiltersChange((prev) =>
@@ -184,6 +206,8 @@ export function PublicExplorePage() {
         ...prev,
         types: undefined,
         sizes: undefined,
+        brands: undefined,
+        tags: undefined,
         search: undefined,
       }),
     });
@@ -289,6 +313,22 @@ export function PublicExplorePage() {
                     />
                   );
                 })}
+                {brands.map((slug) => (
+                  <FilterBadge
+                    key={slug}
+                    label={brandNameBySlug.get(slug) ?? slug}
+                    onRemove={() => handleBrandToggle(slug)}
+                  />
+                ))}
+                {tags.map((tag) => (
+                  <FilterBadge
+                    key={tag}
+                    label={`#${tag}`}
+                    onRemove={() =>
+                      onFiltersChange((prev) => toggleTagFilter(prev, tag))
+                    }
+                  />
+                ))}
                 <button
                   className={styles.clearAllBadge}
                   onClick={handleClearAllFilters}

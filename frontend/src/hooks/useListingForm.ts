@@ -13,6 +13,7 @@ import {
   MIN_LISTING_PRICE,
   MAX_SHIPPING_COST,
   MIN_SHIPPING_COST,
+  BRAND_OTHER_VALUE,
 } from "@/constants/listing";
 import { notifySuccess, notifyError } from "@/utils/notify";
 import { getErrorMessage } from "@/utils/error";
@@ -179,6 +180,11 @@ export function useListingForm({
         description: values.description,
         type: values.type!,
         gender: values.gender!,
+        brand:
+          values.brand && values.brand !== BRAND_OTHER_VALUE
+            ? values.brand
+            : undefined,
+        tags: values.tags,
         price: values.price as number,
         shipping_cost: (values.shippingCost as number) || 0,
         size: values.size!,

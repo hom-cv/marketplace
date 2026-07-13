@@ -16,13 +16,16 @@ from httpx import ASGITransport, AsyncClient
 from app.core.jwt import create_access_token
 from app.core.security import get_current_user, get_current_user_allow_unverified
 from app.core.settings import Settings, get_settings
+from app.crud.brand import BrandCRUD, get_brand_crud
 from app.crud.follow import FollowCRUD, get_follow_crud
 from app.crud.like import LikeCRUD, get_like_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
+from app.crud.tag import TagCRUD, get_tag_crud
 from app.crud.user import UserCRUD, get_user_crud
 from app.db.utils import get_async_db
 from app.main import create_app
+from app.models.brand import Brand
 from app.models.user import User, UserStatus
 from app.constants.payment import PaymentMethod
 from app.schemas.payment import PriceBreakdown
@@ -223,6 +226,38 @@ def mock_post_crud() -> MagicMock:
     return create_mock_post_crud()
 
 
+def create_mock_brand_crud() -> MagicMock:
+    """Mock BrandCRUD: resolution returns None ("Other"); list is empty."""
+    crud = MagicMock(spec=BrandCRUD)
+    crud.resolve = AsyncMock(return_value=None)
+    crud.list_brands = AsyncMock(return_value=[])
+    crud.get_by_slug = AsyncMock(return_value=None)
+    crud.create = AsyncMock(
+        side_effect=lambda db, *, name, slug: Brand(name=name, slug=slug)
+    )
+    crud.delete = AsyncMock(return_value=None)
+    return crud
+
+
+def create_mock_tag_crud() -> MagicMock:
+    """Mock TagCRUD: get_or_create_many returns no tags."""
+    crud = MagicMock(spec=TagCRUD)
+    crud.get_or_create_many = AsyncMock(return_value=[])
+    return crud
+
+
+@pytest.fixture
+def mock_brand_crud() -> MagicMock:
+    """Fixture for mock BrandCRUD."""
+    return create_mock_brand_crud()
+
+
+@pytest.fixture
+def mock_tag_crud() -> MagicMock:
+    """Fixture for mock TagCRUD."""
+    return create_mock_tag_crud()
+
+
 @pytest.fixture
 def mock_payment_crud() -> MagicMock:
     """Fixture for mock PaymentCRUD."""
@@ -299,6 +334,8 @@ async def async_client(
     mock_payment_crud: MagicMock,
     mock_like_crud: MagicMock,
     mock_follow_crud: MagicMock,
+    mock_brand_crud: MagicMock,
+    mock_tag_crud: MagicMock,
     mock_email_service: MagicMock,
     mock_storage_service: MagicMock,
     mock_settings: MagicMock,
@@ -317,6 +354,8 @@ async def async_client(
     app.dependency_overrides[get_payment_crud] = lambda: mock_payment_crud
     app.dependency_overrides[get_like_crud] = lambda: mock_like_crud
     app.dependency_overrides[get_follow_crud] = lambda: mock_follow_crud
+    app.dependency_overrides[get_brand_crud] = lambda: mock_brand_crud
+    app.dependency_overrides[get_tag_crud] = lambda: mock_tag_crud
 
     # Override external services
     app.dependency_overrides[_get_email_service] = lambda: mock_email_service
