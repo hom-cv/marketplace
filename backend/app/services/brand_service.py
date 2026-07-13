@@ -44,12 +44,13 @@ class BrandService:
         if await self._brand_crud.get_by_slug(self.db, slug):
             raise conflict_error(f"Brand '{name}' already exists")
 
-        brand = await self._brand_crud.create(self.db, name=name, slug=slug)
+        # create() flushes, so a lost unique-slug race can raise here too;
+        # keep it inside the try so it maps to 409, not 500.
         try:
+            brand = await self._brand_crud.create(self.db, name=name, slug=slug)
             await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
-
             raise conflict_error(f"Brand '{name}' already exists")
         logger.info("Created brand %r", slug)
         return BrandRead.model_validate(brand)
