@@ -233,6 +233,11 @@ def create_mock_brand_crud() -> MagicMock:
         return_value=Brand(name="Other", slug="other")
     )
     crud.list_brands = AsyncMock(return_value=[])
+    crud.get_by_slug = AsyncMock(return_value=None)
+    crud.create = AsyncMock(
+        side_effect=lambda db, *, name, slug: Brand(name=name, slug=slug)
+    )
+    crud.delete = AsyncMock(return_value=None)
     return crud
 
 

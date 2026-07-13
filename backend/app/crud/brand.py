@@ -31,6 +31,25 @@ class BrandCRUD:
         )
         return result.all()
 
+    async def get_by_slug(self, db: AsyncSession, slug: str) -> Brand | None:
+        """Fetch a brand by its unique slug, or ``None``."""
+        return await db.scalar(select(Brand).where(Brand.slug == slug))
+
+    async def create(self, db: AsyncSession, *, name: str, slug: str) -> Brand:
+        """Insert a brand (flush only; caller commits)."""
+        brand = Brand(name=name, slug=slug)
+        db.add(brand)
+        await db.flush()
+        return brand
+
+    async def delete(self, db: AsyncSession, *, brand: Brand) -> None:
+        """Delete a brand (flush only; caller commits).
+
+        Posts referencing it are unlinked via the FK's ``ON DELETE SET NULL``.
+        """
+        await db.delete(brand)
+        await db.flush()
+
     async def resolve_or_catchall(
         self, db: AsyncSession, *, slug: str | None
     ) -> Brand:

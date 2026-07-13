@@ -51,6 +51,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import {
   UsersPage,
   InviteCodesPage,
+  BrandsPage,
   ReportsPage,
   FlaggedMessagesPage,
   UserBansPage,
@@ -290,6 +291,12 @@ const adminInvitesRoute = createRoute({
   component: InviteCodesPage,
 });
 
+const adminBrandsRoute = createRoute({
+  getParentRoute: () => adminLayout,
+  path: "/brands",
+  component: BrandsPage,
+});
+
 const adminReportsRoute = createRoute({
   getParentRoute: () => adminLayout,
   path: "/reports",
@@ -342,6 +349,7 @@ const routeTree = rootRoute.addChildren([
         adminIndexRoute,
         adminUsersRoute,
         adminInvitesRoute,
+        adminBrandsRoute,
         adminReportsRoute,
         adminFlaggedMessagesRoute,
         adminUserBansRoute,

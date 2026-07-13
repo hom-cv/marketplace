@@ -29,6 +29,12 @@ class BrandRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class BrandCreateRequest(BaseModel):
+    """Admin: create a brand from a display name (slug derived server-side)."""
+
+    name: str = Field(..., min_length=1, max_length=MAX_BRAND_NAME_LENGTH)
+
+
 def validate_tags(tags: list[str]) -> list[str]:
     """Enforce tag count/length caps (normalization happens in the CRUD)."""
     if len(tags) > MAX_TAGS_PER_POST:
