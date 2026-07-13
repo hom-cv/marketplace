@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { updatePost } from "@/api/posts";
+import { BRAND_OTHER_VALUE } from "@/constants/listing";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { Post } from "@/api/types/post";
 import { useListingForm } from "@/hooks/useListingForm";
@@ -24,7 +25,7 @@ export function useEditPostForm(post: Post) {
       description: post.description,
       type: post.type,
       gender: post.gender,
-      brand: post.brand?.slug ?? "",
+      brand: post.brand?.slug ?? BRAND_OTHER_VALUE,
       tags: post.tags ?? [],
       price: parseFloat(post.price),
       shippingCost: parseFloat(post.shipping_cost || "0"),

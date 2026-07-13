@@ -9,7 +9,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { Post, PostType } from "@/api/types/post";
-import { displayBrand } from "@/utils/brand";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -34,7 +33,7 @@ const typeColors: Record<PostType, string> = {
 export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
-  const brand = displayBrand(post.brand);
+  const brand = post.brand;
   const currentUser = useAuthStore((state) => state.user);
   const isOwner = currentUser?.id === post.user.id;
   const { t } = useTranslation("common");

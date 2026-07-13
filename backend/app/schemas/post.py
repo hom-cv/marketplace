@@ -146,7 +146,7 @@ class PostCreateSchema(BaseModel):
     brand: str | None = Field(
         default=None,
         max_length=MAX_BRAND_NAME_LENGTH,
-        description="Brand slug from the curated list; unknown/blank → catch-all",
+        description="Brand slug from the curated list; unknown/blank → Other (no brand)",
     )
     tags: list[str] = Field(
         default_factory=list,

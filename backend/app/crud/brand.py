@@ -3,32 +3,25 @@
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.post import CATCHALL_BRAND_SLUG
 from app.core.utils import slugify
 from app.models.brand import Brand
-from app.models.post import Post
 
 
 class BrandCRUD:
     """CRUD operations for Brand model.
 
     Brands are a curated list (admin/seed-managed); sellers pick from it, they
-    can't create new ones. Anything not in the list resolves to the catch-all.
+    can't create new ones. Anything not in the list is treated as "Other"
+    (a NULL brand on the post).
     """
 
     async def list_brands(self, db: AsyncSession) -> Sequence[Brand]:
-        """Selectable brands, alphabetical (for the pick-list + Explore filter).
-
-        Excludes the catch-all: it's a fallback, not a brand to advertise, and
-        the create form pins its own relabeled "Other" option separately.
-        """
+        """Selectable brands, alphabetical (for the pick-list + Explore filter)."""
         result = await db.scalars(
-            select(Brand)
-            .where(Brand.slug != CATCHALL_BRAND_SLUG)
-            .order_by(func.lower(Brand.name))
+            select(Brand).order_by(func.lower(Brand.name))
         )
         return result.all()
 
@@ -43,47 +36,23 @@ class BrandCRUD:
         await db.flush()
         return brand
 
-    async def reassign_posts(
-        self, db: AsyncSession, *, from_brand_id: int, to_brand_id: int
-    ) -> None:
-        """Re-point every post on one brand to another (flush only)."""
-        await db.execute(
-            update(Post)
-            .where(Post.brand_id == from_brand_id)
-            .values(brand_id=to_brand_id)
-        )
-        await db.flush()
-
     async def delete(self, db: AsyncSession, *, brand: Brand) -> None:
         """Delete a brand (flush only; caller commits).
 
-        Callers re-point its posts to the catch-all first, so no post is left
-        with a NULL brand (the FK's ``ON DELETE SET NULL`` is a safety net).
+        Its posts fall back to "Other" via the FK's ``ON DELETE SET NULL``.
         """
         await db.delete(brand)
         await db.flush()
 
-    async def resolve_or_catchall(
+    async def resolve(
         self, db: AsyncSession, *, slug: str | None
-    ) -> Brand:
-        """Return the curated brand for ``slug``, else the catch-all brand.
-        """
+    ) -> Brand | None:
+        """Return the curated brand for ``slug``, or ``None`` when it's
+        unspecified or unknown (a NULL brand means "Other")."""
         normalized = slugify(slug) if slug else ""
-
-        if normalized:
-            brand = await db.scalar(
-                select(Brand).where(Brand.slug == normalized)
-            )
-            if brand:
-                return brand
-        catchall = await db.scalar(
-            select(Brand).where(Brand.slug == CATCHALL_BRAND_SLUG)
-        )
-        if catchall is None:
-            raise RuntimeError(
-                f"Catch-all brand '{CATCHALL_BRAND_SLUG}' is not seeded"
-            )
-        return catchall
+        if not normalized:
+            return None
+        return await self.get_by_slug(db, normalized)
 
 
 brand_crud = BrandCRUD()

@@ -117,19 +117,8 @@ class TestDeleteBrand:
         response = await admin_client.delete("/api/v1/brands/nike")
 
         assert response.status_code == 204
-        # Its posts are re-pointed to the catch-all before the brand is removed.
-        mock_brand_crud.reassign_posts.assert_called_once()
+        # Its posts fall back to "Other" via ON DELETE SET NULL — no reassign.
         mock_brand_crud.delete.assert_called_once()
-
-    async def test_catchall_cannot_be_deleted(
-        self,
-        admin_client: AsyncClient,
-        mock_brand_crud: MagicMock,
-    ) -> None:
-        response = await admin_client.delete("/api/v1/brands/other")
-
-        assert response.status_code == 400
-        mock_brand_crud.delete.assert_not_called()
 
     async def test_missing_brand_returns_404(
         self,

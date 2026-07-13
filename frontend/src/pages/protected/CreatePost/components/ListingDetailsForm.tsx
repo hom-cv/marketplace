@@ -23,7 +23,7 @@ import {
   MIN_SHIPPING_COST,
   MAX_TAGS_PER_POST,
   MAX_TAG_LENGTH,
-  CATCHALL_BRAND_SLUG,
+  BRAND_OTHER_VALUE,
 } from "@/constants/listing";
 import type {
   CreatePostFormValues,
@@ -54,7 +54,7 @@ export function ListingDetailsForm({
 
   const brandOptions = useMemo(
     () => [
-      { value: CATCHALL_BRAND_SLUG, label: t("create.form.brandOther") },
+      { value: BRAND_OTHER_VALUE, label: t("create.form.brandOther") },
       ...(brands ?? []).map((b) => ({ value: b.slug, label: b.name })),
     ],
     [brands, t],
@@ -122,7 +122,7 @@ export function ListingDetailsForm({
             renderOption={({ option }) => (
               <div>
                 <div>{option.label}</div>
-                {option.value === CATCHALL_BRAND_SLUG && (
+                {option.value === BRAND_OTHER_VALUE && (
                   <div className={styles.brandOptionHint}>
                     {t("create.form.brandOtherHint")}
                   </div>

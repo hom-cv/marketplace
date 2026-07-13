@@ -164,8 +164,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
 
         if brand_slugs:
             # Normalize so a hand-edited ?brands=Nike still matches "nike".
-            # Deleting a brand re-points its posts to the catch-all (never
-            # NULL), so a plain slug match is sufficient.
+            # Posts with no brand (NULL = "Other") simply don't match any slug.
             normalized = [n for s in brand_slugs if (n := slugify(s))]
             base_query = base_query.where(
                 self.model.brand.has(Brand.slug.in_(normalized))

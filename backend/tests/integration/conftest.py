@@ -227,17 +227,14 @@ def mock_post_crud() -> MagicMock:
 
 
 def create_mock_brand_crud() -> MagicMock:
-    """Mock BrandCRUD: resolution returns the catch-all; list is empty."""
+    """Mock BrandCRUD: resolution returns None ("Other"); list is empty."""
     crud = MagicMock(spec=BrandCRUD)
-    crud.resolve_or_catchall = AsyncMock(
-        return_value=Brand(name="Other", slug="other")
-    )
+    crud.resolve = AsyncMock(return_value=None)
     crud.list_brands = AsyncMock(return_value=[])
     crud.get_by_slug = AsyncMock(return_value=None)
     crud.create = AsyncMock(
         side_effect=lambda db, *, name, slug: Brand(name=name, slug=slug)
     )
-    crud.reassign_posts = AsyncMock(return_value=None)
     crud.delete = AsyncMock(return_value=None)
     return crud
 

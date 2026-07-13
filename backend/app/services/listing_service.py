@@ -248,12 +248,10 @@ class ListingService:
     ) -> None:
         """Resolve the brand (from the curated list) and tag set onto ``post``.
 
-        ``brand`` is a slug; an unknown/absent one falls back to the catch-all.
+        ``brand`` is a slug; an unknown/absent one leaves the brand NULL ("Other").
         ``tags`` fully replaces the post's tags.
         """
-        post.brand = await self._brand_crud.resolve_or_catchall(
-            self.db, slug=brand
-        )
+        post.brand = await self._brand_crud.resolve(self.db, slug=brand)
         post.tags = await self._tag_crud.get_or_create_many(self.db, names=tags)
 
     async def create_listing(

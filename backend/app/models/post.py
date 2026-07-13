@@ -103,7 +103,8 @@ class Post(Base):
         nullable=False,
         index=True,
     )
-    # Brand is optional; SET NULL so removing a brand doesn't delete listings.
+    # Brand is optional; a NULL brand means "Other" (unspecified). SET NULL so
+    # deleting a brand leaves its listings intact, falling back to "Other".
     brand_id: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("brands.id", ondelete="SET NULL"),

@@ -9,7 +9,6 @@ import { LikeButton } from "@/components/LikeButton";
 import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
 import type { Post } from "@/api/types/post";
 import { formatSize } from "@/api/types/post";
-import { displayBrand } from "@/utils/brand";
 import styles from "../PublicPostViewPage.module.css";
 
 interface PostDetailsProps {
@@ -29,7 +28,7 @@ export function PostDetails({
 
   const price = parseFloat(post.price);
   const shippingCost = parseFloat(post.shipping_cost || "0");
-  const brand = displayBrand(post.brand);
+  const brand = post.brand;
 
   return (
     <>

@@ -31,7 +31,3 @@ MAX_SHIPPING_COST: int = 10_000
 MAX_BRAND_NAME_LENGTH: int = 128
 MAX_TAGS_PER_POST: int = 10
 MAX_TAG_LENGTH: int = 50
-
-# Catch-all brand for items whose brand isn't in the curated list. Seeded; a
-# listing with no/unknown brand resolves to this.
-CATCHALL_BRAND_SLUG: str = "other"

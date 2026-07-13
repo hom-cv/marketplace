@@ -6,7 +6,6 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.constants.post import CATCHALL_BRAND_SLUG
 from app.core.exceptions import (
     bad_request_error,
     conflict_error,
@@ -28,7 +27,7 @@ class BrandService:
         self._brand_crud = brand_crud_dep
 
     async def list_brands(self) -> list[BrandRead]:
-        """All selectable brands (excludes the catch-all), alphabetical."""
+        """All selectable brands, alphabetical."""
         brands = await self._brand_crud.list_brands(self.db)
         return [BrandRead.model_validate(b) for b in brands]
 
@@ -47,20 +46,12 @@ class BrandService:
         return BrandRead.model_validate(brand)
 
     async def delete_brand(self, *, slug: str) -> None:
-        """Delete a brand by slug. The catch-all is protected."""
-        if slug == CATCHALL_BRAND_SLUG:
-            raise bad_request_error("The catch-all brand cannot be deleted")
-
+        """Delete a brand by slug. Its posts fall back to "Other" (NULL brand)
+        via the FK's ``ON DELETE SET NULL``."""
         brand = await self._brand_crud.get_by_slug(self.db, slug)
         if brand is None:
             raise not_found_error(f"Brand '{slug}' not found")
 
-        # Re-point this brand's posts to the catch-all so brand_id is never
-        # left NULL, then delete the now-unreferenced brand.
-        catchall = await self._brand_crud.resolve_or_catchall(self.db, slug=None)
-        await self._brand_crud.reassign_posts(
-            self.db, from_brand_id=brand.id, to_brand_id=catchall.id
-        )
         await self._brand_crud.delete(self.db, brand=brand)
         await self.db.commit()
         logger.info("Deleted brand %r", slug)

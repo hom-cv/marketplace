@@ -33,5 +33,5 @@ async def delete_brand(
     brand_service: AnnotatedBrandService,
     slug: str,
 ) -> None:
-    """Delete a brand by slug. **Admin only.** The catch-all is protected."""
+    """Delete a brand by slug. **Admin only.** Its posts fall back to "Other"."""
     await brand_service.delete_brand(slug=slug)
