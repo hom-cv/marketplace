@@ -257,7 +257,7 @@ class ListingService:
 
             if (
                 parts.scheme != cdn.scheme
-                or parts.netloc != cdn.netloc
+                or parts.hostname != cdn.hostname
                 or not path.startswith("/posts/")
             ):
                 raise bad_request_error(f"Invalid image URL: {url}")

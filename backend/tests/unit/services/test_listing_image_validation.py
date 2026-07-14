@@ -54,3 +54,9 @@ def test_rejects_look_alike_host():
     with pytest.raises(HTTPException) as exc:
         service._validate_image_urls(["https://cdn.example.com.evil.test/posts/a.jpg"])
     assert exc.value.status_code == 400
+
+
+def test_accepts_uppercase_host():
+    service = _make_service()
+
+    service._validate_image_urls(["https://CDN.EXAMPLE.COM/posts/a.jpg"])  # no raise
