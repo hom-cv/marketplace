@@ -40,3 +40,17 @@ def test_rejects_path_traversal():
     with pytest.raises(HTTPException) as exc:
         service._validate_image_urls([f"{CDN}/posts/../secrets/a.jpg"])
     assert exc.value.status_code == 400
+
+
+def test_rejects_encoded_path_traversal():
+    service = _make_service()
+    with pytest.raises(HTTPException) as exc:
+        service._validate_image_urls([f"{CDN}/posts/..%2f..%2fsecrets.jpg"])
+    assert exc.value.status_code == 400
+
+
+def test_rejects_look_alike_host():
+    service = _make_service()
+    with pytest.raises(HTTPException) as exc:
+        service._validate_image_urls(["https://cdn.example.com.evil.test/posts/a.jpg"])
+    assert exc.value.status_code == 400

@@ -1,6 +1,8 @@
 """Listing service for purchase, sales, and user listings."""
 
+import posixpath
 from typing import Annotated
+from urllib.parse import unquote, urlsplit
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -222,8 +224,11 @@ class ListingService:
         """
         Ensure submitted image URLs are ours (uploaded via presigned URLs).
 
-        Guards against storing arbitrary external URLs: every URL must live
-        under our CDN's ``posts/`` prefix. The size cap is enforced by the
+        Guards against storing arbitrary external URLs: every URL must be on our
+        CDN host and, once percent-decoded and normalized, resolve to a key
+        under the ``posts/`` prefix. Decoding + ``normpath`` before the prefix
+        check means encoded traversal (``..%2f``) can't slip a key outside
+        ``posts/`` past a naive substring check. The size cap is enforced by the
         presigned POST policy at upload time (``content-length-range``), so no
         HEAD re-check is needed here.
 
@@ -235,14 +240,26 @@ class ListingService:
             raise too_many_images_error(
                 f"Maximum {MAX_IMAGES_PER_POST} images allowed"
             )
+
         if not image_urls:
             return
+
         cdn_url = self._storage.cdn_url
+
         if not cdn_url:
             raise bad_request_error("Image storage is not configured")
-        prefix = f"{cdn_url.rstrip('/')}/posts/"
+
+        cdn = urlsplit(cdn_url)
+
         for url in image_urls:
-            if not url.startswith(prefix) or "/../" in url:
+            parts = urlsplit(url)
+            path = posixpath.normpath(unquote(parts.path))
+
+            if (
+                parts.scheme != cdn.scheme
+                or parts.netloc != cdn.netloc
+                or not path.startswith("/posts/")
+            ):
                 raise bad_request_error(f"Invalid image URL: {url}")
 
     async def _apply_brand_and_tags(
