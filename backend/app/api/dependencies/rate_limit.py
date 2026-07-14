@@ -20,8 +20,8 @@ async def enforce_presign_rate_limit(
 ) -> None:
     """Cap how many presigned upload URLs a user may mint per minute.
 
-    Fixed-window counter keyed by user + epoch-minute. First hit in a window
-    sets a 60s TTL; the key self-expires, so no cleanup is needed.
+    Fixed-window counter keyed by user + epoch-minute; the key self-expires, so
+    no cleanup is needed.
 
     # ponytail: fixed window per minute; move to a sliding window only if
     # boundary bursts (up to ~2x the limit across a window edge) matter.
@@ -31,10 +31,11 @@ async def enforce_presign_rate_limit(
     """
     window = int(time.time()) // 60
     key = f"presign:{current_user.id}:{window}"
-    count = await redis.incr(key)
 
-    if count == 1:
-        await redis.expire(key, 60)
+    async with redis.pipeline(transaction=True) as pipe:
+        pipe.incr(key)
+        pipe.expire(key, 60)
+        count, _ = await pipe.execute()
 
     if count > settings.PRESIGN_RATE_LIMIT_PER_MINUTE:
         raise too_many_requests_error(

@@ -222,10 +222,16 @@ def create_mock_settings() -> MagicMock:
 
 @pytest.fixture
 def mock_redis() -> MagicMock:
-    """Mock Redis client; incr returns 1 (under the rate limit) by default."""
+    """Mock Redis whose rate-limit pipeline yields count=1 (under limit) by default.
+
+    Override the count via ``mock_redis.pipeline.return_value.execute.return_value``.
+    """
     redis = MagicMock()
-    redis.incr = AsyncMock(return_value=1)
-    redis.expire = AsyncMock(return_value=True)
+    pipe = MagicMock()
+    pipe.__aenter__ = AsyncMock(return_value=pipe)
+    pipe.__aexit__ = AsyncMock(return_value=False)
+    pipe.execute = AsyncMock(return_value=[1, True])  # [incr count, expire result]
+    redis.pipeline = MagicMock(return_value=pipe)
     return redis
 
 

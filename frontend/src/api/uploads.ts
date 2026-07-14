@@ -36,6 +36,8 @@ function toBlob(
 }
 
 async function downscale(file: File): Promise<Blob> {
+  if (file.size <= MAX_BYTES) return file;
+
   const bitmap = await createImageBitmap(file, {
     imageOrientation: "from-image",
   }).catch(() => null);

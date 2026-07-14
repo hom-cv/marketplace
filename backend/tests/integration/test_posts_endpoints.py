@@ -621,7 +621,8 @@ class TestPresignUploadEndpoint:
     ):
         """Exceeding the per-minute presign limit returns 429."""
         mock_user.is_seller = True
-        mock_redis.incr = AsyncMock(return_value=31)  # over the limit of 30
+
+        mock_redis.pipeline.return_value.execute = AsyncMock(return_value=[31, True])
 
         response = await async_client.post(
             "/api/v1/posts/uploads/presign",
