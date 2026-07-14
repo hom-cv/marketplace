@@ -114,6 +114,7 @@
     "maxImages": "Up to {{max}} images",
     "dropHere": "Drop images here",
     "limitExceeded": "Image limit reached (max {{max}}). {{rejected}} image(s) not added.",
+    "tooLarge": "Image too large (max {{max}}MB). {{rejected}} image(s) not added.",
     "moveLeft": "Move image left",
     "moveRight": "Move image right",
     "remove": "Remove image"

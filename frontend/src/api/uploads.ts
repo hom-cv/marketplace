@@ -14,8 +14,9 @@ export interface PresignResponse {
   file_url: string;
 }
 
-const MAX_BYTES = 600 * 1024; // hard cap on stored file size
+const MAX_BYTES = 600 * 1024;
 const MAX_DIMENSION = 2000; // px longest edge — large enough to view/zoom
+const QUALITY_STOPS = [0.8, 0.6, 0.45];
 
 function drawScaled(bitmap: ImageBitmap, maxDim: number): HTMLCanvasElement {
   const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
@@ -44,24 +45,16 @@ async function downscale(file: File): Promise<Blob> {
 
   if (!bitmap) return file;
 
-  let smallest: Blob | null = null;
-  for (
-    let maxDim = MAX_DIMENSION;
-    maxDim >= 800;
-    maxDim = Math.round(maxDim * 0.8)
-  ) {
-    const canvas = drawScaled(bitmap, maxDim);
-    for (let quality = 0.85; quality >= 0.5; quality -= 0.1) {
-      const blob = await toBlob(canvas, quality);
-      if (!blob) continue;
-      if (!smallest || blob.size < smallest.size) smallest = blob;
-      if (blob.size <= MAX_BYTES) {
-        bitmap.close();
-        return blob;
-      }
-    }
-  }
+  const canvas = drawScaled(bitmap, MAX_DIMENSION);
   bitmap.close();
+
+  let smallest: Blob | null = null;
+  for (const quality of QUALITY_STOPS) {
+    const blob = await toBlob(canvas, quality);
+    if (!blob) continue;
+    if (!smallest || blob.size < smallest.size) smallest = blob;
+    if (blob.size <= MAX_BYTES) return blob;
+  }
   return smallest ?? file;
 }
 
