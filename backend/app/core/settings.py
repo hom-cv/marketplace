@@ -65,7 +65,6 @@ class Settings(BaseSettings):
 
     RESERVATION_DURATION_MINUTES: int = 10
 
-    # Hard cap per image, enforced by the presigned POST policy (content-length-range).
     MAX_UPLOAD_BYTES: int = 10 * 1024 * 1024
 
     @property

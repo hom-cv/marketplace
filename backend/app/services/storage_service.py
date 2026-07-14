@@ -190,8 +190,6 @@ class StorageService:
         key = f"{folder}/{uuid.uuid4()}.{file_ext}"
 
         try:
-            # POST (not PUT) so the signed policy can enforce content-length-range:
-            # Spaces rejects oversized bodies at write time, not just the browser.
             presigned = self.client.generate_presigned_post(
                 Bucket=self.bucket,
                 Key=key,
