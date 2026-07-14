@@ -213,26 +213,6 @@ class StorageService:
             "file_url": f"{self.cdn_url.rstrip('/')}/{key}",
         }
 
-    async def get_object_size(self, image_url: str) -> int | None:
-        """Return the stored object's size in bytes, or None if it doesn't exist.
-
-        Used to confirm a submitted image URL was actually uploaded (not just a
-        well-formed guess). Any missing object or storage error yields None.
-
-        Args:
-            image_url: The full CDN URL of the image.
-        """
-        if not self.enabled or not image_url or self.client is None:
-            return None
-        key = urlparse(image_url).path.lstrip("/")
-        try:
-            head = await asyncio.to_thread(
-                self.client.head_object, Bucket=self.bucket, Key=key
-            )
-            return head["ContentLength"]
-        except ClientError:
-            return None
-
     async def delete_image(self, image_url: str) -> None:
         """
         Delete an image from Digital Ocean Spaces.

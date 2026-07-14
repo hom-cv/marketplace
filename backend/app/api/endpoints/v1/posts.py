@@ -13,7 +13,6 @@ from app.constants.post import (
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
 )
-from app.api.dependencies.rate_limit import enforce_presign_rate_limit
 from app.core.exceptions import (
     bad_request_error,
     not_found_error,
@@ -80,7 +79,6 @@ async def create_post(
     "/uploads/presign",
     status_code=status.HTTP_200_OK,
     response_model=PresignUploadResponse,
-    dependencies=[Depends(enforce_presign_rate_limit)],
 )
 async def create_upload_url(
     storage_service: AnnotatedStorageService,
@@ -95,7 +93,7 @@ async def create_upload_url(
     pins the content type. The returned `file_url` is referenced when
     creating/updating a listing.
 
-    Requires the user to be a verified seller; rate-limited per user.
+    Requires the user to be a verified seller.
     """
     if not current_user.is_seller:
         raise bad_request_error(

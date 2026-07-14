@@ -12,7 +12,9 @@ import { moveItem } from "@/utils/array";
 /** Maximum number of images allowed per listing. */
 export const MAX_IMAGES = 10;
 
-const MAX_INPUT_BYTES = 30 * 1024 * 1024;
+// Matches the backend MAX_UPLOAD_BYTES cap (the presigned POST policy rejects
+// anything larger), so we never accept a file the server will refuse.
+const MAX_INPUT_BYTES = 10 * 1024 * 1024;
 
 type ImageSlot =
   | { kind: "existing"; url: string }

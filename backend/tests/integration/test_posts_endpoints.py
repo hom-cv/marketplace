@@ -5,7 +5,7 @@ using mocked CRUDs (allowing real service logic to run).
 """
 
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 from httpx import AsyncClient
 
@@ -612,24 +612,6 @@ class TestPresignUploadEndpoint:
         assert "url" in body
         assert isinstance(body["fields"], dict)
         assert body["file_url"].startswith(TEST_CDN_URL)
-
-    async def test_presign_over_rate_limit_returns_429(
-        self,
-        async_client: AsyncClient,
-        mock_user: MagicMock,
-        mock_redis: MagicMock,
-    ):
-        """Exceeding the per-minute presign limit returns 429."""
-        mock_user.is_seller = True
-
-        mock_redis.pipeline.return_value.execute = AsyncMock(return_value=[31, True])
-
-        response = await async_client.post(
-            "/api/v1/posts/uploads/presign",
-            json={"content_type": "image/jpeg"},
-        )
-
-        assert response.status_code == 429
 
     async def test_presign_non_seller_returns_400(
         self,
