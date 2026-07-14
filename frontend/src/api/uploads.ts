@@ -39,6 +39,8 @@ function toBlob(
 async function downscale(file: File): Promise<Blob> {
   if (file.size <= MAX_BYTES) return file;
 
+  if (typeof createImageBitmap !== "function") return file;
+
   const bitmap = await createImageBitmap(file, {
     imageOrientation: "from-image",
   }).catch(() => null);
@@ -55,7 +57,8 @@ async function downscale(file: File): Promise<Blob> {
     if (!smallest || blob.size < smallest.size) smallest = blob;
     if (blob.size <= MAX_BYTES) return blob;
   }
-  return smallest ?? file;
+
+  return smallest && smallest.size < file.size ? smallest : file;
 }
 
 /** Request a presigned upload target for a given image MIME type. */
