@@ -70,6 +70,8 @@
     "multipleItems": "รายการ"
   },
   "filtersSidebar": {
+    "department": "แผนก",
+    "allDepartments": "ทั้งหมด",
     "filters": "ตัวกรอง",
     "clear": "ล้าง",
     "category": "หมวดหมู่",
@@ -78,7 +80,11 @@
     "noBrands": "ไม่พบแบรนด์",
     "priceRange": "ช่วงราคา",
     "size": "ไซส์",
-    "oneSize": "ขนาดเดียว"
+    "oneSize": "ขนาดเดียว",
+    "allOf": "{{category}}ทั้งหมด",
+    "selectDepartmentFirst": "เลือกแผนกด้านบนเพื่อดูหมวดหมู่",
+    "selectCategoryForSize": "เลือกหมวดหมู่เพื่อกรองตามขนาด",
+    "oneSizeItems": "สินค้าเหล่านี้เป็นขนาดเดียว"
   },
   "report": {
     "title": "รายงาน{{type}}",

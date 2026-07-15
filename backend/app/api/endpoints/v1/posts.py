@@ -22,7 +22,7 @@ from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import User
-from app.models.post import Gender, PostType
+from app.models.post import Gender, PostCategory
 from app.schemas.payment import PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
@@ -56,13 +56,15 @@ async def create_post(
     (POST /posts/uploads/presign); pass the resulting public CDN URLs in
     `image_urls` (first = cover, max 10).
 
-    Size is required. Valid sizes depend on category:
-    - Shirts/Jackets/Other: XS, S, M, L, XL, XXL, XXXL
-    - Pants: 26, 28, 30, 32, 34, 36, 38, 40, 42, 44
-    - Shoes: 35-48 (Italian/EU sizing)
-    - Accessories: ONE_SIZE
+    Category + subcategory are required and must be a valid path in the taxonomy
+    (GET /categories) for the chosen gender. Size is required; valid sizes depend
+    on the subcategory's size group:
+    - LETTER (tops/outerwear/dresses/tailoring): XS, S, M, L, XL, XXL, XXXL
+    - WAIST (denim/trousers): 26-44
+    - SHOE (footwear): 35-48 (EU sizing)
+    - ONE_SIZE (accessories/jewelry/bags): ONE_SIZE
 
-    `measurements` is an optional object validated against the post type.
+    `measurements` is an optional object validated against the size group.
 
     Requires the user to be a verified seller.
     """
@@ -117,7 +119,8 @@ async def list_posts(
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
-    types: Annotated[list[PostType] | None, Query()] = None,
+    categories: Annotated[list[PostCategory] | None, Query()] = None,
+    subcategories: Annotated[list[str] | None, Query()] = None,
     genders: Annotated[list[Gender] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
     brands: Annotated[list[str] | None, Query()] = None,
@@ -135,7 +138,8 @@ async def list_posts(
     Query parameters:
     - skip: Number of records to skip (for pagination)
     - limit: Maximum number of records to return
-    - types: Filter by post types (can specify multiple)
+    - categories: Filter by top-level category (can specify multiple)
+    - subcategories: Filter by granular subcategory (can specify multiple)
     - genders: Filter by department (mens/womens/unisex, can specify multiple)
     - sizes: Filter by sizes (can specify multiple). Excludes posts with no size.
     - brands: Filter by brand slug(s) (can specify multiple)
@@ -151,7 +155,8 @@ async def list_posts(
         db,
         skip=skip,
         limit=limit,
-        types=types,
+        categories=categories,
+        subcategories=subcategories,
         genders=genders,
         sizes=sizes,
         brand_slugs=brands,

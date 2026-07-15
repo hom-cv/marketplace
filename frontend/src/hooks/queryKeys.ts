@@ -25,6 +25,11 @@ export const queryKeys = {
     all: ["brands"] as const,
   },
 
+  // Category taxonomy (static)
+  categories: {
+    all: ["categories"] as const,
+  },
+
   // Payments
   payments: {
     priceBreakdown: (postId: number | string, method?: string) =>

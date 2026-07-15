@@ -21,14 +21,20 @@ import { PostFeedItem } from "@/components/PostFeedItem";
 import { ExploreFiltersPanel } from "@/components/ExploreFiltersPanel";
 import { FilterBadge } from "@/components/FilterBadge";
 import { EmptyState } from "@/components/EmptyState";
-import type { PostType, PostFilters, SizeCategory } from "@/api/types/post";
-import { POST_TYPES, SIZE_CATEGORY_CONFIG } from "@/api/types/post";
-import { DEPARTMENT_GENDERS } from "@/constants/departments";
+import type {
+  PostCategory,
+  PostFilters,
+  SizeGroup,
+} from "@/api/types/post";
+import { SIZE_GROUP_CONFIG } from "@/api/types/post";
+import { DEPARTMENT_GENDERS, type Department } from "@/constants/departments";
+import { useCategoryTree } from "@/hooks/useCategoryTree";
 import {
   type FiltersState,
   ITEMS_PER_PAGE,
   parseSizeKey,
-  toggleTypeFilter,
+  toggleCategoryFilter,
+  toggleSubcategoryFilter,
   toggleSizeFilter,
   toggleBrandFilter,
   toggleTagFilter,
@@ -42,18 +48,24 @@ export function PublicExplorePage() {
   const isAuthenticated = useIsAuthenticated();
   const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
-  const { t: tListings } = useTranslation("listings");
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const {
     department,
-    types = [],
+    categories = [],
+    subcategories = [],
     sizes = [],
     brands = [],
     tags = [],
     search = "",
   } = useSearch({ from: "/explore" });
-  const filters: FiltersState = { types, sizes, brands, tags };
+  const filters: FiltersState = {
+    categories,
+    subcategories,
+    sizes,
+    brands,
+    tags,
+  };
 
   const onFiltersChange = useCallback(
     (updater: FiltersState | ((prev: FiltersState) => FiltersState)) => {
@@ -62,7 +74,8 @@ export function PublicExplorePage() {
         replace: true,
         search: (prev) => {
           const current: FiltersState = {
-            types: prev.types ?? [],
+            categories: prev.categories ?? [],
+            subcategories: prev.subcategories ?? [],
             sizes: prev.sizes ?? [],
             brands: prev.brands ?? [],
             tags: prev.tags ?? [],
@@ -71,7 +84,10 @@ export function PublicExplorePage() {
             typeof updater === "function" ? updater(current) : updater;
           return {
             ...prev,
-            types: next.types.length ? next.types : undefined,
+            categories: next.categories.length ? next.categories : undefined,
+            subcategories: next.subcategories.length
+              ? next.subcategories
+              : undefined,
             sizes: next.sizes.length ? next.sizes : undefined,
             brands: next.brands.length ? next.brands : undefined,
             tags: next.tags.length ? next.tags : undefined,
@@ -101,22 +117,31 @@ export function PublicExplorePage() {
     });
   };
 
-  const typeOptions = useMemo(
-    () =>
-      POST_TYPES.map((postType) => ({
-        value: postType,
-        label: tListings(`categories.${postType.toLowerCase()}`),
-      })),
-    [tListings],
+  const { data: taxonomy } = useCategoryTree();
+
+  const handleDepartmentChange = useCallback(
+    (dept: Department | undefined) => {
+      // Switching department changes the tree, so drop category/subcategory picks.
+      navigate({
+        to: "/explore",
+        replace: true,
+        search: (prev) => ({
+          ...prev,
+          department: dept,
+          categories: undefined,
+          subcategories: undefined,
+        }),
+      });
+    },
+    [navigate],
+  );
+  const categoryLabel = useCallback(
+    (c: PostCategory) => taxonomy?.categoryLabels[c] ?? c,
+    [taxonomy],
   );
 
-  const typeLabelsMap = useMemo(
-    () => new Map(typeOptions.map((o) => [o.value, o.label])),
-    [typeOptions],
-  );
-
-  const sizeCategoryMap = useMemo(
-    () => new Map(SIZE_CATEGORY_CONFIG.map((c) => [c.category, c])),
+  const sizeGroupMap = useMemo(
+    () => new Map(SIZE_GROUP_CONFIG.map((c) => [c.group, c])),
     [],
   );
 
@@ -128,27 +153,13 @@ export function PublicExplorePage() {
 
   const queryFilters: PostFilters = {};
   {
-    const typesSet = new Set<PostType>(types);
-    const hasExplicitTypes = types.length > 0;
-
+    if (categories.length > 0) queryFilters.categories = categories;
+    if (subcategories.length > 0) queryFilters.subcategories = subcategories;
     if (sizes.length > 0) {
-      const rawSizes: string[] = [];
-      for (const sizeKey of sizes) {
-        const { category, size } = parseSizeKey(sizeKey);
-        rawSizes.push(size);
-        if (!hasExplicitTypes) {
-          const categoryConfig = sizeCategoryMap.get(category);
-          if (categoryConfig) {
-            for (const postType of categoryConfig.postTypes) {
-              typesSet.add(postType);
-            }
-          }
-        }
-      }
-      queryFilters.sizes = [...new Set(rawSizes)];
+      queryFilters.sizes = [
+        ...new Set(sizes.map((k) => parseSizeKey(k).size)),
+      ];
     }
-
-    if (typesSet.size > 0) queryFilters.types = [...typesSet];
     if (department) queryFilters.genders = DEPARTMENT_GENDERS[department];
     if (brands.length > 0) queryFilters.brands = brands;
     if (tags.length > 0) queryFilters.tags = tags;
@@ -177,25 +188,31 @@ export function PublicExplorePage() {
   });
 
   const hasActiveFilters =
-    types.length > 0 ||
+    categories.length > 0 ||
+    subcategories.length > 0 ||
     sizes.length > 0 ||
     brands.length > 0 ||
     tags.length > 0 ||
     search.trim() !== "";
 
   const activeFilterCount =
-    types.length + sizes.length + brands.length + tags.length;
+    categories.length +
+    subcategories.length +
+    sizes.length +
+    brands.length +
+    tags.length;
 
   const handleBrandToggle = (slug: string) =>
     onFiltersChange((prev) => toggleBrandFilter(prev, slug));
 
-  const handleTypeToggle = (postType: PostType) =>
-    onFiltersChange((prev) =>
-      toggleTypeFilter(prev, postType, SIZE_CATEGORY_CONFIG),
-    );
+  const handleCategoryToggle = (category: PostCategory) =>
+    onFiltersChange((prev) => toggleCategoryFilter(prev, category));
 
-  const handleSizeToggle = (category: SizeCategory, size: string) =>
-    onFiltersChange((prev) => toggleSizeFilter(prev, category, size));
+  const handleSubcategoryToggle = (subcategory: string) =>
+    onFiltersChange((prev) => toggleSubcategoryFilter(prev, subcategory));
+
+  const handleSizeToggle = (group: SizeGroup, size: string) =>
+    onFiltersChange((prev) => toggleSizeFilter(prev, group, size));
 
   const handleClearAllFilters = () => {
     setSearchInput("");
@@ -204,7 +221,8 @@ export function PublicExplorePage() {
       replace: true,
       search: (prev) => ({
         ...prev,
-        types: undefined,
+        categories: undefined,
+        subcategories: undefined,
         sizes: undefined,
         brands: undefined,
         tags: undefined,
@@ -246,6 +264,8 @@ export function PublicExplorePage() {
                 </span>
               </div>
               <ExploreFiltersPanel
+                department={department}
+                onDepartmentChange={handleDepartmentChange}
                 filters={filters}
                 onFiltersChange={onFiltersChange}
               />
@@ -292,24 +312,31 @@ export function PublicExplorePage() {
                 {search.trim() && (
                   <FilterBadge label={`"${search}"`} onRemove={clearSearch} />
                 )}
-                {filters.types.map((type) => (
+                {filters.categories.map((category) => (
                   <FilterBadge
-                    key={type}
-                    label={typeLabelsMap.get(type) ?? type}
-                    onRemove={() => handleTypeToggle(type)}
+                    key={category}
+                    label={categoryLabel(category)}
+                    onRemove={() => handleCategoryToggle(category)}
+                  />
+                ))}
+                {filters.subcategories.map((subcategory) => (
+                  <FilterBadge
+                    key={subcategory}
+                    label={subcategory}
+                    onRemove={() => handleSubcategoryToggle(subcategory)}
                   />
                 ))}
                 {filters.sizes.map((sizeKey) => {
-                  const { category, size } = parseSizeKey(sizeKey);
-                  const categoryConfig = sizeCategoryMap.get(category);
-                  const displayLabel = categoryConfig?.formatLabel
-                    ? categoryConfig.formatLabel(size)
+                  const { group, size } = parseSizeKey(sizeKey);
+                  const groupConfig = sizeGroupMap.get(group);
+                  const displayLabel = groupConfig?.formatLabel
+                    ? groupConfig.formatLabel(size)
                     : size;
                   return (
                     <FilterBadge
                       key={sizeKey}
                       label={displayLabel}
-                      onRemove={() => handleSizeToggle(category, size)}
+                      onRemove={() => handleSizeToggle(group, size)}
                     />
                   );
                 })}
@@ -448,6 +475,8 @@ export function PublicExplorePage() {
         className={styles.drawer}
       >
         <ExploreFiltersPanel
+          department={department}
+          onDepartmentChange={handleDepartmentChange}
           filters={filters}
           onFiltersChange={onFiltersChange}
         />

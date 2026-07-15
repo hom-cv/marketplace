@@ -3,7 +3,12 @@
 import { Container } from "@mantine/core";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { DEPARTMENTS, type Department } from "@/constants/departments";
+import {
+  DEPARTMENTS,
+  departmentToGender,
+  type Department,
+} from "@/constants/departments";
+import { ShopByCategoryMenu } from "@/components/ShopByCategoryMenu";
 import styles from "./DepartmentBar.module.css";
 
 export function DepartmentBar() {
@@ -33,18 +38,35 @@ export function DepartmentBar() {
   return (
     <nav className={styles.bar}>
       <Container size="md" className={styles.content}>
-        {items.map((item) => (
-          <button
-            key={item.value ?? "all"}
-            type="button"
-            className={[styles.item, active === item.value && styles.itemActive]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => select(item.value)}
-          >
-            {item.label}
-          </button>
-        ))}
+        {items.map((item) => {
+          const button = (
+            <button
+              key={item.value ?? "all"}
+              type="button"
+              className={[
+                styles.item,
+                active === item.value && styles.itemActive,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => select(item.value)}
+            >
+              {item.label}
+            </button>
+          );
+          // Men's/Women's get a Shop By Category mega-menu on hover.
+          return item.value ? (
+            <ShopByCategoryMenu
+              key={item.value}
+              gender={departmentToGender(item.value)}
+              department={item.value}
+            >
+              {button}
+            </ShopByCategoryMenu>
+          ) : (
+            button
+          );
+        })}
       </Container>
     </nav>
   );

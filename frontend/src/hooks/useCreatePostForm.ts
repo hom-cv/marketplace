@@ -19,7 +19,8 @@ export function useCreatePostForm() {
     initialValues: {
       title: "",
       description: "",
-      type: null,
+      category: null,
+      subcategory: null,
       gender: null,
       brand: "",
       tags: [],

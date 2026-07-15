@@ -6,8 +6,8 @@ import {
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
-import { POST_TYPES } from "@/api/types/post";
-import type { PostType } from "@/api/types/post";
+import { POST_CATEGORIES } from "@/api/types/post";
+import type { PostCategory } from "@/api/types/post";
 import { isDepartment, type Department } from "@/constants/departments";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -132,7 +132,8 @@ const publicExploreRoute = createRoute({
     search: Record<string, unknown>,
   ): {
     department?: Department;
-    types?: PostType[];
+    categories?: PostCategory[];
+    subcategories?: string[];
     sizes?: string[];
     brands?: string[];
     tags?: string[];
@@ -140,12 +141,15 @@ const publicExploreRoute = createRoute({
   } => {
     const asArray = (v: unknown): string[] =>
       Array.isArray(v) ? v.map(String) : typeof v === "string" && v ? [v] : [];
-    const types = [
+    const categories = [
       ...new Set(
-        asArray(search.types).filter((t): t is PostType =>
-          (POST_TYPES as readonly string[]).includes(t),
+        asArray(search.categories).filter((c): c is PostCategory =>
+          (POST_CATEGORIES as readonly string[]).includes(c),
         ),
       ),
+    ];
+    const subcategories = [
+      ...new Set(asArray(search.subcategories).filter(Boolean)),
     ];
     const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
     const brands = [...new Set(asArray(search.brands).filter(Boolean))];
@@ -155,7 +159,8 @@ const publicExploreRoute = createRoute({
       department: isDepartment(search.department)
         ? search.department
         : undefined,
-      types: types.length ? types : undefined,
+      categories: categories.length ? categories : undefined,
+      subcategories: subcategories.length ? subcategories : undefined,
       sizes: sizes.length ? sizes : undefined,
       brands: brands.length ? brands : undefined,
       tags: tags.length ? tags : undefined,
@@ -361,10 +366,47 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
 ]);
 
+// Clean search-param serialization: arrays become repeated keys
+// (?categories=TOPS&subcategories=Polos) instead of JSON blobs. Scalars keep the
+// default's JSON round-trip (numbers/booleans/objects survive) so other routes are
+// unaffected; plain strings stay unquoted.
+function stringifySearch(search: Record<string, unknown>): string {
+  const params = new URLSearchParams();
+  const encode = (v: unknown) =>
+    typeof v === "string" ? v : JSON.stringify(v);
+  for (const key of Object.keys(search)) {
+    const val = search[key];
+    if (val === undefined || val === null) continue;
+    if (Array.isArray(val)) val.forEach((item) => params.append(key, encode(item)));
+    else params.append(key, encode(val));
+  }
+  const str = params.toString();
+  return str ? `?${str}` : "";
+}
+
+function parseSearch(searchStr: string): Record<string, unknown> {
+  const params = new URLSearchParams(searchStr.replace(/^\?/, ""));
+  const decode = (v: string): unknown => {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return v;
+    }
+  };
+  const result: Record<string, unknown> = {};
+  for (const key of new Set(params.keys())) {
+    const all = params.getAll(key);
+    result[key] = all.length > 1 ? all.map(decode) : decode(all[0]);
+  }
+  return result;
+}
+
 export const router = createRouter({
   routeTree,
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
+  parseSearch,
+  stringifySearch,
 });
 
 declare module "@tanstack/react-router" {

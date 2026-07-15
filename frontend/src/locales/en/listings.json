@@ -14,6 +14,8 @@
       "descriptionPlaceholder": "Describe your item - condition, size, brand, etc.",
       "category": "Category",
       "categoryPlaceholder": "Select type",
+      "subcategory": "Subcategory",
+      "subcategoryPlaceholder": "Select subcategory",
       "gender": "Department",
       "genderPlaceholder": "Select department",
       "brand": "Brand",
@@ -50,7 +52,8 @@
       "sizeRequired": "Size is required",
       "submit": "Publish Listing",
       "submitting": "Publishing...",
-      "publishHint": "Your listing will be visible to all buyers immediately"
+      "publishHint": "Your listing will be visible to all buyers immediately",
+      "subcategoryRequired": "Subcategory is required"
     },
     "success": "Listing created successfully!",
     "error": "Failed to create listing"
@@ -88,12 +91,15 @@
     "insoleLength": "Insole Length"
   },
   "categories": {
-    "shirt": "Shirt",
-    "pants": "Pants",
-    "jacket": "Jacket",
-    "shoes": "Shoes",
+    "tops": "Tops",
+    "bottoms": "Bottoms",
+    "outerwear": "Outerwear",
+    "footwear": "Footwear",
     "accessories": "Accessories",
-    "other": "Other"
+    "tailoring": "Tailoring",
+    "dresses": "Dresses",
+    "jewelry": "Jewelry",
+    "bags": "Bags & Luggage"
   },
   "genders": {
     "mens": "Men's",
@@ -161,5 +167,12 @@
     "title": "Sold Listings",
     "noSales": "No sales yet",
     "waitingForSale": "Your listings will appear here once they're sold"
+  },
+  "sizeGroups": {
+    "letter": "Clothing",
+    "waist": "Waist",
+    "shoe": "Shoe",
+    "one_size": "One Size",
+    "suit": "Suit"
   }
 }

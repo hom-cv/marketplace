@@ -10,7 +10,7 @@ from unittest.mock import MagicMock
 from httpx import AsyncClient
 
 from app.models.like import Like
-from app.models.post import Gender, Post, PostType
+from app.models.post import Gender, Post, PostCategory
 from tests.integration.conftest import create_mock_user
 
 
@@ -26,7 +26,8 @@ def create_mock_post(
     mock_post.id = post_id
     mock_post.title = title
     mock_post.description = description
-    mock_post.type = PostType.SHIRT
+    mock_post.category = PostCategory.TOPS
+    mock_post.subcategory = "Polos"
     mock_post.gender = Gender.UNISEX
     mock_post.brand = None
     mock_post.tags = []

@@ -5,19 +5,23 @@
 import type { User } from "./user";
 
 /**
- * All available post types.
- * Single source of truth for post type values.
+ * All top-level post categories (must match backend PostCategory).
+ * The full gendered tree of granular subcategories is served by GET /categories
+ * (see useCategoryTree) — this union is only for labels/colors/badges.
  */
-export const POST_TYPES = [
-  "SHIRT",
-  "PANTS",
-  "JACKET",
-  "SHOES",
+export const POST_CATEGORIES = [
+  "TOPS",
+  "BOTTOMS",
+  "OUTERWEAR",
+  "FOOTWEAR",
   "ACCESSORIES",
-  "OTHER",
+  "TAILORING",
+  "DRESSES",
+  "JEWELRY",
+  "BAGS",
 ] as const;
 
-export type PostType = (typeof POST_TYPES)[number];
+export type PostCategory = (typeof POST_CATEGORIES)[number];
 
 /**
  * All available departments (who the item is for).
@@ -27,24 +31,60 @@ export const POST_GENDERS = ["MENS", "WOMENS", "UNISEX"] as const;
 
 export type Gender = (typeof POST_GENDERS)[number];
 
-// Letter-based sizes for shirts, jackets, tops
+/**
+ * Size group a subcategory belongs to (must match backend SizeGroup). Determines
+ * the available size options + measurement fields for a listing.
+ */
+export const SIZE_GROUPS = [
+  "LETTER",
+  "WAIST",
+  "SHOE",
+  "SUIT",
+  "ONE_SIZE",
+] as const;
+export type SizeGroup = (typeof SIZE_GROUPS)[number];
+
+// Letter-based sizes for tops, outerwear, dresses, tailoring
 export const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
 export type LetterSize = (typeof LETTER_SIZES)[number] | "ONE_SIZE";
 
-// Pants waist sizes (even numbers 26-44)
-export const PANTS_SIZES = [
+// Waist sizes for denim/trousers (every inch, 26-44)
+export const WAIST_SIZES = [
   "26",
+  "27",
   "28",
+  "29",
   "30",
+  "31",
   "32",
+  "33",
+  "34",
+  "35",
+  "36",
+  "37",
+  "38",
+  "39",
+  "40",
+  "41",
+  "42",
+  "43",
+  "44",
+] as const;
+export type WaistSize = (typeof WAIST_SIZES)[number];
+
+// Suit / tailoring sizes (chest, inches)
+export const SUIT_SIZES = [
   "34",
   "36",
   "38",
   "40",
   "42",
   "44",
+  "46",
+  "48",
+  "50",
 ] as const;
-export type PantsSize = (typeof PANTS_SIZES)[number];
+export type SuitSize = (typeof SUIT_SIZES)[number];
 
 // Italian (EU) shoe sizes 35-48
 export const SHOE_SIZES = [
@@ -111,28 +151,23 @@ const TOP_MEASUREMENT_FIELDS: readonly MeasurementFieldConfig[] = [
 ];
 
 /**
- * Measurement fields per category.
- * - SHIRT, JACKET: Standard top measurements
- * - PANTS: Waist, inseam, etc.
- * - SHOES: Insole length
- * - OTHER: No default fields - users add custom measurements only
- * - ACCESSORIES: No measurements supported
+ * Measurement fields per size group (stable: 4 groups). Which group a listing
+ * uses comes from the taxonomy (subcategory) — see `size_group` on Post.
  */
-export const MEASUREMENT_FIELDS: Record<
-  PostType,
+export const MEASUREMENT_FIELDS_BY_GROUP: Record<
+  SizeGroup,
   readonly MeasurementFieldConfig[]
 > = {
-  SHIRT: TOP_MEASUREMENT_FIELDS,
-  JACKET: TOP_MEASUREMENT_FIELDS,
-  OTHER: [], // No default measurements - users add custom measurements as needed
-  PANTS: [
+  LETTER: TOP_MEASUREMENT_FIELDS,
+  SUIT: TOP_MEASUREMENT_FIELDS,
+  WAIST: [
     { key: "total_length", translationKey: "totalLength" },
     { key: "inseam", translationKey: "inseam" },
     { key: "rise", translationKey: "rise" },
     { key: "hip", translationKey: "hip" },
   ],
-  SHOES: [{ key: "insole_length", translationKey: "insoleLength" }],
-  ACCESSORIES: [],
+  SHOE: [{ key: "insole_length", translationKey: "insoleLength" }],
+  ONE_SIZE: [],
 };
 
 /**
@@ -140,7 +175,7 @@ export const MEASUREMENT_FIELDS: Record<
  * Used for displaying measurement values with translated labels.
  */
 export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> =
-  Object.values(MEASUREMENT_FIELDS)
+  Object.values(MEASUREMENT_FIELDS_BY_GROUP)
     .flat()
     .reduce(
       (acc, field) => {
@@ -151,116 +186,80 @@ export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> =
     );
 
 /**
- * Size category identifiers used for filtering and display.
+ * Config for each size group: its sizes, filter label, and how to render a size.
  */
-export type SizeCategory = "letter" | "pants" | "shoes" | "one_size";
-
-/**
- * Configuration for each size category.
- * Single source of truth for mapping between post types and size groups.
- */
-export interface SizeCategoryConfig {
-  /** Size category identifier */
-  category: SizeCategory;
-  /** Available sizes in this category */
+export interface SizeGroupConfig {
+  group: SizeGroup;
   sizes: readonly string[];
-  /** Post types that use this size category */
-  postTypes: readonly PostType[];
-  /** i18n key for the category label (e.g., "sizeCategories.tops") */
+  /** i18n key for the group label in the size filter (e.g. "sizeCategories.tops") */
   labelKey: string;
-  /** Optional label formatter (e.g., adding "EU" prefix for shoes) */
   formatLabel?: (size: string) => string;
 }
 
-/**
- * Unified size category configuration.
- * This is the single source of truth for:
- * - Which sizes belong to which category
- * - Which post types use which size category
- * - How to display size labels
- */
-export const SIZE_CATEGORY_CONFIG: readonly SizeCategoryConfig[] = [
+export const SIZE_GROUP_CONFIG: readonly SizeGroupConfig[] = [
+  { group: "LETTER", sizes: LETTER_SIZES, labelKey: "sizeGroups.letter" },
+  { group: "WAIST", sizes: WAIST_SIZES, labelKey: "sizeGroups.waist" },
+  { group: "SUIT", sizes: SUIT_SIZES, labelKey: "sizeGroups.suit" },
   {
-    category: "letter",
-    sizes: LETTER_SIZES,
-    postTypes: ["SHIRT", "JACKET", "OTHER"],
-    labelKey: "sizeCategories.tops",
-  },
-  {
-    category: "pants",
-    sizes: PANTS_SIZES,
-    postTypes: ["PANTS"],
-    labelKey: "sizeCategories.pants",
-  },
-  {
-    category: "shoes",
+    group: "SHOE",
     sizes: SHOE_SIZES,
-    postTypes: ["SHOES"],
     labelKey: "sizeCategories.shoes",
     formatLabel: (size) => `EU ${size}`,
   },
   {
-    category: "one_size",
+    group: "ONE_SIZE",
     sizes: ["ONE_SIZE"],
-    postTypes: ["ACCESSORIES"],
     labelKey: "sizeCategories.accessories",
     formatLabel: () => "One Size",
   },
 ];
 
-/**
- * Map from PostType to its size category for quick lookup.
- * Derived from SIZE_CATEGORY_CONFIG.
- */
-export const POST_TYPE_TO_SIZE_CATEGORY: Record<PostType, SizeCategory> =
-  SIZE_CATEGORY_CONFIG.reduce(
-    (acc, config) => {
-      for (const postType of config.postTypes) {
-        acc[postType] = config.category;
-      }
+const SIZE_GROUP_BY_KEY: Record<SizeGroup, SizeGroupConfig> =
+  SIZE_GROUP_CONFIG.reduce(
+    (acc, c) => {
+      acc[c.group] = c;
       return acc;
     },
-    {} as Record<PostType, SizeCategory>,
+    {} as Record<SizeGroup, SizeGroupConfig>,
   );
 
-/**
- * Helper to ensure exhaustive type checking at compile time.
- * If a new PostType is added but not handled, TypeScript will error.
- */
-function assertNever(value: never): never {
-  throw new Error(`Unhandled post type: ${value}`);
+/** Available size options for a size group. */
+export function getSizesForGroup(group: SizeGroup): readonly string[] {
+  return SIZE_GROUP_BY_KEY[group]?.sizes ?? [];
 }
 
-/**
- * Get valid sizes for a post type category.
- * Uses SIZE_CATEGORY_CONFIG as the single source of truth.
- */
-export function formatSize(size: string, type?: PostType): string {
-  const config = type
-    ? SIZE_CATEGORY_CONFIG.find(
-        (c) => c.category === POST_TYPE_TO_SIZE_CATEGORY[type],
-      )
-    : SIZE_CATEGORY_CONFIG.find((c) => c.sizes.includes(size));
+/** Render a size for display (e.g. "EU 42", "One Size"). */
+export function formatSize(size: string, group?: SizeGroup): string {
+  const config = group
+    ? SIZE_GROUP_BY_KEY[group]
+    : SIZE_GROUP_CONFIG.find((c) => c.sizes.includes(size));
   if (!config) return size;
   return config.formatLabel ? config.formatLabel(size) : size;
 }
 
-export function getSizesForType(type: PostType): readonly string[] {
-  switch (type) {
-    case "SHIRT":
-    case "JACKET":
-    case "OTHER":
-      return LETTER_SIZES;
-    case "PANTS":
-      return PANTS_SIZES;
-    case "SHOES":
-      return SHOE_SIZES;
-    case "ACCESSORIES":
-      return ["ONE_SIZE"];
-    default:
-      // Compile-time exhaustive check - will error if a PostType case is missing
-      return assertNever(type);
-  }
+/**
+ * The taxonomy served by GET /categories. Single client-side source for the
+ * gendered category tree and per-subcategory size groups.
+ */
+export interface CategoryTaxonomy {
+  genders: Record<Gender, Record<string, string[]>>;
+  categoryLabels: Record<string, string>;
+  categoryDefaultSizeGroups: Record<string, SizeGroup>;
+  subcategorySizeGroups: Record<string, SizeGroup>;
+}
+
+/** Resolve a (category, subcategory)'s size group, mirroring the backend rule. */
+export function sizeGroupFor(
+  taxonomy: CategoryTaxonomy | undefined,
+  category: PostCategory | null,
+  subcategory: string | null,
+): SizeGroup {
+  if (!taxonomy || !category) return "ONE_SIZE";
+  return (
+    (subcategory && taxonomy.subcategorySizeGroups[subcategory]) ||
+    taxonomy.categoryDefaultSizeGroups[category] ||
+    "ONE_SIZE"
+  );
 }
 
 export interface Brand {
@@ -272,7 +271,10 @@ export interface Post {
   id: number;
   title: string;
   description: string;
-  type: PostType;
+  category: PostCategory;
+  subcategory: string | null;
+  /** Derived server-side from (category, subcategory); drives size/measurement UI */
+  size_group: SizeGroup;
   gender: Gender;
   brand: Brand | null;
   tags: string[];
@@ -297,7 +299,8 @@ export interface Post {
 export interface CreatePostRequest {
   title: string;
   description: string;
-  type: PostType;
+  category: PostCategory;
+  subcategory: string;
   gender: Gender;
   brand?: string;
   tags?: string[];
@@ -311,7 +314,8 @@ export interface CreatePostRequest {
 export interface UpdatePostRequest {
   title: string;
   description: string;
-  type: PostType;
+  category: PostCategory;
+  subcategory: string;
   gender: Gender;
   brand?: string;
   tags?: string[];
@@ -323,7 +327,8 @@ export interface UpdatePostRequest {
 }
 
 export interface PostFilters {
-  types?: PostType[];
+  categories?: PostCategory[];
+  subcategories?: string[];
   genders?: Gender[];
   sizes?: string[];
   brands?: string[];
