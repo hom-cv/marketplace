@@ -101,7 +101,7 @@ async def create_upload_url(
         )
 
     return PresignUploadResponse(
-        **storage_service.create_presigned_upload(data.content_type)
+        **storage_service.create_presigned_upload(data.content_type, current_user.id)
     )
 
 

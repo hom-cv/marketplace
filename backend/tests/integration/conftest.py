@@ -182,6 +182,7 @@ def create_mock_storage_service() -> MagicMock:
     """Create a mock StorageService (no real network/boto3)."""
     mock_service = MagicMock(spec=StorageService)
     mock_service.cdn_url = TEST_CDN_URL
+    mock_service.image_path_prefix = "/posts/"
     mock_service.upload_image = AsyncMock(return_value=None)
     mock_service.upload_images = AsyncMock(return_value=[])
     mock_service.delete_image = AsyncMock(return_value=None)

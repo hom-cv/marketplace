@@ -18,6 +18,7 @@ CDN = "https://cdn.example.com"
 def _make_service() -> ListingService:
     storage = MagicMock()
     storage.cdn_url = CDN
+    storage.image_path_prefix = "/posts/"
     return ListingService(
         MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock(), storage
     )
@@ -54,6 +55,15 @@ def test_rejects_look_alike_host():
     with pytest.raises(HTTPException) as exc:
         service._validate_image_urls(["https://cdn.example.com.evil.test/posts/a.jpg"])
     assert exc.value.status_code == 400
+
+
+def test_honors_env_namespaced_prefix():
+    # Non-prod uploads live under /posts-dev/; the validator must follow storage.
+    service = _make_service()
+    service._storage.image_path_prefix = "/posts-dev/"
+    service._validate_image_urls([f"{CDN}/posts-dev/42/a.jpg"])  # no raise
+    with pytest.raises(HTTPException):
+        service._validate_image_urls([f"{CDN}/posts/42/a.jpg"])
 
 
 def test_accepts_uppercase_host():

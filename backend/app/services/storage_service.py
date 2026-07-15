@@ -36,6 +36,7 @@ class StorageService:
             settings: Application settings.
         """
         self._settings = settings
+        self._env_suffix = "" if settings.is_production else "-dev"
         self.enabled = all(
             [
                 self._settings.DO_SPACES_KEY,
@@ -68,6 +69,19 @@ class StorageService:
         ext = filename.rsplit(".", 1)[-1].lower()
         return ext if ext in ALLOWED_IMAGE_EXTENSIONS else None
 
+    def _namespaced(self, folder: str) -> str:
+        """Apply the environment folder suffix (e.g. "posts" -> "posts-dev")."""
+        return f"{folder}{self._env_suffix}"
+
+    @property
+    def image_path_prefix(self) -> str:
+        """URL path prefix hosted post images live under, env-aware.
+
+        e.g. ``/posts/`` in prod, ``/posts-dev/`` elsewhere. Used to validate
+        that a submitted image URL points at one of our uploaded objects.
+        """
+        return f"/{self._namespaced('posts')}/"
+
     async def upload_image(self, file: UploadFile, folder: str = "posts") -> str | None:
         """
         Upload an image to Digital Ocean Spaces.
@@ -96,7 +110,7 @@ class StorageService:
                 f"Invalid file type. Allowed: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}"
             )
 
-        unique_filename = f"{folder}/{uuid.uuid4()}.{file_ext}"
+        unique_filename = f"{self._namespaced(folder)}/{uuid.uuid4()}.{file_ext}"
 
         try:
             await asyncio.to_thread(
@@ -154,6 +168,7 @@ class StorageService:
     def create_presigned_upload(
         self,
         content_type: str,
+        owner_id: int,
         folder: str = "posts",
         expires_in: int = 600,
     ) -> dict[str, Any]:
@@ -166,6 +181,8 @@ class StorageService:
 
         Args:
             content_type: The image MIME type (e.g. "image/jpeg").
+            owner_id: The uploading user's id; keys are namespaced under it so
+                objects can be attributed/cleaned up per user.
             folder: The key prefix/folder to store the object under.
             expires_in: Seconds until the presigned URL expires.
 
@@ -187,7 +204,7 @@ class StorageService:
                 f"{', '.join(sorted(CONTENT_TYPE_TO_EXTENSION))}"
             )
 
-        key = f"{folder}/{uuid.uuid4()}.{file_ext}"
+        key = f"{self._namespaced(folder)}/{owner_id}/{uuid.uuid4()}.{file_ext}"
 
         try:
             presigned = self.client.generate_presigned_post(

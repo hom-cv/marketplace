@@ -250,6 +250,7 @@ class ListingService:
             raise bad_request_error("Image storage is not configured")
 
         cdn = urlsplit(cdn_url)
+        prefix = self._storage.image_path_prefix  # env-aware, e.g. /posts/ or /posts-dev/
 
         for url in image_urls:
             parts = urlsplit(url)
@@ -258,7 +259,7 @@ class ListingService:
             if (
                 parts.scheme != cdn.scheme
                 or parts.hostname != cdn.hostname
-                or not path.startswith("/posts/")
+                or not path.startswith(prefix)
             ):
                 raise bad_request_error(f"Invalid image URL: {url}")
 

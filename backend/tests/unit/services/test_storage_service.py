@@ -34,11 +34,11 @@ def test_presign_enforces_content_length_range():
         "fields": {"key": "posts/x.jpg"},
     }
 
-    result = service.create_presigned_upload("image/jpeg")
+    result = service.create_presigned_upload("image/jpeg", owner_id=42)
 
     _, kwargs = client.generate_presigned_post.call_args
     assert ["content-length-range", 0, 5_000_000] in kwargs["Conditions"]
     assert {"Content-Type": "image/jpeg"} in kwargs["Conditions"]
-    assert result["file_url"].startswith("https://cdn.example.com/posts/")
+    assert result["file_url"].startswith("https://cdn.example.com/posts/42/")
     assert result["file_url"].endswith(".jpg")
     assert "fields" in result and "url" in result
