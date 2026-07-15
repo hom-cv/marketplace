@@ -65,6 +65,8 @@ class Settings(BaseSettings):
 
     RESERVATION_DURATION_MINUTES: int = 10
 
+    MAX_UPLOAD_BYTES: int = 10 * 1024 * 1024
+
     @property
     def is_production(self) -> bool:
         return self.ENVIRONMENT == "production"

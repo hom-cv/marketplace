@@ -86,6 +86,7 @@ export function PostCard({
           <Image
             src={post.image_url}
             alt={post.title}
+            loading="lazy"
             className={post.is_sold ? styles.imageSold : styles.image}
           />
         ) : (

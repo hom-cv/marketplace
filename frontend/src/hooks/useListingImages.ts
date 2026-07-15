@@ -12,6 +12,10 @@ import { moveItem } from "@/utils/array";
 /** Maximum number of images allowed per listing. */
 export const MAX_IMAGES = 10;
 
+// Matches the backend MAX_UPLOAD_BYTES cap (the presigned POST policy rejects
+// anything larger), so we never accept a file the server will refuse.
+const MAX_INPUT_BYTES = 10 * 1024 * 1024;
+
 type ImageSlot =
   | { kind: "existing"; url: string }
   | { kind: "new"; file: File; previewUrl: string };
@@ -44,9 +48,22 @@ export function useListingImages(initialUrls: string[] = []) {
   // Create object URLs outside the updater (keeps it pure / StrictMode-safe).
   const handleAddImages = useCallback(
     (files: File[]) => {
+      const sized = files.filter((f) => f.size <= MAX_INPUT_BYTES);
+      const tooLarge = files.length - sized.length;
+
+      if (tooLarge > 0) {
+        notifications.show({
+          message: t("images.tooLarge", {
+            max: MAX_INPUT_BYTES / (1024 * 1024),
+            rejected: tooLarge,
+          }),
+          color: "orange",
+        });
+      }
+
       const available = MAX_IMAGES - slots.length;
-      const accepted = files.slice(0, Math.max(0, available));
-      const rejected = files.length - accepted.length;
+      const accepted = sized.slice(0, Math.max(0, available));
+      const rejected = sized.length - accepted.length;
 
       if (rejected > 0) {
         notifications.show({

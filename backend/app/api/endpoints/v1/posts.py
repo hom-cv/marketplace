@@ -86,11 +86,12 @@ async def create_upload_url(
     data: PresignUploadRequest,
 ) -> PresignUploadResponse:
     """
-    Issue a presigned URL for a direct image upload to object storage.
+    Issue a presigned POST target for a direct image upload to object storage.
 
-    The client PUTs the file bytes to `upload_url` with matching `Content-Type`
-    and `x-amz-acl: public-read` headers (both are part of the signature), then
-    references the returned `file_url` when creating/updating a listing.
+    The client POSTs a multipart form of the returned `fields` plus the image
+    bytes to `url`; the signed policy caps the size (`content-length-range`) and
+    pins the content type. The returned `file_url` is referenced when
+    creating/updating a listing.
 
     Requires the user to be a verified seller.
     """
@@ -100,7 +101,7 @@ async def create_upload_url(
         )
 
     return PresignUploadResponse(
-        **storage_service.create_presigned_upload(data.content_type)
+        **storage_service.create_presigned_upload(data.content_type, current_user.id)
     )
 
 

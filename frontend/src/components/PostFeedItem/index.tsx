@@ -65,6 +65,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         <Image
           src={post.image_url}
           alt={post.title}
+          loading="lazy"
           h={400}
           fit="cover"
         />

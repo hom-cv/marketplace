@@ -599,7 +599,7 @@ class TestPresignUploadEndpoint:
         async_client: AsyncClient,
         mock_user: MagicMock,
     ):
-        """A verified seller gets an upload URL and a public file URL."""
+        """A verified seller gets a POST target (url + fields) and a file URL."""
         mock_user.is_seller = True
 
         response = await async_client.post(
@@ -609,7 +609,8 @@ class TestPresignUploadEndpoint:
 
         assert response.status_code == 200
         body = response.json()
-        assert "upload_url" in body
+        assert "url" in body
+        assert isinstance(body["fields"], dict)
         assert body["file_url"].startswith(TEST_CDN_URL)
 
     async def test_presign_non_seller_returns_400(

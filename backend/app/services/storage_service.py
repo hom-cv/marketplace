@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 from urllib.parse import urlparse
 
 import boto3
@@ -36,6 +36,7 @@ class StorageService:
             settings: Application settings.
         """
         self._settings = settings
+        self._env_suffix = "" if settings.is_production else "-dev"
         self.enabled = all(
             [
                 self._settings.DO_SPACES_KEY,
@@ -68,6 +69,19 @@ class StorageService:
         ext = filename.rsplit(".", 1)[-1].lower()
         return ext if ext in ALLOWED_IMAGE_EXTENSIONS else None
 
+    def _namespaced(self, folder: str) -> str:
+        """Apply the environment folder suffix (e.g. "posts" -> "posts-dev")."""
+        return f"{folder}{self._env_suffix}"
+
+    @property
+    def image_path_prefix(self) -> str:
+        """URL path prefix hosted post images live under, env-aware.
+
+        e.g. ``/posts/`` in prod, ``/posts-dev/`` elsewhere. Used to validate
+        that a submitted image URL points at one of our uploaded objects.
+        """
+        return f"/{self._namespaced('posts')}/"
+
     async def upload_image(self, file: UploadFile, folder: str = "posts") -> str | None:
         """
         Upload an image to Digital Ocean Spaces.
@@ -86,7 +100,7 @@ class StorageService:
         if not file or not file.filename:
             return None
 
-        if not self.enabled:
+        if not self.enabled or self.client is None:
             logger.warning("Image upload skipped - DO Spaces not configured")
             return None
 
@@ -96,7 +110,7 @@ class StorageService:
                 f"Invalid file type. Allowed: {', '.join(sorted(ALLOWED_IMAGE_EXTENSIONS))}"
             )
 
-        unique_filename = f"{folder}/{uuid.uuid4()}.{file_ext}"
+        unique_filename = f"{self._namespaced(folder)}/{uuid.uuid4()}.{file_ext}"
 
         try:
             await asyncio.to_thread(
@@ -154,30 +168,33 @@ class StorageService:
     def create_presigned_upload(
         self,
         content_type: str,
+        owner_id: int,
         folder: str = "posts",
         expires_in: int = 600,
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         """
-        Create a presigned URL for a direct browser-to-Spaces image upload.
+        Create a presigned POST target for a direct browser-to-Spaces upload.
 
-        The client PUTs the file bytes to ``upload_url`` (sending matching
-        ``Content-Type`` and ``x-amz-acl: public-read`` headers, which are part
-        of the signature) and then references ``file_url`` (the public CDN URL)
-        when creating/updating a listing.
+        The client POSTs a multipart form of ``fields`` + the image bytes to
+        ``url``, then references ``file_url`` (the public CDN URL) when
+        creating/updating a listing.
 
         Args:
             content_type: The image MIME type (e.g. "image/jpeg").
+            owner_id: The uploading user's id; keys are namespaced under it so
+                objects can be attributed/cleaned up per user.
             folder: The key prefix/folder to store the object under.
             expires_in: Seconds until the presigned URL expires.
 
         Returns:
-            ``{"upload_url": <signed PUT url>, "file_url": <public CDN url>}``.
+            ``{"url": <POST url>, "fields": <form fields>, "file_url": <CDN url>}``.
+            The client POSTs a multipart form of ``fields`` + the image bytes.
 
         Raises:
             UploadError: If storage is not configured or signing fails.
             InvalidFileTypeError: If the content type is not an allowed image.
         """
-        if not self.enabled or not self.cdn_url:
+        if not self.enabled or not self.cdn_url or self.client is None:
             raise upload_error("Image storage is not configured")
 
         file_ext = CONTENT_TYPE_TO_EXTENSION.get(content_type.lower())
@@ -187,24 +204,29 @@ class StorageService:
                 f"{', '.join(sorted(CONTENT_TYPE_TO_EXTENSION))}"
             )
 
-        key = f"{folder}/{uuid.uuid4()}.{file_ext}"
+        key = f"{self._namespaced(folder)}/{owner_id}/{uuid.uuid4()}.{file_ext}"
 
         try:
-            upload_url = self.client.generate_presigned_url(
-                "put_object",
-                Params={
-                    "Bucket": self.bucket,
-                    "Key": key,
-                    "ContentType": content_type,
-                    "ACL": "public-read",
-                },
+            presigned = self.client.generate_presigned_post(
+                Bucket=self.bucket,
+                Key=key,
+                Fields={"acl": "public-read", "Content-Type": content_type},
+                Conditions=[
+                    {"acl": "public-read"},
+                    {"Content-Type": content_type},
+                    ["content-length-range", 0, self._settings.MAX_UPLOAD_BYTES],
+                ],
                 ExpiresIn=expires_in,
             )
         except ClientError as e:
             logger.error(f"Failed to create presigned upload URL: {e}")
             raise upload_error("Failed to create upload URL") from e
 
-        return {"upload_url": upload_url, "file_url": f"{self.cdn_url.rstrip('/')}/{key}"}
+        return {
+            "url": presigned["url"],
+            "fields": presigned["fields"],
+            "file_url": f"{self.cdn_url.rstrip('/')}/{key}",
+        }
 
     async def delete_image(self, image_url: str) -> None:
         """
@@ -216,7 +238,7 @@ class StorageService:
         Raises:
             DeleteError: If deletion fails.
         """
-        if not self.enabled or not image_url:
+        if not self.enabled or not image_url or self.client is None:
             return
 
         try:

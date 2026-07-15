@@ -182,13 +182,15 @@ def create_mock_storage_service() -> MagicMock:
     """Create a mock StorageService (no real network/boto3)."""
     mock_service = MagicMock(spec=StorageService)
     mock_service.cdn_url = TEST_CDN_URL
+    mock_service.image_path_prefix = "/posts/"
     mock_service.upload_image = AsyncMock(return_value=None)
     mock_service.upload_images = AsyncMock(return_value=[])
     mock_service.delete_image = AsyncMock(return_value=None)
-    # generate_presigned_url is local signing (sync), not async.
+    # generate_presigned_post is local signing (sync), not async.
     mock_service.create_presigned_upload = MagicMock(
         return_value={
-            "upload_url": "https://upload.example/signed",
+            "url": "https://upload.example/",
+            "fields": {"key": "posts/new-image.jpg", "acl": "public-read"},
             "file_url": f"{TEST_CDN_URL}/posts/new-image.jpg",
         }
     )
@@ -206,6 +208,7 @@ def create_mock_settings() -> MagicMock:
     mock_settings.PROMPTPAY_PROCESSING_FEE_FIXED_THB = Decimal("10.0")
     mock_settings.PROCESSING_FEE_VAT_PERCENT = Decimal("7.0")
     mock_settings.TRANSFER_FEE = Decimal("30.0")
+    mock_settings.MAX_UPLOAD_BYTES = 10 * 1024 * 1024
     return mock_settings
 
 
