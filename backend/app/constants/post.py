@@ -277,9 +277,9 @@ def size_group_for(category: PostCategory, subcategory: str | None) -> SizeGroup
     """
     if subcategory is None:
         return CATEGORY_DEFAULT_SIZE_GROUP[category]
-    return SUBCATEGORY_SIZE_GROUP.get(subcategory) or CATEGORY_DEFAULT_SIZE_GROUP[
-        category
-    ]
+    return SUBCATEGORY_SIZE_GROUP.get(
+        subcategory, CATEGORY_DEFAULT_SIZE_GROUP[category]
+    )
 
 
 def is_valid_category_path(

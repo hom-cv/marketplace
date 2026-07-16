@@ -11,7 +11,7 @@ router = APIRouter(prefix="/categories", tags=["categories"])
 
 
 @router.get("", status_code=status.HTTP_200_OK)
-async def get_categories() -> dict:
+def get_categories() -> dict:
     """Return the gendered category tree + per-subcategory size groups.
 
     Static and cacheable — drives the create form, explore filters, and the
