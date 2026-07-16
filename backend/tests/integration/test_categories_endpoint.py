@@ -15,9 +15,11 @@ async def test_get_categories_returns_wellformed_tree(async_client: AsyncClient)
     assert set(body) == {
         "genders",
         "categoryLabels",
+        "subcategoryLabels",
         "categoryDefaultSizeGroups",
         "subcategorySizeGroups",
     }
+    assert body["subcategoryLabels"]["POLOS"] == "Polos"
 
     genders = body["genders"]
     assert set(genders) == {"MENS", "WOMENS", "UNISEX"}
@@ -25,7 +27,7 @@ async def test_get_categories_returns_wellformed_tree(async_client: AsyncClient)
     assert "DRESSES" not in genders["MENS"]
     assert "TAILORING" not in genders["WOMENS"]
     assert "DRESSES" in genders["UNISEX"] and "TAILORING" in genders["UNISEX"]
-    assert "Polos" in genders["MENS"]["TOPS"]
+    assert "POLOS" in genders["MENS"]["TOPS"]
     # size groups: a heterogeneous override is exposed.
-    assert body["subcategorySizeGroups"]["Formal Trousers"] == "WAIST"
+    assert body["subcategorySizeGroups"]["FORMAL_TROUSERS"] == "WAIST"
     assert body["categoryDefaultSizeGroups"]["FOOTWEAR"] == "SHOE"

@@ -232,7 +232,7 @@ function ExploreFiltersPanelComponent({
             {subcatsFor(activeDrill).map((sub) => (
               <Checkbox
                 key={sub}
-                label={sub}
+                label={taxonomy?.subcategoryLabels[sub] ?? sub}
                 size="xs"
                 checked={filters.subcategories.includes(sub)}
                 onChange={() => handleSubcategoryToggle(sub)}

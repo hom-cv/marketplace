@@ -247,8 +247,11 @@ export function formatSize(size: string, group?: SizeGroup): string {
  * gendered category tree and per-subcategory size groups.
  */
 export interface CategoryTaxonomy {
+  // genders[gender][category] = ordered subcategory CODES (e.g. "POLOS").
   genders: Record<Gender, Record<string, string[]>>;
   categoryLabels: Record<string, string>;
+  // Display label per subcategory code, e.g. { POLOS: "Polos" }.
+  subcategoryLabels: Record<string, string>;
   categoryDefaultSizeGroups: Record<string, SizeGroup>;
   subcategorySizeGroups: Record<string, SizeGroup>;
 }

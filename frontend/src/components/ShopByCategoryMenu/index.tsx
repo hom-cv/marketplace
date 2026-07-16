@@ -62,7 +62,7 @@ export function ShopByCategoryMenu({
                   className={styles.leaf}
                   onClick={() => goTo(category, sub)}
                 >
-                  {sub}
+                  {taxonomy?.subcategoryLabels[sub] ?? sub}
                 </button>
               ))}
             </Stack>

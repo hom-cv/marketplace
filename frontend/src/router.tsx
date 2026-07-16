@@ -134,7 +134,12 @@ const publicExploreRoute = createRoute({
     department?: Department;
     categories?: PostCategory[];
     subcategories?: string[];
-    sizes?: string[];
+    // Sizes are per-group params (clothing/waist/shoe/suit) so the URL reads
+    // ?shoe=39&waist=40 instead of ?sizes=SHOE:39.
+    clothing?: string[];
+    waist?: string[];
+    shoe?: string[];
+    suit?: string[];
     brands?: string[];
     tags?: string[];
     search?: string;
@@ -145,6 +150,10 @@ const publicExploreRoute = createRoute({
       if (v === undefined || v === null || v === "") return [];
       return [String(v)];
     };
+    const clean = (v: unknown) => {
+      const arr = [...new Set(asArray(v).filter(Boolean))];
+      return arr.length ? arr : undefined;
+    };
 
     const categories = [
       ...new Set(
@@ -153,12 +162,6 @@ const publicExploreRoute = createRoute({
         ),
       ),
     ];
-    const subcategories = [
-      ...new Set(asArray(search.subcategories).filter(Boolean)),
-    ];
-    const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
-    const brands = [...new Set(asArray(search.brands).filter(Boolean))];
-    const tags = [...new Set(asArray(search.tags).filter(Boolean))];
     const q =
       search.search !== undefined && search.search !== null
         ? String(search.search).trim()
@@ -168,10 +171,13 @@ const publicExploreRoute = createRoute({
         ? search.department
         : undefined,
       categories: categories.length ? categories : undefined,
-      subcategories: subcategories.length ? subcategories : undefined,
-      sizes: sizes.length ? sizes : undefined,
-      brands: brands.length ? brands : undefined,
-      tags: tags.length ? tags : undefined,
+      subcategories: clean(search.subcategories),
+      clothing: clean(search.clothing),
+      waist: clean(search.waist),
+      shoe: clean(search.shoe),
+      suit: clean(search.suit),
+      brands: clean(search.brands),
+      tags: clean(search.tags),
       search: q || undefined,
     };
   },

@@ -19,7 +19,7 @@ def _make_post(*, reserved_until=None, reserved_by_payment_id=None) -> Post:
         title="Test item",
         description="A test item",
         category=PostCategory.TOPS,
-        subcategory="Polos",
+        subcategory="POLOS",
         gender=Gender.UNISEX,
         price=Decimal("500.00"),
         shipping_cost=Decimal("0.00"),

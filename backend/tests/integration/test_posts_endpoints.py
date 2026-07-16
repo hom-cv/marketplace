@@ -88,13 +88,13 @@ class TestListPostsEndpoint:
         mock_post_crud.get_posts_with_filters.return_value = ([], 0)
 
         response = await async_client.get(
-            "/api/v1/posts?categories=TOPS&subcategories=Polos&subcategories=Blouses"
+            "/api/v1/posts?categories=TOPS&subcategories=POLOS&subcategories=BLOUSES"
         )
 
         assert response.status_code == 200
         _, kwargs = mock_post_crud.get_posts_with_filters.call_args
         assert kwargs["categories"] == [PostCategory.TOPS]
-        assert kwargs["subcategories"] == ["Polos", "Blouses"]
+        assert kwargs["subcategories"] == ["POLOS", "BLOUSES"]
 
     async def test_list_posts_invalid_category_returns_422(
         self,
@@ -168,7 +168,7 @@ class TestGetPostEndpoint:
         mock_post.title = "Test Post"
         mock_post.description = "A test post description"
         mock_post.category = PostCategory.TOPS  # Use actual enum
-        mock_post.subcategory = "Polos"
+        mock_post.subcategory = "POLOS"
         mock_post.gender = Gender.UNISEX
         mock_post.brand = None
         mock_post.tags = []
@@ -321,7 +321,7 @@ def _make_mock_post(
     mock_post.title = "Original Title"
     mock_post.description = "Original description"
     mock_post.category = PostCategory.TOPS
-    mock_post.subcategory = "Polos"
+    mock_post.subcategory = "POLOS"
     mock_post.gender = Gender.UNISEX
     mock_post.brand = None
     mock_post.tags = []
@@ -344,7 +344,7 @@ VALID_UPDATE_JSON = {
     "title": "Updated Title",
     "description": "Updated description",
     "category": "TOPS",
-    "subcategory": "Polos",
+    "subcategory": "POLOS",
     "gender": "MENS",
     "price": "600.00",
     "size": "L",
@@ -556,7 +556,7 @@ VALID_CREATE_JSON = {
     "title": "New Item",
     "description": "A brand new listing",
     "category": "TOPS",
-    "subcategory": "Polos",
+    "subcategory": "POLOS",
     "gender": "MENS",
     "price": "600.00",
     "size": "L",
@@ -589,7 +589,7 @@ class TestCreatePostEndpoint:
     ):
         """DRESSES isn't in the Men's tree → the (gender,category) path is invalid."""
         mock_user.is_seller = True
-        payload = {**VALID_CREATE_JSON, "category": "DRESSES", "subcategory": "Gowns"}
+        payload = {**VALID_CREATE_JSON, "category": "DRESSES", "subcategory": "GOWNS"}
 
         response = await async_client.post("/api/v1/posts", json=payload)
 
@@ -602,7 +602,7 @@ class TestCreatePostEndpoint:
     ):
         """A subcategory that isn't a leaf of the chosen category is rejected."""
         mock_user.is_seller = True
-        payload = {**VALID_CREATE_JSON, "subcategory": "Poloss"}
+        payload = {**VALID_CREATE_JSON, "subcategory": "POLOSS"}
 
         response = await async_client.post("/api/v1/posts", json=payload)
 

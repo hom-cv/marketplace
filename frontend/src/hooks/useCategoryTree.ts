@@ -26,7 +26,7 @@ export function categoriesForGender(
   return Object.keys(taxonomy.genders[gender] ?? {}) as PostCategory[];
 }
 
-/** Ordered subcategories for a (gender, category). */
+/** Ordered subcategory codes for a (gender, category). */
 export function subcategoriesFor(
   taxonomy: CategoryTaxonomy | undefined,
   gender: Gender | null,
@@ -34,4 +34,12 @@ export function subcategoriesFor(
 ): string[] {
   if (!taxonomy || !gender || !category) return [];
   return taxonomy.genders[gender]?.[category] ?? [];
+}
+
+/** Display label for a subcategory code (falls back to the code itself). */
+export function subcategoryLabel(
+  taxonomy: CategoryTaxonomy | undefined,
+  code: string,
+): string {
+  return taxonomy?.subcategoryLabels[code] ?? code;
 }

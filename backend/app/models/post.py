@@ -15,7 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.constants.post import Gender, PostCategory
+from app.constants.post import Gender, PostCategory, Subcategory
 from app.models._base import Base
 
 
@@ -50,8 +50,15 @@ class Post(Base):
     )
     # Granular subcategory (a leaf in CATEGORY_TREE). Nullable: legacy posts predate
     # the taxonomy ("uncategorized"); required on new listings via the schema.
-    subcategory: Mapped[str | None] = mapped_column(
-        String(64),
+    # Non-native enum (VARCHAR, app-validated) like category; length pinned to 64
+    # so the column type is unchanged from the earlier String(64).
+    subcategory: Mapped[Subcategory | None] = mapped_column(
+        Enum(
+            Subcategory,
+            native_enum=False,
+            validate_strings=True,
+            length=64,
+        ),
         nullable=True,
         index=True,
     )

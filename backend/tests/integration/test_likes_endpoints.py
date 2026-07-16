@@ -27,7 +27,7 @@ def create_mock_post(
     mock_post.title = title
     mock_post.description = description
     mock_post.category = PostCategory.TOPS
-    mock_post.subcategory = "Polos"
+    mock_post.subcategory = "POLOS"
     mock_post.gender = Gender.UNISEX
     mock_post.brand = None
     mock_post.tags = []

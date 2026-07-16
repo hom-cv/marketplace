@@ -37,6 +37,44 @@ export function parseSizeKey(key: string): { group: SizeGroup; size: string } {
   return { group: group as SizeGroup, size };
 }
 
+// Per-group URL param names, so sizes read as ?shoe=39&waist=40 rather than
+// ?sizes=SHOE:39. ONE_SIZE is never filterable, so it has no param.
+const PARAM_TO_GROUP: Record<string, SizeGroup> = {
+  clothing: "LETTER",
+  waist: "WAIST",
+  shoe: "SHOE",
+  suit: "SUIT",
+};
+const GROUP_TO_PARAM: Partial<Record<SizeGroup, string>> = {
+  LETTER: "clothing",
+  WAIST: "waist",
+  SHOE: "shoe",
+  SUIT: "suit",
+};
+export const SIZE_GROUP_PARAMS = Object.keys(PARAM_TO_GROUP);
+
+/** Per-group URL size params -> internal GROUP:size keys. */
+export function paramsToSizeKeys(search: Record<string, unknown>): string[] {
+  const keys: string[] = [];
+  for (const [param, group] of Object.entries(PARAM_TO_GROUP)) {
+    const values = search[param];
+    if (!Array.isArray(values)) continue;
+    for (const size of values) keys.push(createSizeKey(group, String(size)));
+  }
+  return keys;
+}
+
+/** Internal GROUP:size keys -> per-group URL size params. */
+export function sizeKeysToParams(sizes: string[]): Record<string, string[]> {
+  const out: Record<string, string[]> = {};
+  for (const key of sizes) {
+    const { group, size } = parseSizeKey(key);
+    const param = GROUP_TO_PARAM[group];
+    if (param) (out[param] ??= []).push(size);
+  }
+  return out;
+}
+
 /**
  * Toggle a top-level category. Independent of subcategories — selecting a
  * category means "all of it", selecting subcategories narrows within.

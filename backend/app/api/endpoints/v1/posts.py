@@ -141,7 +141,8 @@ async def list_posts(
     - categories: Filter by top-level category (can specify multiple)
     - subcategories: Filter by granular subcategory (can specify multiple)
     - genders: Filter by department (mens/womens/unisex, can specify multiple)
-    - sizes: Filter by sizes (can specify multiple). Excludes posts with no size.
+    - sizes: Group-qualified sizes ("SHOE:39", "WAIST:32"); each constrains only
+      posts of its own size group (can specify multiple)
     - brands: Filter by brand slug(s) (can specify multiple)
     - tags: Filter by tag name(s) (can specify multiple; matches any)
     - min_price: Minimum price filter

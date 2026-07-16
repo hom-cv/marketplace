@@ -23,6 +23,7 @@ from app.constants.post import (
     Gender,
     PostCategory,
     SizeGroup,
+    Subcategory,
 )
 from app.constants.storage import MAX_IMAGES_PER_POST
 from app.constants.taxonomy import is_valid_category_path, size_group_for
@@ -165,10 +166,8 @@ class PostCreateSchema(BaseModel):
         ...,
         description="Top-level category of the clothing item",
     )
-    subcategory: str = Field(
+    subcategory: Subcategory = Field(
         ...,
-        min_length=1,
-        max_length=64,
         description="Granular subcategory (a leaf in the taxonomy for this gender+category)",
     )
     gender: Gender = Field(
@@ -233,7 +232,7 @@ class PostUpdateSchema(BaseModel):
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1, max_length=5000)
     category: PostCategory | None = None
-    subcategory: str | None = Field(None, min_length=1, max_length=64)
+    subcategory: Subcategory | None = None
     gender: Gender | None = None
     price: Decimal | None = Field(
         None, ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
@@ -257,7 +256,7 @@ class PostUpdateRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1, max_length=5000)
     category: PostCategory
-    subcategory: str = Field(..., min_length=1, max_length=64)
+    subcategory: Subcategory = Field(...)
     gender: Gender
     brand: str | None = Field(default=None, max_length=MAX_BRAND_NAME_LENGTH)
     tags: TagList = Field(default_factory=list)
@@ -318,7 +317,7 @@ class PostResponseSchema(BaseModel):
     title: str
     description: str
     category: PostCategory
-    subcategory: str | None = None
+    subcategory: Subcategory | None = None
     size_group: SizeGroup | None = None
     gender: Gender
     brand: BrandRead | None = None

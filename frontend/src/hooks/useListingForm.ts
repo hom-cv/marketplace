@@ -132,7 +132,7 @@ export function useListingForm({
   const subcategoryOptions = useMemo<SelectOption[]>(() => {
     return subcategoriesFor(taxonomy, gender, category).map((s) => ({
       value: s,
-      label: s,
+      label: taxonomy?.subcategoryLabels[s] ?? s,
     }));
   }, [taxonomy, gender, category]);
 
