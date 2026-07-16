@@ -5,7 +5,7 @@
  */
 
 import { useMemo, useCallback, useState, memo } from "react";
-import { Stack, Group, Checkbox, TextInput, ScrollArea } from "@mantine/core";
+import { Stack, Group, Checkbox, TextInput } from "@mantine/core";
 import {
   IconX,
   IconCategory,
@@ -176,7 +176,7 @@ function ExploreFiltersPanelComponent({
   }, [onFiltersChange]);
 
   return (
-    <Stack gap="lg">
+    <Stack gap="xs">
       {/* Department (single-select: check to scope, uncheck for all) */}
       <CollapsibleFilterSection
         title={tCommon("filtersSidebar.department")}
@@ -281,25 +281,23 @@ function ExploreFiltersPanelComponent({
               size="xs"
               radius="xs"
             />
-            <ScrollArea.Autosize mah={220}>
-              <Stack gap="xs">
-                {visibleBrands.map((brand) => (
-                  <Checkbox
-                    key={brand.slug}
-                    label={brand.name}
-                    checked={filters.brands.includes(brand.slug)}
-                    onChange={() => handleBrandToggle(brand.slug)}
-                    radius="xs"
-                    className={styles.checkbox}
-                  />
-                ))}
-                {visibleBrands.length === 0 && (
-                  <span className={styles.noResults}>
-                    {tCommon("filtersSidebar.noBrands")}
-                  </span>
-                )}
-              </Stack>
-            </ScrollArea.Autosize>
+            <Stack gap="xs">
+              {visibleBrands.map((brand) => (
+                <Checkbox
+                  key={brand.slug}
+                  label={brand.name}
+                  checked={filters.brands.includes(brand.slug)}
+                  onChange={() => handleBrandToggle(brand.slug)}
+                  radius="xs"
+                  className={styles.checkbox}
+                />
+              ))}
+              {visibleBrands.length === 0 && (
+                <span className={styles.noResults}>
+                  {tCommon("filtersSidebar.noBrands")}
+                </span>
+              )}
+            </Stack>
           </Stack>
         </CollapsibleFilterSection>
       )}
