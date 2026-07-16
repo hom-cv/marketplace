@@ -9,10 +9,8 @@ import type { User } from "./user";
  * The full gendered tree of granular subcategories is served by GET /categories
  * (see useCategoryTree) — this union is only for labels/colors/badges.
  *
- * ⚠️ CROSS-STACK SYNC: mirror of the PostCategory / SizeGroup enums in
- *   backend/app/constants/post.py
- * Keep the vocabularies (below) in sync. The size-VALUE lists + measurement
- * fields further down are frontend-owned (grouped by the backend's SizeGroup).
+ * SYNC: POST_CATEGORIES / SIZE_GROUPS mirror the enums in
+ * backend/app/constants/post.py. Size-value lists below are frontend-owned.
  */
 export const POST_CATEGORIES = [
   "TOPS",
