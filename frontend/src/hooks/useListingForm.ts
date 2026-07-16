@@ -176,10 +176,11 @@ export function useListingForm({
   const handleSubcategoryChange = useCallback(
     (value: string | null) => {
       form.setFieldValue("subcategory", value);
-      form.setFieldValue("size", null);
+      const group = value ? sizeGroupFor(taxonomy, category, value) : null;
+      form.setFieldValue("size", group === "ONE_SIZE" ? "ONE_SIZE" : null);
       resetMeasurements();
     },
-    [form, resetMeasurements],
+    [form, resetMeasurements, taxonomy, category],
   );
 
   const measurementFields = useMemo<MeasurementField[]>(() => {

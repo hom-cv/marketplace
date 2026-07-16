@@ -30,12 +30,7 @@ export function ShopByCategoryMenu({
   const goTo = (category: PostCategory, subcategory: string) => {
     navigate({
       to: "/explore",
-      search: (prev) => ({
-        ...prev,
-        department,
-        categories: [category],
-        subcategories: [subcategory],
-      }),
+      search: { department, categories: [category], subcategories: [subcategory] },
     });
   };
 

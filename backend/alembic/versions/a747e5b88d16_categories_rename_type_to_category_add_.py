@@ -86,5 +86,5 @@ def downgrade() -> None:
     _remap(_CATEGORY_TO_TYPE)
 
     op.drop_index(op.f("ix_posts_category"), table_name="posts")
-    op.create_index("ix_posts_type", "posts", ["category"], unique=False)
     op.alter_column("posts", "category", new_column_name="type")
+    op.create_index("ix_posts_type", "posts", ["type"], unique=False)

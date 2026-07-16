@@ -260,8 +260,7 @@ SUBCATEGORY_SIZE_GROUP: dict[str, SizeGroup] = {
     # tailoring: trousers use waist, dress shirts use letter; the rest default to suit
     "Formal Trousers": SizeGroup.WAIST,
     "Formal Shirting": SizeGroup.LETTER,
-    # letter-sized accessories that actually have sizes
-    "Belts": SizeGroup.LETTER,
+    "Belts": SizeGroup.WAIST,
     "Gloves & Scarves": SizeGroup.LETTER,
     "Gloves": SizeGroup.LETTER,
     "Hats": SizeGroup.LETTER,
