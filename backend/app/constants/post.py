@@ -270,8 +270,14 @@ SUBCATEGORY_SIZE_GROUP: dict[str, SizeGroup] = {
 }
 
 
-def size_group_for(category: PostCategory, subcategory: str) -> SizeGroup:
-    """SizeGroup for a (category, subcategory): leaf override, else category default."""
+def size_group_for(category: PostCategory, subcategory: str | None) -> SizeGroup:
+    """SizeGroup for a (category, subcategory): leaf override, else category default.
+
+    ``subcategory`` may be None (legacy posts predate the taxonomy) — that falls
+    through to the category default.
+    """
+    if subcategory is None:
+        return CATEGORY_DEFAULT_SIZE_GROUP[category]
     return SUBCATEGORY_SIZE_GROUP.get(subcategory) or CATEGORY_DEFAULT_SIZE_GROUP[
         category
     ]

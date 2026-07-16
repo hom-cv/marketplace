@@ -10,9 +10,9 @@ NULL for legacy rows (they predate the taxonomy; "uncategorized").
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = 'a747e5b88d16'
@@ -43,19 +43,31 @@ _CATEGORY_TO_TYPE = {
     "BAGS": "OTHER",
 }
 
+# Lightweight table handle for data-only UPDATEs via SQLAlchemy core.
+_posts = sa.table("posts", sa.column("category", sa.String))
+
+
+def _remap(mapping: dict[str, str]) -> None:
+    """Rewrite posts.category values in place, dialect-agnostically."""
+    for old, new in mapping.items():
+        op.execute(
+            _posts.update().where(_posts.c.category == old).values(category=new)
+        )
+
 
 def upgrade() -> None:
     """Upgrade schema."""
-    # Rename the column (preserves data), widen to fit new values.
+    # Rename the column (preserves data). New values fit the existing width.
     op.alter_column("posts", "type", new_column_name="category")
-    op.alter_column(
-        "posts", "category", type_=sa.String(length=32), existing_nullable=False
+    # Re-point the index at the renamed column (drop+create is portable;
+    # Alembic has no rename_index op).
+    op.drop_index("ix_posts_type", table_name="posts")
+    op.create_index(
+        op.f("ix_posts_category"), "posts", ["category"], unique=False
     )
-    op.execute("ALTER INDEX ix_posts_type RENAME TO ix_posts_category")
 
     # Remap legacy values in place.
-    for old, new in _TYPE_TO_CATEGORY.items():
-        op.execute(f"UPDATE posts SET category = '{new}' WHERE category = '{old}'")
+    _remap(_TYPE_TO_CATEGORY)
 
     # New granular column; NULL for legacy rows ("uncategorized").
     op.add_column(
@@ -71,11 +83,8 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_posts_subcategory"), table_name="posts")
     op.drop_column("posts", "subcategory")
 
-    for new, old in _CATEGORY_TO_TYPE.items():
-        op.execute(f"UPDATE posts SET category = '{old}' WHERE category = '{new}'")
+    _remap(_CATEGORY_TO_TYPE)
 
-    op.execute("ALTER INDEX ix_posts_category RENAME TO ix_posts_type")
-    op.alter_column(
-        "posts", "category", type_=sa.String(length=11), existing_nullable=False
-    )
+    op.drop_index(op.f("ix_posts_category"), table_name="posts")
+    op.create_index("ix_posts_type", "posts", ["category"], unique=False)
     op.alter_column("posts", "category", new_column_name="type")
