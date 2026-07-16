@@ -139,8 +139,13 @@ const publicExploreRoute = createRoute({
     tags?: string[];
     search?: string;
   } => {
-    const asArray = (v: unknown): string[] =>
-      Array.isArray(v) ? v.map(String) : typeof v === "string" && v ? [v] : [];
+
+    const asArray = (v: unknown): string[] => {
+      if (Array.isArray(v)) return v.map(String);
+      if (v === undefined || v === null || v === "") return [];
+      return [String(v)];
+    };
+
     const categories = [
       ...new Set(
         asArray(search.categories).filter((c): c is PostCategory =>
@@ -154,7 +159,10 @@ const publicExploreRoute = createRoute({
     const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
     const brands = [...new Set(asArray(search.brands).filter(Boolean))];
     const tags = [...new Set(asArray(search.tags).filter(Boolean))];
-    const q = typeof search.search === "string" ? search.search.trim() : "";
+    const q =
+      search.search !== undefined && search.search !== null
+        ? String(search.search).trim()
+        : "";
     return {
       department: isDepartment(search.department)
         ? search.department
