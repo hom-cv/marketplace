@@ -23,10 +23,9 @@ from app.constants.post import (
     Gender,
     PostCategory,
     SizeGroup,
-    is_valid_category_path,
-    size_group_for,
 )
 from app.constants.storage import MAX_IMAGES_PER_POST
+from app.constants.taxonomy import is_valid_category_path, size_group_for
 from app.schemas.user import UserResponseSchema
 
 
@@ -58,7 +57,8 @@ def validate_tags(tags: list[str]) -> list[str]:
 TagList = Annotated[list[str], AfterValidator(validate_tags)]
 
 
-# Measurement schemas for category-specific validation
+# Measurement schemas for category-specific validation.
+# SYNC: fields mirror MEASUREMENT_FIELDS_BY_GROUP in frontend/src/api/types/post.ts.
 class TopMeasurements(BaseModel):
     """Measurements for shirts, jackets, and tops (all in cm)."""
 
@@ -319,7 +319,6 @@ class PostResponseSchema(BaseModel):
     description: str
     category: PostCategory
     subcategory: str | None = None
-    # Derived (not stored): which size/measurement group this listing uses.
     size_group: SizeGroup | None = None
     gender: Gender
     brand: BrandRead | None = None
@@ -338,13 +337,16 @@ class PostResponseSchema(BaseModel):
         """Map the ORM ``list[Tag]`` to plain names (leave a list[str] as-is)."""
         if not v:
             return []
+
         return [getattr(t, "name", t) for t in v]
 
     @model_validator(mode="after")
     def _derive_size_group(self) -> "PostResponseSchema":
         """Compute the size group from (category, subcategory) for the client."""
         self.size_group = size_group_for(self.category, self.subcategory)
+
         return self
+
     is_sold: bool = False
     is_banned: bool = False
     is_user_banned: bool = False

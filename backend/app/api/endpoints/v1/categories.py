@@ -5,7 +5,7 @@ Serves the single source-of-truth taxonomy so the frontend never re-declares it.
 
 from fastapi import APIRouter, status
 
-from app.constants.post import taxonomy_payload
+from app.constants.taxonomy import taxonomy_payload
 
 router = APIRouter(prefix="/categories", tags=["categories"])
 

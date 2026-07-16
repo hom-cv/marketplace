@@ -8,6 +8,11 @@ import type { User } from "./user";
  * All top-level post categories (must match backend PostCategory).
  * The full gendered tree of granular subcategories is served by GET /categories
  * (see useCategoryTree) — this union is only for labels/colors/badges.
+ *
+ * ⚠️ CROSS-STACK SYNC: mirror of the PostCategory / SizeGroup enums in
+ *   backend/app/constants/post.py
+ * Keep the vocabularies (below) in sync. The size-VALUE lists + measurement
+ * fields further down are frontend-owned (grouped by the backend's SizeGroup).
  */
 export const POST_CATEGORIES = [
   "TOPS",
@@ -153,6 +158,10 @@ const TOP_MEASUREMENT_FIELDS: readonly MeasurementFieldConfig[] = [
 /**
  * Measurement fields per size group (stable: 4 groups). Which group a listing
  * uses comes from the taxonomy (subcategory) — see `size_group` on Post.
+ *
+ * ⚠️ CROSS-STACK SYNC: mirror of the measurement schemas (TopMeasurements /
+ * PantsMeasurements / ShoesMeasurements) in backend/app/schemas/post.py, which
+ * validates them. Add/remove a field in both places.
  */
 export const MEASUREMENT_FIELDS_BY_GROUP: Record<
   SizeGroup,
