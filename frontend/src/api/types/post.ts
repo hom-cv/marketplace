@@ -157,9 +157,7 @@ const TOP_MEASUREMENT_FIELDS: readonly MeasurementFieldConfig[] = [
  * Measurement fields per size group (stable: 4 groups). Which group a listing
  * uses comes from the taxonomy (subcategory) — see `size_group` on Post.
  *
- * ⚠️ CROSS-STACK SYNC: mirror of the measurement schemas (TopMeasurements /
- * PantsMeasurements / ShoesMeasurements) in backend/app/schemas/post.py, which
- * validates them. Add/remove a field in both places.
+ * SYNC: mirrors the measurement schemas in backend/app/schemas/post.py.
  */
 export const MEASUREMENT_FIELDS_BY_GROUP: Record<
   SizeGroup,
