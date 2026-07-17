@@ -121,7 +121,8 @@ export function PublicExplorePage() {
 
   const handleDepartmentChange = useCallback(
     (dept: Department | undefined) => {
-      // Switching department changes the tree, so drop category/subcategory picks.
+      // Switching department changes the tree, so drop the category-scoped picks
+      // (categories/subcategories) and the sizes chosen under them.
       navigate({
         to: "/explore",
         replace: true,
@@ -130,6 +131,7 @@ export function PublicExplorePage() {
           department: dept,
           categories: undefined,
           subcategories: undefined,
+          sizes: undefined,
         }),
       });
     },

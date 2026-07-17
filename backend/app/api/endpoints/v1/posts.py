@@ -22,7 +22,7 @@ from app.crud.like import AnnotatedLikeCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import User
-from app.models.post import Gender, PostCategory
+from app.models.post import Gender, PostCategory, Subcategory
 from app.schemas.payment import PriceBreakdownResponse
 from app.schemas.post import (
     PaginatedPostsResponse,
@@ -120,7 +120,7 @@ async def list_posts(
     skip: Annotated[int, Query(ge=0)] = 0,
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     categories: Annotated[list[PostCategory] | None, Query()] = None,
-    subcategories: Annotated[list[str] | None, Query()] = None,
+    subcategories: Annotated[list[Subcategory] | None, Query()] = None,
     genders: Annotated[list[Gender] | None, Query()] = None,
     sizes: Annotated[list[str] | None, Query()] = None,
     brands: Annotated[list[str] | None, Query()] = None,

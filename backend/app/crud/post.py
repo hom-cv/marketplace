@@ -19,7 +19,7 @@ from app.core.utils import normalize_tag, slugify
 from app.crud._base import BaseCRUD
 from app.models.brand import Brand
 from app.models.payment import Payment, PaymentStatus
-from app.models.post import Gender, Post, PostCategory
+from app.models.post import Gender, Post, PostCategory, Subcategory
 from app.models.post_ban import PostBan
 from app.models.tag import Tag
 from app.models.user import User
@@ -153,7 +153,7 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         skip: int = 0,
         limit: int = 50,
         categories: list[PostCategory] | None = None,
-        subcategories: list[str] | None = None,
+        subcategories: list[Subcategory] | None = None,
         genders: list[Gender] | None = None,
         sizes: list[str] | None = None,
         brand_slugs: list[str] | None = None,

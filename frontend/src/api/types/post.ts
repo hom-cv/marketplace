@@ -191,31 +191,24 @@ export const MEASUREMENT_KEY_TO_TRANSLATION: Record<string, string> =
     );
 
 /**
- * Config for each size group: its sizes, filter label, and how to render a size.
+ * Config for each size group: its sizes and how to render one. The group's filter
+ * label comes from i18n (`sizeGroups.<group>`), so it isn't stored here.
  */
 export interface SizeGroupConfig {
   group: SizeGroup;
   sizes: readonly string[];
-  /** i18n key for the group label in the size filter (e.g. "sizeCategories.tops") */
-  labelKey: string;
   formatLabel?: (size: string) => string;
 }
 
 // Full Record<SizeGroup, ...> so a missing group is a compile error (exhaustiveness).
 const SIZE_GROUP_BY_KEY: Record<SizeGroup, SizeGroupConfig> = {
-  LETTER: { group: "LETTER", sizes: LETTER_SIZES, labelKey: "sizeGroups.letter" },
-  WAIST: { group: "WAIST", sizes: WAIST_SIZES, labelKey: "sizeGroups.waist" },
-  SUIT: { group: "SUIT", sizes: SUIT_SIZES, labelKey: "sizeGroups.suit" },
-  SHOE: {
-    group: "SHOE",
-    sizes: SHOE_SIZES,
-    labelKey: "sizeCategories.shoes",
-    formatLabel: (size) => `EU ${size}`,
-  },
+  LETTER: { group: "LETTER", sizes: LETTER_SIZES },
+  WAIST: { group: "WAIST", sizes: WAIST_SIZES },
+  SUIT: { group: "SUIT", sizes: SUIT_SIZES },
+  SHOE: { group: "SHOE", sizes: SHOE_SIZES, formatLabel: (size) => `EU ${size}` },
   ONE_SIZE: {
     group: "ONE_SIZE",
     sizes: ["ONE_SIZE"],
-    labelKey: "sizeCategories.accessories",
     formatLabel: () => "One Size",
   },
 };

@@ -105,6 +105,15 @@ class TestListPostsEndpoint:
 
         assert response.status_code == 422
 
+    async def test_list_posts_invalid_subcategory_returns_422(
+        self,
+        async_client: AsyncClient,
+    ):
+        """An unknown subcategory is rejected at the API boundary (like categories)."""
+        response = await async_client.get("/api/v1/posts?subcategories=NOTREAL")
+
+        assert response.status_code == 422
+
     async def test_list_posts_brand_and_tag_filters_passthrough(
         self,
         async_client: AsyncClient,

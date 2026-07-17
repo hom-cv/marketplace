@@ -4,6 +4,8 @@ Single source of truth for categories — validated against here and served to t
 frontend via ``taxonomy_payload`` (GET /categories).
 """
 
+from functools import lru_cache
+
 from app.constants.post import (
     Gender,
     PostCategory,
@@ -354,8 +356,12 @@ def is_valid_category_path(
     return subcategory in CATEGORY_TREE.get(gender, {}).get(category, [])
 
 
+@lru_cache(maxsize=1)
 def taxonomy_payload() -> dict:
     """Serialize the taxonomy for the public GET /categories endpoint.
+
+    Cached: the taxonomy is static, so the dict is built once and reused. Callers
+    (the endpoint) only read it, never mutate.
 
     Shape: ``{genders, categoryLabels, subcategoryLabels, categoryDefaultSizeGroups,
     subcategorySizeGroups}``. The frontend computes a subcategory's size group as

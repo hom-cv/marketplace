@@ -106,12 +106,6 @@
     "womens": "ผู้หญิง",
     "unisex": "ยูนิเซ็กส์"
   },
-  "sizeCategories": {
-    "tops": "เสื้อผ้าส่วนบน (เสื้อ/แจ็คเก็ต)",
-    "pants": "กางเกง (เอว)",
-    "shoes": "รองเท้า (EU)",
-    "accessories": "เครื่องประดับ"
-  },
   "images": {
     "noImages": "ยังไม่ได้อัปโหลดรูปภาพ",
     "noImagesAvailable": "ไม่มีรูปภาพ",
