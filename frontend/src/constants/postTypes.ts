@@ -1,45 +1,48 @@
 /**
- * Shared constants for post type colors and label helpers
- * Used across PostCard, PostFeedItem, PostView pages, and Explore pages
+ * Shared constants for post category badges (colors + label helpers).
+ * Used across PostCard, PostFeedItem, PostView pages, and Explore pages.
  */
 
-import type { PostType } from "@/api/types/post";
+import type { PostCategory } from "@/api/types/post";
 
 /**
- * Color mapping for post type badges
+ * Color mapping for post category badges.
  */
-export const POST_TYPE_COLORS: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
+export const POST_CATEGORY_COLORS: Record<PostCategory, string> = {
+  TOPS: "blue",
+  BOTTOMS: "teal",
+  OUTERWEAR: "grape",
+  FOOTWEAR: "orange",
   ACCESSORIES: "pink",
-  OTHER: "gray",
+  TAILORING: "indigo",
+  DRESSES: "violet",
+  JEWELRY: "yellow",
+  BAGS: "gray",
 };
 
 /**
- * Translation keys for post type labels
+ * i18n keys for category labels (namespace "listings").
  */
-export const POST_TYPE_LABEL_KEYS: Record<PostType, string> = {
-  SHIRT: "categories.shirt",
-  PANTS: "categories.pants",
-  JACKET: "categories.jacket",
-  SHOES: "categories.shoes",
+export const POST_CATEGORY_LABEL_KEYS: Record<PostCategory, string> = {
+  TOPS: "categories.tops",
+  BOTTOMS: "categories.bottoms",
+  OUTERWEAR: "categories.outerwear",
+  FOOTWEAR: "categories.footwear",
   ACCESSORIES: "categories.accessories",
-  OTHER: "categories.other",
+  TAILORING: "categories.tailoring",
+  DRESSES: "categories.dresses",
+  JEWELRY: "categories.jewelry",
+  BAGS: "categories.bags",
 };
 
 /**
- * Hook to get translated post type labels
+ * Get translated category labels.
  * @param t - Translation function from useTranslation("listings")
  */
-export function getPostTypeLabels(t: (key: string) => string): Record<PostType, string> {
-  return {
-    SHIRT: t("categories.shirt"),
-    PANTS: t("categories.pants"),
-    JACKET: t("categories.jacket"),
-    SHOES: t("categories.shoes"),
-    ACCESSORIES: t("categories.accessories"),
-    OTHER: t("categories.other"),
-  };
+export function getCategoryLabels(
+  t: (key: string) => string,
+): Record<PostCategory, string> {
+  return Object.fromEntries(
+    Object.entries(POST_CATEGORY_LABEL_KEYS).map(([cat, key]) => [cat, t(key)]),
+  ) as Record<PostCategory, string>;
 }

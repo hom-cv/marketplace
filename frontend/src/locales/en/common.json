@@ -70,6 +70,7 @@
     "multipleItems": "listings"
   },
   "filtersSidebar": {
+    "department": "Department",
     "filters": "Filters",
     "clear": "Clear",
     "category": "Category",
@@ -78,7 +79,11 @@
     "noBrands": "No brands found",
     "priceRange": "Price Range",
     "size": "Size",
-    "oneSize": "One Size"
+    "oneSize": "One Size",
+    "allOf": "All {{category}}",
+    "selectDepartmentFirst": "Select a department above to browse categories.",
+    "selectCategoryForSize": "Select a category to filter by size",
+    "oneSizeItems": "These items are one size"
   },
   "report": {
     "title": "Report {{type}}",

@@ -7,7 +7,7 @@ import { useRef, useState, useMemo, useCallback } from "react";
 import { useDisclosure } from "@mantine/hooks";
 import { useTranslation } from "react-i18next";
 import type { Measurements, Post } from "@/api/types/post";
-import { MEASUREMENT_FIELDS } from "@/api/types/post";
+import { MEASUREMENT_FIELDS_BY_GROUP } from "@/api/types/post";
 import type { ExtraMeasurement } from "@/api/types/listingForm";
 import { updateAt } from "@/utils/array";
 
@@ -24,7 +24,7 @@ function splitMeasurements(post: Post): {
   const known: Record<string, number> = {};
   const extra: ExtraMeasurement[] = [];
   const fieldKeys = new Set(
-    (MEASUREMENT_FIELDS[post.type] ?? []).map((f) => f.key),
+    (MEASUREMENT_FIELDS_BY_GROUP[post.size_group] ?? []).map((f) => f.key),
   );
 
   let counter = 0;

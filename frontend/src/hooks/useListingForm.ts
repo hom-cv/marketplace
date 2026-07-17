@@ -19,16 +19,22 @@ import { notifySuccess, notifyError } from "@/utils/notify";
 import { getErrorMessage } from "@/utils/error";
 import type {
   Post,
-  PostType,
+  PostCategory,
   Gender,
   CreatePostRequest,
 } from "@/api/types/post";
 import {
-  getSizesForType,
+  getSizesForGroup,
   formatSize,
-  MEASUREMENT_FIELDS,
+  sizeGroupFor,
+  MEASUREMENT_FIELDS_BY_GROUP,
   POST_GENDERS,
 } from "@/api/types/post";
+import {
+  useCategoryTree,
+  categoriesForGender,
+  subcategoriesFor,
+} from "@/hooks/useCategoryTree";
 import { getGenderLabels } from "@/constants/postGenders";
 import type {
   CreatePostFormValues,
@@ -65,18 +71,7 @@ export function useListingForm({
   onSuccess,
 }: UseListingFormOptions) {
   const { t } = useTranslation("listings");
-
-  const postTypeOptions = useMemo<SelectOption[]>(
-    () => [
-      { value: "SHIRT", label: t("categories.shirt") },
-      { value: "PANTS", label: t("categories.pants") },
-      { value: "JACKET", label: t("categories.jacket") },
-      { value: "SHOES", label: t("categories.shoes") },
-      { value: "ACCESSORIES", label: t("categories.accessories") },
-      { value: "OTHER", label: t("categories.other") },
-    ],
-    [t],
-  );
+  const { data: taxonomy } = useCategoryTree();
 
   const genderOptions = useMemo<SelectOption[]>(() => {
     const labels = getGenderLabels(t);
@@ -91,8 +86,10 @@ export function useListingForm({
         value.trim().length < 1 ? t("create.form.titleRequired") : null,
       description: (value) =>
         value.trim().length < 1 ? t("create.form.descriptionRequired") : null,
-      type: (value) => (!value ? t("create.form.categoryRequired") : null),
       gender: (value) => (!value ? t("create.form.genderRequired") : null),
+      category: (value) => (!value ? t("create.form.categoryRequired") : null),
+      subcategory: (value) =>
+        !value ? t("create.form.subcategoryRequired") : null,
       price: (value) => {
         if (!value || value < MIN_LISTING_PRICE)
           return t("create.form.priceMin", { min: MIN_LISTING_PRICE });
@@ -113,7 +110,7 @@ export function useListingForm({
         return null;
       },
       size: (value, values) =>
-        values.type && !value ? t("create.form.sizeRequired") : null,
+        values.subcategory && !value ? t("create.form.sizeRequired") : null,
     },
   });
 
@@ -122,38 +119,77 @@ export function useListingForm({
   const { reset: resetMeasurements, assemble: assembleMeasurements } =
     measurements;
 
-  const sizeOptions = useMemo<SelectOption[]>(() => {
-    const type = form.values.type;
-    if (!type) return [];
-    return getSizesForType(type).map((s) => ({
-      value: s,
-      label: formatSize(s, type),
-    }));
-  }, [form.values.type]);
+  const { gender, category, subcategory } = form.values;
 
-  const handleTypeChange = useCallback(
+  // Gender-scoped category options (from the served taxonomy).
+  const categoryOptions = useMemo<SelectOption[]>(() => {
+    return categoriesForGender(taxonomy, gender).map((c) => ({
+      value: c,
+      label: taxonomy?.categoryLabels[c] ?? c,
+    }));
+  }, [taxonomy, gender]);
+
+  const subcategoryOptions = useMemo<SelectOption[]>(() => {
+    return subcategoriesFor(taxonomy, gender, category).map((s) => ({
+      value: s,
+      label: taxonomy?.subcategoryLabels[s] ?? s,
+    }));
+  }, [taxonomy, gender, category]);
+
+  // Size + measurements derive from the subcategory's size group.
+  const sizeGroup = useMemo(
+    () => sizeGroupFor(taxonomy, category, subcategory),
+    [taxonomy, category, subcategory],
+  );
+
+  const sizeOptions = useMemo<SelectOption[]>(() => {
+    if (!subcategory) return [];
+    return getSizesForGroup(sizeGroup).map((s) => ({
+      value: s,
+      label: formatSize(s, sizeGroup),
+    }));
+  }, [subcategory, sizeGroup]);
+
+  // Changing gender invalidates the whole category path.
+  const handleGenderChange = useCallback(
     (value: string | null) => {
-      form.setFieldValue("type", value as PostType | null);
+      form.setFieldValue("gender", value as Gender | null);
+      form.setFieldValue("category", null);
+      form.setFieldValue("subcategory", null);
       form.setFieldValue("size", null);
       resetMeasurements();
     },
     [form, resetMeasurements],
   );
 
-  const handleGenderChange = useCallback(
+  const handleCategoryChange = useCallback(
     (value: string | null) => {
-      form.setFieldValue("gender", value as Gender | null);
+      form.setFieldValue("category", value as PostCategory | null);
+      form.setFieldValue("subcategory", null);
+      form.setFieldValue("size", null);
+      resetMeasurements();
     },
-    [form],
+    [form, resetMeasurements],
+  );
+
+  // Size group can change with the subcategory, so reset size + measurements.
+  const handleSubcategoryChange = useCallback(
+    (value: string | null) => {
+      form.setFieldValue("subcategory", value);
+      const group = value ? sizeGroupFor(taxonomy, category, value) : null;
+      form.setFieldValue("size", group === "ONE_SIZE" ? "ONE_SIZE" : null);
+      resetMeasurements();
+    },
+    [form, resetMeasurements, taxonomy, category],
   );
 
   const measurementFields = useMemo<MeasurementField[]>(() => {
-    if (!form.values.type) return [];
-    return (MEASUREMENT_FIELDS[form.values.type] ?? []).map((field) => ({
+    if (!subcategory) return [];
+    return (MEASUREMENT_FIELDS_BY_GROUP[sizeGroup] ?? []).map((field) => ({
       key: field.key,
       label: t(`measurements.${field.translationKey}`),
     }));
-  }, [form.values.type, t]);
+  }, [subcategory, sizeGroup, t]);
 
   const mutation = useMutation({
     mutationFn: async (data: ListingData) => {
@@ -178,7 +214,8 @@ export function useListingForm({
       mutate({
         title: values.title,
         description: values.description,
-        type: values.type!,
+        category: values.category!,
+        subcategory: values.subcategory!,
         gender: values.gender!,
         brand:
           values.brand && values.brand !== BRAND_OTHER_VALUE
@@ -197,11 +234,13 @@ export function useListingForm({
   return {
     // Form
     form,
-    postTypeOptions,
+    categoryOptions,
+    subcategoryOptions,
     genderOptions,
     sizeOptions,
-    handleTypeChange,
     handleGenderChange,
+    handleCategoryChange,
+    handleSubcategoryChange,
 
     // Images
     imageCount: images.imageCount,

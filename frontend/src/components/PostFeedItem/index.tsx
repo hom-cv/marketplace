@@ -8,7 +8,8 @@ import { Box, Group, Text, Badge, Stack, Image } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import type { Post, PostType } from "@/api/types/post";
+import type { Post } from "@/api/types/post";
+import { POST_CATEGORY_COLORS, getCategoryLabels } from "@/constants/postTypes";
 import { useAuthStore } from "@/stores/authStore";
 import { LikeButton } from "@/components/LikeButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -21,15 +22,6 @@ interface PostFeedItemProps {
   linkPrefix?: string;
 }
 
-const typeColors: Record<PostType, string> = {
-  SHIRT: "blue",
-  PANTS: "teal",
-  JACKET: "grape",
-  SHOES: "orange",
-  ACCESSORIES: "pink",
-  OTHER: "gray",
-};
-
 export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
   const price = parseFloat(post.price);
@@ -41,18 +33,8 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
 
-  // Type labels with translations
-  const typeLabels: Record<PostType, string> = useMemo(
-    () => ({
-      SHIRT: tListings("categories.shirt"),
-      PANTS: tListings("categories.pants"),
-      JACKET: tListings("categories.jacket"),
-      SHOES: tListings("categories.shoes"),
-      ACCESSORIES: tListings("categories.accessories"),
-      OTHER: tListings("categories.other"),
-    }),
-    [tListings],
-  );
+  // Category labels with translations
+  const categoryLabels = useMemo(() => getCategoryLabels(tListings), [tListings]);
 
   const handleClick = () => {
     navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
@@ -101,8 +83,8 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
                 {t("badges.sold")}
               </Badge>
             )}
-            <Badge color={typeColors[post.type]} variant="light">
-              {typeLabels[post.type]}
+            <Badge color={POST_CATEGORY_COLORS[post.category]} variant="light">
+              {categoryLabels[post.category]}
             </Badge>
             {isOwner && (
               <Badge variant="light" color="gray">

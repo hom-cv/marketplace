@@ -218,7 +218,7 @@ function ListingPreview({ post }: { post: Post }) {
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>Size</span>
             <span className={styles.sizeBadge}>
-              {formatSize(post.size, post.type)}
+              {formatSize(post.size, post.size_group)}
             </span>
           </div>
         )}

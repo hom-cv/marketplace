@@ -24,11 +24,13 @@ export function CreatePostPage() {
 
   const {
     form,
-    postTypeOptions,
+    categoryOptions,
+    subcategoryOptions,
     genderOptions,
     sizeOptions,
-    handleTypeChange,
     handleGenderChange,
+    handleCategoryChange,
+    handleSubcategoryChange,
     imageCount,
     imagePreviews,
     selectedImageIndex,
@@ -96,10 +98,12 @@ export function CreatePostPage() {
               <div className={styles.formCard}>
                 <ListingDetailsForm
                   form={form}
-                  postTypeOptions={postTypeOptions}
+                  categoryOptions={categoryOptions}
+                  subcategoryOptions={subcategoryOptions}
                   genderOptions={genderOptions}
                   sizeOptions={sizeOptions}
-                  onTypeChange={handleTypeChange}
+                  onCategoryChange={handleCategoryChange}
+                  onSubcategoryChange={handleSubcategoryChange}
                   onGenderChange={handleGenderChange}
                 />
               </div>

@@ -1,17 +1,25 @@
-"""Post/listing-related constants."""
+"""Post/listing vocabulary enums + scalar constants.
+"""
 
 from enum import Enum
 
+# Source of truth for the shared vocabulary. The frontend copy is generated from
+# these by scripts/gen_frontend_enums.py (run before committing); the gendered
+# category tree is served at runtime via /categories (taxonomy.py).
 
-class PostType(str, Enum):
-    """Clothing type. Shared by the API schema and the ORM model."""
 
-    SHIRT = "SHIRT"
-    PANTS = "PANTS"
-    JACKET = "JACKET"
-    SHOES = "SHOES"
+class PostCategory(str, Enum):
+    """Top-level clothing category. Shared by the API schema and the ORM model."""
+
+    TOPS = "TOPS"
+    BOTTOMS = "BOTTOMS"
+    OUTERWEAR = "OUTERWEAR"
+    FOOTWEAR = "FOOTWEAR"
     ACCESSORIES = "ACCESSORIES"
-    OTHER = "OTHER"
+    TAILORING = "TAILORING"
+    DRESSES = "DRESSES"
+    JEWELRY = "JEWELRY"
+    BAGS = "BAGS"
 
 
 class Gender(str, Enum):
@@ -20,6 +28,129 @@ class Gender(str, Enum):
     MENS = "MENS"
     WOMENS = "WOMENS"
     UNISEX = "UNISEX"
+
+
+class SizeGroup(str, Enum):
+    """Which size options + measurement fields a subcategory shows."""
+
+    LETTER = "LETTER"  # XS-XXXL
+    WAIST = "WAIST"  # 26-44
+    SHOE = "SHOE"  # EU 35-48
+    SUIT = "SUIT"  # 34-50 (chest)
+    ONE_SIZE = "ONE_SIZE"  # no size
+
+
+class Subcategory(str, Enum):
+    """Granular clothing subcategory (a leaf in the taxonomy)."""
+
+    # --- Shared by both departments ---
+    BELTS = "BELTS"
+    BLAZERS = "BLAZERS"
+    BOMBERS = "BOMBERS"
+    BOOTS = "BOOTS"
+    DENIM_JACKETS = "DENIM_JACKETS"
+    GLASSES = "GLASSES"
+    HATS = "HATS"
+    HI_TOP_SNEAKERS = "HI_TOP_SNEAKERS"
+    LEATHER_JACKETS = "LEATHER_JACKETS"
+    LEGGINGS = "LEGGINGS"
+    LONG_SLEEVE_T_SHIRTS = "LONG_SLEEVE_T_SHIRTS"
+    LOW_TOP_SNEAKERS = "LOW_TOP_SNEAKERS"
+    MISCELLANEOUS = "MISCELLANEOUS"
+    POLOS = "POLOS"
+    SANDALS = "SANDALS"
+    SHORTS = "SHORTS"
+    SHORT_SLEEVE_T_SHIRTS = "SHORT_SLEEVE_T_SHIRTS"
+    SLIP_ONS = "SLIP_ONS"
+    SUNGLASSES = "SUNGLASSES"
+    VESTS = "VESTS"
+    WALLETS = "WALLETS"
+    # --- Men's ---
+    BAGS_AND_LUGGAGE = "BAGS_AND_LUGGAGE"
+    CASUAL_LEATHER_SHOES = "CASUAL_LEATHER_SHOES"
+    CASUAL_PANTS = "CASUAL_PANTS"
+    CLOAKS_AND_CAPES = "CLOAKS_AND_CAPES"
+    CROPPED_PANTS = "CROPPED_PANTS"
+    DENIM = "DENIM"
+    FORMAL_SHIRTING = "FORMAL_SHIRTING"
+    FORMAL_SHOES = "FORMAL_SHOES"
+    FORMAL_TROUSERS = "FORMAL_TROUSERS"
+    GLOVES_AND_SCARVES = "GLOVES_AND_SCARVES"
+    HEAVY_COATS = "HEAVY_COATS"
+    JERSEYS = "JERSEYS"
+    JEWELRY_AND_WATCHES = "JEWELRY_AND_WATCHES"
+    LIGHT_JACKETS = "LIGHT_JACKETS"
+    OVERALLS_AND_JUMPSUITS = "OVERALLS_AND_JUMPSUITS"
+    PARKAS = "PARKAS"
+    RAINCOATS = "RAINCOATS"
+    SHIRTS_BUTTON_UPS = "SHIRTS_BUTTON_UPS"
+    SOCKS_AND_UNDERWEAR = "SOCKS_AND_UNDERWEAR"
+    SUITS = "SUITS"
+    SWEATERS_AND_KNITWEAR = "SWEATERS_AND_KNITWEAR"
+    SWEATPANTS_AND_JOGGERS = "SWEATPANTS_AND_JOGGERS"
+    SWEATSHIRTS_AND_HOODIES = "SWEATSHIRTS_AND_HOODIES"
+    SWIMWEAR = "SWIMWEAR"
+    TANK_TOPS_AND_SLEEVELESS = "TANK_TOPS_AND_SLEEVELESS"
+    TIES_AND_POCKETSQUARES = "TIES_AND_POCKETSQUARES"
+    TUXEDOS = "TUXEDOS"
+    # --- Women's ---
+    BACKPACKS = "BACKPACKS"
+    BELT_BAGS = "BELT_BAGS"
+    BLOUSES = "BLOUSES"
+    BODYSUITS = "BODYSUITS"
+    BRACELETS = "BRACELETS"
+    BUCKET_BAGS = "BUCKET_BAGS"
+    BUTTON_UPS = "BUTTON_UPS"
+    CLUTCHES = "CLUTCHES"
+    COATS = "COATS"
+    CROP_TOPS = "CROP_TOPS"
+    CROSSBODY_BAGS = "CROSSBODY_BAGS"
+    DOWN_JACKETS = "DOWN_JACKETS"
+    EARRINGS = "EARRINGS"
+    FLATS = "FLATS"
+    FUR_AND_FAUX_FUR = "FUR_AND_FAUX_FUR"
+    GLOVES = "GLOVES"
+    GOWNS = "GOWNS"
+    HAIR_ACCESSORIES = "HAIR_ACCESSORIES"
+    HANDLE_BAGS = "HANDLE_BAGS"
+    HEELS = "HEELS"
+    HOBO_BAGS = "HOBO_BAGS"
+    HOODIES = "HOODIES"
+    JACKETS = "JACKETS"
+    JEANS = "JEANS"
+    JUMPSUITS = "JUMPSUITS"
+    LUGGAGE_AND_TRAVEL = "LUGGAGE_AND_TRAVEL"
+    MAXI_DRESSES = "MAXI_DRESSES"
+    MAXI_SKIRTS = "MAXI_SKIRTS"
+    MESSENGERS_AND_SATCHELS = "MESSENGERS_AND_SATCHELS"
+    MIDI_DRESSES = "MIDI_DRESSES"
+    MIDI_SKIRTS = "MIDI_SKIRTS"
+    MINI_BAGS = "MINI_BAGS"
+    MINI_DRESSES = "MINI_DRESSES"
+    MINI_SKIRTS = "MINI_SKIRTS"
+    MULES = "MULES"
+    NECKLACES = "NECKLACES"
+    OTHER = "OTHER"
+    PANTS = "PANTS"
+    PLATFORMS = "PLATFORMS"
+    RAIN_JACKETS = "RAIN_JACKETS"
+    RINGS = "RINGS"
+    SCARVES = "SCARVES"
+    SHOULDER_BAGS = "SHOULDER_BAGS"
+    SOCKS_AND_INTIMATES = "SOCKS_AND_INTIMATES"
+    SWEATERS = "SWEATERS"
+    SWEATSHIRTS = "SWEATSHIRTS"
+    TANK_TOPS = "TANK_TOPS"
+    TOTE_BAGS = "TOTE_BAGS"
+    WATCHES = "WATCHES"
+
+
+# Size value lists per size group (canonical source; generated to the frontend via
+# scripts/gen_frontend_enums.py).
+LETTER_SIZES: list[str] = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]
+WAIST_SIZES: list[str] = [str(n) for n in range(26, 45)]  # every inch, 26-44
+SUIT_SIZES: list[str] = [str(n) for n in range(34, 51, 2)]  # chest, 34-50
+SHOE_SIZES: list[str] = [str(n) for n in range(35, 49)]  # EU, 35-48
 
 
 MIN_LISTING_PRICE: int = 50

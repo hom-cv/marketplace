@@ -72,7 +72,7 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
           <div>
             <div className={styles.sectionLabel}>{tCommon("postCard.size")}</div>
             <span className={styles.sizeBadge}>
-              {formatSize(post.size, post.type)}
+              {formatSize(post.size, post.size_group)}
             </span>
           </div>
         )}

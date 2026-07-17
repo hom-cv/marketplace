@@ -5,16 +5,21 @@ from decimal import Decimal
 from typing import Annotated, Sequence
 
 from fastapi import Depends
-from sqlalchemy import case, false, func, or_, select, update
+from sqlalchemy import and_, case, false, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.constants.post import SizeGroup
+from app.constants.taxonomy import (
+    CATEGORY_DEFAULT_SIZE_GROUP,
+    SUBCATEGORY_SIZE_GROUP,
+)
 from app.core.exceptions import server_error
 from app.core.utils import normalize_tag, slugify
 from app.crud._base import BaseCRUD
 from app.models.brand import Brand
 from app.models.payment import Payment, PaymentStatus
-from app.models.post import Gender, Post, PostType
+from app.models.post import Gender, Post, PostCategory, Subcategory
 from app.models.post_ban import PostBan
 from app.models.tag import Tag
 from app.models.user import User
@@ -95,13 +100,65 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         result = await db.scalars(query)
         return result.all()
 
+    def _size_group_case(self):
+        """SQL expression mapping a post to its SizeGroup (mirrors size_group_for).
+
+        Subcategory overrides precede category defaults, so the first match wins.
+        """
+        return case(
+            *[
+                (self.model.subcategory == sub, grp.value)
+                for sub, grp in SUBCATEGORY_SIZE_GROUP.items()
+            ],
+            *[
+                (self.model.category == cat, grp.value)
+                for cat, grp in CATEGORY_DEFAULT_SIZE_GROUP.items()
+            ],
+            else_=SizeGroup.ONE_SIZE.value,
+        )
+
+    def _apply_size_filter(self, query, sizes: list[str], *, scoped: bool):
+        """Group-aware size filter: a size only constrains posts of its own group.
+
+        ``sizes`` are group-qualified tokens ("SHOE-39"), so shoe-39 never excludes
+        waist-40 bottoms. When a category/subcategory facet is present (``scoped``),
+        posts of groups with no size selected pass through; otherwise a bare size
+        filter browses only the selected groups.
+        """
+        valid_groups = {g.value for g in SizeGroup}
+        by_group: dict[str, list[str]] = {}
+
+        for token in sizes:
+            group, _, value = token.partition("-")
+            group = group.upper()
+
+            if value and group in valid_groups:
+                by_group.setdefault(group, []).append(value)
+
+        if not by_group:
+            return query
+
+        group_expr = self._size_group_case()
+        group_match = or_(
+            *[
+                and_(group_expr == group, self.model.size.in_(values))
+                for group, values in by_group.items()
+            ]
+        )
+        if scoped:
+            return query.where(
+                or_(group_expr.notin_(list(by_group.keys())), group_match)
+            )
+        return query.where(group_match)
+
     async def get_posts_with_filters(
         self,
         db: AsyncSession,
         *,
         skip: int = 0,
         limit: int = 50,
-        types: list[PostType] | None = None,
+        categories: list[PostCategory] | None = None,
+        subcategories: list[Subcategory] | None = None,
         genders: list[Gender] | None = None,
         sizes: list[str] | None = None,
         brand_slugs: list[str] | None = None,
@@ -126,7 +183,8 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
             db: The async database session.
             skip: Number of records to skip.
             limit: Maximum number of records to return.
-            types: Filter by post types.
+            categories: Filter by top-level category.
+            subcategories: Filter by granular subcategory (leaf).
             genders: Filter by target department (mens/womens/unisex).
             brand_slugs: Filter by brand slug(s).
             tags: Filter by tag name(s); matches posts having any of them.
@@ -152,15 +210,24 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         )
 
         # Apply filters
-        if types:
-            base_query = base_query.where(self.model.type.in_(types))
+        # Category (top) + subcategory are one hierarchical facet: OR them so
+        # "All Bottoms" + "Jeans" is a union, not an impossible AND. Other facets
+        # still AND across dimensions.
+        taxonomy_clauses = []
+        if categories:
+            taxonomy_clauses.append(self.model.category.in_(categories))
+        if subcategories:
+            taxonomy_clauses.append(self.model.subcategory.in_(subcategories))
+        if taxonomy_clauses:
+            base_query = base_query.where(or_(*taxonomy_clauses))
 
         if genders:
             base_query = base_query.where(self.model.gender.in_(genders))
 
         if sizes:
-            # Filter by size - this automatically excludes posts with no size (NULL)
-            base_query = base_query.where(self.model.size.in_(sizes))
+            base_query = self._apply_size_filter(
+                base_query, sizes, scoped=bool(categories or subcategories)
+            )
 
         if brand_slugs:
             # Normalize so a hand-edited ?brands=Nike still matches "nike".

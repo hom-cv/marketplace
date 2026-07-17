@@ -33,7 +33,8 @@ export async function getPosts(
 
   const appendAll = (name: string, values?: string[]) =>
     values?.forEach((v) => params.append(name, v));
-  appendAll("types", filters?.types);
+  appendAll("categories", filters?.categories);
+  appendAll("subcategories", filters?.subcategories);
   appendAll("genders", filters?.genders);
   appendAll("sizes", filters?.sizes);
   appendAll("brands", filters?.brands);

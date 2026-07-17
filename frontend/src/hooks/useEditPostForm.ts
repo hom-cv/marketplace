@@ -23,7 +23,8 @@ export function useEditPostForm(post: Post) {
     initialValues: {
       title: post.title,
       description: post.description,
-      type: post.type,
+      category: post.category,
+      subcategory: post.subcategory,
       gender: post.gender,
       brand: post.brand?.slug ?? BRAND_OTHER_VALUE,
       tags: post.tags ?? [],

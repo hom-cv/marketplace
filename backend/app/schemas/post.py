@@ -21,9 +21,12 @@ from app.constants.post import (
     MIN_LISTING_PRICE,
     MIN_SHIPPING_COST,
     Gender,
-    PostType,
+    PostCategory,
+    SizeGroup,
+    Subcategory,
 )
 from app.constants.storage import MAX_IMAGES_PER_POST
+from app.constants.taxonomy import is_valid_category_path, size_group_for
 from app.schemas.user import UserResponseSchema
 
 
@@ -55,7 +58,8 @@ def validate_tags(tags: list[str]) -> list[str]:
 TagList = Annotated[list[str], AfterValidator(validate_tags)]
 
 
-# Measurement schemas for category-specific validation
+# Measurement schemas for category-specific validation.
+# SYNC: fields mirror MEASUREMENT_FIELDS_BY_GROUP in frontend/src/api/types/post.ts.
 class TopMeasurements(BaseModel):
     """Measurements for shirts, jackets, and tops (all in cm)."""
 
@@ -97,37 +101,56 @@ def _validate_nested_measurements(
         )
 
 
-def validate_measurements_for_post_type(
-    post_type: "PostType", measurements: dict[str, Any] | None
+def validate_category_path(
+    gender: "Gender", category: "PostCategory", subcategory: "Subcategory | None"
+) -> None:
+    """Ensure (gender, category, subcategory) is a real path in the taxonomy.
+
+    Rejects off-tree leaves and gender-mismatched categories (e.g. MENS + DRESSES).
+    """
+    if subcategory is None:
+        return
+    if not is_valid_category_path(gender, category, subcategory):
+        raise ValueError(
+            f"'{subcategory}' is not a valid subcategory of "
+            f"{category.value} for {gender.value}"
+        )
+
+
+def validate_measurements_for_category(
+    category: "PostCategory",
+    subcategory: "Subcategory | None",
+    measurements: dict[str, Any] | None,
 ) -> None:
     """
-    Validate measurements structure based on post type.
+    Validate measurements structure based on the (category, subcategory) size group.
 
-    This function can be called directly from endpoints without
-    needing to instantiate the full PostCreateSchema.
-
-    Validation rules:
-    - SHIRT, JACKET: Validates against TopMeasurements schema
-    - PANTS: Validates against PantsMeasurements schema
-    - SHOES: Validates against ShoesMeasurements schema
-    - OTHER: No schema validation - allows any custom measurements
-    - ACCESSORIES: Measurements not supported
+    - LETTER (tops/outerwear/dresses/most tailoring): TopMeasurements
+    - WAIST (denim/trousers): PantsMeasurements
+    - SHOE (footwear): ShoesMeasurements
+    - ONE_SIZE (accessories/jewelry/bags): measurements not supported
 
     Raises:
-        ValueError: If measurements are invalid for the given post type.
+        ValueError: If measurements are invalid for the resolved size group.
     """
     if measurements is None:
         return
 
-    if post_type in (PostType.SHIRT, PostType.JACKET):
-        _validate_nested_measurements(measurements, TopMeasurements, post_type.value)
-    elif post_type == PostType.PANTS:
-        _validate_nested_measurements(measurements, PantsMeasurements, post_type.value)
-    elif post_type == PostType.SHOES:
-        _validate_nested_measurements(measurements, ShoesMeasurements, post_type.value)
-    # OTHER: No schema validation - users add custom measurements as needed
-    elif post_type == PostType.ACCESSORIES and measurements:
-        raise ValueError("Measurements are not supported for ACCESSORIES type.")
+    for key, value in measurements.items():
+        if value is not None and (
+            isinstance(value, bool) or not isinstance(value, (int, float))
+        ):
+            raise ValueError(f"Measurement '{key}' must be a number.")
+
+    group = size_group_for(category, subcategory)
+    if group in (SizeGroup.LETTER, SizeGroup.SUIT):
+        _validate_nested_measurements(measurements, TopMeasurements, category.value)
+    elif group == SizeGroup.WAIST:
+        _validate_nested_measurements(measurements, PantsMeasurements, category.value)
+    elif group == SizeGroup.SHOE:
+        _validate_nested_measurements(measurements, ShoesMeasurements, category.value)
+    elif group == SizeGroup.ONE_SIZE and measurements:
+        raise ValueError(f"Measurements are not supported for {category.value}.")
 
 
 class PostCreateSchema(BaseModel):
@@ -145,9 +168,13 @@ class PostCreateSchema(BaseModel):
         max_length=5000,
         description="Detailed description of the item",
     )
-    type: PostType = Field(
+    category: PostCategory = Field(
         ...,
-        description="Category of the clothing item",
+        description="Top-level category of the clothing item",
+    )
+    subcategory: Subcategory = Field(
+        ...,
+        description="Granular subcategory code (a leaf in the taxonomy for this gender+category)",
     )
     gender: Gender = Field(
         ...,
@@ -196,9 +223,12 @@ class PostCreateSchema(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_measurements_for_type(self) -> "PostCreateSchema":
-        """Validate measurements structure based on post type."""
-        validate_measurements_for_post_type(self.type, self.measurements)
+    def validate_category_and_measurements(self) -> "PostCreateSchema":
+        """Validate the taxonomy path, then measurements against its size group."""
+        validate_category_path(self.gender, self.category, self.subcategory)
+        validate_measurements_for_category(
+            self.category, self.subcategory, self.measurements
+        )
         return self
 
 
@@ -207,7 +237,8 @@ class PostUpdateSchema(BaseModel):
 
     title: str | None = Field(None, min_length=1, max_length=200)
     description: str | None = Field(None, min_length=1, max_length=5000)
-    type: PostType | None = None
+    category: PostCategory | None = None
+    subcategory: Subcategory | None = None
     gender: Gender | None = None
     price: Decimal | None = Field(
         None, ge=MIN_LISTING_PRICE, le=MAX_LISTING_PRICE, decimal_places=2
@@ -230,7 +261,8 @@ class PostUpdateRequest(BaseModel):
 
     title: str = Field(..., min_length=1, max_length=200)
     description: str = Field(..., min_length=1, max_length=5000)
-    type: PostType
+    category: PostCategory
+    subcategory: Subcategory = Field(...)
     gender: Gender
     brand: str | None = Field(default=None, max_length=MAX_BRAND_NAME_LENGTH)
     tags: TagList = Field(default_factory=list)
@@ -257,9 +289,12 @@ class PostUpdateRequest(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_measurements_for_type(self) -> "PostUpdateRequest":
-        """Validate measurements structure based on post type."""
-        validate_measurements_for_post_type(self.type, self.measurements)
+    def validate_category_and_measurements(self) -> "PostUpdateRequest":
+        """Validate the taxonomy path, then measurements against its size group."""
+        validate_category_path(self.gender, self.category, self.subcategory)
+        validate_measurements_for_category(
+            self.category, self.subcategory, self.measurements
+        )
         return self
 
 
@@ -287,7 +322,9 @@ class PostResponseSchema(BaseModel):
     id: int
     title: str
     description: str
-    type: PostType
+    category: PostCategory
+    subcategory: Subcategory | None = None
+    size_group: SizeGroup | None = None
     gender: Gender
     brand: BrandRead | None = None
     tags: list[str] = Field(default_factory=list)
@@ -298,14 +335,6 @@ class PostResponseSchema(BaseModel):
     size: str | None = None
     measurements: dict[str, Any] | None = None
     user: UserResponseSchema
-
-    @field_validator("tags", mode="before")
-    @classmethod
-    def _tag_names(cls, v: Any) -> list[str]:
-        """Map the ORM ``list[Tag]`` to plain names (leave a list[str] as-is)."""
-        if not v:
-            return []
-        return [getattr(t, "name", t) for t in v]
     is_sold: bool = False
     is_banned: bool = False
     is_user_banned: bool = False
@@ -315,6 +344,22 @@ class PostResponseSchema(BaseModel):
     is_liked: bool = False
 
     model_config = {"from_attributes": True}
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def _tag_names(cls, v: Any) -> list[str]:
+        """Map the ORM ``list[Tag]`` to plain names (leave a list[str] as-is)."""
+        if not v:
+            return []
+
+        return [getattr(t, "name", t) for t in v]
+
+    @model_validator(mode="after")
+    def _derive_size_group(self) -> "PostResponseSchema":
+        """Compute the size group from (category, subcategory) for the client."""
+        self.size_group = size_group_for(self.category, self.subcategory)
+
+        return self
 
 
 class PaginatedPostsResponse(BaseModel):

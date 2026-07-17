@@ -14,6 +14,8 @@
       "descriptionPlaceholder": "อธิบายสินค้าของคุณ - สภาพ, ขนาด, แบรนด์, ฯลฯ",
       "category": "หมวดหมู่",
       "categoryPlaceholder": "เลือกประเภท",
+      "subcategory": "หมวดหมู่ย่อย",
+      "subcategoryPlaceholder": "เลือกหมวดหมู่ย่อย",
       "gender": "แผนก",
       "genderPlaceholder": "เลือกแผนก",
       "brand": "แบรนด์",
@@ -50,7 +52,8 @@
       "sizeRequired": "กรุณาเลือกไซส์",
       "submit": "เผยแพร่รายการ",
       "submitting": "กำลังเผยแพร่...",
-      "publishHint": "รายการของคุณจะปรากฏให้ผู้ซื้อทุกคนเห็นทันที"
+      "publishHint": "รายการของคุณจะปรากฏให้ผู้ซื้อทุกคนเห็นทันที",
+      "subcategoryRequired": "กรุณาเลือกหมวดหมู่ย่อย"
     },
     "success": "สร้างรายการเรียบร้อยแล้ว!",
     "error": "ไม่สามารถสร้างรายการได้"
@@ -88,23 +91,20 @@
     "insoleLength": "ความยาวพื้นรองเท้า"
   },
   "categories": {
-    "shirt": "เสื้อ",
-    "pants": "กางเกง",
-    "jacket": "แจ็คเก็ต",
-    "shoes": "รองเท้า",
-    "accessories": "เครื่องประดับ",
-    "other": "อื่นๆ"
+    "tops": "เสื้อ",
+    "bottoms": "กางเกง/กระโปรง",
+    "outerwear": "เสื้อคลุม",
+    "footwear": "รองเท้า",
+    "accessories": "อุปกรณ์เสริม",
+    "tailoring": "สูท",
+    "dresses": "เดรส",
+    "jewelry": "เครื่องประดับ",
+    "bags": "กระเป๋า"
   },
   "genders": {
     "mens": "ผู้ชาย",
     "womens": "ผู้หญิง",
     "unisex": "ยูนิเซ็กส์"
-  },
-  "sizeCategories": {
-    "tops": "เสื้อผ้าส่วนบน (เสื้อ/แจ็คเก็ต)",
-    "pants": "กางเกง (เอว)",
-    "shoes": "รองเท้า (EU)",
-    "accessories": "เครื่องประดับ"
   },
   "images": {
     "noImages": "ยังไม่ได้อัปโหลดรูปภาพ",
@@ -161,5 +161,12 @@
     "title": "สินค้าที่ขายแล้ว",
     "noSales": "ยังไม่มียอดขาย",
     "waitingForSale": "รายการของคุณจะปรากฏที่นี่เมื่อขายได้"
+  },
+  "sizeGroups": {
+    "letter": "เสื้อผ้า",
+    "waist": "เอว",
+    "shoe": "รองเท้า",
+    "one_size": "ขนาดเดียว",
+    "suit": "สูท"
   }
 }

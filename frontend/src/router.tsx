@@ -6,9 +6,10 @@ import {
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
-import { POST_TYPES } from "@/api/types/post";
-import type { PostType } from "@/api/types/post";
+import { POST_CATEGORIES, SUBCATEGORIES } from "@/api/types/post";
+import type { PostCategory } from "@/api/types/post";
 import { isDepartment, type Department } from "@/constants/departments";
+import { isValidSizeKey } from "@/utils/filterHelpers";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
@@ -132,33 +133,52 @@ const publicExploreRoute = createRoute({
     search: Record<string, unknown>,
   ): {
     department?: Department;
-    types?: PostType[];
+    categories?: PostCategory[];
+    subcategories?: string[];
     sizes?: string[];
     brands?: string[];
     tags?: string[];
     search?: string;
   } => {
-    const asArray = (v: unknown): string[] =>
-      Array.isArray(v) ? v.map(String) : typeof v === "string" && v ? [v] : [];
-    const types = [
+
+    const asArray = (v: unknown): string[] => {
+      if (Array.isArray(v)) return v.map(String);
+      if (v === undefined || v === null || v === "") return [];
+      return [String(v)];
+    };
+    const clean = (v: unknown) => {
+      const arr = [...new Set(asArray(v).filter(Boolean))];
+      return arr.length ? arr : undefined;
+    };
+
+    const categories = [
       ...new Set(
-        asArray(search.types).filter((t): t is PostType =>
-          (POST_TYPES as readonly string[]).includes(t),
+        asArray(search.categories).filter((c): c is PostCategory =>
+          (POST_CATEGORIES as readonly string[]).includes(c),
         ),
       ),
     ];
-    const sizes = [...new Set(asArray(search.sizes).filter(Boolean))];
-    const brands = [...new Set(asArray(search.brands).filter(Boolean))];
-    const tags = [...new Set(asArray(search.tags).filter(Boolean))];
-    const q = typeof search.search === "string" ? search.search.trim() : "";
+    const subcategories = [
+      ...new Set(
+        asArray(search.subcategories).filter((s) =>
+          (SUBCATEGORIES as readonly string[]).includes(s),
+        ),
+      ),
+    ];
+    const sizes = [...new Set(asArray(search.sizes).filter(isValidSizeKey))];
+    const q =
+      search.search !== undefined && search.search !== null
+        ? String(search.search).trim()
+        : "";
     return {
       department: isDepartment(search.department)
         ? search.department
         : undefined,
-      types: types.length ? types : undefined,
+      categories: categories.length ? categories : undefined,
+      subcategories: subcategories.length ? subcategories : undefined,
       sizes: sizes.length ? sizes : undefined,
-      brands: brands.length ? brands : undefined,
-      tags: tags.length ? tags : undefined,
+      brands: clean(search.brands),
+      tags: clean(search.tags),
       search: q || undefined,
     };
   },
@@ -361,10 +381,34 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
 ]);
 
+// Serialize search params as plain strings / repeated keys (no JSON blobs).
+function stringifySearch(search: Record<string, unknown>): string {
+  const params = new URLSearchParams();
+  for (const [key, val] of Object.entries(search)) {
+    if (val === undefined || val === null) continue;
+    if (Array.isArray(val)) val.forEach((item) => params.append(key, String(item)));
+    else params.append(key, String(val));
+  }
+  const str = params.toString();
+  return str ? `?${str}` : "";
+}
+
+function parseSearch(searchStr: string): Record<string, unknown> {
+  const params = new URLSearchParams(searchStr.replace(/^\?/, ""));
+  const result: Record<string, unknown> = {};
+  for (const key of new Set(params.keys())) {
+    const all = params.getAll(key);
+    result[key] = all.length > 1 ? all : all[0];
+  }
+  return result;
+}
+
 export const router = createRouter({
   routeTree,
   defaultPreloadStaleTime: 0,
   scrollRestoration: true,
+  parseSearch,
+  stringifySearch,
 });
 
 declare module "@tanstack/react-router" {

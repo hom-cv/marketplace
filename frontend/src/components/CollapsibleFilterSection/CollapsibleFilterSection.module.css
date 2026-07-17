@@ -1,6 +1,6 @@
 .section {
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--mantine-spacing-md);
+  padding-bottom: var(--mantine-spacing-xs);
 }
 
 .section:last-child {
@@ -65,5 +65,5 @@
 }
 
 .content {
-  padding-top: var(--mantine-spacing-sm);
+  padding-top: var(--mantine-spacing-xs);
 }

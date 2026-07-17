@@ -301,7 +301,8 @@ class ListingService:
         post = Post(
             title=data.title,
             description=data.description,
-            type=data.type,
+            category=data.category,
+            subcategory=data.subcategory,
             gender=data.gender,
             price=data.price,
             shipping_cost=data.shipping_cost,
@@ -361,7 +362,8 @@ class ListingService:
         # a bucket lifecycle/TTL rule or a periodic sweep that deletes keys not
         # referenced by any post's image_urls.
 
-        post.type = data.type
+        post.category = data.category
+        post.subcategory = data.subcategory
         post.gender = data.gender
         post.image_urls = data.image_urls
         post.image_url = data.image_urls[0] if data.image_urls else None

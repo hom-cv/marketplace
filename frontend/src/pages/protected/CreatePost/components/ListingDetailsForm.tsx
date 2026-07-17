@@ -34,19 +34,23 @@ import styles from "./ListingDetailsForm.module.css";
 
 interface ListingDetailsFormProps {
   form: UseFormReturnType<CreatePostFormValues>;
-  postTypeOptions: SelectOption[];
+  categoryOptions: SelectOption[];
+  subcategoryOptions: SelectOption[];
   genderOptions: SelectOption[];
   sizeOptions: SelectOption[];
-  onTypeChange: (value: string | null) => void;
+  onCategoryChange: (value: string | null) => void;
+  onSubcategoryChange: (value: string | null) => void;
   onGenderChange: (value: string | null) => void;
 }
 
 export function ListingDetailsForm({
   form,
-  postTypeOptions,
+  categoryOptions,
+  subcategoryOptions,
   genderOptions,
   sizeOptions,
-  onTypeChange,
+  onCategoryChange,
+  onSubcategoryChange,
   onGenderChange,
 }: ListingDetailsFormProps) {
   const { t } = useTranslation("listings");
@@ -94,16 +98,6 @@ export function ListingDetailsForm({
         </h3>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Select
-            label={t("create.form.category")}
-            placeholder={t("create.form.categoryPlaceholder")}
-            data={postTypeOptions}
-            required
-            radius="xs"
-            value={form.values.type}
-            onChange={onTypeChange}
-            error={form.errors.type}
-          />
-          <Select
             label={t("create.form.gender")}
             placeholder={t("create.form.genderPlaceholder")}
             data={genderOptions}
@@ -112,6 +106,29 @@ export function ListingDetailsForm({
             value={form.values.gender}
             onChange={onGenderChange}
             error={form.errors.gender}
+          />
+          <Select
+            label={t("create.form.category")}
+            placeholder={t("create.form.categoryPlaceholder")}
+            data={categoryOptions}
+            disabled={!form.values.gender}
+            required
+            radius="xs"
+            value={form.values.category}
+            onChange={onCategoryChange}
+            error={form.errors.category}
+          />
+          <Select
+            label={t("create.form.subcategory")}
+            placeholder={t("create.form.subcategoryPlaceholder")}
+            data={subcategoryOptions}
+            disabled={!form.values.category}
+            searchable
+            required
+            radius="xs"
+            value={form.values.subcategory}
+            onChange={onSubcategoryChange}
+            error={form.errors.subcategory}
           />
           <Select
             label={t("create.form.brand")}
@@ -141,7 +158,7 @@ export function ListingDetailsForm({
             label={t("create.form.size")}
             placeholder={t("create.form.sizePlaceholder")}
             data={sizeOptions}
-            disabled={!form.values.type}
+            disabled={!form.values.subcategory}
             required
             radius="xs"
             {...form.getInputProps("size")}

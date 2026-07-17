@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 from httpx import AsyncClient
 
-from app.models.post import Gender, Post, PostType
+from app.models.post import Gender, Post, PostCategory
 from tests.integration.conftest import TEST_CDN_URL, create_mock_user
 
 
@@ -79,6 +79,41 @@ class TestListPostsEndpoint:
 
         assert response.status_code == 422
 
+    async def test_list_posts_category_subcategory_passthrough(
+        self,
+        async_client: AsyncClient,
+        mock_post_crud: MagicMock,
+    ):
+        """`categories` (enum) and `subcategories` (free leaf) reach the CRUD."""
+        mock_post_crud.get_posts_with_filters.return_value = ([], 0)
+
+        response = await async_client.get(
+            "/api/v1/posts?categories=TOPS&subcategories=POLOS&subcategories=BLOUSES"
+        )
+
+        assert response.status_code == 200
+        _, kwargs = mock_post_crud.get_posts_with_filters.call_args
+        assert kwargs["categories"] == [PostCategory.TOPS]
+        assert kwargs["subcategories"] == ["POLOS", "BLOUSES"]
+
+    async def test_list_posts_invalid_category_returns_422(
+        self,
+        async_client: AsyncClient,
+    ):
+        """An unknown top-level category is rejected by validation."""
+        response = await async_client.get("/api/v1/posts?categories=SHIRT")
+
+        assert response.status_code == 422
+
+    async def test_list_posts_invalid_subcategory_returns_422(
+        self,
+        async_client: AsyncClient,
+    ):
+        """An unknown subcategory is rejected at the API boundary (like categories)."""
+        response = await async_client.get("/api/v1/posts?subcategories=NOTREAL")
+
+        assert response.status_code == 422
+
     async def test_list_posts_brand_and_tag_filters_passthrough(
         self,
         async_client: AsyncClient,
@@ -141,7 +176,8 @@ class TestGetPostEndpoint:
         mock_post.id = 1
         mock_post.title = "Test Post"
         mock_post.description = "A test post description"
-        mock_post.type = PostType.SHIRT  # Use actual enum
+        mock_post.category = PostCategory.TOPS  # Use actual enum
+        mock_post.subcategory = "POLOS"
         mock_post.gender = Gender.UNISEX
         mock_post.brand = None
         mock_post.tags = []
@@ -293,7 +329,8 @@ def _make_mock_post(
     mock_post.id = post_id
     mock_post.title = "Original Title"
     mock_post.description = "Original description"
-    mock_post.type = PostType.SHIRT
+    mock_post.category = PostCategory.TOPS
+    mock_post.subcategory = "POLOS"
     mock_post.gender = Gender.UNISEX
     mock_post.brand = None
     mock_post.tags = []
@@ -315,7 +352,8 @@ def _make_mock_post(
 VALID_UPDATE_JSON = {
     "title": "Updated Title",
     "description": "Updated description",
-    "type": "SHIRT",
+    "category": "TOPS",
+    "subcategory": "POLOS",
     "gender": "MENS",
     "price": "600.00",
     "size": "L",
@@ -526,7 +564,8 @@ class TestDeletePostEndpoint:
 VALID_CREATE_JSON = {
     "title": "New Item",
     "description": "A brand new listing",
-    "type": "SHIRT",
+    "category": "TOPS",
+    "subcategory": "POLOS",
     "gender": "MENS",
     "price": "600.00",
     "size": "L",
@@ -551,6 +590,32 @@ class TestCreatePostEndpoint:
 
         assert response.status_code == 201
         mock_post_crud.create_post.assert_awaited_once()
+
+    async def test_create_post_gender_mismatched_category_returns_422(
+        self,
+        async_client: AsyncClient,
+        mock_user: MagicMock,
+    ):
+        """DRESSES isn't in the Men's tree → the (gender,category) path is invalid."""
+        mock_user.is_seller = True
+        payload = {**VALID_CREATE_JSON, "category": "DRESSES", "subcategory": "GOWNS"}
+
+        response = await async_client.post("/api/v1/posts", json=payload)
+
+        assert response.status_code == 422
+
+    async def test_create_post_off_tree_subcategory_returns_422(
+        self,
+        async_client: AsyncClient,
+        mock_user: MagicMock,
+    ):
+        """A subcategory that isn't a leaf of the chosen category is rejected."""
+        mock_user.is_seller = True
+        payload = {**VALID_CREATE_JSON, "subcategory": "POLOSS"}
+
+        response = await async_client.post("/api/v1/posts", json=payload)
+
+        assert response.status_code == 422
 
     async def test_create_post_non_seller_returns_400(
         self,

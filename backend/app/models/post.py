@@ -15,7 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.constants.post import Gender, PostType
+from app.constants.post import Gender, PostCategory, Subcategory
 from app.models._base import Base
 
 
@@ -39,13 +39,22 @@ class Post(Base):
         Text,
         nullable=False,
     )
-    type: Mapped[PostType] = mapped_column(
+    category: Mapped[PostCategory] = mapped_column(
         Enum(
-            PostType,
+            PostCategory,
             native_enum=False,
             validate_strings=True,
         ),
         nullable=False,
+        index=True,
+    )
+    subcategory: Mapped[Subcategory | None] = mapped_column(
+        Enum(
+            Subcategory,
+            native_enum=False,
+            length=64,
+        ),
+        nullable=True,
         index=True,
     )
     gender: Mapped[Gender] = mapped_column(

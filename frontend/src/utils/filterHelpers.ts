@@ -1,20 +1,18 @@
 /**
- * Filter utilities for explore pages
- * Shared helpers for handling post filters with size categories
+ * Filter utilities for explore pages.
+ * Shared helpers for handling post filters (categories, subcategories, sizes).
  */
 
-import type {
-  PostType,
-  SizeCategory,
-  SizeCategoryConfig,
-} from "@/api/types/post";
+import type { PostCategory, SizeGroup } from "@/api/types/post";
+import { SIZE_GROUPS, getSizesForGroup } from "@/api/types/post";
 import { toggleInArray } from "@/utils/array";
 
 /**
- * State for post filters
+ * State for post filters.
  */
 export interface FiltersState {
-  types: PostType[];
+  categories: PostCategory[];
+  subcategories: string[];
   sizes: string[];
   brands: string[];
   tags: string[];
@@ -25,58 +23,55 @@ export interface FiltersState {
  */
 export const ITEMS_PER_PAGE = 20;
 
-/**
- * Create a prefixed size key for storing size selections
- * This allows tracking which category a size belongs to (e.g., "shoes:40")
- */
-export function createSizeKey(category: SizeCategory, size: string): string {
-  return `${category}:${size}`;
+// A size key carries its group so it survives round-trips (URL, API): "SHOE-39".
+// The "-" separator is URL-safe (unencoded) and absent from every group/size value.
+export function createSizeKey(group: SizeGroup, size: string): string {
+  return `${group}-${size}`;
+}
+
+export function parseSizeKey(key: string): { group: SizeGroup; size: string } {
+  const i = key.indexOf("-");
+  return { group: key.slice(0, i) as SizeGroup, size: key.slice(i + 1) };
+}
+
+export function isValidSizeKey(key: string): boolean {
+  const { group, size } = parseSizeKey(key);
+  return (
+    (SIZE_GROUPS as readonly string[]).includes(group) &&
+    getSizesForGroup(group).includes(size)
+  );
 }
 
 /**
- * Parse a prefixed size key back into category and size
+ * Toggle a top-level category. Independent of subcategories — selecting a
+ * category means "all of it", selecting subcategories narrows within.
  */
-export function parseSizeKey(key: string): {
-  category: SizeCategory;
-  size: string;
-} {
-  const [category, size] = key.split(":");
-  return { category: category as SizeCategory, size };
-}
-
-/**
- * Toggle a post type in the filter state.
- * When types change, removes sizes that no longer belong to any selected type.
- */
-export function toggleTypeFilter(
+export function toggleCategoryFilter(
   currentFilters: FiltersState,
-  typeToToggle: PostType,
-  sizeCategoryConfig: readonly SizeCategoryConfig[],
+  categoryToToggle: PostCategory,
 ): FiltersState {
-  const updatedTypes = toggleInArray(currentFilters.types, typeToToggle);
+  return {
+    ...currentFilters,
+    categories: toggleInArray(currentFilters.categories, categoryToToggle),
+  };
+}
 
-  const updatedSizes =
-    updatedTypes.length === 0
-      ? []
-      : currentFilters.sizes.filter((sizeKey) => {
-          const { category } = parseSizeKey(sizeKey);
-          const categoryConfig = sizeCategoryConfig.find(
-            (config) => config.category === category,
-          );
-          return categoryConfig?.postTypes.some((postType) =>
-            updatedTypes.includes(postType),
-          );
-        });
-
-  return { ...currentFilters, types: updatedTypes, sizes: updatedSizes };
+export function toggleSubcategoryFilter(
+  currentFilters: FiltersState,
+  subcategory: string,
+): FiltersState {
+  return {
+    ...currentFilters,
+    subcategories: toggleInArray(currentFilters.subcategories, subcategory),
+  };
 }
 
 export function toggleSizeFilter(
   currentFilters: FiltersState,
-  category: SizeCategory,
+  group: SizeGroup,
   size: string,
 ): FiltersState {
-  const sizeKey = createSizeKey(category, size);
+  const sizeKey = createSizeKey(group, size);
   return {
     ...currentFilters,
     sizes: toggleInArray(currentFilters.sizes, sizeKey),
