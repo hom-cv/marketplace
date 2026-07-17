@@ -35,11 +35,3 @@ export function subcategoriesFor(
   if (!taxonomy || !gender || !category) return [];
   return taxonomy.genders[gender]?.[category] ?? [];
 }
-
-/** Display label for a subcategory code (falls back to the code itself). */
-export function subcategoryLabel(
-  taxonomy: CategoryTaxonomy | undefined,
-  code: string,
-): string {
-  return taxonomy?.subcategoryLabels[code] ?? code;
-}

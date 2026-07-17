@@ -201,36 +201,31 @@ export interface SizeGroupConfig {
   formatLabel?: (size: string) => string;
 }
 
-export const SIZE_GROUP_CONFIG: readonly SizeGroupConfig[] = [
-  { group: "LETTER", sizes: LETTER_SIZES, labelKey: "sizeGroups.letter" },
-  { group: "WAIST", sizes: WAIST_SIZES, labelKey: "sizeGroups.waist" },
-  { group: "SUIT", sizes: SUIT_SIZES, labelKey: "sizeGroups.suit" },
-  {
+// Full Record<SizeGroup, ...> so a missing group is a compile error (exhaustiveness).
+const SIZE_GROUP_BY_KEY: Record<SizeGroup, SizeGroupConfig> = {
+  LETTER: { group: "LETTER", sizes: LETTER_SIZES, labelKey: "sizeGroups.letter" },
+  WAIST: { group: "WAIST", sizes: WAIST_SIZES, labelKey: "sizeGroups.waist" },
+  SUIT: { group: "SUIT", sizes: SUIT_SIZES, labelKey: "sizeGroups.suit" },
+  SHOE: {
     group: "SHOE",
     sizes: SHOE_SIZES,
     labelKey: "sizeCategories.shoes",
     formatLabel: (size) => `EU ${size}`,
   },
-  {
+  ONE_SIZE: {
     group: "ONE_SIZE",
     sizes: ["ONE_SIZE"],
     labelKey: "sizeCategories.accessories",
     formatLabel: () => "One Size",
   },
-];
+};
 
-const SIZE_GROUP_BY_KEY: Record<SizeGroup, SizeGroupConfig> =
-  SIZE_GROUP_CONFIG.reduce(
-    (acc, c) => {
-      acc[c.group] = c;
-      return acc;
-    },
-    {} as Record<SizeGroup, SizeGroupConfig>,
-  );
+export const SIZE_GROUP_CONFIG: readonly SizeGroupConfig[] =
+  Object.values(SIZE_GROUP_BY_KEY);
 
 /** Available size options for a size group. */
 export function getSizesForGroup(group: SizeGroup): readonly string[] {
-  return SIZE_GROUP_BY_KEY[group]?.sizes ?? [];
+  return SIZE_GROUP_BY_KEY[group].sizes;
 }
 
 /** Render a size for display (e.g. "EU 42", "One Size"). */

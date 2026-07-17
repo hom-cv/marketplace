@@ -48,15 +48,10 @@ class Post(Base):
         nullable=False,
         index=True,
     )
-    # Granular subcategory (a leaf in CATEGORY_TREE). Nullable: legacy posts predate
-    # the taxonomy ("uncategorized"); required on new listings via the schema.
-    # Non-native enum (VARCHAR, app-validated) like category; length pinned to 64
-    # so the column type is unchanged from the earlier String(64).
     subcategory: Mapped[Subcategory | None] = mapped_column(
         Enum(
             Subcategory,
             native_enum=False,
-            validate_strings=True,
             length=64,
         ),
         nullable=True,

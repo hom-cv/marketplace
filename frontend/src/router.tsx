@@ -134,12 +134,7 @@ const publicExploreRoute = createRoute({
     department?: Department;
     categories?: PostCategory[];
     subcategories?: string[];
-    // Sizes are per-group params (clothing/waist/shoe/suit) so the URL reads
-    // ?shoe=39&waist=40 instead of ?sizes=SHOE:39.
-    clothing?: string[];
-    waist?: string[];
-    shoe?: string[];
-    suit?: string[];
+    sizes?: string[];
     brands?: string[];
     tags?: string[];
     search?: string;
@@ -172,10 +167,7 @@ const publicExploreRoute = createRoute({
         : undefined,
       categories: categories.length ? categories : undefined,
       subcategories: clean(search.subcategories),
-      clothing: clean(search.clothing),
-      waist: clean(search.waist),
-      shoe: clean(search.shoe),
-      suit: clean(search.suit),
+      sizes: clean(search.sizes),
       brands: clean(search.brands),
       tags: clean(search.tags),
       search: q || undefined,
@@ -380,19 +372,13 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
 ]);
 
-// Clean search-param serialization: arrays become repeated keys
-// (?categories=TOPS&subcategories=Polos) instead of JSON blobs. Scalars keep the
-// default's JSON round-trip (numbers/booleans/objects survive) so other routes are
-// unaffected; plain strings stay unquoted.
+// Serialize search params as plain strings / repeated keys (no JSON blobs).
 function stringifySearch(search: Record<string, unknown>): string {
   const params = new URLSearchParams();
-  const encode = (v: unknown) =>
-    typeof v === "string" ? v : JSON.stringify(v);
-  for (const key of Object.keys(search)) {
-    const val = search[key];
+  for (const [key, val] of Object.entries(search)) {
     if (val === undefined || val === null) continue;
-    if (Array.isArray(val)) val.forEach((item) => params.append(key, encode(item)));
-    else params.append(key, encode(val));
+    if (Array.isArray(val)) val.forEach((item) => params.append(key, String(item)));
+    else params.append(key, String(val));
   }
   const str = params.toString();
   return str ? `?${str}` : "";
@@ -400,17 +386,10 @@ function stringifySearch(search: Record<string, unknown>): string {
 
 function parseSearch(searchStr: string): Record<string, unknown> {
   const params = new URLSearchParams(searchStr.replace(/^\?/, ""));
-  const decode = (v: string): unknown => {
-    try {
-      return JSON.parse(v);
-    } catch {
-      return v;
-    }
-  };
   const result: Record<string, unknown> = {};
   for (const key of new Set(params.keys())) {
     const all = params.getAll(key);
-    result[key] = all.length > 1 ? all.map(decode) : decode(all[0]);
+    result[key] = all.length > 1 ? all : all[0];
   }
   return result;
 }

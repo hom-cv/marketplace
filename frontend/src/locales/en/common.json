@@ -71,7 +71,6 @@
   },
   "filtersSidebar": {
     "department": "Department",
-    "allDepartments": "All",
     "filters": "Filters",
     "clear": "Clear",
     "category": "Category",

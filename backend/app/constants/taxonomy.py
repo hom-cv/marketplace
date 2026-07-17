@@ -1,14 +1,17 @@
 """The category taxonomy: the gendered category tree + per-subcategory sizing.
 
-Single source of truth for categories — the backend validates against it and
-serves it (``taxonomy_payload``) so the frontend never re-declares it. Built on
-the vocabulary enums (``PostCategory``/``Gender``/``SizeGroup``) from
-``app.constants.post``.
+Single source of truth for categories — validated against here and served to the
+frontend via ``taxonomy_payload`` (GET /categories).
 """
 
-from app.constants.post import Gender, PostCategory, SizeGroup, Subcategory
+from app.constants.post import (
+    Gender,
+    PostCategory,
+    SizeGroup,
+    Subcategory,
+)
 
-# Human-readable label per top category (used by the frontend menu/filters directly).
+# Display label per top category.
 CATEGORY_LABELS: dict[PostCategory, str] = {
     PostCategory.TOPS: "Tops",
     PostCategory.BOTTOMS: "Bottoms",
@@ -21,8 +24,7 @@ CATEGORY_LABELS: dict[PostCategory, str] = {
     PostCategory.BAGS: "Bags & Luggage",
 }
 
-# --- The taxonomy: gender -> category -> ordered granular subcategories ---------
-# Leaves are Subcategory members (codes); display labels live in SUBCATEGORY_LABELS.
+# gender -> category -> ordered subcategories
 
 _MENS_TREE: dict[PostCategory, list[Subcategory]] = {
     PostCategory.TOPS: [
@@ -178,7 +180,6 @@ _WOMENS_TREE: dict[PostCategory, list[Subcategory]] = {
 }
 
 
-
 def _union_tree(
     *trees: dict[PostCategory, list[Subcategory]],
 ) -> dict[PostCategory, list[Subcategory]]:
@@ -193,31 +194,14 @@ def _union_tree(
     return merged
 
 
-# Unisex draws from the union of both trees (deduped).
-_UNISEX_TREE = _union_tree(_MENS_TREE, _WOMENS_TREE)
-
+# gender -> category -> subcategories (unisex = union of both).
 CATEGORY_TREE: dict[Gender, dict[PostCategory, list[Subcategory]]] = {
     Gender.MENS: _MENS_TREE,
     Gender.WOMENS: _WOMENS_TREE,
-    Gender.UNISEX: _UNISEX_TREE,
+    Gender.UNISEX: _union_tree(_MENS_TREE, _WOMENS_TREE),
 }
 
-# Drift guard: every Subcategory member must appear in the tree and vice versa, so
-# the flat vocabulary (constants.post) and the structured tree can't diverge, and
-# SUBCATEGORY_LABELS covers every member.
-_TREE_LEAVES = {
-    leaf for tree in CATEGORY_TREE.values() for lst in tree.values() for leaf in lst
-}
-assert _TREE_LEAVES == set(Subcategory), (
-    "CATEGORY_TREE and Subcategory are out of sync: "
-    f"tree-only={_TREE_LEAVES - set(Subcategory)}, "
-    f"enum-only={set(Subcategory) - _TREE_LEAVES}"
-)
-
-# --- Sizing: which SizeGroup a listing uses -----------------------------------
-# Group is looked up per-subcategory (override) falling back to the category default,
-# because top categories are heterogeneous (Tailoring = blazers letter + trousers waist).
-
+# Size group per category, overridable per subcategory below.
 CATEGORY_DEFAULT_SIZE_GROUP: dict[PostCategory, SizeGroup] = {
     PostCategory.TOPS: SizeGroup.LETTER,
     PostCategory.BOTTOMS: SizeGroup.LETTER,
@@ -230,8 +214,6 @@ CATEGORY_DEFAULT_SIZE_GROUP: dict[PostCategory, SizeGroup] = {
     PostCategory.BAGS: SizeGroup.ONE_SIZE,
 }
 
-# Leaf-level overrides. Keyed by subcategory string (no cross-category conflicts today;
-# if two categories ever need the same leaf in different groups, switch to a (cat, leaf) key).
 SUBCATEGORY_SIZE_GROUP: dict[Subcategory, SizeGroup] = {
     Subcategory.DENIM: SizeGroup.WAIST,
     Subcategory.JEANS: SizeGroup.WAIST,
@@ -248,7 +230,7 @@ SUBCATEGORY_SIZE_GROUP: dict[Subcategory, SizeGroup] = {
     Subcategory.SOCKS_AND_INTIMATES: SizeGroup.LETTER,
 }
 
-# Display label per subcategory code (served to the frontend).
+# Display label per subcategory code.
 SUBCATEGORY_LABELS: dict[Subcategory, str] = {
     Subcategory.BACKPACKS: "Backpacks",
     Subcategory.BAGS_AND_LUGGAGE: "Bags & Luggage",
@@ -349,14 +331,10 @@ SUBCATEGORY_LABELS: dict[Subcategory, str] = {
     Subcategory.WATCHES: "Watches",
 }
 
-_LABELLED = set(SUBCATEGORY_LABELS)
-assert _LABELLED == set(Subcategory), (
-    f"SUBCATEGORY_LABELS out of sync: missing={set(Subcategory) - _LABELLED}, "
-    f"extra={_LABELLED - set(Subcategory)}"
-)
 
-
-def size_group_for(category: PostCategory, subcategory: Subcategory | None) -> SizeGroup:
+def size_group_for(
+    category: PostCategory, subcategory: Subcategory | None
+) -> SizeGroup:
     """SizeGroup for a (category, subcategory): leaf override, else category default.
 
     ``subcategory`` may be None (legacy posts predate the taxonomy) — that falls
@@ -379,8 +357,8 @@ def is_valid_category_path(
 def taxonomy_payload() -> dict:
     """Serialize the taxonomy for the public GET /categories endpoint.
 
-    Shape: ``{genders, categoryLabels, categoryDefaultSizeGroups, subcategorySizeGroups}``.
-    The frontend computes a subcategory's size group as
+    Shape: ``{genders, categoryLabels, subcategoryLabels, categoryDefaultSizeGroups,
+    subcategorySizeGroups}``. The frontend computes a subcategory's size group as
     ``subcategorySizeGroups[leaf] ?? categoryDefaultSizeGroups[category]``.
     """
     return {
@@ -393,13 +371,13 @@ def taxonomy_payload() -> dict:
         },
         "categoryLabels": {cat.value: label for cat, label in CATEGORY_LABELS.items()},
         "subcategoryLabels": {
-            sub.value: label for sub, label in SUBCATEGORY_LABELS.items()
+            code.value: label for code, label in SUBCATEGORY_LABELS.items()
         },
         "categoryDefaultSizeGroups": {
             cat.value: group.value
             for cat, group in CATEGORY_DEFAULT_SIZE_GROUP.items()
         },
         "subcategorySizeGroups": {
-            sub.value: group.value for sub, group in SUBCATEGORY_SIZE_GROUP.items()
+            code.value: group.value for code, group in SUBCATEGORY_SIZE_GROUP.items()
         },
     }

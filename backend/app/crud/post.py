@@ -120,14 +120,14 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
     def _apply_size_filter(self, query, sizes: list[str], *, scoped: bool):
         """Group-aware size filter: a size only constrains posts of its own group.
 
-        ``sizes`` are group-qualified tokens ("SHOE:39"), so shoe-39 never excludes
+        ``sizes`` are group-qualified tokens ("SHOE-39"), so shoe-39 never excludes
         waist-40 bottoms. When a category/subcategory facet is present (``scoped``),
         posts of groups with no size selected pass through; otherwise a bare size
         filter browses only the selected groups.
         """
         by_group: dict[str, list[str]] = {}
         for token in sizes:
-            group, _, value = token.partition(":")
+            group, _, value = token.partition("-")
             if value:
                 by_group.setdefault(group, []).append(value)
         if not by_group:

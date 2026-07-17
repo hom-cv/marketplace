@@ -22,57 +22,15 @@ export interface FiltersState {
  */
 export const ITEMS_PER_PAGE = 20;
 
-/**
- * Create a prefixed size key (e.g. "SHOE:40") so a size stays tied to its group.
- */
+// A size key carries its group so it survives round-trips (URL, API): "SHOE-39".
+// The "-" separator is URL-safe (unencoded) and absent from every group/size value.
 export function createSizeKey(group: SizeGroup, size: string): string {
-  return `${group}:${size}`;
+  return `${group}-${size}`;
 }
 
-/**
- * Parse a prefixed size key back into group and size.
- */
 export function parseSizeKey(key: string): { group: SizeGroup; size: string } {
-  const [group, size] = key.split(":");
-  return { group: group as SizeGroup, size };
-}
-
-// Per-group URL param names, so sizes read as ?shoe=39&waist=40 rather than
-// ?sizes=SHOE:39. ONE_SIZE is never filterable, so it has no param.
-const PARAM_TO_GROUP: Record<string, SizeGroup> = {
-  clothing: "LETTER",
-  waist: "WAIST",
-  shoe: "SHOE",
-  suit: "SUIT",
-};
-const GROUP_TO_PARAM: Partial<Record<SizeGroup, string>> = {
-  LETTER: "clothing",
-  WAIST: "waist",
-  SHOE: "shoe",
-  SUIT: "suit",
-};
-export const SIZE_GROUP_PARAMS = Object.keys(PARAM_TO_GROUP);
-
-/** Per-group URL size params -> internal GROUP:size keys. */
-export function paramsToSizeKeys(search: Record<string, unknown>): string[] {
-  const keys: string[] = [];
-  for (const [param, group] of Object.entries(PARAM_TO_GROUP)) {
-    const values = search[param];
-    if (!Array.isArray(values)) continue;
-    for (const size of values) keys.push(createSizeKey(group, String(size)));
-  }
-  return keys;
-}
-
-/** Internal GROUP:size keys -> per-group URL size params. */
-export function sizeKeysToParams(sizes: string[]): Record<string, string[]> {
-  const out: Record<string, string[]> = {};
-  for (const key of sizes) {
-    const { group, size } = parseSizeKey(key);
-    const param = GROUP_TO_PARAM[group];
-    if (param) (out[param] ??= []).push(size);
-  }
-  return out;
+  const i = key.indexOf("-");
+  return { group: key.slice(0, i) as SizeGroup, size: key.slice(i + 1) };
 }
 
 /**

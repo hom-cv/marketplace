@@ -33,8 +33,6 @@ import {
   type FiltersState,
   ITEMS_PER_PAGE,
   parseSizeKey,
-  paramsToSizeKeys,
-  sizeKeysToParams,
   toggleCategoryFilter,
   toggleSubcategoryFilter,
   toggleSizeFilter,
@@ -56,14 +54,11 @@ export function PublicExplorePage() {
     department,
     categories = [],
     subcategories = [],
+    sizes = [],
     brands = [],
     tags = [],
     search = "",
-    ...rawSizeParams
   } = useSearch({ from: "/explore" });
-  // Sizes live in the URL as per-group params (shoe/waist/...); rebuild the
-  // internal GROUP:size keys the panel/query use.
-  const sizes = paramsToSizeKeys(rawSizeParams);
   const filters: FiltersState = {
     categories,
     subcategories,
@@ -81,7 +76,7 @@ export function PublicExplorePage() {
           const current: FiltersState = {
             categories: prev.categories ?? [],
             subcategories: prev.subcategories ?? [],
-            sizes: paramsToSizeKeys(prev),
+            sizes: prev.sizes ?? [],
             brands: prev.brands ?? [],
             tags: prev.tags ?? [],
           };
@@ -93,11 +88,7 @@ export function PublicExplorePage() {
             subcategories: next.subcategories.length
               ? next.subcategories
               : undefined,
-            clothing: undefined,
-            waist: undefined,
-            shoe: undefined,
-            suit: undefined,
-            ...sizeKeysToParams(next.sizes),
+            sizes: next.sizes.length ? next.sizes : undefined,
             brands: next.brands.length ? next.brands : undefined,
             tags: next.tags.length ? next.tags : undefined,
           };
@@ -165,8 +156,8 @@ export function PublicExplorePage() {
     if (categories.length > 0) queryFilters.categories = categories;
     if (subcategories.length > 0) queryFilters.subcategories = subcategories;
     if (sizes.length > 0) {
-      // Send group-qualified keys ("SHOE:39"); the backend applies each size only
-      // to posts of its own size group, so shoe-40 doesn't collide with waist-40.
+      // Group-qualified keys ("SHOE-39"); the backend applies each size only to
+      // posts of its own group, so shoe-40 doesn't collide with waist-40.
       queryFilters.sizes = [...new Set(sizes)];
     }
     if (department) queryFilters.genders = DEPARTMENT_GENDERS[department];
@@ -232,10 +223,7 @@ export function PublicExplorePage() {
         ...prev,
         categories: undefined,
         subcategories: undefined,
-        clothing: undefined,
-        waist: undefined,
-        shoe: undefined,
-        suit: undefined,
+        sizes: undefined,
         brands: undefined,
         tags: undefined,
         search: undefined,

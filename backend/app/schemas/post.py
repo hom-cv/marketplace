@@ -102,7 +102,7 @@ def _validate_nested_measurements(
 
 
 def validate_category_path(
-    gender: "Gender", category: "PostCategory", subcategory: str | None
+    gender: "Gender", category: "PostCategory", subcategory: "Subcategory | None"
 ) -> None:
     """Ensure (gender, category, subcategory) is a real path in the taxonomy.
 
@@ -119,7 +119,7 @@ def validate_category_path(
 
 def validate_measurements_for_category(
     category: "PostCategory",
-    subcategory: str | None,
+    subcategory: "Subcategory | None",
     measurements: dict[str, Any] | None,
 ) -> None:
     """
@@ -168,7 +168,7 @@ class PostCreateSchema(BaseModel):
     )
     subcategory: Subcategory = Field(
         ...,
-        description="Granular subcategory (a leaf in the taxonomy for this gender+category)",
+        description="Granular subcategory code (a leaf in the taxonomy for this gender+category)",
     )
     gender: Gender = Field(
         ...,
@@ -329,6 +329,15 @@ class PostResponseSchema(BaseModel):
     size: str | None = None
     measurements: dict[str, Any] | None = None
     user: UserResponseSchema
+    is_sold: bool = False
+    is_banned: bool = False
+    is_user_banned: bool = False
+    is_reserved: bool = False
+    is_reserved_by_viewer: bool = False
+    like_count: int = 0
+    is_liked: bool = False
+
+    model_config = {"from_attributes": True}
 
     @field_validator("tags", mode="before")
     @classmethod
@@ -345,16 +354,6 @@ class PostResponseSchema(BaseModel):
         self.size_group = size_group_for(self.category, self.subcategory)
 
         return self
-
-    is_sold: bool = False
-    is_banned: bool = False
-    is_user_banned: bool = False
-    is_reserved: bool = False
-    is_reserved_by_viewer: bool = False
-    like_count: int = 0
-    is_liked: bool = False
-
-    model_config = {"from_attributes": True}
 
 
 class PaginatedPostsResponse(BaseModel):
