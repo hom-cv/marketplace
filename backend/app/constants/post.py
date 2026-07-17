@@ -3,9 +3,9 @@
 
 from enum import Enum
 
-# SYNC: PostCategory / SizeGroup mirror POST_CATEGORIES / SIZE_GROUPS in
-# frontend/src/api/types/post.ts. The category tree is served via /categories
-# (taxonomy.py), so it is not duplicated.
+# Source of truth for the shared vocabulary. The frontend copy is generated from
+# these by scripts/gen_frontend_enums.py (run before committing); the gendered
+# category tree is served at runtime via /categories (taxonomy.py).
 
 
 class PostCategory(str, Enum):
@@ -143,6 +143,14 @@ class Subcategory(str, Enum):
     TANK_TOPS = "TANK_TOPS"
     TOTE_BAGS = "TOTE_BAGS"
     WATCHES = "WATCHES"
+
+
+# Size value lists per size group (canonical source; generated to the frontend via
+# scripts/gen_frontend_enums.py).
+LETTER_SIZES: list[str] = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"]
+WAIST_SIZES: list[str] = [str(n) for n in range(26, 45)]  # every inch, 26-44
+SUIT_SIZES: list[str] = [str(n) for n in range(34, 51, 2)]  # chest, 34-50
+SHOE_SIZES: list[str] = [str(n) for n in range(35, 49)]  # EU, 35-48
 
 
 MIN_LISTING_PRICE: int = 50

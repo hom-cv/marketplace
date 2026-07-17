@@ -4,6 +4,7 @@
  */
 
 import type { PostCategory, SizeGroup } from "@/api/types/post";
+import { SIZE_GROUPS, getSizesForGroup } from "@/api/types/post";
 import { toggleInArray } from "@/utils/array";
 
 /**
@@ -31,6 +32,14 @@ export function createSizeKey(group: SizeGroup, size: string): string {
 export function parseSizeKey(key: string): { group: SizeGroup; size: string } {
   const i = key.indexOf("-");
   return { group: key.slice(0, i) as SizeGroup, size: key.slice(i + 1) };
+}
+
+export function isValidSizeKey(key: string): boolean {
+  const { group, size } = parseSizeKey(key);
+  return (
+    (SIZE_GROUPS as readonly string[]).includes(group) &&
+    getSizesForGroup(group).includes(size)
+  );
 }
 
 /**

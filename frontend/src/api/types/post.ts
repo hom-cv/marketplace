@@ -3,110 +3,20 @@
  */
 
 import type { User } from "./user";
+import {
+  LETTER_SIZES,
+  WAIST_SIZES,
+  SUIT_SIZES,
+  SHOE_SIZES,
+} from "./generated";
+import type { PostCategory, Gender, SizeGroup } from "./generated";
 
-/**
- * All top-level post categories (must match backend PostCategory).
- * The full gendered tree of granular subcategories is served by GET /categories
- * (see useCategoryTree) — this union is only for labels/colors/badges.
- *
- * SYNC: POST_CATEGORIES / SIZE_GROUPS mirror the enums in
- * backend/app/constants/post.py. Size-value lists below are frontend-owned.
- */
-export const POST_CATEGORIES = [
-  "TOPS",
-  "BOTTOMS",
-  "OUTERWEAR",
-  "FOOTWEAR",
-  "ACCESSORIES",
-  "TAILORING",
-  "DRESSES",
-  "JEWELRY",
-  "BAGS",
-] as const;
-
-export type PostCategory = (typeof POST_CATEGORIES)[number];
-
-/**
- * All available departments (who the item is for).
- * Single source of truth for gender values.
- */
-export const POST_GENDERS = ["MENS", "WOMENS", "UNISEX"] as const;
-
-export type Gender = (typeof POST_GENDERS)[number];
-
-/**
- * Size group a subcategory belongs to (must match backend SizeGroup). Determines
- * the available size options + measurement fields for a listing.
- */
-export const SIZE_GROUPS = [
-  "LETTER",
-  "WAIST",
-  "SHOE",
-  "SUIT",
-  "ONE_SIZE",
-] as const;
-export type SizeGroup = (typeof SIZE_GROUPS)[number];
-
-// Letter-based sizes for tops, outerwear, dresses, tailoring
-export const LETTER_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"] as const;
-export type LetterSize = (typeof LETTER_SIZES)[number] | "ONE_SIZE";
-
-// Waist sizes for denim/trousers (every inch, 26-44)
-export const WAIST_SIZES = [
-  "26",
-  "27",
-  "28",
-  "29",
-  "30",
-  "31",
-  "32",
-  "33",
-  "34",
-  "35",
-  "36",
-  "37",
-  "38",
-  "39",
-  "40",
-  "41",
-  "42",
-  "43",
-  "44",
-] as const;
-export type WaistSize = (typeof WAIST_SIZES)[number];
-
-// Suit / tailoring sizes (chest, inches)
-export const SUIT_SIZES = [
-  "34",
-  "36",
-  "38",
-  "40",
-  "42",
-  "44",
-  "46",
-  "48",
-  "50",
-] as const;
-export type SuitSize = (typeof SUIT_SIZES)[number];
-
-// Italian (EU) shoe sizes 35-48
-export const SHOE_SIZES = [
-  "35",
-  "36",
-  "37",
-  "38",
-  "39",
-  "40",
-  "41",
-  "42",
-  "43",
-  "44",
-  "45",
-  "46",
-  "47",
-  "48",
-] as const;
-export type ShoeSize = (typeof SHOE_SIZES)[number];
+// The shared vocabulary (categories, genders, size groups, subcategory codes, size
+// lists) is generated from the backend enums — backend/app/constants/post.py is the
+// source of truth; see generated.ts / scripts/gen_frontend_enums.py. Re-export all of
+// it so imports from this module are unchanged; the few pulled into scope above are
+// used below. The granular subcategory tree is served separately via GET /categories.
+export * from "./generated";
 
 // Measurement interfaces per category
 export interface TopMeasurements {

@@ -6,9 +6,10 @@ import {
 } from "@tanstack/react-router";
 import { AppNavigation } from "@/components/AppNavigation";
 import { Footer } from "@/components/Footer";
-import { POST_CATEGORIES } from "@/api/types/post";
+import { POST_CATEGORIES, SUBCATEGORIES } from "@/api/types/post";
 import type { PostCategory } from "@/api/types/post";
 import { isDepartment, type Department } from "@/constants/departments";
+import { isValidSizeKey } from "@/utils/filterHelpers";
 import { Outlet } from "@tanstack/react-router";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminProtectedRoute } from "@/components/AdminProtectedRoute";
@@ -157,6 +158,14 @@ const publicExploreRoute = createRoute({
         ),
       ),
     ];
+    const subcategories = [
+      ...new Set(
+        asArray(search.subcategories).filter((s) =>
+          (SUBCATEGORIES as readonly string[]).includes(s),
+        ),
+      ),
+    ];
+    const sizes = [...new Set(asArray(search.sizes).filter(isValidSizeKey))];
     const q =
       search.search !== undefined && search.search !== null
         ? String(search.search).trim()
@@ -166,8 +175,8 @@ const publicExploreRoute = createRoute({
         ? search.department
         : undefined,
       categories: categories.length ? categories : undefined,
-      subcategories: clean(search.subcategories),
-      sizes: clean(search.sizes),
+      subcategories: subcategories.length ? subcategories : undefined,
+      sizes: sizes.length ? sizes : undefined,
       brands: clean(search.brands),
       tags: clean(search.tags),
       search: q || undefined,
