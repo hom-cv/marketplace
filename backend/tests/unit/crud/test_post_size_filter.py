@@ -46,6 +46,18 @@ def test_size_token_without_a_group_is_ignored():
     assert _sql(crud._apply_size_filter(select(Post.id), ["39"], scoped=True)) == base
 
 
+def test_group_name_is_normalized_to_uppercase():
+    upper = _sql(crud._apply_size_filter(select(Post.id), ["SHOE-39"], scoped=True))
+    lower = _sql(crud._apply_size_filter(select(Post.id), ["shoe-39"], scoped=True))
+    assert lower == upper
+
+
+def test_unknown_group_is_dropped_not_filter_bypassing():
+    base = _sql(select(Post.id))
+    got = _sql(crud._apply_size_filter(select(Post.id), ["NOPE-39"], scoped=True))
+    assert got == base
+
+
 def test_size_group_case_checks_subcategory_before_category():
     # Subcategory overrides must win over the category default (first match wins).
     sql = _sql(select(crud._size_group_case()))

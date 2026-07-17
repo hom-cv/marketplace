@@ -125,11 +125,16 @@ class PostCRUD(BaseCRUD[Post, PostCreateSchema, PostUpdateSchema]):
         posts of groups with no size selected pass through; otherwise a bare size
         filter browses only the selected groups.
         """
+        valid_groups = {g.value for g in SizeGroup}
         by_group: dict[str, list[str]] = {}
+
         for token in sizes:
             group, _, value = token.partition("-")
-            if value:
+            group = group.upper()
+
+            if value and group in valid_groups:
                 by_group.setdefault(group, []).append(value)
+
         if not by_group:
             return query
 

@@ -136,6 +136,12 @@ def validate_measurements_for_category(
     if measurements is None:
         return
 
+    for key, value in measurements.items():
+        if value is not None and (
+            isinstance(value, bool) or not isinstance(value, (int, float))
+        ):
+            raise ValueError(f"Measurement '{key}' must be a number.")
+
     group = size_group_for(category, subcategory)
     if group in (SizeGroup.LETTER, SizeGroup.SUIT):
         _validate_nested_measurements(measurements, TopMeasurements, category.value)
