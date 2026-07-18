@@ -38,7 +38,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   const price = parseFloat(post.price);
   const currentUser = useAuthStore((state) => state.user);
   const isAuthenticated = useIsAuthenticated();
-  const isOwner = currentUser?.id === post.user.id;
+  const isOwner = currentUser?.id === post.user?.id;
   const { t } = useTranslation("common");
   const [loginModalOpened, { open: openLoginModal, close: closeLoginModal }] =
     useDisclosure(false);
