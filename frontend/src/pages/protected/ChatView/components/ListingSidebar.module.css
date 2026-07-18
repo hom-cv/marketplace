@@ -102,15 +102,19 @@
   gap: 16px;
 }
 
-/* Pinned footer - seller + actions */
+/* Pinned footer - seller + actions. Scale the shared seller card + buy button
+   down (via their vars) so the footer doesn't crowd out the preview above. */
 .footer {
   flex-shrink: 0;
-  padding: 16px;
+  padding: 12px 16px;
   border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background: var(--color-bg-card);
+  --seller-card-padding: 10px;
+  --seller-avatar-size: 34px;
+  --listing-action-padding: 11px;
 }
 
 /* View listing - subtle link out to the full page (sidebar-only affordance) */

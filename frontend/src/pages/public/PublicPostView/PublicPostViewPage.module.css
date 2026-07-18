@@ -194,7 +194,8 @@
   padding: 16px;
 }
 
-/* Seller card with arrow */
+/* Seller card with arrow. Padding/avatar are vars so an embedder (chat sidebar)
+   can render a more compact card without forking. */
 .sellerCard {
   display: flex;
   align-items: center;
@@ -202,7 +203,7 @@
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: 16px;
+  padding: var(--seller-card-padding, 16px);
   cursor: pointer;
   transition: border-color 0.15s ease;
   text-decoration: none;
@@ -220,7 +221,7 @@
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: 16px;
+  padding: var(--seller-card-padding, 16px);
 }
 
 .sellerInfo {
@@ -230,8 +231,8 @@
 }
 
 .sellerAvatar {
-  width: 48px;
-  height: 48px;
+  width: var(--seller-avatar-size, 48px);
+  height: var(--seller-avatar-size, 48px);
   border-radius: 50%;
   background: var(--color-primary-light);
   color: white;
@@ -266,7 +267,7 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 16px 24px;
+  padding: var(--listing-action-padding, 16px 24px);
   background: var(--color-primary);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
@@ -294,7 +295,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 16px 24px;
+  padding: var(--listing-action-padding, 16px 24px);
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
