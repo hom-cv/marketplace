@@ -57,7 +57,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   // Image tap: distinguish single (open post) from double (like). Wait one
   // double-tap window before navigating so a second tap can cancel it.
   const lastTapRef = useRef(0);
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(tapTimerRef.current), []);
 
   const openPost = () => {
