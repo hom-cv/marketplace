@@ -111,11 +111,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         {showReportMenu && (
           <Menu shadow="md" width={200} position="bottom-end">
             <Menu.Target>
-              <button
-                type="button"
-                className={styles.menuButton}
-                onClick={(e) => e.stopPropagation()}
-              >
+              <button type="button" className={styles.menuButton}>
                 <IconDotsVertical size={20} />
               </button>
             </Menu.Target>
