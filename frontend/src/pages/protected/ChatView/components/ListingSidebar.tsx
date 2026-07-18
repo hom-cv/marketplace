@@ -32,8 +32,9 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
   const currentUser = useAuthStore((state) => state.user);
   const [index, setIndex] = useState(0);
 
-  const isOwner = currentUser?.id === post.user.id;
   const isBanned = !!(post.is_banned || post.is_user_banned);
+  const isOwner = currentUser?.id === post.user.id;
+  const canShowBuy = !!currentUser && !isOwner;
 
   const imageUrls =
     post.image_urls && post.image_urls.length > 0
@@ -101,7 +102,7 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
       <div className={styles.footer}>
         <SellerInfoCard user={post.user} isOwner={isOwner} />
 
-        {!isOwner && (
+        {canShowBuy && (
           <PostActions
             post={post}
             postId={post.id}

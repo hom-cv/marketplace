@@ -13,18 +13,16 @@ export function ImpersonationBanner() {
   const navigate = useNavigate();
   const bannerRef = useRef<HTMLDivElement>(null);
 
-  // Publish the banner's real height so fixed layouts (e.g. the chat page,
-  // pinned to top: 60px) can offset below it. Recomputed on resize for wrap.
   useLayoutEffect(() => {
     const root = document.documentElement;
     const el = bannerRef.current;
     if (!el) return;
-    const sync = () =>
+    const observer = new ResizeObserver(() => {
       root.style.setProperty("--impersonation-height", `${el.offsetHeight}px`);
-    sync();
-    window.addEventListener("resize", sync);
+    });
+    observer.observe(el);
     return () => {
-      window.removeEventListener("resize", sync);
+      observer.disconnect();
       root.style.removeProperty("--impersonation-height");
     };
   }, [isImpersonating]);

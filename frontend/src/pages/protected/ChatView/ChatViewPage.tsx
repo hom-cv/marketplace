@@ -181,7 +181,7 @@ export function ChatViewPage() {
       {/* Right: Listing details */}
       <div className={styles.listingSidebar}>
         {post ? (
-          <ListingSidebar post={post} />
+          <ListingSidebar key={post.id} post={post} />
         ) : postLoading ? (
           <div className={styles.loading}>
             <Loader size="sm" />
