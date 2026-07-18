@@ -1,21 +1,25 @@
 /**
- * ListingSidebar - Rich listing summary mirroring the post view page
- * Shows image carousel, title, price, size, description, measurements, seller
+ * ListingSidebar - Listing preview beside a chat. Reuses the listing-detail
+ * pieces (PostDetails, SellerInfoCard, PostActions) so the two views share the
+ * same styling and never drift. Only the image and panel layout are local.
  */
 
 import { useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   IconChevronLeft,
   IconChevronRight,
   IconExternalLink,
   IconPhoto,
-  IconRosetteDiscountCheck,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
+import {
+  PostActions,
+  PostDetails,
+  SellerInfoCard,
+} from "@/pages/public/PublicPostView/components";
+import { useAuthStore } from "@/stores/authStore";
 import type { Post } from "@/api/types/post";
-import { formatSize } from "@/api/types/post";
 import styles from "./ListingSidebar.module.css";
 
 interface ListingSidebarProps {
@@ -24,11 +28,12 @@ interface ListingSidebarProps {
 
 export function ListingSidebar({ post }: ListingSidebarProps) {
   const { t } = useTranslation("listings");
-  const { t: tCommon } = useTranslation("common");
+  const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
   const [index, setIndex] = useState(0);
 
-  const price = parseFloat(post.price);
-  const shippingCost = parseFloat(post.shipping_cost || "0");
+  const isOwner = currentUser?.id === post.user.id;
+  const isBanned = !!(post.is_banned || post.is_user_banned);
 
   const imageUrls =
     post.image_urls && post.image_urls.length > 0
@@ -40,6 +45,9 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
   const hasMultiple = imageUrls.length > 1;
   const step = (delta: number) =>
     setIndex((current + delta + imageUrls.length) % imageUrls.length);
+
+  const handleBuy = () =>
+    navigate({ to: "/checkout/$postId", params: { postId: String(post.id) } });
 
   return (
     <div className={styles.sidebar}>
@@ -84,101 +92,25 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
         </div>
       </div>
 
-      {/* Scrollable content */}
+      {/* Scrollable content - shared listing-detail body */}
       <div className={styles.content}>
-        {/* Header: brand eyebrow, title, price */}
-        <div className={styles.header}>
-          <div className={styles.eyebrow}>
-            {post.brand && <span className={styles.brand}>{post.brand.name}</span>}
-            {post.is_sold && (
-              <span className={styles.soldBadge}>{tCommon("badges.sold")}</span>
-            )}
-          </div>
-
-          <h2 className={styles.title}>{post.title}</h2>
-
-          <div className={styles.priceSection}>
-            <span className={styles.price}>฿{price.toLocaleString()}</span>
-            {shippingCost > 0 ? (
-              <span className={styles.shipping}>
-                + ฿{shippingCost.toLocaleString()} {t("view.shipping")}
-              </span>
-            ) : (
-              <span className={styles.freeShipping}>{t("view.freeShipping")}</span>
-            )}
-          </div>
-        </div>
-
-        <hr className={styles.divider} />
-
-        {/* Size — label / value row */}
-        {post.size && (
-          <div className={styles.specRow}>
-            <span className={styles.specLabel}>{tCommon("postCard.size")}</span>
-            <span className={styles.sizeBadge}>
-              {formatSize(post.size, post.size_group)}
-            </span>
-          </div>
-        )}
-
-        {/* Description */}
-        {post.description && (
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>{t("view.description")}</div>
-            <p className={styles.description}>{post.description}</p>
-          </div>
-        )}
-
-        {/* Measurements */}
-        {post.measurements && (
-          <MeasurementsDisplay measurements={post.measurements} />
-        )}
-
-        {/* Tags */}
-        {post.tags.length > 0 && (
-          <div className={styles.section}>
-            <div className={styles.sectionLabel}>{t("view.tags")}</div>
-            <div className={styles.tags}>
-              {post.tags.map((tag) => (
-                <span key={tag} className={styles.tag}>
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <PostDetails post={post} isOwner={isOwner} onLikeAuthRequired={() => {}} />
       </div>
 
-      {/* Pinned footer - always visible */}
+      {/* Pinned footer - shared seller card + buy action */}
       <div className={styles.footer}>
-        {/* Seller card */}
-        <Link
-          to="/profile/$username"
-          params={{ username: post.user.username }}
-          className={styles.sellerCard}
-        >
-          <div className={styles.sellerAvatar}>
-            {post.user.username.charAt(0).toUpperCase()}
-          </div>
-          <div className={styles.sellerDetails}>
-            <div className={styles.sellerNameRow}>
-              <span className={styles.sellerName}>@{post.user.username}</span>
-              {post.user.is_seller && (
-                <IconRosetteDiscountCheck size={14} className={styles.sellerBadgeIcon} />
-              )}
-            </div>
-            {post.user.show_full_name && post.user.first_name && (
-              <span className={styles.sellerFullName}>
-                {[post.user.first_name, post.user.last_name]
-                  .filter(Boolean)
-                  .join(" ")}
-              </span>
-            )}
-          </div>
-          <IconChevronRight size={16} className={styles.sellerArrow} />
-        </Link>
+        <SellerInfoCard user={post.user} isOwner={isOwner} />
 
-        {/* View listing link */}
+        {!isOwner && (
+          <PostActions
+            post={post}
+            postId={post.id}
+            isOwner={false}
+            isBanned={isBanned}
+            onBuyClick={handleBuy}
+          />
+        )}
+
         <Link
           to="/explore/$postId"
           params={{ postId: String(post.id) }}
