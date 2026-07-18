@@ -2,7 +2,8 @@
 
 .page {
   position: fixed;
-  top: 60px;
+  /* 60px nav + impersonation banner height when present (0 otherwise) */
+  top: calc(60px + var(--impersonation-height, 0px));
   left: 0;
   right: 0;
   bottom: 0;
