@@ -9,6 +9,10 @@ export const DEPARTMENTS = ["mens", "womens", "unisex"] as const;
 
 export type Department = (typeof DEPARTMENTS)[number];
 
+// Departments surfaced in the browse bar / drawer shop links. Unisex is
+// filter-only (it lives in the explore filter panel, not the top-level nav).
+export const BAR_DEPARTMENTS = ["mens", "womens"] as const satisfies readonly Department[];
+
 // Which post genders a department includes (mens/womens also surface unisex items).
 export const DEPARTMENT_GENDERS: Record<Department, Gender[]> = {
   mens: ["MENS", "UNISEX"],

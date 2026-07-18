@@ -36,7 +36,10 @@ export function AppNavigation() {
         onToggleDrawer={toggleDrawer}
         onLogout={handleLogout}
       />
-      <DepartmentBar />
+      {/* Desktop only; on mobile the departments live in the hamburger drawer. */}
+      <Box visibleFrom="xs">
+        <DepartmentBar />
+      </Box>
       <MobileDrawer
         opened={drawerOpened}
         onClose={closeDrawer}
