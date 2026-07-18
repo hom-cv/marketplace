@@ -38,6 +38,7 @@ export function usePost(postId: number | string | null) {
     queryKey: queryKeys.posts.detail(postId),
     queryFn: () => (numericId ? getPost(numericId) : null),
     enabled: !!numericId,
+    retry: false, // a missing/deleted post won't appear on retry — fail fast instead of spinning
   });
 }
 

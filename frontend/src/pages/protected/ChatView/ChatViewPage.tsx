@@ -7,7 +7,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { Loader } from "@mantine/core";
-import { IconX, IconShieldCheck } from "@tabler/icons-react";
+import { IconX, IconShieldCheck, IconPhoto } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { getConversationMessages } from "@/api/chat";
 import { useConversation } from "@/hooks/useChat";
@@ -52,7 +52,9 @@ export function ChatViewPage() {
   } = useConversation(conversationId);
 
   // Fetch full post data for the sidebar
-  const { data: post } = usePost(conversation?.post.id ?? null);
+  const { data: post, isLoading: postLoading } = usePost(
+    conversation?.post.id ?? null
+  );
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -180,9 +182,22 @@ export function ChatViewPage() {
       <div className={styles.listingSidebar}>
         {post ? (
           <ListingSidebar post={post} />
-        ) : (
+        ) : postLoading ? (
           <div className={styles.loading}>
             <Loader size="sm" />
+          </div>
+        ) : (
+          // Deleted/unavailable listing: still show the snapshot from the conversation
+          <div className={styles.unavailable}>
+            <div className={styles.unavailableImage}>
+              {conversation.post.image_url ? (
+                <img src={conversation.post.image_url} alt={conversation.post.title} />
+              ) : (
+                <IconPhoto size={40} />
+              )}
+            </div>
+            <h2 className={styles.unavailableTitle}>{conversation.post.title}</h2>
+            <p className={styles.unavailableText}>{t("listingUnavailable")}</p>
           </div>
         )}
       </div>

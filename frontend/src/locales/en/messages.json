@@ -9,5 +9,6 @@
   "inputPlaceholder": "Type a message...",
   "messageSent": "Message sent",
   "viewListing": "View Listing",
+  "listingUnavailable": "This listing has been deleted",
   "safetyBanner": "For your protection, keep all transactions on the platform. Off-site payments are not covered by our buyer protection."
 }
