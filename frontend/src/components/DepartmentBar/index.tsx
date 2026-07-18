@@ -10,6 +10,7 @@ import {
   type Department,
 } from "@/constants/departments";
 import { ShopByCategoryPanel } from "@/components/ShopByCategoryMenu";
+import { useCategoryTree, categoriesForGender } from "@/hooks/useCategoryTree";
 import styles from "./DepartmentBar.module.css";
 
 export function DepartmentBar() {
@@ -22,6 +23,11 @@ export function DepartmentBar() {
   });
   // Department whose category panel is open, overlaying the page (click-driven).
   const [open, setOpen] = useState<Department | null>(null);
+  const { data: taxonomy } = useCategoryTree();
+  // Only show the panel once the taxonomy has categories for the department —
+  // otherwise the bordered wrapper renders as an empty strip while loading.
+  const hasCategories =
+    !!open && categoriesForGender(taxonomy, departmentToGender(open)).length > 0;
 
   const items: { value: Department | undefined; label: string }[] = [
     { value: undefined, label: t("departments.all") },
@@ -64,7 +70,7 @@ export function DepartmentBar() {
           </button>
         ))}
       </Container>
-      {open && (
+      {open && hasCategories && (
         <div className={styles.panel}>
           <Container size="md">
             <ShopByCategoryPanel

@@ -47,7 +47,6 @@
   z-index: 200;
   background-color: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
   padding: 16px 0;
   /* header (60) + bar (44) sit above; cap to the rest of the viewport and scroll. */
   max-height: calc(100dvh - 104px);
