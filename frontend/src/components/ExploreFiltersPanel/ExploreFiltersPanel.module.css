@@ -1,5 +1,5 @@
 .noResults {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   padding: 4px 0;
 }
@@ -10,12 +10,12 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 5px 2px;
+  padding: 10px 2px;
   background: none;
   border: none;
   border-bottom: 1px solid var(--color-border);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-text);
   text-align: left;
 }
@@ -36,13 +36,13 @@
 .categoryHint {
   margin: 0;
   padding: 4px 2px;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
 
 /* Size sub-group label (only shown when a selection spans multiple size types) */
 .sizeGroupLabel {
-  font-size: 0.72rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -63,7 +63,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   font-weight: 600;
   color: var(--color-text);
 }
@@ -79,7 +79,7 @@
   border-radius: 8px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 0.65rem;
+  font-size: var(--text-sm);
   line-height: 16px;
   text-align: center;
 }
@@ -98,7 +98,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition:
     border-color 0.15s ease,

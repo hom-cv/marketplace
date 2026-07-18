@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { Tooltip } from "@mantine/core";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { likePost, unlikePost } from "@/api/likes";
-import { queryKeys } from "@/hooks/queryKeys";
+import { useLike } from "@/hooks/useLike";
 import { useIsAuthenticated } from "@/stores/authStore";
 import styles from "./LikeButton.module.css";
 
@@ -24,49 +21,12 @@ export function LikeButton({
   onAuthRequired,
 }: LikeButtonProps) {
   const { t } = useTranslation("common");
-  const queryClient = useQueryClient();
   const isAuthenticated = useIsAuthenticated();
-
-  const [isLiked, setIsLiked] = useState(initialLiked);
-  const [likeCount, setLikeCount] = useState(initialCount);
-
-  const likeMutation = useMutation({
-    mutationFn: () => likePost(postId),
-    onMutate: () => {
-      setIsLiked(true);
-      setLikeCount((prev) => prev + 1);
-    },
-    onError: () => {
-      setIsLiked(false);
-      setLikeCount((prev) => Math.max(0, prev - 1));
-    },
-    onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.liked }),
-      ]);
-    },
-  });
-
-  const unlikeMutation = useMutation({
-    mutationFn: () => unlikePost(postId),
-    onMutate: () => {
-      setIsLiked(false);
-      setLikeCount((prev) => Math.max(0, prev - 1));
-    },
-    onError: () => {
-      setIsLiked(true);
-      setLikeCount((prev) => prev + 1);
-    },
-    onSuccess: () => {
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.all }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.detail(postId) }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.posts.liked }),
-      ]);
-    },
-  });
+  const { isLiked, likeCount, isPending, toggle } = useLike(
+    postId,
+    initialLiked,
+    initialCount,
+  );
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -76,14 +36,10 @@ export function LikeButton({
       return;
     }
 
-    if (isLiked) {
-      unlikeMutation.mutate();
-    } else {
-      likeMutation.mutate();
-    }
+    toggle();
   };
 
-  const isLoading = likeMutation.isPending || unlikeMutation.isPending;
+  const isLoading = isPending;
   const iconSize = size === "sm" ? 14 : size === "md" ? 18 : 22;
 
   return (
