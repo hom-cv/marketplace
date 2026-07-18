@@ -13,11 +13,10 @@ import {
   Button,
   Loader,
 } from "@mantine/core";
-import { Link, useLocation } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
   IconLogout,
-  IconSearch,
   IconShoppingBag,
   IconPackage,
   IconReceipt,
@@ -26,7 +25,9 @@ import {
   IconSettings,
   IconShield,
   IconMessage,
+  IconArrowRight,
 } from "@tabler/icons-react";
+import { BAR_DEPARTMENTS } from "@/constants/departments";
 import { SellerButton } from "./SellerButton";
 import { getInitials, type UserInfo } from "./types";
 
@@ -46,7 +47,30 @@ export function MobileDrawer({
   onLogout,
 }: MobileDrawerProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useTranslation("navigation");
+  const { t: tListings } = useTranslation("listings");
+  const { t: tExplore } = useTranslation("explore");
+
+  // Department bar is desktop-only; on mobile it lives here in the drawer.
+  const departments = [
+    { value: undefined, label: tExplore("departments.all") },
+    ...BAR_DEPARTMENTS.map((value) => ({ value, label: tListings(`genders.${value}`) })),
+  ];
+  const shopLinks = departments.map((d) => (
+    <NavLink
+      key={d.value ?? "all"}
+      label={d.label}
+      rightSection={<IconArrowRight size={16} stroke={1.5} />}
+      onClick={() => {
+        navigate({
+          to: "/explore",
+          search: (prev) => ({ ...prev, department: d.value || undefined }),
+        });
+        onClose();
+      }}
+    />
+  ));
 
   return (
     <Drawer opened={opened} onClose={onClose} size="100%">
@@ -74,19 +98,13 @@ export function MobileDrawer({
               onClick={onClose}
             />
 
+            {shopLinks}
+
             <Divider my="sm" />
 
             <Text size="xs" c="dimmed" tt="uppercase" fw={600} px="md" mb="xs">
               {t("sections.buying")}
             </Text>
-            <NavLink
-              component={Link}
-              to="/explore"
-              label={t("menu.explore")}
-              leftSection={<IconSearch size={18} />}
-              active={location.pathname === "/explore"}
-              onClick={onClose}
-            />
             <NavLink
               component={Link}
               to="/messages"
@@ -204,6 +222,12 @@ export function MobileDrawer({
             <Button component={Link} to="/sign-up" onClick={onClose}>
               {t("header.signUp")}
             </Button>
+
+            <Divider my="sm" />
+
+            {shopLinks}
+
+
           </>
         )}
       </Stack>

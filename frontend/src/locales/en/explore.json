@@ -1,7 +1,8 @@
 {
   "title": "Explore",
   "departments": {
-    "all": "All"
+    "all": "All",
+    "viewAll": "Shop all {{department}}"
   },
   "search": {
     "placeholder": "Search listings...",

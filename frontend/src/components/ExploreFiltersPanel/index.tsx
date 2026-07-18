@@ -26,6 +26,7 @@ import {
   departmentToGender,
   type Department,
 } from "@/constants/departments";
+import { categoryLabel, subcategoryLabel } from "@/constants/postTypes";
 import {
   useCategoryTree,
   categoriesForGender,
@@ -217,12 +218,12 @@ function ExploreFiltersPanelComponent({
               onClick={() => setDrilled(null)}
             >
               <IconChevronLeft size={15} />
-              <span>{taxonomy?.categoryLabels[activeDrill] ?? activeDrill}</span>
+              <span>{categoryLabel(tListings, taxonomy, activeDrill)}</span>
             </button>
             <Checkbox
               size="xs"
               label={tCommon("filtersSidebar.allOf", {
-                category: taxonomy?.categoryLabels[activeDrill] ?? activeDrill,
+                category: categoryLabel(tListings, taxonomy, activeDrill),
               })}
               checked={filters.categories.includes(activeDrill)}
               onChange={() => handleCategoryToggle(activeDrill)}
@@ -232,7 +233,7 @@ function ExploreFiltersPanelComponent({
             {subcatsFor(activeDrill).map((sub) => (
               <Checkbox
                 key={sub}
-                label={taxonomy?.subcategoryLabels[sub] ?? sub}
+                label={subcategoryLabel(tListings, taxonomy, sub)}
                 size="xs"
                 checked={filters.subcategories.includes(sub)}
                 onChange={() => handleSubcategoryToggle(sub)}
@@ -253,7 +254,7 @@ function ExploreFiltersPanelComponent({
                   onClick={() => setDrilled(category)}
                 >
                   <span className={styles.drillLabel}>
-                    {taxonomy?.categoryLabels[category] ?? category}
+                    {categoryLabel(tListings, taxonomy, category)}
                   </span>
                   {count > 0 && <span className={styles.catCount}>{count}</span>}
                   <IconChevronRight size={15} className={styles.drillChevron} />

@@ -28,6 +28,10 @@ import type {
 } from "@/api/types/post";
 import { SIZE_GROUP_CONFIG } from "@/api/types/post";
 import { DEPARTMENT_GENDERS, type Department } from "@/constants/departments";
+import {
+  categoryLabel as tCategoryLabel,
+  subcategoryLabel as tSubcategoryLabel,
+} from "@/constants/postTypes";
 import { useCategoryTree } from "@/hooks/useCategoryTree";
 import {
   type FiltersState,
@@ -48,6 +52,7 @@ export function PublicExplorePage() {
   const isAuthenticated = useIsAuthenticated();
   const { t } = useTranslation("explore");
   const { t: tCommon } = useTranslation("common");
+  const { t: tListings } = useTranslation("listings");
   const [drawerOpened, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const {
@@ -138,8 +143,8 @@ export function PublicExplorePage() {
     [navigate],
   );
   const categoryLabel = useCallback(
-    (c: PostCategory) => taxonomy?.categoryLabels[c] ?? c,
-    [taxonomy],
+    (c: PostCategory) => tCategoryLabel(tListings, taxonomy, c),
+    [taxonomy, tListings],
   );
 
   const sizeGroupMap = useMemo(
@@ -324,7 +329,7 @@ export function PublicExplorePage() {
                 {filters.subcategories.map((subcategory) => (
                   <FilterBadge
                     key={subcategory}
-                    label={taxonomy?.subcategoryLabels[subcategory] ?? subcategory}
+                    label={tSubcategoryLabel(tListings, taxonomy, subcategory)}
                     onRemove={() => handleSubcategoryToggle(subcategory)}
                   />
                 ))}

@@ -36,6 +36,7 @@ import {
   subcategoriesFor,
 } from "@/hooks/useCategoryTree";
 import { getGenderLabels } from "@/constants/postGenders";
+import { categoryLabel, subcategoryLabel } from "@/constants/postTypes";
 import type {
   CreatePostFormValues,
   MeasurementField,
@@ -125,16 +126,16 @@ export function useListingForm({
   const categoryOptions = useMemo<SelectOption[]>(() => {
     return categoriesForGender(taxonomy, gender).map((c) => ({
       value: c,
-      label: taxonomy?.categoryLabels[c] ?? c,
+      label: categoryLabel(t, taxonomy, c),
     }));
-  }, [taxonomy, gender]);
+  }, [taxonomy, gender, t]);
 
   const subcategoryOptions = useMemo<SelectOption[]>(() => {
     return subcategoriesFor(taxonomy, gender, category).map((s) => ({
       value: s,
-      label: taxonomy?.subcategoryLabels[s] ?? s,
+      label: subcategoryLabel(t, taxonomy, s),
     }));
-  }, [taxonomy, gender, category]);
+  }, [taxonomy, gender, category, t]);
 
   // Size + measurements derive from the subcategory's size group.
   const sizeGroup = useMemo(

@@ -1,14 +1,16 @@
 // Global department bar under the nav; sets the `department` search param.
 
+import { useState } from "react";
 import { Container } from "@mantine/core";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import {
-  DEPARTMENTS,
+  BAR_DEPARTMENTS,
   departmentToGender,
   type Department,
 } from "@/constants/departments";
-import { ShopByCategoryMenu } from "@/components/ShopByCategoryMenu";
+import { ShopByCategoryPanel } from "@/components/ShopByCategoryMenu";
+import { useCategoryTree, categoriesForGender } from "@/hooks/useCategoryTree";
 import styles from "./DepartmentBar.module.css";
 
 export function DepartmentBar() {
@@ -19,16 +21,24 @@ export function DepartmentBar() {
     select: (s) =>
       s.location.pathname === "/explore" ? s.location.search.department : null,
   });
+  // Department whose category panel is open, overlaying the page (click-driven).
+  const [open, setOpen] = useState<Department | null>(null);
+  const { data: taxonomy } = useCategoryTree();
+  // Only show the panel once the taxonomy has categories for the department —
+  // otherwise the bordered wrapper renders as an empty strip while loading.
+  const hasCategories =
+    !!open && categoriesForGender(taxonomy, departmentToGender(open)).length > 0;
 
   const items: { value: Department | undefined; label: string }[] = [
     { value: undefined, label: t("departments.all") },
-    ...DEPARTMENTS.map((value) => ({
+    ...BAR_DEPARTMENTS.map((value) => ({
       value,
       label: tListings(`genders.${value}`),
     })),
   ];
 
   const select = (value: Department | undefined) => {
+    setOpen(null);
     navigate({
       to: "/explore",
       search: (prev) => ({ ...prev, department: value || undefined }),
@@ -36,38 +46,43 @@ export function DepartmentBar() {
   };
 
   return (
-    <nav className={styles.bar}>
+    <nav className={styles.bar} onMouseLeave={() => setOpen(null)}>
       <Container size="md" className={styles.content}>
-        {items.map((item) => {
-          const button = (
-            <button
-              key={item.value ?? "all"}
-              type="button"
-              className={[
-                styles.item,
-                active === item.value && styles.itemActive,
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => select(item.value)}
-            >
-              {item.label}
-            </button>
-          );
-          // Men's/Women's get a Shop By Category mega-menu on hover.
-          return item.value ? (
-            <ShopByCategoryMenu
-              key={item.value}
-              gender={departmentToGender(item.value)}
-              department={item.value}
-            >
-              {button}
-            </ShopByCategoryMenu>
-          ) : (
-            button
-          );
-        })}
+        {items.map((item) => (
+          <button
+            key={item.value ?? "all"}
+            type="button"
+            className={[
+              styles.item,
+              active === item.value && styles.itemActive,
+              open === item.value && styles.itemOpen,
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            // "All" has no category tree — click navigates. Departments toggle the panel.
+            onClick={() =>
+              item.value
+                ? setOpen((cur) => (cur === item.value ? null : item.value!))
+                : select(undefined)
+            }
+          >
+            {item.label}
+          </button>
+        ))}
       </Container>
+      {open && hasCategories && (
+        <div className={styles.panel}>
+          <Container size="md">
+            <ShopByCategoryPanel
+              gender={departmentToGender(open)}
+              department={open}
+              label={tListings(`genders.${open}`)}
+              onSelect={() => setOpen(null)}
+              onViewAll={() => select(open)}
+            />
+          </Container>
+        </div>
+      )}
     </nav>
   );
 }
