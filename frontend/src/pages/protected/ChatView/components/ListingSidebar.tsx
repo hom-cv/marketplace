@@ -1,15 +1,25 @@
 /**
- * ListingSidebar - Rich listing summary mirroring the post view page
- * Shows image carousel, title, price, size, description, measurements, seller
+ * ListingSidebar - Listing preview beside a chat. Reuses the listing-detail
+ * pieces (PostDetails, SellerInfoCard, PostActions) so the two views share the
+ * same styling and never drift. Only the image and panel layout are local.
  */
 
-import { Link } from "@tanstack/react-router";
-import { IconChevronRight, IconExternalLink, IconPhoto, IconRosetteDiscountCheck } from "@tabler/icons-react";
+import { useState } from "react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconExternalLink,
+  IconPhoto,
+} from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { PostImageCarousel } from "@/components/PostImageCarousel";
-import { MeasurementsDisplay } from "@/components/MeasurementsDisplay";
+import {
+  PostActions,
+  PostDetails,
+  SellerInfoCard,
+} from "@/pages/public/PublicPostView/components";
+import { useAuthStore } from "@/stores/authStore";
 import type { Post } from "@/api/types/post";
-import { formatSize } from "@/api/types/post";
 import styles from "./ListingSidebar.module.css";
 
 interface ListingSidebarProps {
@@ -18,10 +28,13 @@ interface ListingSidebarProps {
 
 export function ListingSidebar({ post }: ListingSidebarProps) {
   const { t } = useTranslation("listings");
-  const { t: tCommon } = useTranslation("common");
+  const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.user);
+  const [index, setIndex] = useState(0);
 
-  const price = parseFloat(post.price);
-  const shippingCost = parseFloat(post.shipping_cost || "0");
+  const isBanned = !!(post.is_banned || post.is_user_banned);
+  const isOwner = currentUser?.id === post.user.id;
+  const canShowBuy = !!currentUser && !isOwner;
 
   const imageUrls =
     post.image_urls && post.image_urls.length > 0
@@ -29,101 +42,76 @@ export function ListingSidebar({ post }: ListingSidebarProps) {
       : post.image_url
         ? [post.image_url]
         : [];
+  const current = Math.min(index, imageUrls.length - 1);
+  const hasMultiple = imageUrls.length > 1;
+  const step = (delta: number) =>
+    setIndex((current + delta + imageUrls.length) % imageUrls.length);
+
+  const handleBuy = () =>
+    navigate({ to: "/checkout/$postId", params: { postId: String(post.id) } });
 
   return (
     <div className={styles.sidebar}>
       {/* Image */}
       <div className={styles.imageSection}>
-        {imageUrls.length > 0 ? (
-          <PostImageCarousel imageUrls={imageUrls} alt={post.title} />
-        ) : (
-          <div className={styles.imagePlaceholder}>
-            <IconPhoto size={40} />
-          </div>
-        )}
-      </div>
-
-      {/* Scrollable content */}
-      <div className={styles.content}>
-        {/* Sold badge */}
-        {post.is_sold && (
-          <span className={styles.soldBadge}>{tCommon("badges.sold")}</span>
-        )}
-
-        {/* Title */}
-        <h2 className={styles.title}>{post.title}</h2>
-
-        {/* Price */}
-        <div className={styles.priceSection}>
-          <span className={styles.price}>฿{price.toLocaleString()}</span>
-          {shippingCost > 0 ? (
-            <span className={styles.shipping}>
-              + ฿{shippingCost.toLocaleString()} {t("view.shipping")}
-            </span>
+        <div className={styles.imageFrame}>
+          {imageUrls.length > 0 ? (
+            <img
+              src={imageUrls[current]}
+              alt={post.title}
+              className={styles.image}
+            />
           ) : (
-            <span className={styles.freeShipping}>{t("view.freeShipping")}</span>
+            <div className={styles.imagePlaceholder}>
+              <IconPhoto size={40} />
+            </div>
+          )}
+
+          {hasMultiple && (
+            <>
+              <button
+                type="button"
+                className={`${styles.navButton} ${styles.navPrev}`}
+                onClick={() => step(-1)}
+                aria-label={t("images.previous", "Previous image")}
+              >
+                <IconChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                className={`${styles.navButton} ${styles.navNext}`}
+                onClick={() => step(1)}
+                aria-label={t("images.next", "Next image")}
+              >
+                <IconChevronRight size={18} />
+              </button>
+              <div className={styles.imageCount}>
+                {current + 1}/{imageUrls.length}
+              </div>
+            </>
           )}
         </div>
-
-        <hr className={styles.divider} />
-
-        {/* Size */}
-        {post.size && (
-          <div>
-            <div className={styles.sectionLabel}>{tCommon("postCard.size")}</div>
-            <span className={styles.sizeBadge}>
-              {formatSize(post.size, post.size_group)}
-            </span>
-          </div>
-        )}
-
-        {/* Description */}
-        <div>
-          <div className={styles.sectionLabel}>{t("view.description")}</div>
-          <p className={styles.description}>{post.description}</p>
-        </div>
-
-        {/* Measurements */}
-        {post.measurements && (
-          <MeasurementsDisplay measurements={post.measurements} />
-        )}
       </div>
 
-      {/* Pinned footer - always visible */}
+      {/* Scrollable content - shared listing-detail body */}
+      <div className={styles.content}>
+        <PostDetails post={post} isOwner={isOwner} onLikeAuthRequired={() => {}} />
+      </div>
+
+      {/* Pinned footer - shared seller card + buy action */}
       <div className={styles.footer}>
-        <hr className={styles.divider} />
+        <SellerInfoCard user={post.user} isOwner={isOwner} />
 
-        {/* Seller card */}
-        <Link
-          to="/profile/$username"
-          params={{ username: post.user.username }}
-          className={styles.sellerCard}
-        >
-          <div className={styles.sellerAvatar}>
-            {post.user.username.charAt(0).toUpperCase()}
-          </div>
-          <div className={styles.sellerDetails}>
-            <div className={styles.sellerNameRow}>
-              <span className={styles.sellerName}>@{post.user.username}</span>
-              {post.user.is_seller && (
-                <IconRosetteDiscountCheck size={14} className={styles.sellerBadgeIcon} />
-              )}
-            </div>
-            {post.user.show_full_name && post.user.first_name && (
-              <span className={styles.sellerFullName}>
-                {[post.user.first_name, post.user.last_name]
-                  .filter(Boolean)
-                  .join(" ")}
-              </span>
-            )}
-            {post.user.bio && (
-              <p className={styles.sellerBio}>{post.user.bio}</p>
-            )}
-          </div>
-          <IconChevronRight size={16} className={styles.sellerArrow} />
-        </Link>
+        {canShowBuy && (
+          <PostActions
+            post={post}
+            postId={post.id}
+            isOwner={false}
+            isBanned={isBanned}
+            onBuyClick={handleBuy}
+          />
+        )}
 
-        {/* View listing link */}
         <Link
           to="/explore/$postId"
           params={{ postId: String(post.id) }}

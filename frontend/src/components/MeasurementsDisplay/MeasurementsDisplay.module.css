@@ -18,7 +18,7 @@
 }
 
 .headerLabel {
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* 12px */
   font-weight: 500;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -49,14 +49,14 @@
 
 .labelCell {
   padding: 8px 12px;
-  font-size: 0.85rem;
+  font-size: 0.875rem; /* 14px */
   color: var(--color-text-secondary);
   text-align: left;
 }
 
 .valueCell {
   padding: 8px 12px;
-  font-size: 0.85rem;
+  font-size: 0.875rem; /* 14px */
   font-weight: 600;
   color: var(--color-text);
   text-align: right;

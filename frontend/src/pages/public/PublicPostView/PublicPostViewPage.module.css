@@ -31,15 +31,50 @@
   top: 24px;
 }
 
-/* Details card */
+/* Details card - 20px rhythm between sections */
 .detailsCard {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  padding: 28px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* Header cluster: badges, brand, title, price grouped tighter than sections */
+.headerGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Body fields (size, description, measurements, tags): compact, between the
+   header's 8px cluster and the 20px divider breaks */
+.detailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Size + Category share a row so a short size badge doesn't leave dead space */
+.metaRow {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px 24px;
+  align-items: start;
+}
+
+.metaField {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.metaBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* Badges */
@@ -56,7 +91,7 @@
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* 12px */
   font-weight: 500;
   color: var(--color-text-secondary);
 }
@@ -75,7 +110,7 @@
 
 /* Title */
 .title {
-  font-size: 2rem;
+  font-size: 1.25rem; /* 20px */
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
@@ -97,18 +132,18 @@
 }
 
 .price {
-  font-size: 1.75rem;
+  font-size: 1.25rem; /* 20px */
   font-weight: 700;
   color: var(--color-text);
 }
 
 .shippingCost {
-  font-size: 0.875rem;
+  font-size: 0.875rem; /* 14px */
   color: var(--color-text-secondary);
 }
 
 .freeShipping {
-  font-size: 0.875rem;
+  font-size: 0.875rem; /* 14px */
   color: var(--color-success);
 }
 
@@ -122,7 +157,7 @@
 
 /* Section labels */
 .sectionLabel {
-  font-size: 0.8rem;
+  font-size: 0.75rem; /* 12px */
   font-weight: 500;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -138,14 +173,13 @@
   background: var(--color-bg-muted);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.875rem; /* 14px */
   color: var(--color-text);
 }
 
 /* Description */
 .description {
-  font-size: 0.95rem;
+  font-size: 0.875rem; /* 14px */
   color: var(--color-text);
   line-height: 1.6;
   white-space: pre-wrap;
@@ -204,7 +238,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
+  font-size: 1rem; /* 16px */
   font-weight: 600;
   flex-shrink: 0;
 }
@@ -215,7 +249,7 @@
 }
 
 .sellerUsername {
-  font-size: 0.95rem;
+  font-size: 1rem; /* 16px */
   font-weight: 600;
   color: var(--color-text);
 }
@@ -230,7 +264,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   padding: 16px 24px;
   background: var(--color-primary);
@@ -298,7 +332,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   padding: 14px 20px;
   background: var(--color-primary);
@@ -387,14 +421,6 @@
 
   .detailsCard {
     padding: 20px;
-  }
-
-  .title {
-    font-size: 1.5rem;
-  }
-
-  .price {
-    font-size: 1.5rem;
   }
 
   .buyButtonDesktop {
