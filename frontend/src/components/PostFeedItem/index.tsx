@@ -32,6 +32,8 @@ interface PostFeedItemProps {
 }
 
 const DOUBLE_TAP_MS = 300;
+const SWIPE_THRESHOLD = 50; // px of horizontal travel to change slide
+const TAP_SLOP = 10; // movement under this still counts as a tap, not a swipe
 
 export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
@@ -54,11 +56,60 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
 
   const showReportMenu = isAuthenticated && !isOwner;
 
+  const images =
+    post.image_urls && post.image_urls.length > 0
+      ? post.image_urls
+      : post.image_url
+        ? [post.image_url]
+        : [];
+  const hasMultiple = images.length > 1;
+
+  // Swipeable carousel state.
+  const [index, setIndex] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0); // px, live finger travel
+  const [dragging, setDragging] = useState(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
+  const dxRef = useRef(0);
+  const movedRef = useRef(false);
+  const suppressClickRef = useRef(false);
+
   // Image tap: distinguish single (open post) from double (like). Wait one
   // double-tap window before navigating so a second tap can cancel it.
   const lastTapRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(tapTimerRef.current), []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    suppressClickRef.current = false; // clear any stale flag from a prior gesture
+    if (!hasMultiple) return;
+    startXRef.current = e.touches[0].clientX;
+    dxRef.current = 0;
+    movedRef.current = false;
+    setDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!dragging) return;
+    let dx = e.touches[0].clientX - startXRef.current;
+    if (Math.abs(dx) > TAP_SLOP) movedRef.current = true;
+    // Resist dragging past the first/last slide.
+    if ((index === 0 && dx > 0) || (index === images.length - 1 && dx < 0)) {
+      dx *= 0.3;
+    }
+    dxRef.current = dx;
+    setDragOffset(dx);
+  };
+
+  const handleTouchEnd = () => {
+    if (!dragging) return;
+    const dx = dxRef.current;
+    if (dx <= -SWIPE_THRESHOLD && index < images.length - 1) setIndex(index + 1);
+    else if (dx >= SWIPE_THRESHOLD && index > 0) setIndex(index - 1);
+    if (movedRef.current) suppressClickRef.current = true; // don't tap after a swipe
+    setDragging(false);
+    setDragOffset(0);
+  };
 
   const openPost = () => {
     clearTimeout(tapTimerRef.current);
@@ -71,6 +122,10 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   };
 
   const handleImageTap = () => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
     const now = Date.now();
     if (now - lastTapRef.current < DOUBLE_TAP_MS) {
       clearTimeout(tapTimerRef.current);
@@ -135,15 +190,31 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         )}
       </Box>
 
-      {/* Full-bleed image with double-tap-to-like */}
-      <Box className={styles.imageWrap} onClick={handleImageTap}>
-        {post.image_url ? (
-          <img
-            src={post.image_url}
-            alt={post.title}
-            loading="lazy"
-            className={styles.image}
-          />
+      {/* Full-bleed swipeable image carousel with double-tap-to-like */}
+      <Box
+        className={styles.imageWrap}
+        onClick={handleImageTap}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {images.length > 0 ? (
+          <div
+            ref={trackRef}
+            className={`${styles.track} ${dragging ? styles.dragging : ""}`}
+            style={{ transform: `translateX(calc(${-index * 100}% + ${dragOffset}px))` }}
+          >
+            {images.map((url, i) => (
+              <img
+                key={i}
+                src={url}
+                alt={`${post.title} ${i + 1}`}
+                loading="lazy"
+                draggable={false}
+                className={styles.image}
+              />
+            ))}
+          </div>
         ) : (
           <ImagePlaceholder iconSize={64} />
         )}
@@ -156,6 +227,16 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
           <Badge variant="filled" color="gray" className={styles.ownerOverlay}>
             {t("badges.yourListing")}
           </Badge>
+        )}
+        {hasMultiple && (
+          <div className={styles.dots}>
+            {images.map((_, i) => (
+              <span
+                key={i}
+                className={`${styles.dot} ${i === index ? styles.dotActive : ""}`}
+              />
+            ))}
+          </div>
         )}
         {heartPopKey > 0 && (
           <IconHeartFilled

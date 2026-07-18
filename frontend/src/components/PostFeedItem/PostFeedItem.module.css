@@ -49,13 +49,51 @@
   aspect-ratio: 4 / 5;
   background: var(--color-bg-muted);
   cursor: pointer;
+  overflow: hidden;
+  touch-action: pan-y; /* let the page scroll vertically; JS owns horizontal swipe */
+}
+
+/* Sliding track of images */
+.track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.3s ease-out;
+}
+
+.track.dragging {
+  transition: none;
 }
 
 .image {
+  flex: 0 0 100%;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+/* Carousel dots, overlaid at the bottom of the image */
+.dots {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+.dotActive {
+  background: #fff;
 }
 
 .soldOverlay {
