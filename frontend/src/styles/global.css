@@ -60,6 +60,12 @@
 
   /* Radius */
   --radius-sm: 4px;
+
+  /* Font size scale */
+  --text-lg: 20px; /* big headers, important things */
+  --text-md: 16px; /* less important headers */
+  --text-base: 14px; /* main body text */
+  --text-sm: 12px; /* small, less important things */
 }
 
 html, body {

@@ -26,8 +26,15 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: 20px;
-  max-height: calc(100vh - 100px);
+  /* Fit even at scroll-top, where the card sits below the header (60) +
+     department bar (44) + page padding (32) = 136px, plus a 16px bottom gap. */
+  max-height: calc(100vh - 152px);
   overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.sidebarCard::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .sidebarHeader {
@@ -40,7 +47,7 @@
 }
 
 .sidebarTitle {
-  font-size: 0.9rem;
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--color-text);
 }
@@ -90,7 +97,7 @@
   padding: 6px 10px;
   background: none;
   border: none;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   cursor: pointer;
   display: flex;
@@ -104,7 +111,7 @@
 
 /* Results count */
 .resultsCount {
-  font-size: 0.85rem;
+  font-size: var(--text-base);
   color: var(--color-text-muted);
   margin: 0 0 20px;
 }
@@ -132,7 +139,7 @@
 
 .endMessage {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
   padding: 24px 0;
 }
@@ -167,7 +174,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   font-weight: 500;
   cursor: pointer;
   transition: border-color 0.15s ease;
@@ -203,7 +210,7 @@
 .mobileBottomButton {
   padding: 10px 24px;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: var(--text-base);
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -265,10 +272,6 @@
 @media (max-width: 640px) {
   .page {
     padding: 20px 16px 32px;
-  }
-
-  .title {
-    font-size: 1.5rem;
   }
 
   .grid {

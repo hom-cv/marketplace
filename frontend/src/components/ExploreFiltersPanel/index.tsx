@@ -221,7 +221,6 @@ function ExploreFiltersPanelComponent({
               <span>{categoryLabel(tListings, taxonomy, activeDrill)}</span>
             </button>
             <Checkbox
-              size="xs"
               label={tCommon("filtersSidebar.allOf", {
                 category: categoryLabel(tListings, taxonomy, activeDrill),
               })}
@@ -234,7 +233,6 @@ function ExploreFiltersPanelComponent({
               <Checkbox
                 key={sub}
                 label={subcategoryLabel(tListings, taxonomy, sub)}
-                size="xs"
                 checked={filters.subcategories.includes(sub)}
                 onChange={() => handleSubcategoryToggle(sub)}
                 radius="xs"
@@ -336,7 +334,6 @@ function ExploreFiltersPanelComponent({
                             ? groupConfig.formatLabel(size)
                             : size
                         }
-                        size="xs"
                         checked={filters.sizes.includes(sizeKey)}
                         onChange={() => handleSizeToggle(groupConfig.group, size)}
                         radius="xs"
