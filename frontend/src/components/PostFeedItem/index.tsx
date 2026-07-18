@@ -23,7 +23,6 @@ import { useLike } from "@/hooks/useLike";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { ReportModal } from "@/components/ReportModal";
 import { ImagePlaceholder } from "@/components/ImagePlaceholder";
-import likeStyles from "@/components/LikeButton/LikeButton.module.css";
 import styles from "./PostFeedItem.module.css";
 
 interface PostFeedItemProps {
@@ -50,23 +49,26 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
     post.is_liked,
     post.like_count,
   );
-  const [showHeartPop, setShowHeartPop] = useState(false);
+
+  const [heartPopKey, setHeartPopKey] = useState(0);
 
   const showReportMenu = isAuthenticated && !isOwner;
-
-  const openPost = () =>
-    navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
-
-  const openReport = (type: ReportType) => {
-    setReportType(type);
-    setReportModalOpened(true);
-  };
 
   // Image tap: distinguish single (open post) from double (like). Wait one
   // double-tap window before navigating so a second tap can cancel it.
   const lastTapRef = useRef(0);
   const tapTimerRef = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => () => clearTimeout(tapTimerRef.current), []);
+
+  const openPost = () => {
+    clearTimeout(tapTimerRef.current);
+    navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
+  };
+
+  const openReport = (type: ReportType) => {
+    setReportType(type);
+    setReportModalOpened(true);
+  };
 
   const handleImageTap = () => {
     const now = Date.now();
@@ -78,7 +80,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         return;
       }
       like();
-      setShowHeartPop(true);
+      setHeartPopKey((prev) => prev + 1);
       return;
     }
     lastTapRef.current = now;
@@ -159,11 +161,11 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
             {t("badges.yourListing")}
           </Badge>
         )}
-        {showHeartPop && (
+        {heartPopKey > 0 && (
           <IconHeartFilled
+            key={heartPopKey}
             size={96}
             className={styles.heartPop}
-            onAnimationEnd={() => setShowHeartPop(false)}
           />
         )}
       </Box>
@@ -189,13 +191,13 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         </Stack>
         <button
           type="button"
-          className={[likeStyles.button, styles.likeLarge, isLiked && likeStyles.liked]
+          className={[styles.likeButton, isLiked && styles.liked]
             .filter(Boolean)
             .join(" ")}
           onClick={handleLikeClick}
         >
           {isLiked ? <IconHeartFilled size={26} /> : <IconHeart size={26} />}
-          <span className={likeStyles.count}>{likeCount}</span>
+          <span className={styles.likeCount}>{likeCount}</span>
         </button>
       </Box>
 

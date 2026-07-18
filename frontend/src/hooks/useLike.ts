@@ -16,6 +16,17 @@ export function useLike(
   const [isLiked, setIsLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialCount);
 
+  const [synced, setSynced] = useState({ postId, initialLiked, initialCount });
+  if (
+    synced.postId !== postId ||
+    synced.initialLiked !== initialLiked ||
+    synced.initialCount !== initialCount
+  ) {
+    setSynced({ postId, initialLiked, initialCount });
+    setIsLiked(initialLiked);
+    setLikeCount(initialCount);
+  }
+
   const invalidate = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all }),

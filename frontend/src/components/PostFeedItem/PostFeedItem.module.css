@@ -116,7 +116,37 @@
   cursor: pointer;
 }
 
-.likeLarge {
+.likeButton {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.likeButton:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text-secondary);
+}
+
+.likeButton.liked {
+  color: var(--color-error);
+  border-color: var(--color-error-light);
+}
+
+.likeButton.liked:hover {
+  border-color: var(--color-error);
+}
+
+.likeCount {
+  font-weight: 500;
+  font-size: var(--text-base);
 }
