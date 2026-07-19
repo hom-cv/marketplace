@@ -1,10 +1,11 @@
 /**
  * PostFeedItem component - Instagram-style feed post for mobile.
- * Username header (with report menu), full-bleed portrait image with
- * double-tap-to-like, then a footer: title + price on the left, like on the right.
+ * Username header (with report menu), a swipeable image carousel with
+ * double-tap-to-like, then a footer: title + price on the left, like + view
+ * on the right.
  */
 
-import { useRef, useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Text, Badge, Stack, Avatar, Menu } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useNavigate } from "@tanstack/react-router";
@@ -15,14 +16,16 @@ import {
   IconDotsVertical,
   IconFlag,
   IconUserExclamation,
+  IconChevronRight,
 } from "@tabler/icons-react";
 import type { Post } from "@/api/types/post";
 import type { ReportType } from "@/api/types/admin";
 import { useAuthStore, useIsAuthenticated } from "@/stores/authStore";
 import { useLike } from "@/hooks/useLike";
+import { IconButton } from "@/components/IconButton";
+import { FeedImageCarousel } from "@/components/FeedImageCarousel";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { ReportModal } from "@/components/ReportModal";
-import { ImagePlaceholder } from "@/components/ImagePlaceholder";
 import styles from "./PostFeedItem.module.css";
 
 interface PostFeedItemProps {
@@ -30,8 +33,6 @@ interface PostFeedItemProps {
   /** Base path for navigation (default: "/explore") */
   linkPrefix?: string;
 }
-
-const DOUBLE_TAP_MS = 300;
 
 export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProps) {
   const navigate = useNavigate();
@@ -50,41 +51,24 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
     post.like_count,
   );
 
-  const [heartPopKey, setHeartPopKey] = useState(0);
-
   const showReportMenu = isAuthenticated && !isOwner;
 
-  // Image tap: distinguish single (open post) from double (like). Wait one
-  // double-tap window before navigating so a second tap can cancel it.
-  const lastTapRef = useRef(0);
-  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(tapTimerRef.current), []);
+  const images =
+    post.image_urls && post.image_urls.length > 0
+      ? post.image_urls
+      : post.image_url
+        ? [post.image_url]
+        : [];
 
-  const openPost = () => {
-    clearTimeout(tapTimerRef.current);
+  const openPost = () =>
     navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
-  };
+
+  const openProfile = () =>
+    navigate({ to: "/profile/$username", params: { username: post.user.username } });
 
   const openReport = (type: ReportType) => {
     setReportType(type);
     setReportModalOpened(true);
-  };
-
-  const handleImageTap = () => {
-    const now = Date.now();
-    if (now - lastTapRef.current < DOUBLE_TAP_MS) {
-      clearTimeout(tapTimerRef.current);
-      lastTapRef.current = 0;
-      if (!isAuthenticated) {
-        openLoginModal();
-        return;
-      }
-      like();
-      setHeartPopKey((prev) => prev + 1);
-      return;
-    }
-    lastTapRef.current = now;
-    tapTimerRef.current = setTimeout(openPost, DOUBLE_TAP_MS);
   };
 
   const handleLikeClick = (e: React.MouseEvent) => {
@@ -100,20 +84,20 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
     <Box className={styles.container}>
       {/* Header: avatar + username, report menu on the right */}
       <Box className={styles.header}>
-        <Box className={styles.headerUser} onClick={openPost}>
+        <Box className={styles.headerUser} onClick={openProfile}>
           <Avatar color="blue" radius="xl" size="sm">
             {post.user.username.charAt(0).toUpperCase()}
           </Avatar>
           <Text fw={600} size="sm" className={styles.username}>
-            @{post.user.username}
+            {post.user.username}
           </Text>
         </Box>
         {showReportMenu && (
           <Menu shadow="md" width={200} position="bottom-end">
             <Menu.Target>
-              <button type="button" className={styles.menuButton}>
+              <IconButton aria-label={t("postCard.moreOptions")}>
                 <IconDotsVertical size={20} />
-              </button>
+              </IconButton>
             </Menu.Target>
             <Menu.Dropdown>
               <Menu.Item
@@ -135,18 +119,14 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         )}
       </Box>
 
-      {/* Full-bleed image with double-tap-to-like */}
-      <Box className={styles.imageWrap} onClick={handleImageTap}>
-        {post.image_url ? (
-          <img
-            src={post.image_url}
-            alt={post.title}
-            loading="lazy"
-            className={styles.image}
-          />
-        ) : (
-          <ImagePlaceholder iconSize={64} />
-        )}
+      {/* Swipeable image carousel with double-tap-to-like */}
+      <FeedImageCarousel
+        images={images}
+        alt={post.title}
+        isAuthenticated={isAuthenticated}
+        onLike={like}
+        onAuthRequired={openLoginModal}
+      >
         {post.is_sold && (
           <Badge color="red" variant="filled" className={styles.soldOverlay}>
             {t("badges.sold")}
@@ -157,24 +137,17 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
             {t("badges.yourListing")}
           </Badge>
         )}
-        {heartPopKey > 0 && (
-          <IconHeartFilled
-            key={heartPopKey}
-            size={96}
-            className={styles.heartPop}
-          />
-        )}
-      </Box>
+      </FeedImageCarousel>
 
-      {/* Footer: title + price on the left, large like on the right */}
-      <Box className={styles.footer}>
-        <Stack gap={2} className={styles.footerInfo} onClick={openPost}>
+      {/* Footer: tapping anywhere opens the post; the like button opts out */}
+      <Box className={styles.footer} onClick={openPost}>
+        <Stack gap={2} className={styles.footerInfo}>
           {post.brand && (
             <Text size="xs" fw={600} c="dimmed" tt="uppercase" lineClamp={1}>
               {post.brand.name}
             </Text>
           )}
-          <Text fw={600} size="sm" lineClamp={1}>
+          <Text size="sm" lineClamp={1}>
             {post.title}
           </Text>
           <Text fw={700} size="md">
@@ -195,6 +168,11 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
           {isLiked ? <IconHeartFilled size={26} /> : <IconHeart size={26} />}
           <span className={styles.likeCount}>{likeCount}</span>
         </button>
+        <IconChevronRight
+          size={22}
+          className={styles.viewIndicator}
+          aria-hidden
+        />
       </Box>
 
       <LoginPromptModal

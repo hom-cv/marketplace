@@ -6,13 +6,14 @@
 /* Header: avatar + username on the left, report menu on the right */
 .header {
   display: flex;
+  flex: 1;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
 }
 
 .headerUser {
-  flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -27,37 +28,7 @@
   white-space: nowrap;
 }
 
-.menuButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.menuButton:hover {
-  color: var(--color-text);
-}
-
-/* Full-bleed image, portrait 4:5 like an IG feed photo */
-.imageWrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  background: var(--color-bg-muted);
-  cursor: pointer;
-}
-
-.image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
+/* Badges + heart-pop overlay the carousel frame (which is position: relative) */
 .soldOverlay {
   position: absolute;
   top: 10px;
@@ -70,50 +41,25 @@
   right: 10px;
 }
 
-/* Instagram double-tap heart pop, centered over the image */
-.heartPop {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  color: #fff;
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(0);
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
-  animation: heartPop 0.8s ease-out forwards;
-}
-
-@keyframes heartPop {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-  25% {
-    transform: translate(-50%, -50%) scale(1.1);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0;
-  }
-}
-
-/* Footer: title + price on the left, large like button on the right */
+/* Footer: title + price on the left, like + view indicator on the right */
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px 14px;
+  cursor: pointer;
+}
+
+/* Chevron hinting the whole footer opens the post */
+.viewIndicator {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
 }
 
 .footerInfo {
   min-width: 0;
   flex: 1;
-  cursor: pointer;
 }
 
 .likeButton {

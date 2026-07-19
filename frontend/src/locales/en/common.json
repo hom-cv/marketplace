@@ -51,7 +51,9 @@
   "postCard": {
     "reportListing": "Report Listing",
     "reportUser": "Report User",
-    "size": "Size"
+    "size": "Size",
+    "viewPost": "View post",
+    "moreOptions": "More options"
   },
   "loginPrompt": {
     "title": "Login Required",

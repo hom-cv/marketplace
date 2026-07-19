@@ -1,0 +1,35 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.button:hover {
+  color: var(--color-text);
+}
+
+/* Borderless trigger (e.g. a ⋮ menu target) */
+.subtle {
+  padding: 6px;
+}
+
+/* Bordered action (e.g. a view/next chevron) */
+.outline {
+  padding: 8px;
+  border-color: var(--color-border);
+  background: var(--color-bg-card);
+}
+
+.outline:hover {
+  border-color: var(--color-border-hover);
+}

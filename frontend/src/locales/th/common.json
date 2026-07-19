@@ -51,7 +51,9 @@
   "postCard": {
     "reportListing": "รายงานรายการ",
     "reportUser": "รายงานผู้ใช้",
-    "size": "ไซส์"
+    "size": "ไซส์",
+    "viewPost": "ดูโพสต์",
+    "moreOptions": "ตัวเลือกเพิ่มเติม"
   },
   "loginPrompt": {
     "title": "ต้องเข้าสู่ระบบ",
