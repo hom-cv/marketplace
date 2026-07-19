@@ -21,6 +21,7 @@ import { usePost } from "@/hooks/usePosts";
 import { useAuthStore } from "@/stores/authStore";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
+import { IconButton } from "@/components/IconButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
 import { PostImageCarousel } from "@/components/PostImageCarousel";
 import { ReportModal } from "@/components/ReportModal";
@@ -154,9 +155,12 @@ export function PublicPostViewPage() {
               {showReportMenu && (
                 <Menu shadow="md" width={200} position="bottom-end">
                   <Menu.Target>
-                    <button className={styles.menuButton}>
+                    <IconButton
+                      variant="outline"
+                      aria-label={tCommon("postCard.moreOptions")}
+                    >
                       <IconDotsVertical size={20} />
-                    </button>
+                    </IconButton>
                   </Menu.Target>
                   <Menu.Dropdown>
                     <Menu.Item

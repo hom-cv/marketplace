@@ -17,7 +17,6 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  cursor: pointer;
 }
 
 .username {
@@ -27,75 +26,7 @@
   white-space: nowrap;
 }
 
-.menuButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  background: none;
-  border: none;
-  color: var(--color-text-muted);
-  cursor: pointer;
-}
-
-.menuButton:hover {
-  color: var(--color-text);
-}
-
-/* Full-bleed image, portrait 4:5 like an IG feed photo */
-.imageWrap {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 4 / 5;
-  background: var(--color-bg-muted);
-  cursor: pointer;
-  overflow: hidden;
-  touch-action: pan-y; /* let the page scroll vertically; JS owns horizontal swipe */
-}
-
-/* Sliding track of images */
-.track {
-  display: flex;
-  height: 100%;
-  transition: transform 0.3s ease-out;
-}
-
-.track.dragging {
-  transition: none;
-}
-
-.image {
-  flex: 0 0 100%;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Carousel dots, overlaid at the bottom of the image */
-.dots {
-  position: absolute;
-  bottom: 10px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  pointer-events: none;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
-}
-
-.dotActive {
-  background: #fff;
-}
-
+/* Badges + heart-pop overlay the carousel frame (which is position: relative) */
 .soldOverlay {
   position: absolute;
   top: 10px;
@@ -106,37 +37,6 @@
   position: absolute;
   top: 10px;
   right: 10px;
-}
-
-/* Instagram double-tap heart pop, centered over the image */
-.heartPop {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  color: #fff;
-  pointer-events: none;
-  transform: translate(-50%, -50%) scale(0);
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
-  animation: heartPop 0.8s ease-out forwards;
-}
-
-@keyframes heartPop {
-  0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0;
-  }
-  25% {
-    transform: translate(-50%, -50%) scale(1.1);
-    opacity: 1;
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0;
-  }
 }
 
 /* Footer: title + price on the left, large like button on the right */
@@ -151,7 +51,6 @@
 .footerInfo {
   min-width: 0;
   flex: 1;
-  cursor: pointer;
 }
 
 .likeButton {
