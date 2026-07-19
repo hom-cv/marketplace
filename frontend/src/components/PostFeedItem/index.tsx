@@ -70,6 +70,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   const [dragging, setDragging] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
+  const startYRef = useRef(0);
   const dxRef = useRef(0);
   const movedRef = useRef(false);
   const suppressClickRef = useRef(false);
@@ -84,6 +85,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
     suppressClickRef.current = false; // clear any stale flag from a prior gesture
     if (!hasMultiple) return;
     startXRef.current = e.touches[0].clientX;
+    startYRef.current = e.touches[0].clientY;
     dxRef.current = 0;
     movedRef.current = false;
     setDragging(true);
@@ -92,8 +94,15 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!dragging) return;
     let dx = e.touches[0].clientX - startXRef.current;
+    const dy = e.touches[0].clientY - startYRef.current;
+
+    if (!movedRef.current && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > TAP_SLOP) {
+      setDragging(false);
+      setDragOffset(0);
+      return;
+    }
     if (Math.abs(dx) > TAP_SLOP) movedRef.current = true;
-    // Resist dragging past the first/last slide.
+
     if ((index === 0 && dx > 0) || (index === images.length - 1 && dx < 0)) {
       dx *= 0.3;
     }
@@ -197,6 +206,7 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         {images.length > 0 ? (
           <div
