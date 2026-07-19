@@ -43,7 +43,6 @@ export function FeedImageCarousel({
   const [heartPopKey, setHeartPopKey] = useState(0);
 
   const wrapRef = useRef<HTMLDivElement>(null);
-  const indexRef = useRef(0);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
   const dxRef = useRef(0);
@@ -55,18 +54,17 @@ export function FeedImageCarousel({
   const hasMultiple = images.length > 1;
   const lastIndex = images.length - 1;
 
-  useEffect(() => {
-    indexRef.current = index;
-  }, [index]);
-
+  // `index` only changes at touchEnd (never mid-swipe), so re-registering the
+  // listener when it changes happens between gestures — no jank.
   useEffect(() => {
     const el = wrapRef.current;
     if (!el || !hasMultiple) return;
 
     const onMove = (e: TouchEvent) => {
-      if (!draggingRef.current) return;
-      let dx = e.touches[0].clientX - startXRef.current;
-      const dy = e.touches[0].clientY - startYRef.current;
+      const touch = e.touches[0];
+      if (!draggingRef.current || !touch) return;
+      let dx = touch.clientX - startXRef.current;
+      const dy = touch.clientY - startYRef.current;
 
       if (!movedRef.current) {
         // Direction not decided yet: a mostly-vertical move releases the gesture
@@ -83,21 +81,21 @@ export function FeedImageCarousel({
 
       // Committed horizontal — lock out vertical scroll for the whole gesture.
       e.preventDefault();
-      const i = indexRef.current;
-      if ((i === 0 && dx > 0) || (i === lastIndex && dx < 0)) dx *= 0.3;
+      if ((index === 0 && dx > 0) || (index === lastIndex && dx < 0)) dx *= 0.3;
       dxRef.current = dx;
       setDragOffset(dx);
     };
 
     el.addEventListener("touchmove", onMove, { passive: false });
     return () => el.removeEventListener("touchmove", onMove);
-  }, [hasMultiple, lastIndex]);
+  }, [hasMultiple, index, lastIndex]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     suppressClickRef.current = false; // clear any stale flag from a prior gesture
-    if (!hasMultiple) return;
-    startXRef.current = e.touches[0].clientX;
-    startYRef.current = e.touches[0].clientY;
+    const touch = e.touches[0];
+    if (!hasMultiple || !touch) return;
+    startXRef.current = touch.clientX;
+    startYRef.current = touch.clientY;
     dxRef.current = 0;
     movedRef.current = false;
     draggingRef.current = true;
