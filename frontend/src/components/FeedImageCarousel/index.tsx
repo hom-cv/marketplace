@@ -6,7 +6,7 @@
  * (badges) are drawn on top of the frame.
  */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Box } from "@mantine/core";
 import { IconHeartFilled } from "@tabler/icons-react";
@@ -40,15 +40,79 @@ export function FeedImageCarousel({
   const [index, setIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0); // px, live finger travel
   const [dragging, setDragging] = useState(false);
+  const [heartPopKey, setHeartPopKey] = useState(0);
+
+  const wrapRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const startYRef = useRef(0);
   const dxRef = useRef(0);
-  const movedRef = useRef(false);
+  const movedRef = useRef(false); // committed to a horizontal swipe this gesture
+  const draggingRef = useRef(false);
   const suppressClickRef = useRef(false);
   const lastTapRef = useRef(0);
-  const [heartPopKey, setHeartPopKey] = useState(0);
 
   const hasMultiple = images.length > 1;
+  const lastIndex = images.length - 1;
+
+  // `index` only changes at touchEnd (never mid-swipe), so re-registering the
+  // listener when it changes happens between gestures — no jank.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el || !hasMultiple) return;
+
+    const onMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!draggingRef.current || !touch) return;
+      let dx = touch.clientX - startXRef.current;
+      const dy = touch.clientY - startYRef.current;
+
+      if (!movedRef.current) {
+        // Direction not decided yet: a mostly-vertical move releases the gesture
+        // so the page scrolls naturally.
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > TAP_SLOP) {
+          draggingRef.current = false;
+          setDragging(false);
+          setDragOffset(0);
+          return;
+        }
+        if (Math.abs(dx) > TAP_SLOP) movedRef.current = true;
+      }
+      if (!movedRef.current) return;
+
+      // Committed horizontal — lock out vertical scroll for the whole gesture.
+      e.preventDefault();
+      if ((index === 0 && dx > 0) || (index === lastIndex && dx < 0)) dx *= 0.3;
+      dxRef.current = dx;
+      setDragOffset(dx);
+    };
+
+    el.addEventListener("touchmove", onMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onMove);
+  }, [hasMultiple, index, lastIndex]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    suppressClickRef.current = false; // clear any stale flag from a prior gesture
+    const touch = e.touches[0];
+    if (!hasMultiple || !touch) return;
+    startXRef.current = touch.clientX;
+    startYRef.current = touch.clientY;
+    dxRef.current = 0;
+    movedRef.current = false;
+    draggingRef.current = true;
+    setDragging(true);
+  };
+
+  const handleTouchEnd = () => {
+    if (draggingRef.current && movedRef.current) {
+      const dx = dxRef.current;
+      if (dx <= -SWIPE_THRESHOLD && index < lastIndex) setIndex(index + 1);
+      else if (dx >= SWIPE_THRESHOLD && index > 0) setIndex(index - 1);
+      suppressClickRef.current = true; // don't tap after a swipe
+    }
+    draggingRef.current = false;
+    setDragging(false);
+    setDragOffset(0);
+  };
 
   const handleDoubleTap = () => {
     if (!isAuthenticated) {
@@ -57,47 +121,6 @@ export function FeedImageCarousel({
     }
     onLike();
     setHeartPopKey((prev) => prev + 1); // remount the heart-pop icon to replay it
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    suppressClickRef.current = false; // clear any stale flag from a prior gesture
-    if (!hasMultiple) return;
-    startXRef.current = e.touches[0].clientX;
-    startYRef.current = e.touches[0].clientY;
-    dxRef.current = 0;
-    movedRef.current = false;
-    setDragging(true);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (!dragging) return;
-    let dx = e.touches[0].clientX - startXRef.current;
-    const dy = e.touches[0].clientY - startYRef.current;
-
-    // Before committing to a horizontal swipe, bail out on a mostly-vertical
-    // gesture so the page scrolls naturally (and the tap still registers).
-    if (!movedRef.current && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > TAP_SLOP) {
-      setDragging(false);
-      setDragOffset(0);
-      return;
-    }
-    if (Math.abs(dx) > TAP_SLOP) movedRef.current = true;
-    // Resist dragging past the first/last slide.
-    if ((index === 0 && dx > 0) || (index === images.length - 1 && dx < 0)) {
-      dx *= 0.3;
-    }
-    dxRef.current = dx;
-    setDragOffset(dx);
-  };
-
-  const handleTouchEnd = () => {
-    if (!dragging) return;
-    const dx = dxRef.current;
-    if (dx <= -SWIPE_THRESHOLD && index < images.length - 1) setIndex(index + 1);
-    else if (dx >= SWIPE_THRESHOLD && index > 0) setIndex(index - 1);
-    if (movedRef.current) suppressClickRef.current = true; // don't tap after a swipe
-    setDragging(false);
-    setDragOffset(0);
   };
 
   const handleClick = () => {
@@ -116,10 +139,10 @@ export function FeedImageCarousel({
 
   return (
     <Box
+      ref={wrapRef}
       className={styles.wrap}
       onClick={handleClick}
       onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
     >
