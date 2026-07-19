@@ -1,146 +1,137 @@
-"""Regex scanner for detecting off-site transaction patterns in messages."""
+"""Scanner for off-site transaction / off-platform contact attempts in messages.
+
+Design: normalize once to defeat common evasion (full-width, zero-width, case,
+spacing), then match against flat wordlists. Regex is kept only for genuinely
+structured entities (phone, bank account, email, spelled-out numbers). Adding a
+new term is a one-line list edit, not a new pattern.
+
+Recall is favored over precision on purpose: flagging is silent and every hit is
+reviewed by an admin who can dismiss, so a missed off-site attempt costs the
+platform more than a false positive costs the admin.
+"""
+
 import re
+import unicodedata
 
-OFFSITE_PATTERNS: list[tuple[str, re.Pattern]] = [
-    # 1. Thai Mobile: Catches standard numbers and heavily spaced evasion (e.g., 0 8 1 - 2 3 4)
+# Zero-width / joiner chars used to break up words (e.g. "i​g").
+_ZERO_WIDTH = dict.fromkeys(
+    map(ord, "​‌‍⁠﻿"), None
+)
+
+
+def _normalize(text: str) -> str:
+    """Fold evasion tricks into a canonical form before matching.
+
+    NFKC collapses full-width and many homoglyph forms (ｉｇ -> ig); we then
+    drop zero-width chars, lowercase, and collapse whitespace runs to a single
+    space so token boundaries are predictable.
+    """
+    text = unicodedata.normalize("NFKC", text)
+    text = text.translate(_ZERO_WIDTH)
+    text = text.lower()
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
+_STRUCTURED: list[tuple[str, re.Pattern]] = [
+    # Thai mobile: standard + heavily spaced evasion ("0 8 1-2 3 4 ...").
     ("phone_number", re.compile(
-        r"(?:(?:0|\+66)[\s\-.()]{0,3}[689](?:[\s\-.()]{0,3}\d){8})",
-        re.IGNORECASE,
+        r"(?:0|\+66)[\s\-.()]{0,3}[689](?:[\s\-.()]{0,3}\d){8}"
     )),
-
-    # 2. Thai Bank Account: Standard + flexible spacing/dashes
+    # Thai bank account: flexible spacing / dashes.
     ("bank_account", re.compile(
         r"\b\d{3}[\s\-]{0,2}\d{1}[\s\-]{0,2}\d{5}[\s\-]{0,2}\d{1}\b"
     )),
-
-    # 3. Line URLs: Direct links (line.me, line.ee)
-    ("line_url", re.compile(
-        r"line\.(?:me|ee)/[a-zA-Z0-9/_-]+",
-        re.IGNORECASE
-    )),
-
-    # 4. Line ID (Thai): "ไลน์" implies the app, uses 0-20 char proximity window
-    ("line_id_th", re.compile(
-        r"ไลน์(?:.{0,20}?)([a-zA-Z0-9._-]{3,20})"
-    )),
-
-    # 5. Line ID (English): Requires intent words to avoid regular English sentences
-    ("line_id_en", re.compile(
-        r"(?:line\s*id|my\s*line|add\s*(?:me\s*on\s*)?line)(?:.{0,20}?)([a-zA-Z0-9._-]{3,20})",
-        re.IGNORECASE
-    )),
-
-    # 6. Social URLs: Direct links for other platforms (ig.me, fb.com, wa.me, t.me, etc.)
-    ("social_url", re.compile(
-        r"(?:instagram\.com|ig\.me|facebook\.com|fb\.com|fb\.me|wa\.me|t\.me|tiktok\.com)/[a-zA-Z0-9._-]+",
-        re.IGNORECASE
-    )),
-
-    # 7. Social Contact (Thai): Thai phonetic spellings of apps + proximity window
-    ("social_contact_th", re.compile(
-        r"(?:ไอจี|เฟส|เทเลแกรม|วีแชท)(?:.{0,20}?)([a-zA-Z0-9._-]{3,50})"
-    )),
-
-    # 8. Social Contact (English Intent): Requires "my", "add", or "id" before the platform
-    ("social_contact_en", re.compile(
-        r"(?:my\s+|add\s+(?:me\s+)?(?:on\s+)?|id\s+)(?:ig|instagram|facebook|fb|whatsapp|telegram|wechat|tiktok)(?:.{0,20}?)([a-zA-Z0-9._-]{3,50})",
-        re.IGNORECASE
-    )),
-
-    # 9. Social Contact (Loose/Anchored): Platform name + proximity window + an anchor like @, :, or 'is'
-    ("social_contact_loose", re.compile(
-        r"(?:ig|instagram|facebook|fb|whatsapp|telegram|wechat|tiktok)(?:.{0,20}?)(?:@|:|=|is|at|คือ|ติดต่อ)[:=\s]*([a-zA-Z0-9._-]{3,50})",
-        re.IGNORECASE
-    )),
-
-    # 10. Add/Chat Intent: General intent to move off-site
-    ("add_social", re.compile(
-        r"(?:(?:add|แอด|ทัก)\s*(?:line|ไลน์|ig|เฟส|แชท|ส่วนตัว))",
-        re.IGNORECASE
-    )),
-
-    # 11. Direct Transfer Intent (Thai)
-    ("direct_transfer_th", re.compile(
-        r"(?:โอน\s*(?:ตรง|เงิน|ให้|มา|นอก|ส่วนตัว)|จ่าย\s*(?:ตรง|นอก))"
-    )),
-
-    # 12. Bank Account Intent (Thai)
-    ("bank_account_th", re.compile(
-        r"(?:เลข\s*บัญชี|เลขที่\s*บัญชี|บัญชี\s*ธนาคาร|ขอ\s*เลข\s*บัญชี)"
-    )),
-
-    # 13. PromptPay Intent (Standard & Shorthand)
-    ("promptpay_offsite", re.compile(
-        r"(?:พร้อม\s*เพย์|prompt\s*pay|ppay\b)",
-        re.IGNORECASE
-    )),
-
-    # 14. Direct Transfer Intent (English)
-    ("direct_transfer_en", re.compile(
-        r"(?:pay\s*(?:me\s+)?(?:directly|outside|off[-\s]site)|direct\s+(?:transfer|payment|deposit))",
-        re.IGNORECASE,
-    )),
-
-    # 15. Bank Transfer Intent (English)
-    ("bank_transfer_en", re.compile(
-        r"(?:bank\s+(?:transfer|account|details)|wire\s+(?:transfer|money))",
-        re.IGNORECASE,
-    )),
-
-    # 16. External Payment Platforms
-    ("external_payment", re.compile(
-        r"(?:venmo|paypal|cashapp|cash\s*app|zelle|wise\.com|truemoney|ทรู\s*มันนี่|วอลเล็ต|wallet)",
-        re.IGNORECASE,
-    )),
-
-    # 17. Email Sharing (Standard + Obfuscation catching)
+    # Email, including "name (at) domain (dot) com" style obfuscation.
     ("email_sharing", re.compile(
-        r"(?:[A-Za-z0-9._%+-]+|\S{1,30})\s*(?:@|\[at\]|\(at\)| at )\s*[A-Za-z0-9.-]+\s*(?:\.|\[dot\]|\(dot\)| dot )\s*[A-Z|a-z]{2,7}\b",
-        re.IGNORECASE,
+        r"(?:[a-z0-9._%+-]+|\S{1,30})\s*(?:@|\[at\]|\(at\)| at )\s*"
+        r"[a-z0-9.-]+\s*(?:\.|\[dot\]|\(dot\)| dot )\s*[a-z]{2,7}\b"
     )),
-
-    # 18. Social Storefront Redirect (EN/TH): Catches intent to redirect to a social shop/page
-    ("social_redirect", re.compile(
-        r"(?:(?:shop|store|page|buy|visit|follow|ร้าน|เพจ|ซื้อ|ตาม)(?:.{0,20}?)(?:ig|instagram|facebook|fb|tiktok|line|ไลน์|ไอจี|เฟส))",
-        re.IGNORECASE
-    )),
-
-    # 19. QR Code Scanning: Catches "สแกนคิวอาร์", "scan my qr", etc.
-    ("qr_payment", re.compile(
-        r"(?:scan|สแกน|ส่งรูป|ขอรูป|รูป|แสกน).{0,15}?(?:qr|คิวอาร์|barcode|บาร์โค้ด)",
-        re.IGNORECASE
-    )),
-
-    # 20. Fee Avoidance / Discount for Direct Transfer
-    ("fee_avoidance", re.compile(
-        r"(?:cheaper\s*(?:outside|direct)|no\s*(?:platform\s*)?fee|avoid\s*fees?|โอนตรงถูกกว่า|ไม่หัก(?:ค่า|เปอร์เซ็น)|ถูกกว่า(?:ถ้า|โอน)|โอนนอกระบบ)",
-        re.IGNORECASE
-    )),
-
-    # 21. "Link in Bio" / Profile Redirects
-    ("profile_redirect", re.compile(
-        r"(?:link|ลิ้งก์|ลิงก์|ลิงค์|ลิ้ง|contact|ติดต่อ|จิ้ม).{0,15}?(?:bio|profile|หน้าเพจ|หน้าโปรไฟล์|ไบโอ)",
-        re.IGNORECASE
-    )),
-
-    # 22. Call / Phone Intent
-    ("call_intent", re.compile(
-        r"(?:call\s*me|โทร(?:หา|มา|เบอร์|เลย)|ติดต่อ(?:ได้ที่|เบอร์|มาที่|เรา))",
-        re.IGNORECASE
-    )),
-
-    # 23. In-Person Meetups / Cash
-    ("meet_in_person", re.compile(
-        r"(?:meet\s*up|in\s*person|นัดรับ(?:ของ|สินค้า)?|จ่าย(?:เงิน)?สด|เจอตัว)",
-        re.IGNORECASE
-    )),
-
-    # 24. Spelled-out Thai Numbers (The ultimate evasion tactic)
+    # Spelled-out Thai digits — a long run is a phone/account number in disguise.
     ("spelled_numbers_th", re.compile(
-        r"(?:ศูนย์|หนึ่ง|เอ็ด|สอง|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า)(?:[\s\-.]{0,3}(?:ศูนย์|หนึ่ง|เอ็ด|สอง|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า)){7,9}"
-    ))
+        r"(?:ศูนย์|หนึ่ง|เอ็ด|สอง|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า)"
+        r"(?:[\s\-.]{0,3}(?:ศูนย์|หนึ่ง|เอ็ด|สอง|สาม|สี่|ห้า|หก|เจ็ด|แปด|เก้า)){7,9}"
+    )),
 ]
 
+
+_WORD_GROUPS: dict[str, list[str]] = {
+    # Any social app / competing marketplace named in a DM is suspicious.
+    "platform_mention": [
+        "instagram", "insta", "ig", "facebook", "fb", "messenger",
+        "whatsapp", "telegram", "wechat", "kakao", "snapchat", "tiktok",
+        "shopee", "lazada", "carousell", "grailed", "depop",
+    ],
+    "external_payment": [
+        "venmo", "paypal", "cashapp", "cash app", "zelle",
+        "truemoney", "promptpay", "prompt pay", "ppay",
+    ],
+    "payment_intent": [
+        "direct transfer", "direct payment", "direct deposit",
+        "bank transfer", "bank account", "bank details",
+        "wire transfer", "wire money",
+        "pay directly", "pay me directly", "pay outside",
+        "pay offsite", "pay off site",
+    ],
+    "fee_avoidance": [
+        "no fee", "no fees", "no platform fee",
+        "avoid fee", "avoid fees", "cheaper outside", "cheaper direct",
+    ],
+    # Intent to move the conversation/sale off-platform.
+    "offsite_redirect": [
+        "add me on", "message me on", "msg me on", "dm me",
+        "hit me up", "link in bio", "in bio",
+        "my line", "line id", "follow my",
+    ],
+    "contact_intent": ["call me", "meet up", "in person"],
+    "qr_payment": ["qr", "qr code", "barcode"],
+}
+
+# Thai terms are matched as substrings — Thai is written without spaces, so word
+# boundaries are unreliable; these sequences are distinctive enough to be safe.
+_SUBSTRING_GROUPS: dict[str, list[str]] = {
+    "platform_mention": ["ไลน์", "ไอจี", "เฟส", "เทเลแกรม", "วีแชท"],
+    "external_payment": ["พร้อมเพย์", "ทรูมันนี่"],
+    "payment_intent": [
+        "โอนตรง", "โอนนอกระบบ", "จ่ายตรง", "จ่ายนอก",
+        "เลขบัญชี", "เลขที่บัญชี", "บัญชีธนาคาร", "จ่ายสด",
+    ],
+    "fee_avoidance": ["โอนตรงถูกกว่า", "ไม่หัก"],
+    "offsite_redirect": ["ทัก", "แอด", "หน้าเพจ", "โปรไฟล์"],
+    "contact_intent": ["โทรหา", "โทรมา", "นัดรับ", "เจอตัว"],
+    "qr_payment": ["คิวอาร์", "บาร์โค้ด", "สแกน"],
+    # URL fragments (matched literally after normalization).
+    "social_url": [
+        "line.me/", "line.ee/", "instagram.com/", "ig.me/",
+        "facebook.com/", "fb.me/", "wa.me/", "t.me/", "tiktok.com/",
+        "wise.com",
+    ],
+}
+
+
+def _compile_words(terms: list[str]) -> re.Pattern:
+    """Whole-word alternation from a wordlist (text is pre-lowercased)."""
+    return re.compile(r"\b(?:" + "|".join(re.escape(t) for t in terms) + r")\b")
+
+
+_WORD_MATCHERS: list[tuple[str, re.Pattern]] = [
+    (name, _compile_words(terms)) for name, terms in _WORD_GROUPS.items()
+]
+
+
 def scan_message(content: str) -> list[str]:
-    """Scan message content. Returns list of matched pattern names (empty = clean)."""
-    return [name for name, pattern in OFFSITE_PATTERNS if pattern.search(content)]
+    """Scan message content. Returns matched category names (empty = clean)."""
+    text = _normalize(content)
+    matched: list[str] = []
+
+    for name, pattern in _STRUCTURED:
+        if pattern.search(text):
+            matched.append(name)
+    for name, pattern in _WORD_MATCHERS:
+        if pattern.search(text):
+            matched.append(name)
+    for name, terms in _SUBSTRING_GROUPS.items():
+        if name not in matched and any(t in text for t in terms):
+            matched.append(name)
+
+    return matched
