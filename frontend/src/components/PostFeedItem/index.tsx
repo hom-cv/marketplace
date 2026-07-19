@@ -63,6 +63,9 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
   const openPost = () =>
     navigate({ to: `${linkPrefix}/$postId`, params: { postId: String(post.id) } });
 
+  const openProfile = () =>
+    navigate({ to: "/profile/$username", params: { username: post.user.username } });
+
   const openReport = (type: ReportType) => {
     setReportType(type);
     setReportModalOpened(true);
@@ -81,12 +84,12 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
     <Box className={styles.container}>
       {/* Header: avatar + username, report menu on the right */}
       <Box className={styles.header}>
-        <Box className={styles.headerUser}>
+        <Box className={styles.headerUser} onClick={openProfile}>
           <Avatar color="blue" radius="xl" size="sm">
             {post.user.username.charAt(0).toUpperCase()}
           </Avatar>
           <Text fw={600} size="sm" className={styles.username}>
-            @{post.user.username}
+            {post.user.username}
           </Text>
         </Box>
         {showReportMenu && (
@@ -136,15 +139,15 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
         )}
       </FeedImageCarousel>
 
-      {/* Footer: title + price on the left, like + view-post on the right */}
-      <Box className={styles.footer}>
+      {/* Footer: tapping anywhere opens the post; the like button opts out */}
+      <Box className={styles.footer} onClick={openPost}>
         <Stack gap={2} className={styles.footerInfo}>
           {post.brand && (
             <Text size="xs" fw={600} c="dimmed" tt="uppercase" lineClamp={1}>
               {post.brand.name}
             </Text>
           )}
-          <Text fw={600} size="sm" lineClamp={1}>
+          <Text size="sm" lineClamp={1}>
             {post.title}
           </Text>
           <Text fw={700} size="md">
@@ -165,13 +168,11 @@ export function PostFeedItem({ post, linkPrefix = "/explore" }: PostFeedItemProp
           {isLiked ? <IconHeartFilled size={26} /> : <IconHeart size={26} />}
           <span className={styles.likeCount}>{likeCount}</span>
         </button>
-        <IconButton
-          variant="outline"
-          onClick={openPost}
-          aria-label={t("postCard.viewPost")}
-        >
-          <IconChevronRight size={22} />
-        </IconButton>
+        <IconChevronRight
+          size={22}
+          className={styles.viewIndicator}
+          aria-hidden
+        />
       </Box>
 
       <LoginPromptModal

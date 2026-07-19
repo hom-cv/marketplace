@@ -6,17 +6,19 @@
 /* Header: avatar + username on the left, report menu on the right */
 .header {
   display: flex;
+  flex: 1;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
 }
 
 .headerUser {
-  flex: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
+  cursor: pointer;
 }
 
 .username {
@@ -39,13 +41,20 @@
   right: 10px;
 }
 
-/* Footer: title + price on the left, large like button on the right */
+/* Footer: title + price on the left, like + view indicator on the right */
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 10px 12px 14px;
+  cursor: pointer;
+}
+
+/* Chevron hinting the whole footer opens the post */
+.viewIndicator {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
 }
 
 .footerInfo {
