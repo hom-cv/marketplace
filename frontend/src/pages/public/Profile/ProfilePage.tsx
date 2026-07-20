@@ -22,6 +22,9 @@ export function ProfilePage() {
   const { t: tCommon } = useTranslation("common");
   const currentUser = useAuthStore((state) => state.user);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"listings" | "feedback">(
+    "listings",
+  );
 
   const {
     data: profile,
@@ -119,38 +122,61 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* Listings Section */}
+        {/* Listings / Feedback Tabs */}
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t("sections.listings")}</h2>
-          {postsLoading ? (
-            <div className={styles.loading}>
-              <Loader />
-            </div>
-          ) : postsError ? (
-            <Alert variant="error">{t("errors.failedToLoadPosts")}</Alert>
-          ) : posts && posts.length > 0 ? (
-            <>
-              {/* Desktop Grid */}
-              <Box visibleFrom="sm">
-                <div className={styles.grid}>
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
-                </div>
-              </Box>
+          <div className={styles.tabs} role="tablist">
+            {(["listings", "feedback"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab}
+                className={[styles.tab, activeTab === tab && styles.tabActive]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => setActiveTab(tab)}
+              >
+                {t(`tabs.${tab}`)}
+              </button>
+            ))}
+          </div>
 
-              {/* Mobile Feed */}
-              <Box hiddenFrom="sm">
-                <div>
-                  {posts.map((post) => (
-                    <PostFeedItem key={post.id} post={post} />
-                  ))}
-                </div>
-              </Box>
-            </>
+          {activeTab === "listings" ? (
+            postsLoading ? (
+              <div className={styles.loading}>
+                <Loader />
+              </div>
+            ) : postsError ? (
+              <Alert variant="error">{t("errors.failedToLoadPosts")}</Alert>
+            ) : posts && posts.length > 0 ? (
+              <>
+                {/* Desktop Grid */}
+                <Box visibleFrom="sm">
+                  <div className={styles.grid}>
+                    {posts.map((post) => (
+                      <PostCard key={post.id} post={post} />
+                    ))}
+                  </div>
+                </Box>
+
+                {/* Mobile Feed */}
+                <Box hiddenFrom="sm">
+                  <div>
+                    {posts.map((post) => (
+                      <PostFeedItem key={post.id} post={post} />
+                    ))}
+                  </div>
+                </Box>
+              </>
+            ) : (
+              <div className={styles.emptyState}>
+                <p className={styles.emptyText}>{t("empty.noListings")}</p>
+              </div>
+            )
           ) : (
+            /* ponytail: feedback placeholder until a reviews feature exists */
             <div className={styles.emptyState}>
-              <p className={styles.emptyText}>{t("empty.noListings")}</p>
+              <p className={styles.emptyText}>{t("empty.noFeedback")}</p>
             </div>
           )}
         </div>
