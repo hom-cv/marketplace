@@ -103,6 +103,32 @@
 }
 
 /* Receipt modal */
+.receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.receiptHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--color-text);
+}
+
+.receiptBrand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.receiptNo {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 .receiptItem {
   display: flex;
   justify-content: space-between;
@@ -112,6 +138,19 @@
 .receiptDivider {
   height: 1px;
   background: var(--color-border);
+}
+
+.receiptFoot {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* Print-only receipt copy: hidden on screen, revealed by the @media print
+   rule in global.css. */
+.printOnly {
+  display: none;
 }
 
 /* Mobile responsive */

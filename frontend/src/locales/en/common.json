@@ -238,7 +238,10 @@
     "contactSupport": "Contact Support",
     "supportSubject": "Support request — {{title}} (Order #{{id}})",
     "receipt": "Receipt",
-    "item": "Item"
+    "item": "Item",
+    "receiptNumber": "Receipt No.",
+    "printReceipt": "Print / Save PDF",
+    "thankYou": "Thank you for shopping with Tallad"
   },
   "sales": {
     "title": "Sold Listings",

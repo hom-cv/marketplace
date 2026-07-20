@@ -3,6 +3,7 @@
  */
 
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Loader, Modal, Stack, Group, Text } from "@mantine/core";
 import {
   IconShoppingBag,
@@ -14,6 +15,7 @@ import {
   IconHeadset,
   IconClock,
   IconChevronDown,
+  IconPrinter,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
@@ -273,33 +275,90 @@ export function PurchaseHistoryPage() {
       >
         {receiptModalData && (
           <Stack gap="md">
-            <div className={styles.receiptItem}>
-              <Text size="sm" c="dimmed">{t("purchases.item")}</Text>
-              <Text size="sm" fw={500}>{receiptModalData.post.title}</Text>
-            </div>
-            <div className={styles.receiptItem}>
-              <Text size="sm" c="dimmed">{t("purchases.date")}</Text>
-              <Text size="sm">{new Date(receiptModalData.created_at).toLocaleDateString()}</Text>
-            </div>
-            <div className={styles.receiptDivider} />
-            <div className={styles.receiptItem}>
-              <Text size="sm" c="dimmed">{t("checkout.itemPrice")}</Text>
-              <Text size="sm">฿{formatPrice(receiptModalData.item_price ?? 0)}</Text>
-            </div>
-            {(receiptModalData.shipping_cost ?? 0) > 0 && (
-              <div className={styles.receiptItem}>
-                <Text size="sm" c="dimmed">{t("checkout.shippingLabel")}</Text>
-                <Text size="sm">฿{formatPrice(receiptModalData.shipping_cost ?? 0)}</Text>
-              </div>
-            )}
-            <div className={styles.receiptDivider} />
-            <div className={styles.receiptItem}>
-              <Text size="sm" fw={600}>{t("checkout.total")}</Text>
-              <Text size="sm" fw={600}>฿{formatPrice(receiptModalData.amount)}</Text>
-            </div>
+            <ReceiptBody purchase={receiptModalData} />
+
+            <Button
+              variant="secondary"
+              fullWidth
+              leftIcon={<IconPrinter size={16} />}
+              onClick={() => window.print()}
+            >
+              {t("purchases.printReceipt")}
+            </Button>
           </Stack>
         )}
       </Modal>
+
+      {/* Print-only copy portaled to <body> so @media print can hide every
+          other body child (incl. Mantine's modal) and keep it to one page. */}
+      {receiptModalData &&
+        createPortal(
+          <div className={`receipt-printable ${styles.printOnly}`}>
+            <ReceiptBody purchase={receiptModalData} />
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
+function ReceiptBody({ purchase }: { purchase: PurchaseListItem }) {
+  const { t } = useTranslation("common");
+  return (
+    <div className={styles.receipt}>
+      <div className={styles.receiptHead}>
+        <span className={styles.receiptBrand}>Tallad</span>
+        <span className={styles.receiptNo}>
+          {t("purchases.receiptNumber")} #{purchase.payment_id}
+        </span>
+      </div>
+
+      <div className={styles.receiptItem}>
+        <Text size="sm" c="dimmed">{t("purchases.date")}</Text>
+        <Text size="sm">
+          {new Date(purchase.paid_at ?? purchase.created_at).toLocaleDateString()}
+        </Text>
+      </div>
+      <div className={styles.receiptItem}>
+        <Text size="sm" c="dimmed">{t("purchases.seller")}</Text>
+        <Text size="sm">@{purchase.seller?.username ?? "—"}</Text>
+      </div>
+      <div className={styles.receiptItem}>
+        <Text size="sm" c="dimmed">{t("checkout.paymentMethod")}</Text>
+        <Text size="sm">
+          {purchase.payment_method === "card"
+            ? t("checkout.creditCard")
+            : "PromptPay"}
+        </Text>
+      </div>
+
+      <div className={styles.receiptDivider} />
+
+      <div className={styles.receiptItem}>
+        <Text size="sm" fw={500}>{purchase.post.title}</Text>
+        <Text size="sm">฿{formatSatang(purchase.item_price ?? 0)}</Text>
+      </div>
+      {(purchase.shipping_cost ?? 0) > 0 && (
+        <div className={styles.receiptItem}>
+          <Text size="sm" c="dimmed">{t("checkout.shippingLabel")}</Text>
+          <Text size="sm">฿{formatSatang(purchase.shipping_cost ?? 0)}</Text>
+        </div>
+      )}
+      {(purchase.processing_fee ?? 0) > 0 && (
+        <div className={styles.receiptItem}>
+          <Text size="sm" c="dimmed">{t("checkout.buyerProtectionFee")}</Text>
+          <Text size="sm">฿{formatSatang(purchase.processing_fee ?? 0)}</Text>
+        </div>
+      )}
+
+      <div className={styles.receiptDivider} />
+
+      <div className={styles.receiptItem}>
+        <Text size="sm" fw={700}>{t("checkout.total")}</Text>
+        <Text size="sm" fw={700}>฿{formatSatang(purchase.amount)}</Text>
+      </div>
+
+      <div className={styles.receiptFoot}>{t("purchases.thankYou")}</div>
     </div>
   );
 }

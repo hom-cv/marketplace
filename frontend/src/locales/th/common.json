@@ -238,7 +238,10 @@
     "contactSupport": "ติดต่อฝ่ายสนับสนุน",
     "supportSubject": "คำขอความช่วยเหลือ — {{title}} (คำสั่งซื้อ #{{id}})",
     "receipt": "ใบเสร็จ",
-    "item": "สินค้า"
+    "item": "สินค้า",
+    "receiptNumber": "เลขที่ใบเสร็จ",
+    "printReceipt": "พิมพ์ / บันทึก PDF",
+    "thankYou": "ขอบคุณที่ช้อปกับ Tallad"
   },
   "sales": {
     "title": "สินค้าที่ขายแล้ว",

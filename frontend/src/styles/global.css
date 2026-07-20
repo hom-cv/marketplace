@@ -87,3 +87,16 @@ body {
   background-color: var(--color-primary-light);
   color: white;
 }
+
+/* Print: show only the receipt. The printable copy is portaled to <body>, so
+   hiding every other body child leaves just the receipt — one page, no blank
+   trailing pages (display:none removes the app from flow, unlike visibility). */
+@media print {
+  body > *:not(.receipt-printable) {
+    display: none !important;
+  }
+  .receipt-printable {
+    display: block !important;
+    padding: 24px;
+  }
+}
