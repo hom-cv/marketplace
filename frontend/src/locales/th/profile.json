@@ -4,7 +4,8 @@
   },
   "stats": {
     "totalLikes": "ถูกใจทั้งหมด",
-    "followers": "ผู้ติดตาม"
+    "followers": "ผู้ติดตาม",
+    "completedSales": "ขายสำเร็จ"
   },
   "follow": {
     "follow": "ติดตาม",

@@ -9,6 +9,7 @@ from app.api.dependencies.user import AnnotatedValidUserByUsername
 from app.core.security import get_current_user, get_current_user_optional
 from app.crud.follow import AnnotatedFollowCRUD
 from app.crud.like import AnnotatedLikeCRUD
+from app.crud.payment import AnnotatedPaymentCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post, User
@@ -32,6 +33,7 @@ async def get_user_profile(
     db: Annotated[AsyncSession, Depends(get_async_db)],
     like_crud: AnnotatedLikeCRUD,
     follow_crud: AnnotatedFollowCRUD,
+    payment_crud: AnnotatedPaymentCRUD,
     user: AnnotatedValidUserByUsername,
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PublicUserProfileSchema:
@@ -53,6 +55,11 @@ async def get_user_profile(
     # Get follower count
     follower_count = await follow_crud.get_follower_count(db, user_id=user.id)
 
+    # Get completed transaction count (successful sales as a seller)
+    completed_sales = await payment_crud.get_completed_sales_count(
+        db, seller_id=user.id
+    )
+
     # Check if current user is following this profile
     is_followed = False
     if current_user and current_user.id != user.id:
@@ -61,7 +68,11 @@ async def get_user_profile(
         )
 
     return PublicUserProfileSchema.from_user(
-        user, total_likes, follower_count=follower_count, is_followed=is_followed
+        user,
+        total_likes,
+        follower_count=follower_count,
+        completed_sales=completed_sales,
+        is_followed=is_followed,
     )
 
 

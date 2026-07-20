@@ -200,18 +200,20 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   padding: var(--seller-card-padding, 16px);
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-  text-decoration: none;
-  color: inherit;
 }
 
-.sellerCard:hover {
-  border-color: var(--color-border-hover);
+/* Clickable seller info (name/avatar/stats) — links to the profile */
+.sellerLink {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 /* Non-clickable seller card (for owner view) */
@@ -247,6 +249,9 @@
 .sellerDetails {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .sellerUsername {
@@ -255,9 +260,17 @@
   color: var(--color-text);
 }
 
-.sellerArrow {
-  color: var(--color-text-muted);
-  flex-shrink: 0;
+.sellerRating {
+  display: flex;
+  gap: 2px;
+  color: var(--color-primary);
+}
+
+.sellerStats {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8125rem; /* 13px */
+  color: var(--color-text-secondary);
 }
 
 /* Desktop buy button */

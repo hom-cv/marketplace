@@ -130,6 +130,7 @@ class PublicUserProfileSchema(BaseModel):
     is_seller: bool = False
     total_likes: int = 0
     follower_count: int = 0
+    completed_sales: int = 0
     is_followed: bool = False
 
     model_config = {"from_attributes": True}
@@ -140,6 +141,7 @@ class PublicUserProfileSchema(BaseModel):
         user: Any,
         total_likes: int,
         follower_count: int = 0,
+        completed_sales: int = 0,
         is_followed: bool = False,
     ) -> "PublicUserProfileSchema":
         """Create public profile from User model."""
@@ -152,5 +154,6 @@ class PublicUserProfileSchema(BaseModel):
             is_seller=user.is_seller,
             total_likes=total_likes,
             follower_count=follower_count,
+            completed_sales=completed_sales,
             is_followed=is_followed,
         )

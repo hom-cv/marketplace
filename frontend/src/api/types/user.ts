@@ -25,6 +25,7 @@ export interface PublicUserProfile {
   is_seller: boolean;
   total_likes: number;
   follower_count: number;
+  completed_sales: number;
   is_followed: boolean;
 }
 
