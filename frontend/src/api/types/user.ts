@@ -26,6 +26,8 @@ export interface PublicUserProfile {
   total_likes: number;
   follower_count: number;
   completed_sales: number;
+  rating: number | null;
+  feedback_count: number;
   is_followed: boolean;
 }
 

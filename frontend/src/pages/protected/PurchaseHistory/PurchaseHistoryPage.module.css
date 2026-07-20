@@ -7,99 +7,161 @@
   flex-shrink: 0;
 }
 
-/* Content grid */
-.contentGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding-top: 12px;
-}
-
-/* Stepper card (left column) */
-.stepperCard {
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-}
-
-.cardLabel {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin: 0 0 12px;
-}
-
-/* Actions column (right column) */
-.actionsColumn {
+/* Expanded detail — vertical flow */
+.detail {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
 }
 
-/* Link button style */
-.linkButton {
+/* Progress rail: nodes joined by connectors */
+.rail {
+  display: flex;
+  align-items: flex-start;
+  padding: 0 4px;
+}
+
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 68px;
+}
+
+.dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.nodeLabel {
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.nodeActive .dot {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.nodeActive .nodeLabel {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.nodeDone .dot {
+  background: var(--color-bg-card);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.nodeDone .nodeLabel {
+  color: var(--color-text-secondary);
+}
+
+/* Connector line, vertically centered on the 28px dots */
+.connector {
+  flex: 1;
+  height: 2px;
+  margin-top: 13px;
+  border-radius: 1px;
+  background: var(--color-border);
+}
+
+.connectorDone {
+  background: var(--color-primary);
+}
+
+/* Status note (waiting / reviewed) */
+.note {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  background: var(--color-bg-muted);
+  padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
   font-weight: 500;
-  color: var(--color-text);
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.linkButton:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card);
-}
-
-/* Awaiting shipment card */
-.awaitingCard {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+.noteWait {
   background: var(--color-warning-light);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
+  border-color: var(--color-warning);
   color: var(--color-warning);
 }
 
-.awaitingIcon {
-  flex-shrink: 0;
+.noteDone {
+  background: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success);
 }
 
-/* Button row */
-.buttonRow {
-  display: flex;
-  gap: 8px;
-}
-
-.buttonRow > * {
-  flex: 1;
-}
-
-/* Delivered badge */
-.deliveredBadge {
+/* Rate-your-order prompt (delivered, not yet reviewed) */
+.ratePrompt {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  background: var(--color-success-light);
-  border: 1px solid var(--color-success);
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-secondary-light);
+  border: 1px solid var(--color-secondary);
   border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-success);
+}
+
+.rateText {
+  min-width: 0;
+}
+
+.rateTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.rateSub {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin: 2px 0 0;
+}
+
+/* Quiet secondary action links */
+.secondary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 0;
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.secondaryLink:hover {
+  color: var(--color-primary);
 }
 
 /* Receipt modal */
@@ -155,11 +217,9 @@
 
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .contentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .buttonRow {
+  .ratePrompt {
     flex-direction: column;
+    align-items: stretch;
+    text-align: center;
   }
 }

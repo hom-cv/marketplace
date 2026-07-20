@@ -21,13 +21,12 @@ interface SellerInfoCardProps {
   isOwner: boolean;
 }
 
-// ponytail: placeholder rating until reviews exist — swap for profile.rating
-const RATING = 4.5;
-
 export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
   const { t } = useTranslation("profile");
   const { data: profile } = useUserProfile(user.username);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+
+  const rating = profile?.rating ?? 0;
 
   const content = (
     <div className={styles.sellerInfo}>
@@ -36,15 +35,17 @@ export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
       </div>
       <div className={styles.sellerDetails}>
         <div className={styles.sellerUsername}>@{user.username}</div>
-        <div className={styles.sellerRating}>
-          {Array.from({ length: 5 }, (_, i) => {
-            if (RATING >= i + 1)
-              return <IconStarFilled key={i} size={13} />;
-            if (RATING >= i + 0.5)
-              return <IconStarHalfFilled key={i} size={13} />;
-            return <IconStar key={i} size={13} stroke={1.25} />;
-          })}
-        </div>
+        {rating > 0 && (
+          <div className={styles.sellerRating}>
+            {Array.from({ length: 5 }, (_, i) => {
+              if (rating >= i + 1)
+                return <IconStarFilled key={i} size={13} />;
+              if (rating >= i + 0.5)
+                return <IconStarHalfFilled key={i} size={13} />;
+              return <IconStar key={i} size={13} stroke={1.25} />;
+            })}
+          </div>
+        )}
         {profile && (
           <div className={styles.sellerStats}>
             <span>

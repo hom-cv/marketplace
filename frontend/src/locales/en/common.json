@@ -241,7 +241,14 @@
     "item": "Item",
     "receiptNumber": "Receipt No.",
     "printReceipt": "Print / Save PDF",
-    "thankYou": "Thank you for shopping with Tallad"
+    "thankYou": "Thank you for shopping with Tallad",
+    "rateTitle": "How was your order?",
+    "rateSubtitle": "Leave feedback for @{{username}}",
+    "rateButton": "Rate order",
+    "reviewed": "You reviewed this order",
+    "waitingToShip": "Waiting for the seller to ship",
+    "feedbackStep": "Feedback",
+    "completed": "Order completed"
   },
   "sales": {
     "title": "Sold Listings",
@@ -331,5 +338,14 @@
       "sectionLabel": "Browse Items",
       "sectionTitle": "Explore Tallad"
     }
+  },
+  "feedback": {
+    "title": "Leave feedback",
+    "ratingLabel": "Your rating",
+    "commentLabel": "Comment (optional)",
+    "commentPlaceholder": "Share your experience with this seller...",
+    "submit": "Submit feedback",
+    "leaveButton": "Leave feedback",
+    "submitted": "Thanks for your feedback!"
   }
 }

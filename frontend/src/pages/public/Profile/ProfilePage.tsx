@@ -4,10 +4,11 @@
 
 import { useState } from "react";
 import { useParams } from "@tanstack/react-router";
-import { Loader, Box } from "@mantine/core";
+import { Loader, Box, Rating } from "@mantine/core";
 import { IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useUserProfile, useUserPosts } from "@/hooks/useUsers";
+import { useUserFeedback } from "@/hooks/useFeedback";
 import { Alert } from "@/components/Alert";
 import { FollowButton } from "@/components/FollowButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -37,6 +38,9 @@ export function ProfilePage() {
     isLoading: postsLoading,
     error: postsError,
   } = useUserPosts(username);
+
+  const { data: feedback, isLoading: feedbackLoading } =
+    useUserFeedback(username);
 
   if (profileLoading) {
     return (
@@ -173,8 +177,30 @@ export function ProfilePage() {
                 <p className={styles.emptyText}>{t("empty.noListings")}</p>
               </div>
             )
+          ) : feedbackLoading ? (
+            <div className={styles.loading}>
+              <Loader />
+            </div>
+          ) : feedback && feedback.length > 0 ? (
+            <div className={styles.feedbackList}>
+              {feedback.map((f) => (
+                <div key={f.id} className={styles.feedbackItem}>
+                  <div className={styles.feedbackHeader}>
+                    <Rating value={f.rating} readOnly size="sm" />
+                    <span className={styles.feedbackDate}>
+                      {new Date(f.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {f.comment && (
+                    <p className={styles.feedbackComment}>{f.comment}</p>
+                  )}
+                  <span className={styles.feedbackAuthor}>
+                    @{f.reviewer_username}
+                  </span>
+                </div>
+              ))}
+            </div>
           ) : (
-            /* ponytail: feedback placeholder until a reviews feature exists */
             <div className={styles.emptyState}>
               <p className={styles.emptyText}>{t("empty.noFeedback")}</p>
             </div>

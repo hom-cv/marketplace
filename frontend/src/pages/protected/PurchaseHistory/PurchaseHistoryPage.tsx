@@ -2,7 +2,7 @@
  * Purchase History Page - Messages list style
  */
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { createPortal } from "react-dom";
 import { Loader, Modal, Stack, Group, Text } from "@mantine/core";
 import {
@@ -16,6 +16,7 @@ import {
   IconClock,
   IconChevronDown,
   IconPrinter,
+  IconStar,
 } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "@tanstack/react-router";
@@ -26,9 +27,9 @@ import { formatSatang } from "@/utils/currency";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
-import { Stepper } from "@/components/Stepper";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
 import { FulfillmentBadge } from "@/components/FulfillmentBadge";
+import { FeedbackModal } from "@/components/FeedbackModal";
 import shared from "@/styles/listPage.module.css";
 import styles from "./PurchaseHistoryPage.module.css";
 
@@ -36,6 +37,7 @@ export function PurchaseHistoryPage() {
   const { t } = useTranslation("common");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [receiptModalData, setReceiptModalData] = useState<PurchaseListItem | null>(null);
+  const [feedbackPaymentId, setFeedbackPaymentId] = useState<number | null>(null);
 
   const { data: purchases, isLoading, error } = useMyPurchases();
 
@@ -63,11 +65,12 @@ export function PurchaseHistoryPage() {
     );
   }
 
-  const getFulfillmentStep = (status: string | null): number => {
-    switch (status) {
+  // 0 Packing · 1 In transit · 2 Delivered · 3 Feedback · 4 = all done (completed)
+  const getProgressStep = (purchase: PurchaseListItem): number => {
+    switch (purchase.fulfillment_status) {
       case "packing": return 0;
       case "in_transit": return 1;
-      case "delivered": return 2;
+      case "delivered": return purchase.has_feedback ? 4 : 3;
       default: return 0;
     }
   };
@@ -80,6 +83,7 @@ export function PurchaseHistoryPage() {
     { icon: IconPackage, label: t("purchases.packing") },
     { icon: IconTruck, label: t("purchases.inTransit") },
     { icon: IconCheck, label: t("purchases.delivered") },
+    { icon: IconStar, label: t("purchases.feedbackStep") },
   ];
 
   const contactSupport = (purchase: PurchaseListItem) => {
@@ -92,98 +96,131 @@ export function PurchaseHistoryPage() {
     );
   };
 
-  const renderRightColumn = (purchase: PurchaseListItem) => {
+  const renderProgressRail = (currentStep: number) => (
+    <div className={styles.rail}>
+      {steps.map((step, i) => {
+        const StepIcon = step.icon;
+        const done = i < currentStep;
+        const active = i === currentStep;
+        const nodeClass = [
+          styles.node,
+          done && styles.nodeDone,
+          active && styles.nodeActive,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          <Fragment key={i}>
+            {i > 0 && (
+              <div
+                className={`${styles.connector} ${
+                  i <= currentStep ? styles.connectorDone : ""
+                }`}
+              />
+            )}
+            <div className={nodeClass}>
+              <span className={styles.dot}>
+                {done ? <IconCheck size={15} /> : <StepIcon size={15} />}
+              </span>
+              <span className={styles.nodeLabel}>{step.label}</span>
+            </div>
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+
+  const renderDetail = (purchase: PurchaseListItem) => {
     const status = purchase.fulfillment_status;
 
     return (
-      <Stack gap="xs">
-        <Link to="/explore/$postId" params={{ postId: String(purchase.post.id) }} className={styles.linkButton}>
-          <IconExternalLink size={14} />
-          {t("purchases.viewListing")}
-        </Link>
+      <div className={styles.detail}>
+        {renderProgressRail(getProgressStep(purchase))}
 
-        <button
-          type="button"
-          className={styles.linkButton}
-          onClick={() => setReceiptModalData(purchase)}
-        >
-          <IconReceipt size={14} />
-          {t("purchases.showReceipt")}
-        </button>
+        {purchase.tracking_number && (
+          <TrackingInfoCard
+            trackingNumber={purchase.tracking_number}
+            carrier={purchase.shipping_carrier}
+          />
+        )}
 
+        {/* What's next — one clear action per state */}
         {status === "packing" && (
-          <>
-            <div className={styles.awaitingCard}>
-              <IconClock size={14} className={styles.awaitingIcon} />
-              <span>{t("purchases.awaitingShipment")}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              fullWidth
-              leftIcon={<IconHeadset size={14} />}
-              onClick={() => contactSupport(purchase)}
-            >
-              {t("purchases.contactSupport")}
-            </Button>
-          </>
+          <div className={`${styles.note} ${styles.noteWait}`}>
+            <IconClock size={15} />
+            <span>{t("purchases.waitingToShip")}</span>
+          </div>
         )}
 
         {status === "in_transit" && (
-          <>
-            {purchase.tracking_number && (
-              <TrackingInfoCard
-                trackingNumber={purchase.tracking_number}
-                carrier={purchase.shipping_carrier}
-              />
-            )}
-            <div className={styles.buttonRow}>
-              <Button
-                variant="primary"
-                size="sm"
-                leftIcon={<IconCheck size={14} />}
-                onClick={() => confirmMutation.mutate(purchase.payment_id)}
-                disabled={confirmMutation.isPending}
-              >
-                {t("purchases.confirmDelivery")}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                leftIcon={<IconHeadset size={14} />}
-                onClick={() => contactSupport(purchase)}
-              >
-                {t("purchases.contactSupport")}
-              </Button>
-            </div>
-          </>
+          <Button
+            variant="primary"
+            fullWidth
+            leftIcon={<IconCheck size={16} />}
+            onClick={() => confirmMutation.mutate(purchase.payment_id)}
+            disabled={confirmMutation.isPending}
+          >
+            {t("purchases.confirmDelivery")}
+          </Button>
         )}
 
-        {status === "delivered" && (
-          <>
-            {purchase.tracking_number && (
-              <TrackingInfoCard
-                trackingNumber={purchase.tracking_number}
-                carrier={purchase.shipping_carrier}
-              />
-            )}
-            <div className={styles.buttonRow}>
-              <div className={styles.deliveredBadge}>
-                <IconCheck size={14} />
-                <span>{t("purchases.delivered")}</span>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                leftIcon={<IconHeadset size={14} />}
-                onClick={() => contactSupport(purchase)}
-              >
-                {t("purchases.contactSupport")}
-              </Button>
+        {status === "delivered" && !purchase.has_feedback && (
+          <div className={styles.ratePrompt}>
+            <div className={styles.rateText}>
+              <p className={styles.rateTitle}>{t("purchases.rateTitle")}</p>
+              {purchase.seller && (
+                <p className={styles.rateSub}>
+                  {t("purchases.rateSubtitle", {
+                    username: purchase.seller.username,
+                  })}
+                </p>
+              )}
             </div>
-          </>
+            <Button
+              variant="primary"
+              leftIcon={<IconStar size={15} />}
+              onClick={() => setFeedbackPaymentId(purchase.payment_id)}
+            >
+              {t("purchases.rateButton")}
+            </Button>
+          </div>
         )}
-      </Stack>
+
+        {status === "delivered" && purchase.has_feedback && (
+          <div className={`${styles.note} ${styles.noteDone}`}>
+            <IconCheck size={15} />
+            <span>{t("purchases.completed")}</span>
+          </div>
+        )}
+
+        {/* Quiet secondary actions */}
+        <div className={styles.secondary}>
+          <Link
+            to="/explore/$postId"
+            params={{ postId: String(purchase.post.id) }}
+            className={styles.secondaryLink}
+          >
+            <IconExternalLink size={14} />
+            {t("purchases.viewListing")}
+          </Link>
+          <button
+            type="button"
+            className={styles.secondaryLink}
+            onClick={() => setReceiptModalData(purchase)}
+          >
+            <IconReceipt size={14} />
+            {t("purchases.showReceipt")}
+          </button>
+          <button
+            type="button"
+            className={styles.secondaryLink}
+            onClick={() => contactSupport(purchase)}
+          >
+            <IconHeadset size={14} />
+            {t("purchases.contactSupport")}
+          </button>
+        </div>
+      </div>
     );
   };
 
@@ -202,7 +239,6 @@ export function PurchaseHistoryPage() {
           <div className={shared.list}>
             {successfulPurchases.map((purchase) => {
               const isExpanded = expandedId === purchase.payment_id;
-              const currentStep = getFulfillmentStep(purchase.fulfillment_status);
 
               return (
                 <div key={purchase.payment_id} className={shared.item}>
@@ -241,16 +277,7 @@ export function PurchaseHistoryPage() {
 
                   {isExpanded && (
                     <div className={shared.expandedContent}>
-                      <div className={styles.contentGrid}>
-                        <div className={styles.stepperCard}>
-                          <p className={styles.cardLabel}>{t("purchases.orderProgress")}</p>
-                          <Stepper steps={steps} currentStep={currentStep} vertical />
-                        </div>
-
-                        <div className={styles.actionsColumn}>
-                          {renderRightColumn(purchase)}
-                        </div>
-                      </div>
+                      {renderDetail(purchase)}
                     </div>
                   )}
                 </div>
@@ -288,6 +315,12 @@ export function PurchaseHistoryPage() {
           </Stack>
         )}
       </Modal>
+
+      <FeedbackModal
+        paymentId={feedbackPaymentId}
+        opened={feedbackPaymentId !== null}
+        onClose={() => setFeedbackPaymentId(null)}
+      />
 
       {/* Print-only copy portaled to <body> so @media print can hide every
           other body child (incl. Mantine's modal) and keep it to one page. */}

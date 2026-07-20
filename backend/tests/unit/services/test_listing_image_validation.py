@@ -20,7 +20,13 @@ def _make_service() -> ListingService:
     storage.cdn_url = CDN
     storage.image_path_prefix = "/posts/"
     return ListingService(
-        MagicMock(), MagicMock(), MagicMock(), MagicMock(), MagicMock(), storage
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        MagicMock(),
+        storage,
+        MagicMock(),
     )
 
 

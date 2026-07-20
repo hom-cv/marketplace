@@ -15,6 +15,7 @@ from app.core.exceptions import (
     too_many_images_error,
 )
 from app.crud.brand import BrandCRUD, get_brand_crud
+from app.crud.feedback import FeedbackCRUD, get_feedback_crud
 from app.crud.payment import PaymentCRUD, get_payment_crud
 from app.crud.post import PostCRUD, get_post_crud
 from app.crud.tag import TagCRUD, get_tag_crud
@@ -34,14 +35,18 @@ AnnotatedPostCRUD = Annotated[PostCRUD, Depends(get_post_crud)]
 AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]
 AnnotatedBrandCRUD = Annotated[BrandCRUD, Depends(get_brand_crud)]
 AnnotatedTagCRUD = Annotated[TagCRUD, Depends(get_tag_crud)]
+AnnotatedFeedbackCRUD = Annotated[FeedbackCRUD, Depends(get_feedback_crud)]
 AnnotatedStorageService = Annotated[StorageService, Depends(_get_storage_service)]
 
 
 def _payment_to_list_item(
-    p: Payment, include_shipping_address: bool = False
+    p: Payment,
+    include_shipping_address: bool = False,
+    has_feedback: bool = False,
 ) -> PurchaseListItem:
     """Convert Payment model to PurchaseListItem schema."""
     return PurchaseListItem(
+        has_feedback=has_feedback,
         payment_id=p.id,
         status=p.status.value.lower(),
         amount=p.amount,
@@ -116,6 +121,7 @@ class ListingService:
         brand_crud_dep: BrandCRUD,
         tag_crud_dep: TagCRUD,
         storage_service: StorageService,
+        feedback_crud_dep: FeedbackCRUD,
     ) -> None:
         self.db = db
         self._post_crud = post_crud_dep
@@ -123,13 +129,22 @@ class ListingService:
         self._brand_crud = brand_crud_dep
         self._tag_crud = tag_crud_dep
         self._storage = storage_service
+        self._feedback_crud = feedback_crud_dep
 
     async def get_purchases(self, buyer_id: int) -> list[PurchaseListItem]:
         """Get all purchases made by a buyer."""
         payments = await self._payment_crud.get_payments_by_buyer(
             self.db, buyer_id=buyer_id
         )
-        return [_payment_to_list_item(p) for p in payments]
+        reviewed_ids = await self._feedback_crud.get_reviewed_payment_ids(
+            self.db,
+            reviewer_user_id=buyer_id,
+            payment_ids=[p.id for p in payments],
+        )
+        return [
+            _payment_to_list_item(p, has_feedback=p.id in reviewed_ids)
+            for p in payments
+        ]
 
     async def get_sales(self, seller_id: int) -> list[PurchaseListItem]:
         """Get all sales made by a seller (includes shipping address)."""
@@ -422,6 +437,7 @@ def _get_listing_service(
     brand_crud_dep: AnnotatedBrandCRUD,
     tag_crud_dep: AnnotatedTagCRUD,
     storage_service: AnnotatedStorageService,
+    feedback_crud_dep: AnnotatedFeedbackCRUD,
     db: AsyncSession = Depends(get_async_db),
 ) -> ListingService:
     """Factory function to create ListingService instance."""
@@ -432,6 +448,7 @@ def _get_listing_service(
         brand_crud_dep,
         tag_crud_dep,
         storage_service,
+        feedback_crud_dep,
     )
 
 

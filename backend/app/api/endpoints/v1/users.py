@@ -7,12 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.user import AnnotatedValidUserByUsername
 from app.core.security import get_current_user, get_current_user_optional
+from app.crud.feedback import AnnotatedFeedbackCRUD
 from app.crud.follow import AnnotatedFollowCRUD
 from app.crud.like import AnnotatedLikeCRUD
 from app.crud.payment import AnnotatedPaymentCRUD
 from app.crud.post import AnnotatedPostCRUD
 from app.db.utils import get_async_db
 from app.models import Post, User
+from app.schemas.feedback import FeedbackResponseSchema
 from app.schemas.post import PostResponseSchema
 from app.schemas.user import (
     PublicUserProfileSchema,
@@ -34,6 +36,7 @@ async def get_user_profile(
     like_crud: AnnotatedLikeCRUD,
     follow_crud: AnnotatedFollowCRUD,
     payment_crud: AnnotatedPaymentCRUD,
+    feedback_crud: AnnotatedFeedbackCRUD,
     user: AnnotatedValidUserByUsername,
     current_user: Annotated[Optional[User], Depends(get_current_user_optional)] = None,
 ) -> PublicUserProfileSchema:
@@ -60,6 +63,11 @@ async def get_user_profile(
         db, seller_id=user.id
     )
 
+    # Get feedback rating summary (average + count)
+    rating, feedback_count = await feedback_crud.get_rating_summary(
+        db, seller_id=user.id
+    )
+
     # Check if current user is following this profile
     is_followed = False
     if current_user and current_user.id != user.id:
@@ -72,6 +80,8 @@ async def get_user_profile(
         total_likes,
         follower_count=follower_count,
         completed_sales=completed_sales,
+        rating=rating,
+        feedback_count=feedback_count,
         is_followed=is_followed,
     )
 
@@ -115,6 +125,25 @@ async def get_user_posts(
         return response
 
     return [_build_post_response(p, like_data) for p in posts]
+
+
+@router.get(
+    "/{username}/feedback",
+    status_code=status.HTTP_200_OK,
+    response_model=list[FeedbackResponseSchema],
+)
+async def get_user_feedback(
+    db: Annotated[AsyncSession, Depends(get_async_db)],
+    feedback_crud: AnnotatedFeedbackCRUD,
+    user: AnnotatedValidUserByUsername,
+    skip: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+) -> list[FeedbackResponseSchema]:
+    """Get feedback a seller has received, newest first."""
+    feedback = await feedback_crud.get_for_seller(
+        db, seller_id=user.id, skip=skip, limit=limit
+    )
+    return [FeedbackResponseSchema.from_feedback(f) for f in feedback]
 
 
 @router.patch(

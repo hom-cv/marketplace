@@ -131,6 +131,8 @@ class PublicUserProfileSchema(BaseModel):
     total_likes: int = 0
     follower_count: int = 0
     completed_sales: int = 0
+    rating: float | None = None
+    feedback_count: int = 0
     is_followed: bool = False
 
     model_config = {"from_attributes": True}
@@ -142,6 +144,8 @@ class PublicUserProfileSchema(BaseModel):
         total_likes: int,
         follower_count: int = 0,
         completed_sales: int = 0,
+        rating: float | None = None,
+        feedback_count: int = 0,
         is_followed: bool = False,
     ) -> "PublicUserProfileSchema":
         """Create public profile from User model."""
@@ -155,5 +159,7 @@ class PublicUserProfileSchema(BaseModel):
             total_likes=total_likes,
             follower_count=follower_count,
             completed_sales=completed_sales,
+            rating=rating,
+            feedback_count=feedback_count,
             is_followed=is_followed,
         )

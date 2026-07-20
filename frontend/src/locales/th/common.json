@@ -241,7 +241,14 @@
     "item": "สินค้า",
     "receiptNumber": "เลขที่ใบเสร็จ",
     "printReceipt": "พิมพ์ / บันทึก PDF",
-    "thankYou": "ขอบคุณที่ช้อปกับ Tallad"
+    "thankYou": "ขอบคุณที่ช้อปกับ Tallad",
+    "rateTitle": "การสั่งซื้อเป็นอย่างไรบ้าง?",
+    "rateSubtitle": "ให้ความคิดเห็นกับ @{{username}}",
+    "rateButton": "ให้คะแนน",
+    "reviewed": "คุณรีวิวคำสั่งซื้อนี้แล้ว",
+    "waitingToShip": "รอผู้ขายจัดส่ง",
+    "feedbackStep": "รีวิว",
+    "completed": "คำสั่งซื้อเสร็จสมบูรณ์"
   },
   "sales": {
     "title": "สินค้าที่ขายแล้ว",
@@ -331,5 +338,14 @@
       "sectionLabel": "ดูสินค้า",
       "sectionTitle": "สำรวจ Tallad"
     }
+  },
+  "feedback": {
+    "title": "ให้ความคิดเห็น",
+    "ratingLabel": "ให้คะแนน",
+    "commentLabel": "ความคิดเห็น (ไม่บังคับ)",
+    "commentPlaceholder": "แบ่งปันประสบการณ์กับผู้ขายรายนี้...",
+    "submit": "ส่งความคิดเห็น",
+    "leaveButton": "ให้ความคิดเห็น",
+    "submitted": "ขอบคุณสำหรับความคิดเห็น!"
   }
 }

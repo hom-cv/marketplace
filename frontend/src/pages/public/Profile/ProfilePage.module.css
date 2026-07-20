@@ -173,6 +173,42 @@
   gap: 16px;
 }
 
+/* Feedback list */
+.feedbackList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feedbackItem {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.feedbackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.feedbackDate {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.feedbackComment {
+  margin: 8px 0 4px;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.feedbackAuthor {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 /* Empty state */
 .emptyState {
   background: var(--color-bg-card);

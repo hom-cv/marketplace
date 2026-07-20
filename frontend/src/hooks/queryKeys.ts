@@ -49,6 +49,7 @@ export const queryKeys = {
       username
         ? (["userProfile", username] as const)
         : (["userProfile"] as const),
+    feedback: (username: string) => ["userFeedback", username] as const,
   },
 
   // Chat
