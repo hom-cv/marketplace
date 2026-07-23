@@ -2,7 +2,7 @@
  * Purchase History Page - Messages list style
  */
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { Loader, Modal, Stack, Group, Text } from "@mantine/core";
 import {
@@ -30,6 +30,7 @@ import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { TrackingInfoCard } from "@/components/TrackingInfoCard";
 import { FulfillmentBadge } from "@/components/FulfillmentBadge";
 import { FeedbackModal } from "@/components/FeedbackModal";
+import { OrderProgressRail } from "@/components/OrderProgressRail";
 import shared from "@/styles/listPage.module.css";
 import styles from "./PurchaseHistoryPage.module.css";
 
@@ -96,46 +97,12 @@ export function PurchaseHistoryPage() {
     );
   };
 
-  const renderProgressRail = (currentStep: number) => (
-    <div className={styles.rail}>
-      {steps.map((step, i) => {
-        const StepIcon = step.icon;
-        const done = i < currentStep;
-        const active = i === currentStep;
-        const nodeClass = [
-          styles.node,
-          done && styles.nodeDone,
-          active && styles.nodeActive,
-        ]
-          .filter(Boolean)
-          .join(" ");
-        return (
-          <Fragment key={i}>
-            {i > 0 && (
-              <div
-                className={`${styles.connector} ${
-                  i <= currentStep ? styles.connectorDone : ""
-                }`}
-              />
-            )}
-            <div className={nodeClass}>
-              <span className={styles.dot}>
-                {done ? <IconCheck size={15} /> : <StepIcon size={15} />}
-              </span>
-              <span className={styles.nodeLabel}>{step.label}</span>
-            </div>
-          </Fragment>
-        );
-      })}
-    </div>
-  );
-
   const renderDetail = (purchase: PurchaseListItem) => {
     const status = purchase.fulfillment_status;
 
     return (
-      <div className={styles.detail}>
-        {renderProgressRail(getProgressStep(purchase))}
+      <div className={shared.detail}>
+        <OrderProgressRail steps={steps} currentStep={getProgressStep(purchase)} />
 
         {purchase.tracking_number && (
           <TrackingInfoCard
@@ -146,7 +113,7 @@ export function PurchaseHistoryPage() {
 
         {/* What's next — one clear action per state */}
         {status === "packing" && (
-          <div className={`${styles.note} ${styles.noteWait}`}>
+          <div className={`${shared.note} ${shared.noteWait}`}>
             <IconClock size={15} />
             <span>{t("purchases.waitingToShip")}</span>
           </div>
@@ -187,25 +154,25 @@ export function PurchaseHistoryPage() {
         )}
 
         {status === "delivered" && purchase.has_feedback && (
-          <div className={`${styles.note} ${styles.noteDone}`}>
+          <div className={`${shared.note} ${shared.noteDone}`}>
             <IconCheck size={15} />
             <span>{t("purchases.completed")}</span>
           </div>
         )}
 
         {/* Quiet secondary actions */}
-        <div className={styles.secondary}>
+        <div className={shared.secondary}>
           <Link
             to="/explore/$postId"
             params={{ postId: String(purchase.post.id) }}
-            className={styles.secondaryLink}
+            className={shared.secondaryLink}
           >
             <IconExternalLink size={14} />
             {t("purchases.viewListing")}
           </Link>
           <button
             type="button"
-            className={styles.secondaryLink}
+            className={shared.secondaryLink}
             onClick={() => setReceiptModalData(purchase)}
           >
             <IconReceipt size={14} />
@@ -213,7 +180,7 @@ export function PurchaseHistoryPage() {
           </button>
           <button
             type="button"
-            className={styles.secondaryLink}
+            className={shared.secondaryLink}
             onClick={() => contactSupport(purchase)}
           >
             <IconHeadset size={14} />
@@ -326,7 +293,7 @@ export function PurchaseHistoryPage() {
           other body child (incl. Mantine's modal) and keep it to one page. */}
       {receiptModalData &&
         createPortal(
-          <div className={`receipt-printable ${styles.printOnly}`}>
+          <div className={`print-page ${styles.printOnly}`}>
             <ReceiptBody purchase={receiptModalData} />
           </div>,
           document.body,

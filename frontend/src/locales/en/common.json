@@ -263,7 +263,17 @@
     "ship": "Ship",
     "shipped": "Shipped",
     "toggleDetails": "Toggle sale details",
-    "date": "Date"
+    "date": "Date",
+    "awaitingDelivery": "Shipped — waiting for delivery",
+    "awaitingFeedback": "Delivered — waiting for buyer's feedback",
+    "copy": "Copy",
+    "filterAll": "All",
+    "filterToShip": "To ship",
+    "filterInTransit": "In transit",
+    "filterDelivered": "Delivered",
+    "noSalesInFilter": "No orders here",
+    "colItem": "Item",
+    "colStatus": "Status"
   },
   "seller": {
     "becomeSeller": "Become a Seller",

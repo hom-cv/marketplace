@@ -151,8 +151,16 @@ class ListingService:
         payments = await self._payment_crud.get_payments_by_seller(
             self.db, seller_id=seller_id
         )
+        reviewed_ids = await self._feedback_crud.get_payment_ids_with_feedback(
+            self.db, payment_ids=[p.id for p in payments]
+        )
         return [
-            _payment_to_list_item(p, include_shipping_address=True) for p in payments
+            _payment_to_list_item(
+                p,
+                include_shipping_address=True,
+                has_feedback=p.id in reviewed_ids,
+            )
+            for p in payments
         ]
 
     async def get_my_listings(

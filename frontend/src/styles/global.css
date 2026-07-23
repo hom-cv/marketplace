@@ -88,14 +88,15 @@ body {
   color: white;
 }
 
-/* Print: show only the receipt. The printable copy is portaled to <body>, so
-   hiding every other body child leaves just the receipt — one page, no blank
-   trailing pages (display:none removes the app from flow, unlike visibility). */
+/* Print: show only the printable copy (receipt, shipping label, …). It is
+   portaled to <body>, so hiding every other body child leaves just it — one
+   page, no blank trailing pages (display:none removes the app from flow,
+   unlike visibility). */
 @media print {
-  body > *:not(.receipt-printable) {
+  body > *:not(.print-page) {
     display: none !important;
   }
-  .receipt-printable {
+  .print-page {
     display: block !important;
     padding: 24px;
   }

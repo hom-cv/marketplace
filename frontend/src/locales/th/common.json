@@ -263,7 +263,17 @@
     "ship": "จัดส่ง",
     "shipped": "จัดส่งแล้ว",
     "toggleDetails": "แสดง/ซ่อนรายละเอียดการขาย",
-    "date": "วันที่"
+    "date": "วันที่",
+    "awaitingDelivery": "จัดส่งแล้ว — รอส่งถึงผู้ซื้อ",
+    "awaitingFeedback": "ส่งถึงแล้ว — รอรีวิวจากผู้ซื้อ",
+    "copy": "คัดลอก",
+    "filterAll": "ทั้งหมด",
+    "filterToShip": "รอจัดส่ง",
+    "filterInTransit": "กำลังจัดส่ง",
+    "filterDelivered": "จัดส่งแล้ว",
+    "noSalesInFilter": "ไม่มีคำสั่งซื้อในหมวดนี้",
+    "colItem": "สินค้า",
+    "colStatus": "สถานะ"
   },
   "seller": {
     "becomeSeller": "เป็นผู้ขาย",

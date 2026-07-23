@@ -80,6 +80,18 @@ class FeedbackCRUD:
         result = await db.execute(query)
         return set(result.scalars().all())
 
+    async def get_payment_ids_with_feedback(
+        self, db: AsyncSession, *, payment_ids: list[int]
+    ) -> set[int]:
+        """Subset of the given payment ids that have any feedback (seller view)."""
+        if not payment_ids:
+            return set()
+        query = select(Feedback.payment_id).where(
+            Feedback.payment_id.in_(payment_ids)
+        )
+        result = await db.execute(query)
+        return set(result.scalars().all())
+
 
 feedback_crud = FeedbackCRUD()
 
