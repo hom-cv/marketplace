@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSellerStatus, registerSeller } from "@/api/seller";
+import { getOnboardingLink, getSellerStatus, registerSeller } from "@/api/seller";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { queryKeys } from "./queryKeys";
 
@@ -27,6 +27,18 @@ export function useRegisterSellerMutation(options?: {
         queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
       ]);
       options?.onSuccess?.(data);
+    },
+    onError: options?.onError,
+  });
+}
+
+export function useOnboardingLinkMutation(options?: {
+  onError?: (err: Error) => void;
+}) {
+  return useMutation({
+    mutationFn: getOnboardingLink,
+    onSuccess: (data) => {
+      window.location.href = data.onboarding_url;
     },
     onError: options?.onError,
   });

@@ -27,8 +27,11 @@ import {
 import { useForm } from "@mantine/form";
 import { IconBuildingBank, IconCheck, IconAlertCircle, IconTicket } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { useSellerStatus, useRegisterSellerMutation } from "@/hooks/useSeller";
-import { getOnboardingLink } from "@/api/seller";
+import {
+  useSellerStatus,
+  useRegisterSellerMutation,
+  useOnboardingLinkMutation,
+} from "@/hooks/useSeller";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate } from "@tanstack/react-router";
@@ -51,6 +54,11 @@ export function BecomeSellerPage() {
     // the in-progress state, which shows the tutorial video and fetches a
     // fresh onboarding link on click (account links are single-use and expire).
     onSuccess: () => setError(null),
+    onError: (err: Error) => setError(err.message),
+  });
+
+  // Redirects to Stripe on success, so isPending stays true until navigation
+  const onboardingLinkMutation = useOnboardingLinkMutation({
     onError: (err: Error) => setError(err.message),
   });
 
@@ -161,13 +169,8 @@ export function BecomeSellerPage() {
               preload="metadata"
             />
             <Button
-              onClick={() =>
-                getOnboardingLink()
-                  .then((data) => {
-                    window.location.href = data.onboarding_url;
-                  })
-                  .catch((err: Error) => setError(err.message))
-              }
+              loading={onboardingLinkMutation.isPending}
+              onClick={() => onboardingLinkMutation.mutate()}
             >
               {t("seller.continueToStripe")}
             </Button>
