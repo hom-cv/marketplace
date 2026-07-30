@@ -2,8 +2,9 @@
  * BecomeSeller page for Stripe Connect Standard onboarding.
  *
  * Seller registration is invite-gated. On submit, the backend creates a
- * Stripe Connect Standard account and returns a one-time onboarding URL.
- * We redirect the browser to that URL, where Stripe collects KYC and bank
+ * Stripe Connect Standard account and the page re-renders into the
+ * in-progress state, which shows a tutorial video and a button that fetches
+ * a fresh one-time onboarding URL and redirects to Stripe for KYC and bank
  * details. The user is returned to this page (or the refresh URL)
  * afterwards, at which point we poll the backend for the latest account
  * state. Verified sellers manage payouts on dashboard.stripe.com directly.
@@ -46,12 +47,10 @@ export function BecomeSellerPage() {
 
   // Mutation for registering as seller
   const registerMutation = useRegisterSellerMutation({
-    onSuccess: (data) => {
-      setError(null);
-      if (data.onboarding_url) {
-        window.location.href = data.onboarding_url;
-      }
-    },
+    // No redirect here: invalidating seller status re-renders this page into
+    // the in-progress state, which shows the tutorial video and fetches a
+    // fresh onboarding link on click (account links are single-use and expire).
+    onSuccess: () => setError(null),
     onError: (err: Error) => setError(err.message),
   });
 
@@ -153,8 +152,14 @@ export function BecomeSellerPage() {
           <Stack align="center" gap="lg">
             <Title order={2}>{t("seller.onboardingInProgress")}</Title>
             <Text c="dimmed" ta="center">
-              {t("seller.pendingMessage")}
+              {t("seller.onboardingVideoMessage")}
             </Text>
+            <video
+              className={styles.video}
+              src={t("seller.onboardingVideoUrl")}
+              controls
+              preload="metadata"
+            />
             <Button
               onClick={() =>
                 getOnboardingLink()
