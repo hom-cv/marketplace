@@ -1,6 +1,6 @@
 /**
- * OrderProgressRail - Horizontal step rail for order fulfillment.
- * Shared by the Purchases and Sold Listings cards.
+ * OrderProgressRail - Horizontal step rail.
+ * Shared by the Purchases and Sold Listings cards and Checkout.
  */
 
 import { Fragment } from "react";

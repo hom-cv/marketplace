@@ -3,6 +3,7 @@
 from typing import Annotated
 
 from fastapi import Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -69,15 +70,23 @@ class FeedbackService:
                 "You have already left feedback for this order"
             )
 
-        feedback = await self._feedback_crud.create(
-            self.db,
-            payment_id=payment_id,
-            reviewer_user_id=reviewer_id,
-            seller_user_id=payment.seller_id,
-            rating=rating,
-            comment=comment,
-        )
-        await self.db.commit()
+        try:
+            feedback = await self._feedback_crud.create(
+                self.db,
+                payment_id=payment_id,
+                reviewer_user_id=reviewer_id,
+                seller_user_id=payment.seller_id,
+                rating=rating,
+                comment=comment,
+            )
+            await self.db.commit()
+        except IntegrityError:
+            # Concurrent duplicate submit: the exists check above raced; the
+            # unique index on payment_id is the source of truth.
+            await self.db.rollback()
+            raise conflict_error(
+                "You have already left feedback for this order"
+            )
         return feedback
 
 

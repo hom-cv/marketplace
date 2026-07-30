@@ -93,7 +93,9 @@ body {
    page, no blank trailing pages (display:none removes the app from flow,
    unlike visibility). */
 @media print {
-  body > *:not(.print-page) {
+  /* Only when a printable copy is mounted — otherwise Cmd+P prints the app
+     normally instead of a blank page. */
+  body:has(> .print-page) > *:not(.print-page) {
     display: none !important;
   }
   .print-page {

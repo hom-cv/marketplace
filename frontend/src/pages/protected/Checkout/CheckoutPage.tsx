@@ -24,7 +24,7 @@ import type {
 import { stripePromise } from "@/lib/stripe";
 import { Alert } from "@/components/Alert";
 import { Button } from "@/components/Button";
-import { Stepper } from "@/components/Stepper";
+import { OrderProgressRail } from "@/components/OrderProgressRail";
 import {
   ShippingForm,
   PaymentForm,
@@ -186,7 +186,7 @@ export function CheckoutPage() {
             {!hasPaymentResponse && (
               <>
                 <div className={styles.stepperWrapper}>
-                  <Stepper
+                  <OrderProgressRail
                     steps={[
                       { label: t("checkout.shipping"), icon: IconMapPin },
                       { label: t("checkout.payment"), icon: IconCreditCard },

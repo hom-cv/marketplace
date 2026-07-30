@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from app.models.payment import FulfillmentStatus, PaymentStatus
 from app.services.feedback_service import FeedbackService
@@ -68,3 +69,14 @@ async def test_duplicate_409():
     with pytest.raises(HTTPException) as exc:
         await service.create_feedback(reviewer_id=1, payment_id=10, rating=5, comment=None)
     assert exc.value.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_concurrent_duplicate_409():
+    """Race past the exists check: unique-index violation still maps to 409."""
+    service, _, db = _service(_payment(), exists=False)
+    db.commit.side_effect = IntegrityError("stmt", None, Exception("dup"))
+    with pytest.raises(HTTPException) as exc:
+        await service.create_feedback(reviewer_id=1, payment_id=10, rating=5, comment=None)
+    assert exc.value.status_code == 409
+    db.rollback.assert_awaited_once()

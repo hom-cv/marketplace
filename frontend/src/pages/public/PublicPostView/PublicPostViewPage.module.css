@@ -262,8 +262,10 @@
 
 .sellerRating {
   display: flex;
-  gap: 2px;
-  color: var(--color-primary);
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem; /* 12px — numeric average next to the stars */
+  color: var(--color-text-secondary);
 }
 
 .sellerStats {

@@ -20,10 +20,11 @@ export function useCreateFeedbackMutation() {
   return useMutation({
     mutationFn: (data: CreateFeedbackRequest) => createFeedback(data),
     onSuccess: () => {
-      // Purchases carry a has_feedback flag; the profile carries the rating.
+      // Purchases/sales carry a has_feedback flag; the profile carries the rating.
       queryClient.invalidateQueries({ queryKey: queryKeys.payments.myPurchases });
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
-      queryClient.invalidateQueries({ queryKey: ["userFeedback"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.payments.mySales });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.profile() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.allFeedback });
     },
   });
 }

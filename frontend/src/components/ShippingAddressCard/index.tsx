@@ -33,7 +33,7 @@ function CopyField({ value, children }: { value: string; children: ReactNode }) 
       type="button"
       className={styles.copyField}
       onClick={copy}
-      aria-label={t("sales.copy")}
+      aria-label={`${t("sales.copy")}: ${value}`}
       title={t("sales.copy")}
     >
       <span className={styles.copyContent}>{children}</span>

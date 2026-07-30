@@ -342,13 +342,14 @@ class PaymentCRUD(
     async def get_completed_sales_count(
         self, db: AsyncSession, *, seller_id: int
     ) -> int:
-        """Count a seller's completed (successful) transactions."""
+        """Count a seller's completed (paid and delivered) transactions."""
         query = (
             select(func.count())
             .select_from(self.model)
             .where(
                 self.model.seller_id == seller_id,
                 self.model.status == PaymentStatus.SUCCESSFUL,
+                self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
             )
         )
         result = await db.scalar(query)

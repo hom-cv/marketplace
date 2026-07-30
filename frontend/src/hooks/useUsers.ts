@@ -13,6 +13,9 @@ export function useUserProfile(username: string | undefined) {
     queryKey: queryKeys.users.profile(username),
     queryFn: () => getUserProfile(username!),
     enabled: !!username,
+    // Profiles change slowly; without this every listing view refetches the
+    // seller's profile. Mutations (follow, feedback) invalidate explicitly.
+    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -128,13 +128,14 @@ export function ProfilePage() {
 
         {/* Listings / Feedback Tabs */}
         <div className={styles.section}>
-          <div className={styles.tabs} role="tablist">
+          {/* Toggle buttons, not ARIA tabs — full tablist wiring (panel ids,
+              arrow keys) isn't worth it for two buttons. */}
+          <div className={styles.tabs}>
             {(["listings", "feedback"] as const).map((tab) => (
               <button
                 key={tab}
                 type="button"
-                role="tab"
-                aria-selected={activeTab === tab}
+                aria-pressed={activeTab === tab}
                 className={[styles.tab, activeTab === tab && styles.tabActive]
                   .filter(Boolean)
                   .join(" ")}

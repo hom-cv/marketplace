@@ -4,11 +4,7 @@
 
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import {
-  IconStar,
-  IconStarFilled,
-  IconStarHalfFilled,
-} from "@tabler/icons-react";
+import { Rating } from "@mantine/core";
 import { useTranslation } from "react-i18next";
 import type { Post } from "@/api/types/post";
 import { FollowButton } from "@/components/FollowButton";
@@ -37,13 +33,8 @@ export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
         <div className={styles.sellerUsername}>@{user.username}</div>
         {rating > 0 && (
           <div className={styles.sellerRating}>
-            {Array.from({ length: 5 }, (_, i) => {
-              if (rating >= i + 1)
-                return <IconStarFilled key={i} size={13} />;
-              if (rating >= i + 0.5)
-                return <IconStarHalfFilled key={i} size={13} />;
-              return <IconStar key={i} size={13} stroke={1.25} />;
-            })}
+            <Rating value={rating} fractions={10} readOnly size="xs" />
+            <span>{rating.toFixed(1)}</span>
           </div>
         )}
         {profile && (

@@ -39,11 +39,11 @@ type SaleState = "to_ship" | "in_transit" | "delivered";
 
 /** What action, if any, a sale is waiting on — drives the dashboard grouping. */
 const saleState = (s: PurchaseListItem): SaleState =>
-  !s.tracking_number
-    ? "to_ship"
-    : s.fulfillment_status === "delivered"
-      ? "delivered"
-      : "in_transit";
+  s.fulfillment_status === "delivered"
+    ? "delivered"
+    : s.tracking_number
+      ? "in_transit"
+      : "to_ship";
 
 const STATE_ORDER: Record<SaleState, number> = {
   to_ship: 0,
@@ -130,11 +130,10 @@ export function SoldListingsPage() {
 
   // 0 Packing · 1 Shipped · 2 Delivered · 3 Feedback · 4 = completed
   const getSellerStep = (sale: PurchaseListItem): number => {
-    if (!sale.tracking_number) return 0;
     if (sale.fulfillment_status === "delivered") {
       return sale.has_feedback ? 4 : 3;
     }
-    return 1; // shipped / in transit
+    return sale.tracking_number ? 1 : 0; // shipped / packing
   };
 
   const renderDetail = (sale: PurchaseListItem) => (
@@ -142,7 +141,19 @@ export function SoldListingsPage() {
       <OrderProgressRail steps={steps} currentStep={getSellerStep(sale)} />
 
       {/* Primary action / status — full width, up top */}
-      {!sale.tracking_number ? (
+      {sale.fulfillment_status === "delivered" ? (
+        sale.has_feedback ? (
+          <div className={`${shared.note} ${shared.noteDone}`}>
+            <IconCheck size={15} />
+            <span>{t("purchases.completed")}</span>
+          </div>
+        ) : (
+          <div className={shared.note}>
+            <IconCheck size={15} />
+            <span>{t("sales.awaitingFeedback")}</span>
+          </div>
+        )
+      ) : !sale.tracking_number ? (
         <div className={styles.shipHighlight}>
           <p className={styles.shipHighlightLabel}>
             <IconTruck size={13} /> {t("sales.addShipping")}
@@ -188,18 +199,6 @@ export function SoldListingsPage() {
             </div>
           </div>
         </div>
-      ) : sale.fulfillment_status === "delivered" ? (
-        sale.has_feedback ? (
-          <div className={`${shared.note} ${shared.noteDone}`}>
-            <IconCheck size={15} />
-            <span>{t("purchases.completed")}</span>
-          </div>
-        ) : (
-          <div className={shared.note}>
-            <IconCheck size={15} />
-            <span>{t("sales.awaitingFeedback")}</span>
-          </div>
-        )
       ) : (
         <div className={shared.note}>
           <IconTruck size={15} />
