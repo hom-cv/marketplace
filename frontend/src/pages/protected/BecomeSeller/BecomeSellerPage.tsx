@@ -2,8 +2,9 @@
  * BecomeSeller page for Stripe Connect Standard onboarding.
  *
  * Seller registration is invite-gated. On submit, the backend creates a
- * Stripe Connect Standard account and returns a one-time onboarding URL.
- * We redirect the browser to that URL, where Stripe collects KYC and bank
+ * Stripe Connect Standard account and the page re-renders into the
+ * in-progress state, which shows a tutorial video and a button that fetches
+ * a fresh one-time onboarding URL and redirects to Stripe for KYC and bank
  * details. The user is returned to this page (or the refresh URL)
  * afterwards, at which point we poll the backend for the latest account
  * state. Verified sellers manage payouts on dashboard.stripe.com directly.
@@ -26,8 +27,11 @@ import {
 import { useForm } from "@mantine/form";
 import { IconBuildingBank, IconCheck, IconAlertCircle, IconTicket } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
-import { useSellerStatus, useRegisterSellerMutation } from "@/hooks/useSeller";
-import { getOnboardingLink } from "@/api/seller";
+import {
+  useSellerStatus,
+  useRegisterSellerMutation,
+  useOnboardingLinkMutation,
+} from "@/hooks/useSeller";
 import { queryKeys } from "@/hooks/queryKeys";
 import type { SellerVerificationRequest } from "@/api/types/seller";
 import { useNavigate } from "@tanstack/react-router";
@@ -46,12 +50,12 @@ export function BecomeSellerPage() {
 
   // Mutation for registering as seller
   const registerMutation = useRegisterSellerMutation({
-    onSuccess: (data) => {
-      setError(null);
-      if (data.onboarding_url) {
-        window.location.href = data.onboarding_url;
-      }
-    },
+    onSuccess: () => setError(null),
+    onError: (err: Error) => setError(err.message),
+  });
+
+  // Redirects to Stripe on success, so isPending stays true until navigation
+  const onboardingLinkMutation = useOnboardingLinkMutation({
     onError: (err: Error) => setError(err.message),
   });
 
@@ -153,16 +157,17 @@ export function BecomeSellerPage() {
           <Stack align="center" gap="lg">
             <Title order={2}>{t("seller.onboardingInProgress")}</Title>
             <Text c="dimmed" ta="center">
-              {t("seller.pendingMessage")}
+              {t("seller.onboardingVideoMessage")}
             </Text>
+            <video
+              className={styles.video}
+              src={t("seller.onboardingVideoUrl")}
+              controls
+              preload="metadata"
+            />
             <Button
-              onClick={() =>
-                getOnboardingLink()
-                  .then((data) => {
-                    window.location.href = data.onboarding_url;
-                  })
-                  .catch((err: Error) => setError(err.message))
-              }
+              loading={onboardingLinkMutation.isPending}
+              onClick={() => onboardingLinkMutation.mutate()}
             >
               {t("seller.continueToStripe")}
             </Button>
