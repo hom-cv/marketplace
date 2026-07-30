@@ -21,8 +21,8 @@ export function useRegisterSellerMutation(options?: {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: SellerVerificationRequest) => registerSeller(data),
-    onSuccess: (data) => {
-      Promise.all([
+    onSuccess: async (data) => {
+      await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.seller.status }),
         queryClient.invalidateQueries({ queryKey: queryKeys.currentUser }),
       ]);
