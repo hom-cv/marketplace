@@ -50,9 +50,6 @@ export function BecomeSellerPage() {
 
   // Mutation for registering as seller
   const registerMutation = useRegisterSellerMutation({
-    // No redirect here: invalidating seller status re-renders this page into
-    // the in-progress state, which shows the tutorial video and fetches a
-    // fresh onboarding link on click (account links are single-use and expire).
     onSuccess: () => setError(null),
     onError: (err: Error) => setError(err.message),
   });
