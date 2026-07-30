@@ -4,7 +4,8 @@
   },
   "stats": {
     "totalLikes": "total likes",
-    "followers": "followers"
+    "followers": "followers",
+    "completedSales": "sales"
   },
   "follow": {
     "follow": "Follow",
@@ -15,8 +16,13 @@
   "sections": {
     "listings": "Listings"
   },
+  "tabs": {
+    "listings": "Listings",
+    "feedback": "Feedback"
+  },
   "empty": {
-    "noListings": "No listings yet"
+    "noListings": "No listings yet",
+    "noFeedback": "No feedback yet"
   },
   "errors": {
     "profileNotFound": "User not found",

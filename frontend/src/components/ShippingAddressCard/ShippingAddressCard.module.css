@@ -26,27 +26,75 @@
   letter-spacing: 0.02em;
 }
 
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Click-to-copy field */
+.copyField {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 6px;
+  margin: 0 -6px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.copyField:hover {
+  background: var(--color-bg-card);
+}
+
+.copyContent {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.copyIcon {
+  color: var(--color-text-muted);
+  opacity: 0;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: opacity 0.15s ease;
+}
+
+.copyField:hover .copyIcon {
+  opacity: 1;
+}
+
+.copyDone {
+  color: var(--color-success);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .name {
   font-size: 0.8rem;
   font-weight: 500;
   color: var(--color-text);
-  margin: 0 0 2px;
 }
 
 .phone {
   font-size: 0.75rem;
   color: var(--color-text-muted);
-  margin: 0 0 2px;
 }
 
 .address {
   font-size: 0.8rem;
   color: var(--color-text);
-  margin: 0;
 }
 
 .location {
   font-size: 0.8rem;
   color: var(--color-text);
-  margin: 2px 0 0;
+  margin-top: 2px;
 }

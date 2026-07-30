@@ -5,6 +5,7 @@ from app.api.endpoints.v1 import (
     auth,
     brands,
     categories,
+    feedback,
     follows,
     invites,
     likes,
@@ -24,6 +25,7 @@ api_router.include_router(brands.router)
 api_router.include_router(categories.router)
 api_router.include_router(likes.router)
 api_router.include_router(follows.router)
+api_router.include_router(feedback.router)
 api_router.include_router(seller.router)
 api_router.include_router(payments.router)
 api_router.include_router(invites.router)

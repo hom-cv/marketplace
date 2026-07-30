@@ -72,6 +72,7 @@ export interface PurchaseListItem {
   total_vat: number | null;
   seller_payout: number | null;
   platform_fee_waived: boolean;
+  has_feedback: boolean;
   // Fulfillment tracking fields
   fulfillment_status: string | null;
   tracking_number: string | null;

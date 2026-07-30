@@ -238,7 +238,17 @@
     "contactSupport": "ติดต่อฝ่ายสนับสนุน",
     "supportSubject": "คำขอความช่วยเหลือ — {{title}} (คำสั่งซื้อ #{{id}})",
     "receipt": "ใบเสร็จ",
-    "item": "สินค้า"
+    "item": "สินค้า",
+    "receiptNumber": "เลขที่ใบเสร็จ",
+    "printReceipt": "พิมพ์ / บันทึก PDF",
+    "thankYou": "ขอบคุณที่ช้อปกับ Tallad",
+    "rateTitle": "การสั่งซื้อเป็นอย่างไรบ้าง?",
+    "rateSubtitle": "ให้ความคิดเห็นกับ @{{username}}",
+    "rateButton": "ให้คะแนน",
+    "reviewed": "คุณรีวิวคำสั่งซื้อนี้แล้ว",
+    "waitingToShip": "รอผู้ขายจัดส่ง",
+    "feedbackStep": "รีวิว",
+    "completed": "คำสั่งซื้อเสร็จสมบูรณ์"
   },
   "sales": {
     "title": "สินค้าที่ขายแล้ว",
@@ -253,7 +263,17 @@
     "ship": "จัดส่ง",
     "shipped": "จัดส่งแล้ว",
     "toggleDetails": "แสดง/ซ่อนรายละเอียดการขาย",
-    "date": "วันที่"
+    "date": "วันที่",
+    "awaitingDelivery": "จัดส่งแล้ว — รอส่งถึงผู้ซื้อ",
+    "awaitingFeedback": "ส่งถึงแล้ว — รอรีวิวจากผู้ซื้อ",
+    "copy": "คัดลอก",
+    "filterAll": "ทั้งหมด",
+    "filterToShip": "รอจัดส่ง",
+    "filterInTransit": "กำลังจัดส่ง",
+    "filterDelivered": "จัดส่งแล้ว",
+    "noSalesInFilter": "ไม่มีคำสั่งซื้อในหมวดนี้",
+    "colItem": "สินค้า",
+    "colStatus": "สถานะ"
   },
   "seller": {
     "becomeSeller": "เป็นผู้ขาย",
@@ -328,5 +348,14 @@
       "sectionLabel": "ดูสินค้า",
       "sectionTitle": "สำรวจ Tallad"
     }
+  },
+  "feedback": {
+    "title": "ให้ความคิดเห็น",
+    "ratingLabel": "ให้คะแนน",
+    "commentLabel": "ความคิดเห็น (ไม่บังคับ)",
+    "commentPlaceholder": "แบ่งปันประสบการณ์กับผู้ขายรายนี้...",
+    "submit": "ส่งความคิดเห็น",
+    "leaveButton": "ให้ความคิดเห็น",
+    "submitted": "ขอบคุณสำหรับความคิดเห็น!"
   }
 }

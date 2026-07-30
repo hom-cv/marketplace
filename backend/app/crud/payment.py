@@ -1,8 +1,10 @@
 """Payment CRUD operations."""
 
 from datetime import datetime, timezone
+from typing import Annotated
 
-from sqlalchemy import select
+from fastapi import Depends
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -337,9 +339,29 @@ class PaymentCRUD(
         return payment
 
 
+    async def get_completed_sales_count(
+        self, db: AsyncSession, *, seller_id: int
+    ) -> int:
+        """Count a seller's completed (paid and delivered) transactions."""
+        query = (
+            select(func.count())
+            .select_from(self.model)
+            .where(
+                self.model.seller_id == seller_id,
+                self.model.status == PaymentStatus.SUCCESSFUL,
+                self.model.fulfillment_status == FulfillmentStatus.DELIVERED,
+            )
+        )
+        result = await db.scalar(query)
+        return result or 0
+
+
 payment_crud = PaymentCRUD(Payment)
 
 
 def get_payment_crud() -> PaymentCRUD:
     """Dependency provider for PaymentCRUD instance."""
     return payment_crud
+
+
+AnnotatedPaymentCRUD = Annotated[PaymentCRUD, Depends(get_payment_crud)]

@@ -238,7 +238,17 @@
     "contactSupport": "Contact Support",
     "supportSubject": "Support request — {{title}} (Order #{{id}})",
     "receipt": "Receipt",
-    "item": "Item"
+    "item": "Item",
+    "receiptNumber": "Receipt No.",
+    "printReceipt": "Print / Save PDF",
+    "thankYou": "Thank you for shopping with Tallad",
+    "rateTitle": "How was your order?",
+    "rateSubtitle": "Leave feedback for @{{username}}",
+    "rateButton": "Rate order",
+    "reviewed": "You reviewed this order",
+    "waitingToShip": "Waiting for the seller to ship",
+    "feedbackStep": "Feedback",
+    "completed": "Order completed"
   },
   "sales": {
     "title": "Sold Listings",
@@ -253,7 +263,17 @@
     "ship": "Ship",
     "shipped": "Shipped",
     "toggleDetails": "Toggle sale details",
-    "date": "Date"
+    "date": "Date",
+    "awaitingDelivery": "Shipped — waiting for delivery",
+    "awaitingFeedback": "Delivered — waiting for buyer's feedback",
+    "copy": "Copy",
+    "filterAll": "All",
+    "filterToShip": "To ship",
+    "filterInTransit": "In transit",
+    "filterDelivered": "Delivered",
+    "noSalesInFilter": "No orders here",
+    "colItem": "Item",
+    "colStatus": "Status"
   },
   "seller": {
     "becomeSeller": "Become a Seller",
@@ -328,5 +348,14 @@
       "sectionLabel": "Browse Items",
       "sectionTitle": "Explore Tallad"
     }
+  },
+  "feedback": {
+    "title": "Leave feedback",
+    "ratingLabel": "Your rating",
+    "commentLabel": "Comment (optional)",
+    "commentPlaceholder": "Share your experience with this seller...",
+    "submit": "Submit feedback",
+    "leaveButton": "Leave feedback",
+    "submitted": "Thanks for your feedback!"
   }
 }

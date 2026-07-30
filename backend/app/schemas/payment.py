@@ -154,6 +154,7 @@ class PurchaseListItem(BaseModel):
     seller_payout: int | None = None
     platform_fee_waived: bool = False
     # Fulfillment tracking fields
+    has_feedback: bool = False  # Whether the buyer has left feedback (purchases)
     fulfillment_status: str | None = None
     tracking_number: str | None = None
     shipped_at: datetime | None = None

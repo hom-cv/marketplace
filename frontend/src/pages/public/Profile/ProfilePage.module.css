@@ -135,12 +135,35 @@
   margin-bottom: 24px;
 }
 
-.sectionTitle {
-  font-size: 1.125rem;
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 16px;
+}
+
+.tab {
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0 0 12px;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--color-text);
-  margin: 0 0 16px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
   letter-spacing: -0.01em;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  color: var(--color-text);
+  border-bottom-color: var(--color-primary);
 }
 
 /* Grid */
@@ -148,6 +171,42 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
+}
+
+/* Feedback list */
+.feedbackList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.feedbackItem {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.feedbackHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.feedbackDate {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.feedbackComment {
+  margin: 8px 0 4px;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.feedbackAuthor {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
 }
 
 /* Empty state */

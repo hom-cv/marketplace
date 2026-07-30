@@ -19,7 +19,12 @@ from app.crud.payment import payment_crud
 from app.crud.post import post_crud
 from app.crud.seller import seller_crud
 from app.db.utils import get_async_db
-from app.models.payment import Payment, PaymentMethod, PaymentStatus
+from app.models.payment import (
+    FulfillmentStatus,
+    Payment,
+    PaymentMethod,
+    PaymentStatus,
+)
 from app.models.post import Post
 from app.models.seller import SellerProfile, SellerVerificationStatus
 from app.models.user import User
@@ -560,6 +565,11 @@ class PaymentService:
 
         if payment.status != PaymentStatus.SUCCESSFUL:
             raise forbidden_error("Can only add tracking to successful payments")
+
+        # A delivered order must stay delivered — re-shipping would reset the
+        # buyer's delivery confirmation and re-block their feedback.
+        if payment.fulfillment_status == FulfillmentStatus.DELIVERED:
+            raise forbidden_error("Cannot add tracking to a delivered order")
 
         await payment_crud.add_tracking_number(
             self.db,

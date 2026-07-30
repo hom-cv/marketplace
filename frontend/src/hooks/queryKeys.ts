@@ -49,6 +49,9 @@ export const queryKeys = {
       username
         ? (["userProfile", username] as const)
         : (["userProfile"] as const),
+    // Root prefix key for broad invalidation (matches all usernames)
+    allFeedback: ["userFeedback"] as const,
+    feedback: (username: string) => ["userFeedback", username] as const,
   },
 
   // Chat

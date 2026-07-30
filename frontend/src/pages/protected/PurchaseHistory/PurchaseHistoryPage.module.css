@@ -7,102 +7,62 @@
   flex-shrink: 0;
 }
 
-/* Content grid */
-.contentGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Rate-your-order prompt (delivered, not yet reviewed) */
+.ratePrompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding-top: 12px;
-}
-
-/* Stepper card (left column) */
-.stepperCard {
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
+  padding: 14px 16px;
+  background: var(--color-secondary-light);
+  border: 1px solid var(--color-secondary);
   border-radius: var(--radius-sm);
-  padding: 12px;
 }
 
-.cardLabel {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin: 0 0 12px;
+.rateText {
+  min-width: 0;
 }
 
-/* Actions column (right column) */
-.actionsColumn {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Link button style */
-.linkButton {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--color-bg-muted);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 500;
+.rateTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--color-text);
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  margin: 0;
 }
 
-.linkButton:hover {
-  border-color: var(--color-border-hover);
-  background: var(--color-bg-card);
-}
-
-/* Awaiting shipment card */
-.awaitingCard {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background: var(--color-warning-light);
-  border: 1px solid var(--color-warning);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  color: var(--color-warning);
-}
-
-.awaitingIcon {
-  flex-shrink: 0;
-}
-
-/* Button row */
-.buttonRow {
-  display: flex;
-  gap: 8px;
-}
-
-.buttonRow > * {
-  flex: 1;
-}
-
-/* Delivered badge */
-.deliveredBadge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 10px 12px;
-  background: var(--color-success-light);
-  border: 1px solid var(--color-success);
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--color-success);
+.rateSub {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  margin: 2px 0 0;
 }
 
 /* Receipt modal */
+.receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.receiptHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--color-text);
+}
+
+.receiptBrand {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+}
+
+.receiptNo {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
 .receiptItem {
   display: flex;
   justify-content: space-between;
@@ -114,13 +74,24 @@
   background: var(--color-border);
 }
 
+.receiptFoot {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+/* Print-only receipt copy: hidden on screen, revealed by the @media print
+   rule in global.css. */
+.printOnly {
+  display: none;
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
-  .contentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .buttonRow {
+  .ratePrompt {
     flex-direction: column;
+    align-items: stretch;
+    text-align: center;
   }
 }

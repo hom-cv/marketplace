@@ -4,7 +4,8 @@
   },
   "stats": {
     "totalLikes": "ถูกใจทั้งหมด",
-    "followers": "ผู้ติดตาม"
+    "followers": "ผู้ติดตาม",
+    "completedSales": "ขายสำเร็จ"
   },
   "follow": {
     "follow": "ติดตาม",
@@ -15,8 +16,13 @@
   "sections": {
     "listings": "รายการสินค้า"
   },
+  "tabs": {
+    "listings": "รายการสินค้า",
+    "feedback": "รีวิว"
+  },
   "empty": {
-    "noListings": "ยังไม่มีรายการสินค้า"
+    "noListings": "ยังไม่มีรายการสินค้า",
+    "noFeedback": "ยังไม่มีรีวิว"
   },
   "errors": {
     "profileNotFound": "ไม่พบผู้ใช้",

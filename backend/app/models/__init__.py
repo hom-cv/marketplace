@@ -4,6 +4,7 @@ from app.constants.report import ReportReason, ReportStatus, ReportType
 from app.models._base import Base
 from app.models.brand import Brand
 from app.models.conversation import Conversation
+from app.models.feedback import Feedback
 from app.models.follow import Follow
 from app.models.invite import SellerInvite
 from app.models.like import Like
@@ -24,6 +25,7 @@ __all__ = [
     "Base",
     "Brand",
     "Conversation",
+    "Feedback",
     "Follow",
     "Message",
     "InviteStatus",

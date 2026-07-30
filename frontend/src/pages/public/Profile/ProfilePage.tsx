@@ -4,10 +4,11 @@
 
 import { useState } from "react";
 import { useParams } from "@tanstack/react-router";
-import { Loader, Box } from "@mantine/core";
+import { Loader, Box, Rating } from "@mantine/core";
 import { IconUser } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import { useUserProfile, useUserPosts } from "@/hooks/useUsers";
+import { useUserFeedback } from "@/hooks/useFeedback";
 import { Alert } from "@/components/Alert";
 import { FollowButton } from "@/components/FollowButton";
 import { LoginPromptModal } from "@/components/LoginPromptModal";
@@ -22,6 +23,9 @@ export function ProfilePage() {
   const { t: tCommon } = useTranslation("common");
   const currentUser = useAuthStore((state) => state.user);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"listings" | "feedback">(
+    "listings",
+  );
 
   const {
     data: profile,
@@ -34,6 +38,9 @@ export function ProfilePage() {
     isLoading: postsLoading,
     error: postsError,
   } = useUserPosts(username);
+
+  const { data: feedback, isLoading: feedbackLoading } =
+    useUserFeedback(username);
 
   if (profileLoading) {
     return (
@@ -119,38 +126,84 @@ export function ProfilePage() {
           </div>
         </div>
 
-        {/* Listings Section */}
+        {/* Listings / Feedback Tabs */}
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t("sections.listings")}</h2>
-          {postsLoading ? (
+          {/* Toggle buttons, not ARIA tabs — full tablist wiring (panel ids,
+              arrow keys) isn't worth it for two buttons. */}
+          <div className={styles.tabs}>
+            {(["listings", "feedback"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                aria-pressed={activeTab === tab}
+                className={[styles.tab, activeTab === tab && styles.tabActive]
+                  .filter(Boolean)
+                  .join(" ")}
+                onClick={() => setActiveTab(tab)}
+              >
+                {t(`tabs.${tab}`)}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === "listings" ? (
+            postsLoading ? (
+              <div className={styles.loading}>
+                <Loader />
+              </div>
+            ) : postsError ? (
+              <Alert variant="error">{t("errors.failedToLoadPosts")}</Alert>
+            ) : posts && posts.length > 0 ? (
+              <>
+                {/* Desktop Grid */}
+                <Box visibleFrom="sm">
+                  <div className={styles.grid}>
+                    {posts.map((post) => (
+                      <PostCard key={post.id} post={post} />
+                    ))}
+                  </div>
+                </Box>
+
+                {/* Mobile Feed */}
+                <Box hiddenFrom="sm">
+                  <div>
+                    {posts.map((post) => (
+                      <PostFeedItem key={post.id} post={post} />
+                    ))}
+                  </div>
+                </Box>
+              </>
+            ) : (
+              <div className={styles.emptyState}>
+                <p className={styles.emptyText}>{t("empty.noListings")}</p>
+              </div>
+            )
+          ) : feedbackLoading ? (
             <div className={styles.loading}>
               <Loader />
             </div>
-          ) : postsError ? (
-            <Alert variant="error">{t("errors.failedToLoadPosts")}</Alert>
-          ) : posts && posts.length > 0 ? (
-            <>
-              {/* Desktop Grid */}
-              <Box visibleFrom="sm">
-                <div className={styles.grid}>
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
+          ) : feedback && feedback.length > 0 ? (
+            <div className={styles.feedbackList}>
+              {feedback.map((f) => (
+                <div key={f.id} className={styles.feedbackItem}>
+                  <div className={styles.feedbackHeader}>
+                    <Rating value={f.rating} readOnly size="sm" />
+                    <span className={styles.feedbackDate}>
+                      {new Date(f.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {f.comment && (
+                    <p className={styles.feedbackComment}>{f.comment}</p>
+                  )}
+                  <span className={styles.feedbackAuthor}>
+                    @{f.reviewer_username}
+                  </span>
                 </div>
-              </Box>
-
-              {/* Mobile Feed */}
-              <Box hiddenFrom="sm">
-                <div>
-                  {posts.map((post) => (
-                    <PostFeedItem key={post.id} post={post} />
-                  ))}
-                </div>
-              </Box>
-            </>
+              ))}
+            </div>
           ) : (
             <div className={styles.emptyState}>
-              <p className={styles.emptyText}>{t("empty.noListings")}</p>
+              <p className={styles.emptyText}>{t("empty.noFeedback")}</p>
             </div>
           )}
         </div>

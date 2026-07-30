@@ -2,9 +2,14 @@
  * SellerInfoCard - Displays seller information with optional link to profile
  */
 
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { IconChevronRight } from "@tabler/icons-react";
+import { Rating } from "@mantine/core";
+import { useTranslation } from "react-i18next";
 import type { Post } from "@/api/types/post";
+import { FollowButton } from "@/components/FollowButton";
+import { LoginPromptModal } from "@/components/LoginPromptModal";
+import { useUserProfile } from "@/hooks/useUsers";
 import styles from "../PublicPostViewPage.module.css";
 
 interface SellerInfoCardProps {
@@ -13,6 +18,12 @@ interface SellerInfoCardProps {
 }
 
 export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
+  const { t } = useTranslation("profile");
+  const { data: profile } = useUserProfile(user.username);
+  const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+
+  const rating = profile?.rating ?? 0;
+
   const content = (
     <div className={styles.sellerInfo}>
       <div className={styles.sellerAvatar}>
@@ -20,6 +31,22 @@ export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
       </div>
       <div className={styles.sellerDetails}>
         <div className={styles.sellerUsername}>@{user.username}</div>
+        {rating > 0 && (
+          <div className={styles.sellerRating}>
+            <Rating value={rating} fractions={10} readOnly size="xs" />
+            <span>{rating.toFixed(1)}</span>
+          </div>
+        )}
+        {profile && (
+          <div className={styles.sellerStats}>
+            <span>
+              {profile.completed_sales} {t("stats.completedSales")}
+            </span>
+            <span>
+              {profile.follower_count} {t("stats.followers")}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -29,13 +56,28 @@ export function SellerInfoCard({ user, isOwner }: SellerInfoCardProps) {
   }
 
   return (
-    <Link
-      to="/profile/$username"
-      params={{ username: user.username }}
-      className={styles.sellerCard}
-    >
-      {content}
-      <IconChevronRight size={20} className={styles.sellerArrow} />
-    </Link>
+    <>
+      <div className={styles.sellerCard}>
+        <Link
+          to="/profile/$username"
+          params={{ username: user.username }}
+          className={styles.sellerLink}
+        >
+          {content}
+        </Link>
+        <FollowButton
+          userId={user.id}
+          username={user.username}
+          initialFollowed={profile?.is_followed ?? false}
+          onAuthRequired={() => setLoginPromptOpen(true)}
+        />
+      </div>
+
+      <LoginPromptModal
+        opened={loginPromptOpen}
+        onClose={() => setLoginPromptOpen(false)}
+        action={t("follow.followAction")}
+      />
+    </>
   );
 }
