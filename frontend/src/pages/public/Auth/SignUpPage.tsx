@@ -35,8 +35,19 @@ export function SignUpPage() {
       confirmPassword: "",
     },
     validate: {
-      username: (value) =>
-        value.trim().length > 0 ? null : t("validation.usernameRequired"),
+      username: (value) => {
+        const username = value.trim();
+
+        if (!username) return t("validation.usernameRequired");
+        if (username.length < 3 || username.length > 64) {
+          return t("validation.usernameLength");
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+          return t("validation.usernameInvalid");
+        }
+
+        return null;
+      },
       firstName: (value) =>
         value.trim().length > 0 ? null : t("validation.firstNameRequired"),
       email: (value) =>
@@ -50,7 +61,7 @@ export function SignUpPage() {
 
   const handleSubmit = async (values: typeof form.values) => {
     const user = await registerMutation.mutateAsync({
-      username: values.username,
+      username: values.username.trim(),
       first_name: values.firstName,
       last_name: values.lastName,
       email_address: values.email,
